@@ -1,0 +1,27 @@
+﻿using Standard.Types.Maybe;
+
+namespace Orange.Library.Junctions
+{
+   public class OneJunction : Junction
+   {
+      protected bool found;
+
+      public OneJunction(INSGenerator generator, Arguments arguments)
+         : base(generator, arguments)
+      {
+         found = false;
+      }
+
+      public override bool IfNil() => found;
+
+      public override IMaybe<bool> Success()
+      {
+         if (found)
+            return false.Some();
+         found = true;
+         return new None<bool>();
+      }
+
+      public override bool Final() => found;
+   }
+}
