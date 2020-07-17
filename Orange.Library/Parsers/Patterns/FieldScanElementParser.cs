@@ -1,16 +1,13 @@
-﻿using Orange.Library.Patterns;
+﻿using Core.Strings;
+using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers.Patterns
 {
    public class FieldScanElementParser : Parser, IElementParser
    {
-      public FieldScanElementParser()
-         : base("^ /s* /(/d+)? '//'")
-      {
-      }
+      public FieldScanElementParser() : base("^ /s* /(/d+)? '//'") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -23,10 +20,6 @@ namespace Orange.Library.Parsers.Patterns
 
       public override string VerboseName => "field element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

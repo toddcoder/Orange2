@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block block;
 
 		public BreakXBlockElement(Block text, int matchIndex = 0)
-			: base("", matchIndex)
-		{
-			block = text;
-		}
+			: base("", matchIndex) => block = text;
 
-		public BreakXBlockElement()
+	   public BreakXBlockElement()
 			: this(null)
 		{
 		}
@@ -38,10 +35,7 @@ namespace Orange.Library.Patterns
 				setText();
 				return base.Alternate;
 			}
-			set
-			{
-				base.Alternate = value;
-			}
+			set => base.Alternate = value;
 		}
 
 		public override Element Clone()

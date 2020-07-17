@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using Orange.Library.Values;
+﻿using System.Collections.Generic;
 using Standard.Types.Maybe;
 using static Orange.Library.Parsers.ComparisandParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Standard.Types.Tuples.TupleFunctions;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Values.Parameter;
+using static Standard.Types.Maybe.MaybeFunctions;
 using Parameter = Orange.Library.Values.Parameter;
 
 namespace Orange.Library.Parsers.Special
@@ -16,23 +13,18 @@ namespace Orange.Library.Parsers.Special
    {
       List<Parameter> list;
 
-      public PatternParameterListParser2()
-      {
-         list = new List<Parameter>();
-      }
+      public PatternParameterListParser2() => list = new List<Parameter>();
 
-      public override IMaybe<Tuple<List<Parameter>, int>> Parse(string source, int index)
+      public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
          if (freeParser.Scan(source, index, "^ /s* ']'"))
-            return new None<Tuple<List<Parameter>, int>>();
+            return none<(List<Parameter>, int)>();
+
          var bindingIndex = 0;
          while (index < source.Length)
          {
             var comparisand = GetComparisand(source, index, PassAlong("^ /s* [',]']", false));
-            Block comparisandExpression;
-            Block condition;
-            int newIndex;
-            if (comparisand.Assign(out comparisandExpression, out condition, out newIndex))
+            if (comparisand.If(out var comparisandExpression, out var condition, out var newIndex))
             {
                index = newIndex;
                var parameter = FromComparisand(bindingIndex++, comparisandExpression, condition);
@@ -43,27 +35,20 @@ namespace Orange.Library.Parsers.Special
                   index = freeParser.Position;
                   continue;
                }
+
                if (freeParser.Scan(source, index, "^ /s* ']'"))
                {
                   freeParser.ColorAll(Structures);
-                  return tuple(list, freeParser.Position).Some();
+                  return (list, freeParser.Position).Some();
                }
             }
-            return new None<Tuple<List<Parameter>, int>>();
          }
-         return new None<Tuple<List<Parameter>, int>>();
+
+         return none<(List<Parameter>, int)>();
       }
 
-      public bool Multi
-      {
-         get;
-         set;
-      } = true;
+      public bool Multi { get; set; } = true;
 
-      public bool Currying
-      {
-         get;
-         set;
-      }
+      public bool Currying { get; set; }
    }
 }

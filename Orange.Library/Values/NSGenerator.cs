@@ -2,7 +2,6 @@
 using Orange.Library.Junctions;
 using Orange.Library.Managers;
 using Standard.Types.Collections;
-using Standard.Types.Objects;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Runtime;
@@ -19,45 +18,27 @@ namespace Orange.Library.Values
          return (Value)generator;
       }
 
-      public static Value If(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new IfModifier(arguments));
-      }
+      public static Value If(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new IfModifier(arguments));
 
-      public static Value Map(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new MapModifier(arguments));
-      }
+      public static Value IfNot(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new IfNotModifier(arguments));
 
-      public static Value Skip(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new SkipModifier(arguments));
-      }
+      public static Value Map(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new MapModifier(arguments));
 
-      public static Value SkipWhile(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new SkipWhileModifier(arguments));
-      }
+      public static Value MapIf(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new MapIfModifier(arguments));
 
-      public static Value SkipUntil(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new SkipUntilModifier(arguments));
-      }
+      public static Value Skip(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new SkipModifier(arguments));
 
-      public static Value Take(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new TakeModifier(arguments));
-      }
+      public static Value SkipWhile(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new SkipWhileModifier(arguments));
 
-      public static Value TakeWhile(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new TakeWhileModifier(arguments));
-      }
+      public static Value SkipUntil(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new SkipUntilModifier(arguments));
 
-      public static Value TakeUntil(INSGenerator generator, Arguments arguments)
-      {
-         return new NSGeneratorMod(generator, new TakeUntilModifier(arguments));
-      }
+      public static Value Take(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new TakeModifier(arguments));
+
+      public static Value TakeWhile(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new TakeWhileModifier(arguments));
+
+      public static Value TakeUntil(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new TakeUntilModifier(arguments));
+
+      public static Value Flat(INSGenerator generator, Arguments arguments) => new FlatGenerator(generator);
 
       public static Value Group(INSGenerator generator, Arguments arguments)
       {
@@ -76,9 +57,11 @@ namespace Orange.Library.Values
                   subArray.Add(value);
                   value = iterator.Next();
                }
+
                array.Add(value);
                value = iterator.Next();
             }
+
             return array;
          }
 
@@ -87,6 +70,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return ToArray(generator);
+
             var hash = new AutoHash<string, List<Value>>
             {
                Default = DefaultType.Lambda,
@@ -103,9 +87,11 @@ namespace Orange.Library.Values
                var key = block.Evaluate().Text;
                hash[key].Add(item);
             }
+
             var array = new Array();
             foreach (var item in hash)
                array[item.Key] = new Array(item.Value);
+
             return array;
          }
       }
@@ -119,11 +105,14 @@ namespace Orange.Library.Values
             if (block == null)
                return NilValue;
 
+            iterator.Reset();
+
             assistant.TwoValueParameters();
             var initialFromArguments = arguments[0];
             var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
             if (initialValue.IsNil)
                return initialValue;
+
             var secondValue = iterator.Next();
             if (secondValue.IsNil)
                return initialValue;
@@ -133,6 +122,7 @@ namespace Orange.Library.Values
             var signal = Signal();
             if (signal == Breaking)
                return value;
+
             switch (signal)
             {
                case ReturningNull:
@@ -144,6 +134,7 @@ namespace Orange.Library.Values
             var next = iterator.Next();
             if (next.IsNil)
                return value;
+
             for (var i = 0; i < MAX_LOOP; i++)
             {
                assistant.SetParameterValues(value, next);
@@ -151,6 +142,7 @@ namespace Orange.Library.Values
                signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case ReturningNull:
@@ -158,10 +150,12 @@ namespace Orange.Library.Values
                   case Continuing:
                      continue;
                }
+
                next = iterator.Next();
                if (next.IsNil)
                   return value;
             }
+
             return value;
          }
       }
@@ -176,12 +170,15 @@ namespace Orange.Library.Values
             if (block == null)
                return NilValue;
 
+            iterator.Reset();
+
             assistant.TwoValueParameters();
             var initialFromArguments = arguments[0];
             iterator.Reset();
             var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
             if (initialValue.IsNil)
                return initialValue;
+
             var secondValue = iterator.Next();
             if (secondValue.IsNil)
                return initialValue;
@@ -191,6 +188,7 @@ namespace Orange.Library.Values
             var signal = Signal();
             if (signal == Breaking)
                return value;
+
             switch (signal)
             {
                case ReturningNull:
@@ -202,6 +200,7 @@ namespace Orange.Library.Values
             var next = iterator.Next();
             if (next.IsNil)
                return value;
+
             for (var i = 0; i < MAX_LOOP; i++)
             {
                assistant.SetParameterValues(next, value);
@@ -209,6 +208,7 @@ namespace Orange.Library.Values
                signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case ReturningNull:
@@ -216,10 +216,12 @@ namespace Orange.Library.Values
                   case Continuing:
                      continue;
                }
+
                next = iterator.Next();
                if (next.IsNil)
                   return value;
             }
+
             return value;
          }
       }
@@ -241,16 +243,31 @@ namespace Orange.Library.Values
          var junction = new OneJunction(generator, arguments);
          return junction.Evaluate();
       }
+
       public static Value NoneOf(INSGenerator generator, Arguments arguments)
       {
          var junction = new NoneJunction(generator, arguments);
          return junction.Evaluate();
       }
 
+      public static Value Unique(INSGenerator generator, Arguments arguments) => new NSGeneratorMod(generator, new UniqueModifier(arguments));
+
+      public static Value First(INSGenerator generator, Arguments arguments)
+      {
+         var iterator = new NSIterator(generator);
+         iterator.Reset();
+         var next = iterator.Next();
+         if (next.IsNil)
+            return new None();
+
+         return new Some(next);
+      }
+
       protected INSGeneratorSource generatorSource;
       protected int index;
       protected Region region;
       protected Region sharedRegion;
+      protected bool more;
 
       public NSGenerator(INSGeneratorSource generatorSource)
       {
@@ -261,23 +278,15 @@ namespace Orange.Library.Values
 
       public INSGeneratorSource GeneratorSource => generatorSource;
 
-      public virtual void Visit(Value value)
-      {
-      }
+      public virtual void Visit(Value value) { }
+
+      public bool More => more;
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Generator;
 
@@ -290,7 +299,9 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "reset", v => ((INSGenerator)v).DoReset());
          manager.RegisterMessage(this, "next", v => ((INSGenerator)v).Next());
          manager.RegisterMessage(this, "if", v => ((INSGenerator)v).If());
+         manager.RegisterMessage(this, "ifNot", v => ((INSGenerator)v).IfNot());
          manager.RegisterMessage(this, "map", v => ((INSGenerator)v).Map());
+         manager.RegisterMessage(this, "mapIf", v => ((INSGenerator)v).MapIf());
          manager.RegisterMessage(this, "skip", v => ((INSGenerator)v).Skip());
          manager.RegisterMessage(this, "skipWhile", v => ((INSGenerator)v).SkipWhile());
          manager.RegisterMessage(this, "skipUntil", v => ((INSGenerator)v).SkipUntil());
@@ -302,15 +313,23 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "split", v => ((INSGenerator)v).Split());
          manager.RegisterMessage(this, "splitWhile", v => ((INSGenerator)v).SplitWhile());
          manager.RegisterMessage(this, "splitUntil", v => ((INSGenerator)v).SplitUntil());
+         manager.RegisterMessage(this, "unique", v => ((INSGenerator)v).Unique());
+         manager.RegisterMessage(this, "flat", v => ((INSGenerator)v).Flat());
+         manager.RegisterMessage(this, "first", v => ((INSGenerator)v).First());
          manager.RegisterMessage(this, "foldl", v => ((INSGenerator)v).FoldL());
          manager.RegisterMessage(this, "foldr", v => ((INSGenerator)v).FoldR());
          manager.RegisterMessage(this, "allOf", v => ((INSGenerator)v).AllOf());
          manager.RegisterMessage(this, "anyOf", v => ((INSGenerator)v).AnyOf());
          manager.RegisterMessage(this, "oneOf", v => ((INSGenerator)v).OneOf());
          manager.RegisterMessage(this, "noneOf", v => ((INSGenerator)v).NoneOf());
+         manager.RegisterMessage(this, "more", v => ((INSGenerator)v).More);
       }
 
-      public virtual void Reset() => index = -1;
+      public virtual void Reset()
+      {
+         index = -1;
+         more = true;
+      }
 
       public Value DoReset()
       {
@@ -318,11 +337,20 @@ namespace Orange.Library.Values
          return null;
       }
 
-      public virtual Value Next() => generatorSource.Next(++index);
+      public virtual Value Next()
+      {
+         var next = generatorSource.Next(++index);
+         more = !next.IsNil;
+         return next;
+      }
 
       public Value If() => If(this, Arguments);
 
+      public Value IfNot() => IfNot(this, Arguments);
+
       public Value Map() => Map(this, Arguments);
+
+      public Value MapIf() => MapIf(this, Arguments);
 
       public Value Skip() => Skip(this, Arguments);
 
@@ -352,16 +380,16 @@ namespace Orange.Library.Values
 
       public Value NoneOf() => NoneOf(this, Arguments);
 
+      public Value Unique() => Unique(this, Arguments);
+
+      public Value Flat() => Flat(this, Arguments);
+
+      public Value First() => First(this, Arguments);
+
       public Region Region
       {
-         get
-         {
-            return region;
-         }
-         set
-         {
-            region = value.Clone();
-         }
+         get => region;
+         set => region = value.Clone();
       }
 
       public override string ToString() => generatorSource.ToString();
@@ -382,22 +410,27 @@ namespace Orange.Library.Values
                var count = arguments[0].Int;
                if (count == 0)
                   return generator.Array();
+
                Value value;
                for (var i = 0; i < count; i++)
                {
                   value = iterator.Next();
                   if (value.IsNil)
                      break;
+
                   left.Add(value);
                }
+
                value = iterator.Next();
                for (var i = 0; !value.IsNil && i < MAX_LOOP; i++)
                {
                   right.Add(value);
                   value = iterator.Next();
                }
+
                return new Array { left, right };
             }
+
             assistant.IteratorParameter();
             foreach (var item in iterator)
             {
@@ -406,6 +439,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -413,11 +447,13 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (result)
                   left.Add(item);
                else
                   right.Add(item);
             }
+
             return new Array { left, right };
          }
       }
@@ -433,13 +469,13 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return generator.Array();
+
             var left = new Array();
             var right = new Array();
             var adding = true;
             assistant.IteratorParameter();
-            var iterator=new NSIterator(generator);
+            var iterator = new NSIterator(generator);
             foreach (var item in iterator)
-            {
                if (adding)
                {
                   assistant.SetIteratorParameter(item);
@@ -447,6 +483,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -454,6 +491,7 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (result)
                      left.Add(item);
                   else
@@ -464,7 +502,7 @@ namespace Orange.Library.Values
                }
                else
                   right.Add(item);
-            }
+
             return new Array { left, right };
          }
       }
@@ -478,13 +516,13 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return generator.Array();
+
             var left = new Array();
             var right = new Array();
             var adding = true;
             assistant.IteratorParameter();
             var iterator = new NSIterator(generator);
             foreach (var item in iterator)
-            {
                if (adding)
                {
                   assistant.SetIteratorParameter(item);
@@ -492,6 +530,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -499,6 +538,7 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (!result)
                      left.Add(item);
                   else
@@ -509,21 +549,37 @@ namespace Orange.Library.Values
                }
                else
                   right.Add(item);
-            }
+
             return new Array { left, right };
+         }
+      }
+
+      public Value GatherWhile() => GatherWhile(this, Arguments);
+
+      public Value GatherWhile(INSGenerator generator, Arguments arguments)
+      {
+         using (var assistant = new ParameterAssistant(arguments))
+         {
+            var block = assistant.Block();
+            if (block == null)
+               return this;
+
+            assistant.IteratorParameter();
+
+            var array = new Array();
+
+            return array;
          }
       }
 
       public Region SharedRegion
       {
-         get
-         {
-            return sharedRegion;
-         }
+         get => sharedRegion;
          set
          {
             sharedRegion = value?.Clone();
-            generatorSource.As<ISharedRegion>().If(sr => sr.SharedRegion = sharedRegion);
+            if (generatorSource is ISharedRegion sr)
+               sr.SharedRegion = sharedRegion;
          }
       }
    }

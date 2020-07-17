@@ -1,6 +1,5 @@
-﻿using Orange.Library.Values;
-using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+﻿using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.StatementParser;
@@ -14,10 +13,7 @@ namespace Orange.Library.Parsers
       FreeParser parser;
 
       public LoopParser()
-         : base($"^ /(|tabs| 'loop' /s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
-      {
-         parser = new FreeParser();
-      }
+         : base($"^ /(|tabs| 'loop' /s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)") => parser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -27,9 +23,7 @@ namespace Orange.Library.Parsers
          Color(tokens[3].Length, Structures);
 
          var index = NextPosition;
-         Block initialization;
-         if (GetExpression(source, index, LoopWhile())
-            .Assign(out initialization, out index))
+         if (GetExpression(source, index, LoopWhile()).If(out var initialization, out index))
          {
             var builder = new CodeBuilder();
             builder.AssignToNewField(false, variable, initialization);
@@ -42,13 +36,10 @@ namespace Orange.Library.Parsers
                var isWhile = direction == "while";
                parser.Colorize(Whitespaces, KeyWords);
                index = parser.Position;
-               Block condition;
-               if (GetExpression(source, index, LoopThen()).Assign(out condition, out index))
+               if (GetExpression(source, index, LoopThen()).If(out var condition, out index))
                {
                   condition.Expression = false;
-                  Block increment;
-                  if (GetExpression(source, index, LoopEnd())
-                     .Assign(out increment, out index))
+                  if (GetExpression(source, index, LoopEnd()).If(out var increment, out index))
                   {
                      increment.Expression = false;
                      builder.Clear();
@@ -56,8 +47,7 @@ namespace Orange.Library.Parsers
                      builder.Assign();
                      builder.Inline(increment);
                      increment = builder.Block;
-                     Block body;
-                     if (GetOneOrMultipleBlock(source, index).Assign(out body, out index))
+                     if (GetOneOrMultipleBlock(source, index).If(out var body, out index))
                      {
                         overridePosition = index;
                         return new Loop(initialization, isWhile, condition, increment, body) { Index = position };

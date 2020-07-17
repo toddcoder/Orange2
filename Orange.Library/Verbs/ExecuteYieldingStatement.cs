@@ -7,13 +7,10 @@ namespace Orange.Library.Verbs
    {
       Generator generator;
 
-      public ExecuteYieldingStatement(IYieldingStatement statement)
-      {
-         generator = statement.GetGenerator();
-      }
+      public ExecuteYieldingStatement(IYieldingStatement statement) => generator = statement.GetGenerator();
 
       public override Value Evaluate() => generator.Next();
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
    }
 }

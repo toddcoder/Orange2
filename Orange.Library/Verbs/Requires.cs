@@ -17,7 +17,7 @@ namespace Orange.Library.Verbs
 			return x;
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
 	   public override string ToString() => "requires";
 	}

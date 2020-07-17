@@ -2,8 +2,8 @@
 using System.Text;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using Standard.Types.RegularExpressions;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
@@ -14,9 +14,7 @@ namespace Orange.Library.Parsers
    public class InterpolatedStringParser2 : Parser
    {
       public InterpolatedStringParser2()
-         : base("^ |sp| /['$#'] /[quote]")
-      {
-      }
+         : base("^ |sp| /['$#'] /[quote]") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -52,8 +50,7 @@ namespace Orange.Library.Parsers
                   {
                      Color(1, Structures);
                      var index = i + 1;
-                     Block block;
-                     if (GetExpression(source, index, CloseParenthesis()).Assign(out block, out index))
+                     if (GetExpression(source, index, CloseParenthesis()).If(out var block, out index))
                      {
                         text.Append($"#{blocks.Count}#");
                         blocks.Add(block);
@@ -62,6 +59,7 @@ namespace Orange.Library.Parsers
                      else
                         return null;
                   }
+
                   break;
                default:
                   if (c == quote)
@@ -73,13 +71,16 @@ namespace Orange.Library.Parsers
                         Color(1, Interpolated);
                         continue;
                      }
+
                      overridePosition = i + 1;
                      Color(1, Interpolated);
                      var newText = ReplaceEscapedValues(text.ToString());
-                     var interpolatedString = new InterpolatedString(newText.Substitute("^ /(/r/n | /r | /n)", ""), blocks);
+                     var interpolatedString = new InterpolatedString(newText.Substitute("^ /(/r/n | /r | /n)", ""),
+                        blocks);
                      result.Value = type == "$" ? (Value)interpolatedString : new Failure(interpolatedString);
                      return new Push(result.Value);
                   }
+
                   if (escaped)
                   {
                      switch (c)
@@ -98,14 +99,15 @@ namespace Orange.Library.Parsers
                            break;
                         case 'l':
                            text.Append("\r\n");
-                           Color(2, Interpolated);
+                           Color(1, Interpolated);
                            break;
                         default:
                            text.Append("`");
                            text.Append(c);
-                           Color(2, Interpolated);
+                           Color(1, Interpolated);
                            break;
                      }
+
                      escaped = false;
                   }
                   else
@@ -113,6 +115,7 @@ namespace Orange.Library.Parsers
                      text.Append(c);
                      Color(1, Interpolated);
                   }
+
                   break;
             }
          }

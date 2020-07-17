@@ -18,17 +18,8 @@ namespace Orange.Library.Verbs
 			return MessageManager.MessagingState.SendMessage(left, "zipTo1", new Arguments(right));
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "-%%";
-		}
+	   public override string ToString() => "-%%";
 	}
 }

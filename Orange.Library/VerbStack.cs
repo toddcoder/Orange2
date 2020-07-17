@@ -4,31 +4,29 @@ using Standard.Types.Enumerables;
 
 namespace Orange.Library
 {
-	public class VerbStack
-	{
-		Stack<Verb> stack;
+   public class VerbStack
+   {
+      Stack<Verb> stack;
 
-		public VerbStack()
-		{
-			stack = new Stack<Verb>();
-		}
+      public VerbStack() => stack = new Stack<Verb>();
 
-		public void Push(Verb verb) => stack.Push(verb);
+      public void Push(Verb verb) => stack.Push(verb);
 
-	   public Verb Pop() => stack.Pop();
+      public Verb Pop() => stack.Pop();
 
-	   public Verb Peek() => stack.Peek();
+      public Verb Peek() => stack.Peek();
 
-	   public bool IsEmpty => stack.Count == 0;
+      public bool IsEmpty => stack.Count == 0;
 
-	   public bool PendingReady(Verb next)
-		{
-			if (IsEmpty)
-				return false;
-			var peek = Peek();
-			return peek.LeftToRight ? (peek.Presidence <= next.Presidence) : (peek.Presidence < next.Presidence);
-		}
+      public bool PendingReady(Verb next)
+      {
+         if (IsEmpty)
+            return false;
 
-		public override string ToString() => stack.ToArray().Listify(" ");
-	}
+         var peek = Peek();
+         return peek.LeftToRight ? peek.Precedence <= next.Precedence : peek.Precedence < next.Precedence;
+      }
+
+      public override string ToString() => stack.ToArray().Listify(" ");
+   }
 }

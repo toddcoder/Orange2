@@ -4,12 +4,9 @@ namespace Orange.Library.Values
 {
 	public class Ternary : Value
 	{
-		public override int Compare(Value value)
-		{
-			return new Boolean(Truth).Compare(value);
-		}
+		public override int Compare(Value value) => new Boolean(Truth).Compare(value);
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -26,32 +23,17 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Ternary;
-			}
-		}
+		public override ValueType Type => ValueType.Ternary;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return Truth;
-			}
-		}
+	   public override bool IsTrue => Truth;
 
-		public override Value Clone()
+	   public override Value Clone() => new Ternary
 		{
-			return new Ternary
-			{
-				Truth = Truth,
-				Value = Value.Clone()
-			};
-		}
+		   Truth = Truth,
+		   Value = Value.Clone()
+		};
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 
@@ -67,9 +49,6 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override string ToString()
-		{
-			return Truth.ToString().ToLower();
-		}
+		public override string ToString() => Truth.ToString().ToLower();
 	}
 }

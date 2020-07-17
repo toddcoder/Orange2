@@ -25,7 +25,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "crlf", v => CRLF);
          manager.RegisterMessage(this, "cr", v => CR);
          manager.RegisterMessage(this, "lf", v => LF);
-         manager.RegisterMessage(this, "lf", v => LF);
          manager.RegisterMessage(this, "letters", v => Letters);
          manager.RegisterMessage(this, "upper", v => Upper);
          manager.RegisterMessage(this, "lower", v => Lower);
@@ -48,6 +47,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "fldPat", v => FieldPattern);
          manager.RegisterMessage(this, "fldSep", v => FieldSeparator);
          manager.RegisterMessage(this, "id", v => Id);
+         manager.RegisterMessage(this, "commaEnd", v => CommaEnd);
       }
 
       public static Value Tab => STRING_TAB;
@@ -101,5 +101,7 @@ namespace Orange.Library.Values
       public static Value FieldSeparator => " ";
 
       public static Value Id => Id();
+
+      public static Value CommaEnd => ",\r\n";
    }
 }

@@ -8,17 +8,9 @@ namespace Orange.Library.Values
    {
       public override int Compare(Value value) => value is Generate ? 0 : -1;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Generate;
 
@@ -40,6 +32,6 @@ namespace Orange.Library.Values
 
       public static Value GUID() => new String(Guid.NewGuid().ToString());
 
-      public static Value UniqueID() => StringHelps.UniqueID();
+      public static Value UniqueID() => StringFunctions.UniqueID();
    }
 }

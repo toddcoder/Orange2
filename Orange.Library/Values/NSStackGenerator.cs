@@ -8,10 +8,7 @@ namespace Orange.Library.Values
       protected Stack<Value> stack;
 
       public NSStackGenerator(INSGeneratorSource generatorSource)
-         : base(generatorSource)
-      {
-         stack = new Stack<Value>();
-      }
+         : base(generatorSource) => stack = new Stack<Value>();
 
       public override void Reset()
       {

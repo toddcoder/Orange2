@@ -15,17 +15,8 @@ namespace Orange.Library.Verbs
 			return new Rational((int)x.Number, (int)y.Number);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Divide;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Divide;
 
-		public override string ToString()
-		{
-			return "|";
-		}
+	   public override string ToString() => "|";
 	}
 }

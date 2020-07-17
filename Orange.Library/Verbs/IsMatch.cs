@@ -13,10 +13,10 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var y = stack.Pop(true, LOCATION);
          var x = stack.Pop(true, LOCATION);
-         return SendMessage(x, "is_match", y);
+         return SendMessage(x.Text, "isMatch", y);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Equals;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Equals;
 
       public override string ToString() => "=~";
    }

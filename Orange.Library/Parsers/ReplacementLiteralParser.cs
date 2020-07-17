@@ -9,12 +9,9 @@ namespace Orange.Library.Parsers
 		ReplacementParser parser;
 
 		public ReplacementLiteralParser()
-			: base("^ /s* '&'")
-		{
-			parser = new ReplacementParser();
-		}
+			: base("^ /s* '&'") => parser = new ReplacementParser();
 
-		public override Verb CreateVerb(string[] tokens)
+	   public override Verb CreateVerb(string[] tokens)
 		{
 			Color(position, length, Structures);
 			var index = position + length;

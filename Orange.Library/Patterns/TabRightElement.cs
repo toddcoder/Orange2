@@ -4,12 +4,9 @@
 	{
 		protected int position;
 
-		public TabRightElement(int position)
-		{
-			this.position = position;
-		}
+		public TabRightElement(int position) => this.position = position;
 
-		public TabRightElement()
+	   public TabRightElement()
 			: this(-1)
 		{
 		}

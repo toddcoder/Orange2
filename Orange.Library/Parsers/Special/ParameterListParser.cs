@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Values.Object;
 using static Orange.Library.Values.Object.VisibilityType;
+using static Standard.Types.Maybe.MaybeFunctions;
 using When = Orange.Library.Verbs.When;
-using static Standard.Types.Tuples.TupleFunctions;
 
 namespace Orange.Library.Parsers.Special
 {
@@ -58,9 +56,9 @@ namespace Orange.Library.Parsers.Special
          stop = CloseParenthesis();
       }
 
-      public override IMaybe<Tuple<List<Parameter>, int>> Parse(string source, int index)
+      public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
-         return GetExpression(source, index, stop).Map(t => Parse(t.Item1).Map(list => tuple(list, t.Item2)));
+         return GetExpression(source, index, stop).Map(t => Parse(t.Item1).Map(list => (list, t.Item2)));
       }
 
       public IMaybe<List<Parameter>> Parse(Block incomingBlock)
@@ -103,8 +101,9 @@ namespace Orange.Library.Parsers.Special
                         stage = ParsingStage.Default;
                         break;
                      default:
-                        return new None<List<Parameter>>();
+                        return none<List<Parameter>>();
                   }
+
                   break;
                case VerbType.Query:
                   switch (stage)
@@ -116,8 +115,9 @@ namespace Orange.Library.Parsers.Special
                         Multi = true;
                         break;
                      default:
-                        return new None<List<Parameter>>();
+                        return none<List<Parameter>>();
                   }
+
                   break;
                case VerbType.Push:
                   switch (stage)
@@ -129,8 +129,9 @@ namespace Orange.Library.Parsers.Special
                         comparisand.Add(verb);
                         break;
                      default:
-                        return new None<List<Parameter>>();
+                        return none<List<Parameter>>();
                   }
+
                   break;
                case VerbType.Modifiers:
                case VerbType.Variable:
@@ -141,14 +142,17 @@ namespace Orange.Library.Parsers.Special
                      case ParsingStage.Default:
                         foreach (var outVerb in outBlock.AsAdded)
                            defaultValue.Add(outVerb);
+
                         break;
                      case ParsingStage.Comparisand:
                         foreach (var outVerb in outBlock.AsAdded)
                            comparisand.Add(outVerb);
+
                         break;
                      default:
-                        return new None<List<Parameter>>();
+                        return none<List<Parameter>>();
                   }
+
                   break;
                case VerbType.Verb:
                   switch (stage)
@@ -160,11 +164,13 @@ namespace Orange.Library.Parsers.Special
                         comparisand.Add(verb);
                         break;
                      default:
-                        return new None<List<Parameter>>();
+                        return none<List<Parameter>>();
                   }
+
                   break;
             }
          }
+
          if (variableName != null)
             list.Add(new Parameter(variableName, defaultValue, visibility, readOnly, lazy, comparisand));
          return list.Some();
@@ -172,59 +178,47 @@ namespace Orange.Library.Parsers.Special
 
       VerbType determineVerbType(Verb verb)
       {
-         if (verb is AppendToArray)
-            return VerbType.Comma;
-         if (verb is End)
-            return VerbType.End;
-         if (verb is Assign)
-            return VerbType.EqualSign;
-         if (verb is When)
-            return VerbType.Query;
-         Push push;
-         if (verb.As<Push>().Assign(out push) && stage == ParsingStage.Variable)
+         switch (verb)
          {
-            value = push.Value;
-            Variable variable;
-            if (value.As<Variable>().Assign(out variable))
-            {
-               variableName = variable.Name;
-               return VerbType.Variable;
-            }
-            if (value.As<Block>().Assign(out block))
-            {
-               if (block.Count == 1 && block[0].As<Push>().Assign(out push) && push.Value.As<Variable>()
-                  .Assign(out variable))
+            case AppendToArray _:
+               return VerbType.Comma;
+            case End _:
+               return VerbType.End;
+            case Assign _:
+               return VerbType.EqualSign;
+            case When _:
+               return VerbType.Query;
+            case Push push when stage == ParsingStage.Variable:
+               value = push.Value;
+               switch (value)
                {
-                  variableName = variable.Name;
-                  lazy = true;
-                  return VerbType.Variable;
+                  case Variable variable:
+                     variableName = variable.Name;
+                     return VerbType.Variable;
+                  case Block pushBlock:
+                     if (block.Count == 1 && block[0] is Push blockPush && blockPush.Value is Variable pushVariable)
+                     {
+                        variableName = pushVariable.Name;
+                        lazy = true;
+                        return VerbType.Variable;
+                     }
+
+                     block = pushBlock;
+                     return VerbType.Block;
+                  default:
+                     return VerbType.Push;
                }
-               block = (Block)value;
-               return VerbType.Block;
-            }
-            return VerbType.Push;
+            case ParameterModifiers modifiers when stage == ParsingStage.Variable:
+               visibility = modifiers.VisibilityType;
+               readOnly = modifiers.ReadOnly;
+               return VerbType.Modifiers;
          }
-         ParameterModifiers modifiers;
-         if (verb.As<ParameterModifiers>().Assign(out modifiers) && stage == ParsingStage.Variable)
-         {
-            //variableName = define.VariableName;
-            visibility = modifiers.VisibilityType;
-            readOnly = modifiers.ReadOnly;
-            return VerbType.Modifiers;
-         }
+
          return VerbType.Verb;
       }
 
-      public bool Multi
-      {
-         get;
-         set;
-      }
+      public bool Multi { get; set; }
 
-      public bool Currying
-      {
-         get;
-         set;
-      }
+      public bool Currying { get; set; }
    }
 }

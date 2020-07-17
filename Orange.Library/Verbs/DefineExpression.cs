@@ -29,16 +29,14 @@ namespace Orange.Library.Verbs
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
       public override string ToString() => $"def {fieldName} = {thunk}";
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => "Thunk";
+
+      public int Index { get; set; }
    }
 }

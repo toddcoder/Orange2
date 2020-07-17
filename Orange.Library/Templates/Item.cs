@@ -8,12 +8,9 @@ namespace Orange.Library.Templates
 	{
 		protected string text;
 
-		public Item(string text)
-		{
-			this.text = text;
-		}
+		public Item(string text) => this.text = text;
 
-		public abstract void Render(StringWriter writer, string variableName);
+	   public abstract void Render(StringWriter writer, string variableName);
 
 		public virtual void RegisterMessages()
 		{

@@ -2,14 +2,8 @@
 {
 	public class NegateInstruction : Instruction
 	{
-		public override bool Execute(State state)
-		{
-			return false;
-		}
+		public override bool Execute(State state) => false;
 
-		public override string ToString()
-		{
-			return "!";
-		}
+	   public override string ToString() => "!";
 	}
 }

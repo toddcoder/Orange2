@@ -2,7 +2,6 @@
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
@@ -66,12 +65,11 @@ namespace Orange.Library.Parsers
                   }
                   else
                      return null;
+
                   break;
                case "(":
-/*                  staticFunction.ValueAsArgument(++EnumerationValue);
-                  staticFunction.ValueAsArgument(caseName);*/
                   var parametersParser = new ParametersParser();
-                  if (parametersParser.Parse(source, index).Assign(out parameters, out newIndex))
+                  if (parametersParser.Parse(source, index).If(out parameters, out newIndex))
                   {
                      index = newIndex;
                      foreach (var parameter in parameters.GetParameters())
@@ -85,12 +83,13 @@ namespace Orange.Library.Parsers
                      staticFunction.Parameter("name", caseName);
                      staticFunction.VariableAsArgument("name");
                   }
+
                   break;
                case "[":
                   staticFunction.ValueAsArgument(++EnumerationValue);
                   staticFunction.ValueAsArgument(caseName);
                   var patternParametersParser = new ParametersParser(ParametersType.Pattern);
-                  if (patternParametersParser.Parse(source, index).Assign(out parameters, out newIndex))
+                  if (patternParametersParser.Parse(source, index).If(out parameters, out newIndex))
                   {
                      index = newIndex;
                      foreach (var parameter in parameters.GetParameters())
@@ -99,6 +98,7 @@ namespace Orange.Library.Parsers
                         staticFunction.VariableAsArgument(parameter.Name);
                      }
                   }
+
                   break;
                default:
                   return null;
@@ -108,15 +108,12 @@ namespace Orange.Library.Parsers
             staticFunction.ValueAsArgument(++EnumerationValue);
             staticFunction.ValueAsArgument(caseName);
          }
-         //setArrayValues(EnumerationMappingCode, caseName);
+
          staticFunction.Variable(ClassName);
          staticFunction.Invoke();
 
          var lambda = staticFunction.Lambda();
-         var staticBlock = new Block
-         {
-            new CreateFunction(caseName, lambda, false, Public, false, null)
-         };
+         var staticBlock = new Block { new CreateFunction(caseName, lambda, false, Public, false, null) };
          AddStaticBlock(staticBlock);
          var commaParser = new EnumerationValueParser(false);
          if (commaParser.Scan(source, index))
@@ -132,16 +129,6 @@ namespace Orange.Library.Parsers
          var name = new String(caseName).Pushed;
          builder.IndexedSetterMessage("valueToName", "item", enumerationValue, new NotMatched<Verb>(), name, false);
          builder.IndexedSetterMessage("nameToValue", "item", name, new NotMatched<Verb>(), enumerationValue, false);
-/*         builder.Variable("valueToName");
-         builder.IndexerLiteral(EnumerationValue);
-         builder.Assign();
-         builder.Value(caseName);
-         builder.End();
-         builder.Variable("nameToValue");
-         builder.IndexerLiteral(caseName);
-         builder.Assign();
-         builder.Value(EnumerationValue);
-         builder.End();*/
       }
 
       public override string VerboseName => "case";

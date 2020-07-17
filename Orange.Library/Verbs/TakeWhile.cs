@@ -19,7 +19,7 @@ namespace Orange.Library.Verbs
 
       public virtual string Message => "takeWhile";
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "take while";
    }

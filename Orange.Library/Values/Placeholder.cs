@@ -6,12 +6,9 @@ namespace Orange.Library.Values
 	{
 		string name;
 
-		public Placeholder(string name)
-		{
-			this.name = name;
-		}
+		public Placeholder(string name) => this.name = name;
 
-		public override int Compare(Value value) => string.CompareOrdinal(name, value.Text);
+	   public override int Compare(Value value) => string.CompareOrdinal(name, value.Text);
 
 	   public override string Text
 		{

@@ -7,12 +7,9 @@ namespace Orange.Library.Verbs
 	{
 		Message message;
 
-		public ApplyMessageToDefaultVariable(Message message)
-		{
-			this.message = message;
-		}
+		public ApplyMessageToDefaultVariable(Message message) => this.message = message;
 
-		public override Value Evaluate()
+	   public override Value Evaluate()
 		{
 			var defaultVariableName = Runtime.State.DefaultParameterNames.ValueVariable;
 			var variable = new Variable(defaultVariableName);
@@ -24,17 +21,8 @@ namespace Orange.Library.Verbs
 			return block;
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.SendMessage;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.SendMessage;
 
-		public override string ToString()
-		{
-			return message.ToString();
-		}
+	   public override string ToString() => message.ToString();
 	}
 }

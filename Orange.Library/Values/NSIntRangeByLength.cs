@@ -1,6 +1,4 @@
-﻿using Standard.Types.Objects;
-using Standard.Types.Maybe;
-using static Orange.Library.Values.Nil;
+﻿using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
 {
@@ -8,11 +6,10 @@ namespace Orange.Library.Values
    {
       public static INSGenerator ReplaceGeneratorSource(INSGenerator originalGenerator, int length)
       {
-         var result =
-            from nsGenerator in originalGenerator.As<INSGenerator>()
-            from nsIntRange in nsGenerator.GeneratorSource.As<IRangeEndpoints>()
-            select nsIntRange;
-         return result.Map(re => new NSGenerator(new NSIntRangeByLength(re, length)), () => originalGenerator);
+         if (originalGenerator.GeneratorSource is IRangeEndpoints nsIntRange)
+            return new NSGenerator(new NSIntRangeByLength(nsIntRange, length));
+
+         return originalGenerator;
       }
 
       static int wrap(int value, int length) => value < 0 ? length + value : value;

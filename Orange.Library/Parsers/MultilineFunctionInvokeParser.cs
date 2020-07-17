@@ -10,10 +10,7 @@ namespace Orange.Library.Parsers
       ExpressionLineParser parser;
 
       public MultilineFunctionInvokeParser()
-         : base($"^ /(|sp|) /({REGEX_VARIABLE}) /':' /([/r /n]+)")
-      {
-         parser = new ExpressionLineParser();
-      }
+         : base($"^ /(|sp|) /({REGEX_VARIABLE}) /':' /([/r /n]+)") => parser = new ExpressionLineParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -27,7 +24,6 @@ namespace Orange.Library.Parsers
          var index = NextPosition;
          var arguments = new Arguments();
          while (index < source.Length)
-         {
             if (parser.Scan(source, index))
             {
                index = parser.Position;
@@ -36,7 +32,7 @@ namespace Orange.Library.Parsers
             }
             else
                break;
-         }
+
          RegressTabs();
          return new FunctionInvoke(invokeableName, arguments);
       }

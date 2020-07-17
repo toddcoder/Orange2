@@ -9,12 +9,9 @@ namespace Orange.Library.Patterns
 		protected int count;
 
 		public MBreakElement(string text, int count = -1)
-			: base(text)
-		{
-			this.count = count;
-		}
+			: base(text) => this.count = count;
 
-		public MBreakElement()
+	   public MBreakElement()
 			: this("")
 		{
 		}
@@ -63,10 +60,7 @@ namespace Orange.Library.Patterns
 					Next = next
 				};
 			}
-			set
-			{
-				alternate = value;
-			}
-		}
+			set => alternate = value;
+	   }
 	}
 }

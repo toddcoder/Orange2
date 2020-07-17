@@ -2,9 +2,6 @@
 {
    public class FirstmostListParser : ListParser
    {
-      public FirstmostListParser()
-      {
-         pattern = "^ /'['";
-      }
+      public FirstmostListParser() => pattern = "^ /'['";
    }
 }

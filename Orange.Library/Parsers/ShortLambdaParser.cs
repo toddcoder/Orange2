@@ -1,27 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using Standard.Types.RegularExpressions;
 using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Parsers.WordOperatorParser;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.Maybe;
-using static Standard.Types.Tuples.TupleFunctions;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
    public class ShortLambdaParser : Parser
    {
-      public static IMaybe<Tuple<Block, int>> GetExpression(string source, int index, Stop stop)
+      public static IMaybe<(Block, int)> GetExpression(string source, int index, Stop stop)
       {
          var parser = new ShortLambdaParser("", stop);
-         return When(parser.Scan(source, index), () => tuple(parser.Lambda.Block, parser.Position));
+         return when(parser.Scan(source, index), () => (parser.Lambda.Block, parser.Position));
       }
 
       Stop stop;
@@ -62,19 +59,27 @@ namespace Orange.Library.Parsers
             block.Add(sendMessageParser.Verb);
             index = sendMessageParser.Position;
          }
+
          return index.Some();
       }
 
-      static bool isNotWordOperator(Value value) => value.As<Variable>().Map(v => !IsWordOperator(v.Name), () => true);
+      static bool isNotWordOperator(Value value) => !(value is Variable v) || !IsWordOperator(v.Name);
 
-      void addPossibleParameter(Value value) => value.As<Variable>().If(variable => addPossibleParameter(variable.Name));
-
-      void addPossibleParameter(string name) => name.Matches("^ '__$' /(/d+)").If(matcher =>
+      void addPossibleParameter(Value value)
       {
-         var index = matcher.FirstGroup.ToInt();
-         if (index > maxIndex)
-            maxIndex = index;
-      });
+         if (value is Variable variable)
+            addPossibleParameter(variable.Name);
+      }
+
+      void addPossibleParameter(string name)
+      {
+         if (name.Matches("^ '__$' /(/d+)").If(out var matcher))
+         {
+            var index = matcher.FirstGroup.ToInt();
+            if (index > maxIndex)
+               maxIndex = index;
+         }
+      }
 
       Verb returnLambda(Block block, int index)
       {
@@ -84,6 +89,7 @@ namespace Orange.Library.Parsers
             var name = MangledName(i.ToString());
             list.Add(new Parameter(name));
          }
+
          var parameters = new Parameters(list);
 
          var lambda = new Lambda(new Region(), block, parameters, false);
@@ -102,9 +108,11 @@ namespace Orange.Library.Parsers
                freeParser.ColorAll(stop.Color);
                return freeParser.Position.Some();
             }
+
             return index.Some();
          }
-         return new None<int>();
+
+         return none<int>();
       }
 
       public override Verb CreateVerb(string[] tokens)
@@ -126,6 +134,7 @@ namespace Orange.Library.Parsers
             newIndex = getTerm(block, index);
             if (newIndex.IsNone)
                return null;
+
             index = newIndex.Value;
          }
 
@@ -134,6 +143,7 @@ namespace Orange.Library.Parsers
             newIndex = isStopping(index);
             if (newIndex.IsSome)
                return returnLambda(block, newIndex.Value);
+
             if (operatorParser.Scan(source, index))
             {
                block.Add(operatorParser.Verb);
@@ -141,9 +151,11 @@ namespace Orange.Library.Parsers
             }
             else
                break;
+
             newIndex = getTerm(block, index);
             if (newIndex.IsNone)
                return null;
+
             index = newIndex.Value;
          }
 
@@ -152,10 +164,6 @@ namespace Orange.Library.Parsers
 
       public override string VerboseName => "short lambda";
 
-      public Lambda Lambda
-      {
-         get;
-         set;
-      }
+      public Lambda Lambda { get; set; }
    }
 }

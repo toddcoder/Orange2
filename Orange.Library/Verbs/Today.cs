@@ -6,22 +6,10 @@ namespace Orange.Library.Verbs
 {
 	public class Today : Verb
 	{
-		public override Value Evaluate()
-		{
-			return DateTime.Today;
-		}
+		public override Value Evaluate() => DateTime.Today;
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Invoke;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Invoke;
 
-		public override string ToString()
-		{
-			return "today";
-		}
+	   public override string ToString() => "today";
 	}
 }

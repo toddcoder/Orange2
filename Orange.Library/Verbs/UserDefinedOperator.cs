@@ -9,7 +9,7 @@ namespace Orange.Library.Verbs
 
 		int affinity;
 		Lambda lambda;
-		ExpressionManager.VerbPresidenceType presidence;
+		ExpressionManager.VerbPrecedenceType precedence;
 
 		public UserDefinedOperator(int affinity, bool pre, Lambda lambda)
 		{
@@ -18,13 +18,13 @@ namespace Orange.Library.Verbs
 			switch (affinity)
 			{
 				case 0:
-					presidence = ExpressionManager.VerbPresidenceType.Push;
+					precedence = ExpressionManager.VerbPrecedenceType.Push;
 					break;
 				case 1:
-					presidence = pre ? ExpressionManager.VerbPresidenceType.PreIncrement : ExpressionManager.VerbPresidenceType.Increment;
+					precedence = pre ? ExpressionManager.VerbPrecedenceType.PreIncrement : ExpressionManager.VerbPrecedenceType.Increment;
 					break;
 				case 2:
-					presidence = ExpressionManager.VerbPresidenceType.Apply;
+					precedence = ExpressionManager.VerbPrecedenceType.Apply;
 					break;
 			}
 		}
@@ -49,12 +49,6 @@ namespace Orange.Library.Verbs
 			return lambda.Invoke(arguments);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return presidence;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => precedence;
 	}
 }

@@ -33,12 +33,11 @@ namespace Orange.Library.Values
                   .Where(value => value.IsSome)
                   .Aggregate(result, (current, value) => current.Add(value.Value));
             }
+
             var intIndex = (int)evaluated.Number;
-            return list[intIndex].Map(v => v, () => NilValue);
+            return list[intIndex].FlatMap(v => v, () => NilValue);
          }
-         set
-         {
-         }
+         set { }
       }
 
       public override string ContainerType => ValueType.ListIndexer.ToString();

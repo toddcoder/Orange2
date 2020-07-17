@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block textBlock;
 
 		public SpanBlockElement(Block textBlock)
-			: base("")
-		{
-			this.textBlock = textBlock;
-		}
+			: base("") => this.textBlock = textBlock;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			var printBlock = new PrintBlock(textBlock);
 			text = Runtime.Expand(printBlock.String.Text);

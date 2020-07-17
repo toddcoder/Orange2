@@ -17,7 +17,7 @@ namespace Orange.Library.Verbs
 			return -value.Number;
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.ChangeSign;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.ChangeSign;
 
 	   public override string ToString() => "-";
 

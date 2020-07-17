@@ -24,18 +24,17 @@ namespace Orange.Library.Verbs
             block.Evaluate();
             return null;
          }
+
          result = "guard success";
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => "";
+
+      public int Index { get; set; }
    }
 }

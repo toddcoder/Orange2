@@ -1,8 +1,5 @@
-﻿using System;
-using Orange.Library.Managers;
-using Standard.Types.Objects;
+﻿using Orange.Library.Managers;
 using static Orange.Library.ParameterAssistant;
-using static Standard.Types.Tuples.TupleFunctions;
 
 namespace Orange.Library.Values
 {
@@ -10,33 +7,20 @@ namespace Orange.Library.Values
    {
       Value cargo;
 
-      public Some(Value cargo)
-      {
-         this.cargo = cargo;
-      }
+      public Some(Value cargo) => this.cargo = cargo;
 
-      public override int Compare(Value value) => value.As<Some>().Map(s => cargo.Compare(s.cargo), () => -1);
+      public override int Compare(Value value) => value is Some s ? cargo.Compare(s.cargo) : -1;
 
       public override string Text
       {
-         get
-         {
-            return cargo.Text;
-         }
-         set
-         {
-         }
+         get => cargo.Text;
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return cargo.Number;
-         }
-         set
-         {
-         }
+         get => cargo.Number;
+         set { }
       }
 
       public override ValueType Type => ValueType.Some;
@@ -50,7 +34,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "map", v => ((Some)v).Map());
          manager.RegisterMessage(this, "fmap", v => ((Some)v).FlatMap());
          manager.RegisterMessage(this, "value", v => ((Some)v).Value());
-         manager.RegisterMessage(this, "else", v => ((Some)v).Else());
+         manager.RegisterMessage(this, "defaultTo", v => ((Some)v).DefaultTo());
       }
 
       public Value Map()
@@ -74,6 +58,7 @@ namespace Orange.Library.Values
 
             if (result is Some)
                return result;
+
             return new Some(result);
          }
       }
@@ -92,13 +77,13 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Else() => cargo;
+      public Value DefaultTo() => cargo;
 
       public Value Value() => cargo;
 
       public override string ToString() => $"{cargo}?";
 
-      public Tuple<bool, string, Value> Match(Value right) => right.As<Some>()
-         .Map(c => tuple(Case.Match(cargo, c.cargo, false, null), "", cargo), () => tuple(false, "", (Value)null));
+      public (bool, string, Value) Match(Value right) => right is Some c ? (Case.Match(cargo, c.cargo, false, null), "", cargo) :
+         (false, "", (Value)null);
    }
 }

@@ -1,8 +1,7 @@
 ﻿using Orange.Library.Patterns;
-using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using Standard.Types.Strings;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
@@ -12,9 +11,7 @@ namespace Orange.Library.Parsers.Patterns
    public class TabElementParser : Parser, IElementParser
    {
       public TabElementParser()
-         : base("/(^ /s* ['<>']) /('(' | /d+)")
-      {
-      }
+         : base("/(^ /s* ['<>']) /('(' | /d+)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -32,8 +29,7 @@ namespace Orange.Library.Parsers.Patterns
          {
             Color(1, Structures);
             var index = position + length;
-            Block at;
-            if (GetExpression(source, index, CloseParenthesis()).Assign(out at, out index))
+            if (GetExpression(source, index, CloseParenthesis()).If(out var at, out index))
             {
                Element = right ? (Element)new TabRightBlockElement(at) : new TabLeftBlockElement(at);
                overridePosition = index;
@@ -41,16 +37,12 @@ namespace Orange.Library.Parsers.Patterns
             else
                return null;
          }
-         return new NullOp();
 
+         return new NullOp();
       }
 
       public override string VerboseName => "tab element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

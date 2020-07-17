@@ -1,8 +1,8 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 
 namespace Orange.Library.Parsers
 {
@@ -11,10 +11,7 @@ namespace Orange.Library.Parsers
       FunctionBodyParser functionBodyParser;
 
       public PseudoRecursionParser()
-         : base($"^ /(|tabs| 'rec' /s+) /({REGEX_VARIABLE}) /'('")
-      {
-         functionBodyParser = new FunctionBodyParser();
-      }
+         : base($"^ /(|tabs| 'rec' /s+) /({REGEX_VARIABLE}) /'('") => functionBodyParser = new FunctionBodyParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -23,14 +20,14 @@ namespace Orange.Library.Parsers
          Color(name.Length, Variables);
          Color(tokens[3].Length, Structures);
          var parametersParser = new ParametersParser();
-         return parametersParser.Parse(source, NextPosition).Map((parameters, index) =>
+         if (parametersParser.Parse(source, NextPosition).If(out var parameters, out var i) &&
+            functionBodyParser.Parse(source, i).If(out var block, out var j))
          {
-            return functionBodyParser.Parse(source, index).Map((block, newIndex) =>
-            {
-               overridePosition = index;
-               return new CreatePseudoRecursion(name, parameters, block) { Index = position };
-            }, () => null);
-         }, () => null);
+            overridePosition = j;
+            return new CreatePseudoRecursion(name, parameters, block) { Index = position };
+         }
+
+         return null;
       }
 
       public override string VerboseName => "Pseudo recursion";

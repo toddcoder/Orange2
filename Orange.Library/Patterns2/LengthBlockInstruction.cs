@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns2
 		Block countBlock;
 
 		public LengthBlockInstruction(Block countBlock)
-			: base(0)
-		{
-			this.countBlock = countBlock;
-		}
+			: base(0) => this.countBlock = countBlock;
 
-		public override void Initialize()
+	   public override void Initialize()
 		{
 			base.Initialize();
 			count = getCount();

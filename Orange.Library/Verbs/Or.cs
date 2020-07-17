@@ -8,10 +8,7 @@ namespace Orange.Library.Verbs
 	{
 	   Block expression;
 
-	   public Or(Block expression)
-	   {
-	      this.expression = expression;
-	   }
+	   public Or(Block expression) => this.expression = expression;
 
 	   public Block Expression => expression;
 
@@ -19,6 +16,6 @@ namespace Orange.Library.Verbs
 
 	   public override Value Evaluate() => State.Stack.Pop(true, "Or").IsTrue || expression.Evaluate().IsTrue;
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Or;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Or;
 	}
 }

@@ -12,10 +12,8 @@ using Standard.Types.Collections;
 using Standard.Types.Enumerables;
 using Standard.Types.Maybe;
 using Standard.Types.Numbers;
-using Standard.Types.Objects;
 using Standard.Types.RegularExpressions;
 using Standard.Types.Strings;
-using Standard.Types.Tuples;
 using ArrayBase = Standard.Types.Collections.AutoHash<string, Orange.Library.Values.Value>;
 using IndexBase = Standard.Types.Collections.AutoHash<int, string>;
 using KeyValueBase = System.Collections.Generic.KeyValuePair<string, Orange.Library.Values.Value>;
@@ -27,6 +25,8 @@ using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
 using static Orange.Library.Values.NSIterator;
 using static Orange.Library.Values.Null;
+using static Standard.Types.Lambdas.LambdaFunctions;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -37,10 +37,7 @@ namespace Orange.Library.Values
       {
          Array array;
 
-         public Pusher()
-         {
-            array = new Array();
-         }
+         public Pusher() => array = new Array();
 
          public void Add(Value value) => array.Add(value);
 
@@ -58,9 +55,8 @@ namespace Orange.Library.Values
             {
                var index = array.Length - 1;
                var last = array[index];
-               var innerArray = last.As<Array>();
-               if (innerArray.IsSome)
-                  innerArray.Value.Add(value);
+               if (last is Array innerArray)
+                  innerArray.Add(value);
                else
                   array[index] = new Array { last, value };
             }
@@ -86,9 +82,7 @@ namespace Orange.Library.Values
             index = -1;
          }
 
-         public void Dispose()
-         {
-         }
+         public void Dispose() { }
 
          public bool MoveNext()
          {
@@ -97,10 +91,12 @@ namespace Orange.Library.Values
                State.ExitSignal = false;
                return false;
             }
+
             if (State.SkipSignal)
                State.SkipSignal = false;
             if (State.ReturnSignal)
                return false;
+
             index++;
             var moveNext = index < array.Length;
             return moveNext;
@@ -129,23 +125,11 @@ namespace Orange.Library.Values
             Value = item.Value;
          }
 
-         public string Key
-         {
-            get;
-            set;
-         }
+         public string Key { get; set; }
 
-         public int Index
-         {
-            get;
-            set;
-         }
+         public int Index { get; set; }
 
-         public Value Value
-         {
-            get;
-            set;
-         }
+         public Value Value { get; set; }
 
          public override string ToString() => $"{Key} {Index} {Value}";
       }
@@ -160,10 +144,8 @@ namespace Orange.Library.Values
 
       const string LOCATION = "Array";
 
-      public static Array SliceRange(int start, int stop, int length, bool inside, int increment = 1)
-      {
-         return inside ? SliceRangeInside(start, stop, length, increment) : SliceRangeOutside(start, stop, increment);
-      }
+      public static Array SliceRange(int start, int stop, int length, bool inside, int increment = 1) =>
+         inside ? SliceRangeInside(start, stop, length, increment) : SliceRangeOutside(start, stop, increment);
 
       public static Array SliceRangeInside(int start, int stop, int length, int increment = 1)
       {
@@ -216,10 +198,12 @@ namespace Orange.Library.Values
          var array = new Array();
          if (x == null || y == null)
             return array;
+
          foreach (var item in x)
             array.Add(item.Value);
          foreach (var item in y)
             array.Add(item.Value);
+
          return (Array)array.Flatten();
       }
 
@@ -228,26 +212,19 @@ namespace Orange.Library.Values
          var array = new Array();
          foreach (var item in sourceArray)
             array.Add(item.Value);
+
          array.Add(value);
          return array;
       }
 
       protected static ArrayBase createArrayBase()
       {
-         return new ArrayBase
-         {
-            Default = DefaultType.Lambda,
-            DefaultLambda = k => NullValue
-         };
+         return new ArrayBase { Default = DefaultType.Lambda, DefaultLambda = k => NullValue };
       }
 
       protected static IndexBase createIndexBase()
       {
-         return new IndexBase
-         {
-            Default = DefaultType.Lambda,
-            DefaultLambda = i => ""
-         };
+         return new IndexBase { Default = DefaultType.Lambda, DefaultLambda = i => "" };
       }
 
       public static Array Repeat(Value value, int count)
@@ -255,6 +232,7 @@ namespace Orange.Library.Values
          var array = new Array();
          for (var i = 0; i < count; i++)
             array.Add(value.Clone());
+
          return array;
       }
 
@@ -268,6 +246,7 @@ namespace Orange.Library.Values
             array.Add(value);
             value = source.Next();
          }
+
          return array;
       }
 
@@ -280,9 +259,11 @@ namespace Orange.Library.Values
             case 1:
                return new List(array[0]);
          }
+
          var list = new List(array[array.Length - 1]);
          for (var i = array.Length - 2; i > -1; i--)
             list = Library.Values.List.Cons(array[i], list);
+
          return list;
       }
 
@@ -313,6 +294,7 @@ namespace Orange.Library.Values
          suspendIndexUpdate = true;
          foreach (var value in array)
             basicAdd(ConvertIfNumeric(value));
+
          suspendIndexUpdate = false;
          reconstitueArray = false;
          updateIndexes();
@@ -326,6 +308,7 @@ namespace Orange.Library.Values
          suspendIndexUpdate = true;
          foreach (var value in values)
             basicAdd(value);
+
          suspendIndexUpdate = false;
          reconstitueArray = true;
          updateIndexes();
@@ -342,6 +325,7 @@ namespace Orange.Library.Values
             array[item.Key] = item.Value;
             indexes[index++] = item.Key;
          }
+
          suspendIndexUpdate = false;
          reconstitueArray = false;
          updateIndexes();
@@ -354,6 +338,7 @@ namespace Orange.Library.Values
          indexes = createIndexBase();
          foreach (var item in sortedArray)
             this[item.Key] = item.Value;
+
          suspendIndexUpdate = false;
          reconstitueArray = false;
          updateIndexes();
@@ -366,6 +351,7 @@ namespace Orange.Library.Values
          indexes = createIndexBase();
          foreach (var item in hash)
             this[item.Key] = item.Value;
+
          suspendIndexUpdate = false;
          reconstitueArray = false;
          updateIndexes();
@@ -376,6 +362,7 @@ namespace Orange.Library.Values
       {
          if (suspendIndexUpdate)
             return;
+
          indexes.Clear();
          foreach (var item in array)
             updateIndex(item.Key);
@@ -393,8 +380,10 @@ namespace Orange.Library.Values
             {
                if (array.ContainsKey(key))
                   return new Some(array[key]);
+
                return new None();
             }
+
             var value = array[key];
             if (array.AutoAddDefault)
                updateIndexes();
@@ -406,6 +395,7 @@ namespace Orange.Library.Values
                key = "";
             if (value.ID == id)
                return;
+
             if (value.IsNil)
                array.Remove(key);
             else
@@ -420,15 +410,18 @@ namespace Orange.Library.Values
          {
             if (keys.Length == 1)
                return this[keys[0]];
+
             var slice = new Array();
             foreach (var value in keys.Select(key => this[key]))
                slice.Add(value);
+
             return slice;
          }
          set
          {
             if (value.ID == id)
                return;
+
             if (value.IsArray)
             {
                suspendIndexUpdate = true;
@@ -442,6 +435,7 @@ namespace Orange.Library.Values
                   updateIndexes();
                   return;
                }
+
                var minLength = Math.Min(targetLength, sourceLength);
                var index = -1;
                var lastI = -1;
@@ -452,17 +446,17 @@ namespace Orange.Library.Values
                   this[key] = sourceArray[i];
                   lastI = i;
                }
+
                if (sourceLength > minLength)
                {
                   var lastValue = this[index];
-                  var subArray = new Array
-                  {
-                     lastValue
-                  };
+                  var subArray = new Array { lastValue };
                   for (var i = lastI + 1; i < sourceLength; i++)
                      subArray.Add(sourceArray[i]);
+
                   this[index] = subArray;
                }
+
                suspendIndexUpdate = false;
                updateIndexes();
             }
@@ -487,11 +481,13 @@ namespace Orange.Library.Values
          {
             if (value.ID == id)
                return;
+
             if (value.IsNil)
             {
                Remove(index);
                return;
             }
+
             suspendIndexUpdate = true;
             string key;
             Value baseValue;
@@ -519,10 +515,12 @@ namespace Orange.Library.Values
                var defaultValue = ((Variable)Default()).Value;
                for (var i = indexes.Count; i < index; i++)
                   Add(defaultValue);
+
                Add(baseValue);
             }
             else
                array[indexes[index]] = baseValue;
+
             suspendIndexUpdate = false;
             updateIndexes();
          }
@@ -534,15 +532,18 @@ namespace Orange.Library.Values
          {
             if (keys.Length == 1)
                return this[keys[0]];
+
             var slice = new Array();
             foreach (var value in keys.Select(k => this[k]))
                slice.Add(value);
+
             return slice;
          }
          set
          {
             if (value.ID == id)
                return;
+
             if (value.IsArray)
             {
                suspendIndexUpdate = true;
@@ -557,6 +558,7 @@ namespace Orange.Library.Values
                   updateIndexes();
                   return;
                }
+
                var minLength = Math.Min(targetLength, sourceLength);
                var index = -1;
                var lastI = -1;
@@ -567,6 +569,7 @@ namespace Orange.Library.Values
                   this[key] = sourceArray[i];
                   lastI = i;
                }
+
                if (sourceLength > minLength)
                {
                   var lastValue = this[index];
@@ -576,8 +579,10 @@ namespace Orange.Library.Values
                   };
                   for (var i = lastI + 1; i < sourceLength; i++)
                      subArray.Add(sourceArray[i]);
+
                   this[index] = subArray;
                }
+
                suspendIndexUpdate = false;
                updateIndexes();
             }
@@ -590,6 +595,7 @@ namespace Orange.Library.Values
                System.Array.Sort(keys, (x, y) => y.CompareTo(x));
                foreach (var key in keys)
                   Remove(key);
+
                Insert(index1, value);
                suspendIndexUpdate = false;
                updateIndexes();
@@ -639,11 +645,10 @@ namespace Orange.Library.Values
       {
          Reject(value.Type == ValueType.System, LOCATION, "System variable can't be added!");
          string key;
-         var hashKey = value.As<KeyedValue>();
-         if (hashKey.IsSome)
+         if (value is KeyedValue hashKey)
          {
-            key = hashKey.Value.Key;
-            value = hashKey.Value.Value;
+            key = hashKey.Key;
+            value = hashKey.Value;
          }
          else
             key = getKey();
@@ -667,6 +672,7 @@ namespace Orange.Library.Values
             newArray.Add(key, array[key]);
             newIndexes[i] = key;
          }
+
          array = newArray;
          indexes = newIndexes;
       }
@@ -678,12 +684,9 @@ namespace Orange.Library.Values
 
          Reject(array.Count == 0, LOCATION, "Can't pop, array empty");
          var index = -1;
-         if (Arguments != null)
-         {
-            var indexValue = Arguments[0];
-            if (!indexValue.IsEmpty)
-               index = (int)indexValue.Number;
-         }
+         var indexValue = Arguments?[0];
+         if (!indexValue?.IsEmpty == true)
+            index = (int)indexValue.Number;
          var value = this[index];
          Remove(index);
          return maybe ? new Some(value) : value;
@@ -717,6 +720,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          foreach (var item in array)
             newArray[item.Key] = item.Value.Clone();
+
          return newArray;
       }
 
@@ -725,6 +729,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          foreach (var item in this)
             newArray.Add(item.Value.Clone());
+
          return newArray;
       }
 
@@ -751,15 +756,13 @@ namespace Orange.Library.Values
       {
          if (maybe && array.Count == 0)
             return new None();
+
          Assert(array.Count > 0, LOCATION, "Array is empty");
 
          var index = 0;
-         if (Arguments != null)
-         {
-            var indexValue = Arguments[0];
-            if (!indexValue.IsEmpty)
-               index = (int)indexValue.Number;
-         }
+         var indexValue = Arguments?[0];
+         if (!indexValue?.IsEmpty == true)
+            index = (int)indexValue.Number;
 
          var result = this[index];
 
@@ -777,6 +780,7 @@ namespace Orange.Library.Values
             }
             else
                firstFound = true;
+
          array = newArray;
 
          return maybe ? new Some(result) : result;
@@ -786,13 +790,11 @@ namespace Orange.Library.Values
       {
          if (Length == 0)
             return new Nil();
+
          var index = 0;
-         if (Arguments != null)
-         {
-            var indexValue = Arguments[0];
-            if (!indexValue.IsEmpty)
-               index = (int)indexValue.Number;
-         }
+         var indexValue = Arguments?[0];
+         if (!indexValue?.IsEmpty == true)
+            index = (int)indexValue.Number;
 
          var result = this[index];
 
@@ -810,6 +812,7 @@ namespace Orange.Library.Values
             }
             else
                firstFound = true;
+
          array = newArray;
 
          return result;
@@ -847,6 +850,7 @@ namespace Orange.Library.Values
          var key = indexes[index];
          if (key == null)
             return null;
+
          var value = array[key];
          return new IterItem
          {
@@ -870,6 +874,7 @@ namespace Orange.Library.Values
          var item = GetArrayItem(key);
          if (item == null)
             return -1;
+
          return item.Index;
       }
 
@@ -884,9 +889,9 @@ namespace Orange.Library.Values
             var key = indexes[i];
             newArray[key] = array[key];
          }
-         var keyedValue = value.As<KeyedValue>();
-         if (keyedValue.IsSome)
-            newArray[keyedValue.Value.Key] = keyedValue.Value.Value;
+
+         if (value is KeyedValue keyedValue)
+            newArray[keyedValue.Key] = keyedValue.Value;
          else
             newArray[getKey()] = value;
          for (var i = index; i < array.Count; i++)
@@ -894,6 +899,7 @@ namespace Orange.Library.Values
             var key = indexes[i];
             newArray[key] = array[key];
          }
+
          array = newArray;
          updateIndexes();
       }
@@ -909,6 +915,7 @@ namespace Orange.Library.Values
          var other = value.Resolve() as Array;
          if (other == null)
             return -1;
+
          var minLength = Math.Min(Length, other.Length);
          for (var i = 0; i < minLength; i++)
          {
@@ -916,8 +923,10 @@ namespace Orange.Library.Values
             if (compare != 0)
                return compare;
          }
+
          if (Length == other.Length)
             return 0;
+
          return Length > other.Length ? 1 : -1;
       }
 
@@ -956,37 +965,28 @@ namespace Orange.Library.Values
                         connector = value.Text;
                         continue;
                      }
+
                      result.Append(connector);
                      result.Append(value.Text);
                   }
+
                   return result.ToString();
             }
          }
-         set
-         {
-         }
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return array.Count;
-         }
-         set
-         {
-         }
+         get { return array.Count; }
+         set { }
       }
 
       public override ValueType Type => ValueType.Array;
 
       public override bool IsTrue => Length > 0;
 
-      public override Value Clone()
-      {
-         var clone = Copy();
-         return clone;
-      }
+      public override Value Clone() => Copy();
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -997,9 +997,9 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "keys", v => new Array(((Array)v).KeyValues));
          manager.RegisterMessage(this, "indexes", v => new Array(((Array)v).IndexValues));
          manager.RegisterMessage(this, "values", v => new Array(((Array)v).Values));
-         manager.RegisterMessage(this, "is_key", v => ((Array)v).ContainsKey());
-         manager.RegisterMessage(this, "is_idx", v => ((Array)v).ContainsIndex());
-         manager.RegisterMessage(this, "is_val", v => ((Array)v).ContainsValue());
+         manager.RegisterMessage(this, "isKey", v => ((Array)v).ContainsKey());
+         manager.RegisterMessage(this, "isIdx", v => ((Array)v).ContainsIndex());
+         manager.RegisterMessage(this, "isVal", v => ((Array)v).ContainsValue());
          manager.RegisterMessage(this, "pop", v => ((Array)v).Pop());
          manager.RegisterMessage(this, "copy", v => ((Array)v).Copy());
          manager.RegisterMessage(this, "unshift", v => ((Array)v).Unshift());
@@ -1007,10 +1007,9 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "clear", v => ((Array)v).Clear());
          manager.RegisterMessage(this, "addUnique", v => ((Array)v).AddUnique());
          manager.RegisterMessage(this, "insertAt", v => ((Array)v).Insert());
-         manager.RegisterMessage(this, "unique", v => ((Array)v).Unique());
+         //manager.RegisterMessage(this, "unique", v => ((Array)v).Unique());
          manager.RegisterMessage(this, "set", v => ((Array)v).Set());
          manager.RegisterMessage(this, "each", v => ((Array)v).Each(), false);
-         //manager.RegisterMessage(this, "for", v => ((Array)v).For(), false);
          manager.RegisterMessage(this, "listify", v => ((Array)v).Listify());
          manager.RegisterMessage(this, "first", v => ((Array)v).First());
          manager.RegisterMessage(this, "last", v => ((Array)v).Last());
@@ -1020,15 +1019,12 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "notMid", v => ((Array)v).NotMiddle());
          manager.RegisterMessage(this, "byKeys", v => ((Array)v).ByKeys());
          manager.RegisterMessage(this, "byIndexes", v => ((Array)v).ByIndexes());
-         //manager.RegisterMessage(this, "if", v => ((Array)v).If());
-         manager.RegisterMessage(this, "sort", v => ((Array)v).Sort(true));
-         manager.RegisterMessage(this, "sortDesc", v => ((Array)v).Sort(false));
+         manager.RegisterMessage(this, "sort", v => ((Array)v).sort(true));
+         manager.RegisterMessage(this, "sortDesc", v => ((Array)v).sort(false));
          manager.RegisterMessage(this, "sortNum", v => ((Array)v).SortNumeric(true));
          manager.RegisterMessage(this, "sortNumDesc", v => ((Array)v).SortNumeric(false));
          manager.RegisterMessage(this, "sortDescNum", v => ((Array)v).SortNumeric(false));
          manager.RegisterMessage(this, "repeat", v => ((Array)v).Repeat());
-         /*         manager.RegisterMessage(this, "foldl", v => ((Array)v).FoldL());
-                  manager.RegisterMessage(this, "foldr", v => ((Array)v).FoldR());*/
          manager.RegisterMessage(this, "reducel", v => ((Array)v).ReduceL());
          manager.RegisterMessage(this, "reducer", v => ((Array)v).ReduceR());
          manager.RegisterMessage(this, "select", v => ((Array)v).Map(), false);
@@ -1040,17 +1036,17 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "min", v => ((Array)v).Min());
          manager.RegisterMessage(this, "to", v => ((Array)v).Map());
          manager.RegisterMessage(this, "fmap", v => ((Array)v).FlatMap());
-         manager.RegisterMessage(this, "find", v => ((Array)v).Find());
-         manager.RegisterMessage(this, "findIndex", v => ((Array)v).FindIndex());
+         //manager.RegisterMessage(this, "find", v => ((Array)v).Find());
+         manager.RegisterMessage(this, "find", v => ((Array)v).FindIndex());
          manager.RegisterMessage(this, "count", v => ((Array)v).Count());
          manager.RegisterMessage(this, "join", v => ((Array)v).Join());
          manager.RegisterMessage(this, "zip", v => ((Array)v).Zip());
          manager.RegisterMessage(this, "zipDo", v => ((Array)v).ZipDo());
-         manager.RegisterMessage(this, "is_any", v => ((Array)v).Any());
-         manager.RegisterMessage(this, "is_one", v => ((Array)v).Any(c => c == 1));
-         manager.RegisterMessage(this, "is_all", v => ((Array)v).All());
-         manager.RegisterMessage(this, "is_none", v => ((Array)v).None());
-         manager.RegisterMessage(this, "is_empty", v => ((Array)v).Length == 0);
+         manager.RegisterMessage(this, "isAny", v => ((Array)v).Any());
+         manager.RegisterMessage(this, "isOne", v => ((Array)v).Any(c => c == 1));
+         manager.RegisterMessage(this, "isAll", v => ((Array)v).All());
+         manager.RegisterMessage(this, "isNone", v => ((Array)v).None());
+         manager.RegisterMessage(this, "isEmpty", v => ((Array)v).Length == 0);
          manager.RegisterMessage(this, "sub", v => ((Array)v).RemoveWithKey());
          manager.RegisterMessage(this, "shuffle", v => ((Array)v).Shuffle());
          manager.RegisterMessage(this, "sample", v => ((Array)v).Sample());
@@ -1059,7 +1055,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "unfield", v => ((Array)v).Unfield());
          manager.RegisterMessage(this, "unrec", v => ((Array)v).Unrecord());
          manager.RegisterMessage(this, "removeWhere", v => ((Array)v).RemoveWhere());
-         //manager.RegisterMessage(this, "unless", v => ((Array)v).Unless());
          manager.RegisterMessage(this, "merge", v => ((Array)v).Merge());
          manager.RegisterMessage(this, "padder", v => ((Array)v).Padder());
          manager.RegisterProperty(this, "default", v => ((Array)v).GetDefault(), v => ((Array)v).SetDefault());
@@ -1092,7 +1087,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "assoc", v => ((Array)v).Assoc());
          manager.RegisterMessage(this, "trans", v => ((Array)v).Transpose());
          manager.RegisterMessage(this, "match", v => ((Array)v).Match());
-         //manager.RegisterMessage(this, "split", v => ((Array)v).Split());
          manager.RegisterMessage(this, "sum", v => ((Array)v).Sum());
          manager.RegisterMessage(this, "prod", v => ((Array)v).Product());
          manager.RegisterMessage(this, "avg", v => ((Array)v).Average());
@@ -1101,7 +1095,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "as", v => ((Array)v).As());
          manager.RegisterMessage(this, "fields", v => ((Array)v).Fields(false));
          manager.RegisterMessage(this, "awk", v => ((Array)v).Fields(true));
-         //manager.RegisterMessage(this, "group", v => ((Array)v).Group());
          manager.RegisterMessage(this, "groupNum", v => ((Array)v).GroupNumeric());
          manager.RegisterMessage(this, "break", v => ((Array)v).Break());
          manager.RegisterMessage(this, "on", v => ((Array)v).On());
@@ -1131,10 +1124,10 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "unpair", v => ((Array)v).Unpair());
          manager.RegisterMessage(this, "smap", v => ((Array)v).SelfMap());
          manager.RegisterMessage(this, "orderBy", v => ((Array)v).Order());
-         manager.RegisterMessage(this, "index", v => ((Array)v).Index());
+         //manager.RegisterMessage(this, "index", v => ((Array)v).Index());
          manager.RegisterMessage(this, "get", v => ((Array)v).Get());
-         manager.RegisterProperty(this, "is_auto", v => ((Array)v).GetAutoAdd(), v => ((Array)v).SetAutoAdd());
-         manager.RegisterProperty(this, "is_maybe", v => ((Array)v).GetMaybe(), v => ((Array)v).SetMaybe());
+         manager.RegisterProperty(this, "isAuto", v => ((Array)v).GetAutoAdd(), v => ((Array)v).SetAutoAdd());
+         manager.RegisterProperty(this, "isMaybe", v => ((Array)v).GetMaybe(), v => ((Array)v).SetMaybe());
          manager.RegisterMessage(this, "alone", v => ((Array)v).Alone());
          manager.RegisterMessage(this, "fork", v => ((Array)v).Fork());
          manager.RegisterMessage(this, "head", v => ((Array)v).Head());
@@ -1163,19 +1156,16 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "swap", v => ((Array)v).Swap());
          manager.RegisterMessage(this, "array", v => ((Array)v).ToArray());
          manager.RegisterMessage(this, "alloc", v => ((Array)v).Alloc());
+         manager.RegisterMessage(this, "exists", v => ((Array)v).Exists());
       }
 
-      static IMaybe<int> getIntIndex(Value arg)
-      {
-         return Standard.Types.Maybe.Maybe.When(arg.Type == ValueType.Number, () => (int)arg.Number);
-      }
+      static IMaybe<int> getIntIndex(Value arg) => when(arg.Type == ValueType.Number, () => (int)arg.Number);
 
       static string getStrIndex(Value arg) => arg.Text;
 
       static IMaybe<int[]> getIntIndexes(Value[] values)
       {
-         return Standard.Types.Maybe.Maybe.When(values.All(v => v.Type == ValueType.Number),
-            () => values.Select(v => (int)v.Number).ToArray());
+         return when(values.All(v => v.Type == ValueType.Number), () => values.Select(v => (int)v.Number).ToArray());
       }
 
       static string[] getStrIndexes(Value[] values) => values.Select(v => v.Text).ToArray();
@@ -1188,9 +1178,15 @@ namespace Orange.Library.Values
                case DefaultType.None:
                   return NullValue;
                case DefaultType.Value:
+                  if (array.AutoAddDefault)
+                     this[Arguments[0].Text] = array.DefaultValue;
                   return array.DefaultValue;
                case DefaultType.Lambda:
-                  return array.DefaultLambda("");
+                  var key = Arguments[0].Text;
+                  var value = array.DefaultLambda(key);
+                  if (array.AutoAddDefault)
+                     this[key] = value;
+                  return value;
                default:
                   return new Array();
             }
@@ -1203,75 +1199,78 @@ namespace Orange.Library.Values
             var list = iterator.ToList();
             if (list.Count == 0)
                return new Array();
+
             var result = new Array(list.Select(getValue));
-            return result.Length < 2 /*&& Arguments.ArgumentsBlock.Count == 1*/ ? result[0] : result;
+            return result.Length < 2 ? result[0] : result;
          }
       }
 
-      Value getValue(Value value) => getIntIndex(value).Map(index => this[index], () => this[getStrIndex(value)]);
+      Value getValue(Value value) => getIntIndex(value).FlatMap(index => this[index], () => this[getStrIndex(value)]);
 
       void setValue(Value value, Value valueToAssign)
       {
-         getIntIndex(value).If(index => this[index] = valueToAssign).Else(() => this[getStrIndex(value)] = valueToAssign);
+         if (getIntIndex(value).If(out var index))
+            this[index] = valueToAssign;
+         else
+            this[getStrIndex(value)] = valueToAssign;
       }
 
       public Value SetItem()
       {
          var popped = Arguments.Values.Pop();
-         if (popped.IsNone)
-            return this;
-
-         var assignment = popped.Value.Element.AssignmentValue();
-         popped = popped.Value.Array.Pop();
-         if (popped.IsNone)
-            return this;
-
-         var index = popped.Value.Element.AssignmentValue();
-
-         Array indexArray;
-         if (index.ProvidesGenerator && !assignment.ProvidesGenerator)
+         if (popped.If(out var value))
          {
-            indexArray = (Array)index.PossibleIndexGenerator().Map(g => g.Array(), () => new Array { index });
-            if (assignment.IsNil)
+            var assignment = value.element.AssignmentValue();
+            popped = popped.Value.array.Pop();
+            if (popped.If(out value))
             {
-               for (var i = indexArray.Length - 1; i > -1; i--)
-                  setValue(indexArray[i], assignment);
+               var index = value.element.AssignmentValue();
+
+               Array indexArray;
+               if (index.ProvidesGenerator && !assignment.ProvidesGenerator)
+               {
+                  indexArray = (Array)index.PossibleIndexGenerator().FlatMap(g => g.Array(), () => new Array { index });
+                  if (assignment.IsNil)
+                     for (var i = indexArray.Length - 1; i > -1; i--)
+                        setValue(indexArray[i], assignment);
+                  else
+                     for (var i = 0; i < indexArray.Length; i++)
+                        setValue(indexArray[i], assignment);
+
+                  return this;
+               }
+
+               (var iArray, var assignArray) = CombineGenerators(index, assignment, false, false);
+               indexArray = iArray;
+
+               switch (indexArray.Length)
+               {
+                  case 2 when indexArray[0].Compare(indexArray[1]) == 0:
+                     assignArray = (Array)assignArray.Flatten();
+                     var indexAt = indexArray[0];
+                     for (var i = assignArray.Length - 1; i > -1; i--)
+                        insertAt(indexAt, assignArray[i]);
+
+                     return this;
+                  case 1:
+                     setValue(indexArray[0], assignArray.Length == 1 ? assignArray[0] : assignArray);
+                     return this;
+               }
+
+               if (assignment.IsNil)
+                  for (var i = indexArray.Length - 1; i > -1; i--)
+                     setValue(indexArray[i], assignment);
+               else
+                  for (var i = indexArray.Length - 1; i > -1; i--)
+                     if (assignArray[i].IsNull)
+                        Remove(i);
+                     else
+                        setValue(indexArray[i], assignArray[i]);
+
+               return this;
             }
-            else
-            {
-               for (var i = 0; i < indexArray.Length; i++)
-                  setValue(indexArray[i], assignment);
-            }
+
             return this;
-         }
-
-         Array assignArray;
-         CombineGenerators(index, assignment, false, false).Assign(out indexArray, out assignArray);
-
-         if (indexArray.Length == 2 && indexArray[0].Compare(indexArray[1]) == 0)
-         {
-            assignArray = (Array)assignArray.Flatten();
-            var indexAt = indexArray[0];
-            for (var i = assignArray.Length - 1; i > -1; i--)
-               insertAt(indexAt, assignArray[i]);
-            return this;
-         }
-
-         if (indexArray.Length == 1)
-         {
-            setValue(indexArray[0], assignArray.Length == 1 ? assignArray[0] : assignArray);
-            return this;
-         }
-
-         if (assignment.IsNil)
-         {
-            for (var i = indexArray.Length - 1; i > -1; i--)
-               setValue(indexArray[i], assignment);
-         }
-         else
-         {
-            for (var i = indexArray.Length - 1; i > -1; i--)
-               setValue(indexArray[i], assignArray[i]);
          }
 
          return this;
@@ -1291,8 +1290,10 @@ namespace Orange.Library.Values
                   if (!block.IsTrue)
                      return false;
                }
+
                return true;
             }
+
             return Items.All(i => i.Value.IsTrue);
          }
       }
@@ -1311,8 +1312,10 @@ namespace Orange.Library.Values
                   if (block.IsTrue)
                      return true;
                }
+
                return false;
             }
+
             return Items.Any(i => i.Value.IsTrue);
          }
       }
@@ -1331,8 +1334,10 @@ namespace Orange.Library.Values
                   if (block.IsTrue)
                      return false;
                }
+
                return true;
             }
+
             return Items.All(i => !i.Value.IsTrue);
          }
       }
@@ -1341,15 +1346,12 @@ namespace Orange.Library.Values
       {
          var newArray = new Array();
          foreach (var item in this)
-         {
             if (item.Value.Type == ValueType.Array)
-            {
                foreach (var innerItem in (Array)((Array)item.Value).Flatten())
                   newArray.Add(innerItem.Value);
-            }
             else
                newArray.Add(item.Value);
-         }
+
          return newArray;
       }
 
@@ -1357,15 +1359,12 @@ namespace Orange.Library.Values
       {
          var newArray = new Array();
          foreach (var item in this)
-         {
             if (item.Value.IsArray)
-            {
                foreach (var innerItem in (Array)item.Value.SourceArray)
                   newArray.Add(innerItem.Value);
-            }
             else
                newArray.Add(item.Value);
-         }
+
          return newArray;
       }
 
@@ -1386,6 +1385,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -1394,19 +1394,23 @@ namespace Orange.Library.Values
                         return null;
                   }
                }
+
                keysToRemove.Reverse();
                foreach (var keyToRemove in keysToRemove)
                   Remove(keyToRemove);
+
                return this;
             }
+
             var value = Arguments[0];
-            var key = (this.Where(i => value.Compare(i.Value) == 0).Select(i => i.Key)).FirstOrDefault();
+            var key = this.Where(i => value.Compare(i.Value) == 0).Select(i => i.Key).FirstOrDefault();
             if (key != null)
             {
                var element = this[key];
                Remove(key);
                return new Some(element);
             }
+
             return new None();
          }
       }
@@ -1432,6 +1436,7 @@ namespace Orange.Library.Values
                variableName = "$" + variableName;
             Regions[variableName] = item.Value.AssignmentValue();
          }
+
          return null;
       }
 
@@ -1443,9 +1448,10 @@ namespace Orange.Library.Values
             var key = GetKey(i);
             var value = this[i];
             var tuple = new OTuple(key, value);
-            tuple = tuple.Append(i);
+            //tuple = tuple.Append(i);
             result.Add(tuple);
          }
+
          return result;
       }
 
@@ -1458,6 +1464,7 @@ namespace Orange.Library.Values
             return new Array(Values.RangeOf(count, Length - 1));
          if (count == 0)
             return this;
+
          var length = Length + count;
          return length < 0 || length > Length ? new Array() : new Array(Values.Slice(0, Length + count));
       }
@@ -1478,6 +1485,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -1485,13 +1493,16 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (result.IsTrue)
                      newArray.Add(item.Value);
                   else
                      break;
                }
+
                return newArray;
             }
+
             var count = (int)Arguments[0].Number;
             if (count > 0)
             {
@@ -1500,8 +1511,10 @@ namespace Orange.Library.Values
                var newArray = new Array();
                for (var i = 0; i < count; i++)
                   newArray.Add(this[i]);
+
                return newArray;
             }
+
             if (count < 0)
             {
                count = -count;
@@ -1514,8 +1527,10 @@ namespace Orange.Library.Values
                   var index = i + offset;
                   newArray.Add(this[index]);
                }
+
                return newArray;
             }
+
             return this;
          }
       }
@@ -1528,6 +1543,7 @@ namespace Orange.Library.Values
             var messageName = value.Text;
             return new Message(messageName, new Arguments(this));
          }
+
          return ContainsValue(value);
       }
 
@@ -1544,21 +1560,18 @@ namespace Orange.Library.Values
             count = 1;
          var newArray = CopyNoKeys();
          if (count > 0)
-         {
             for (var i = 0; i < count; i++)
             {
                var value = newArray.Shift();
                newArray.Add(value);
             }
-         }
          else
-         {
             for (var i = 0; i < -count; i++)
             {
                var value = newArray.Pop();
                newArray.Unshift(value);
             }
-         }
+
          return newArray;
       }
 
@@ -1594,7 +1607,7 @@ namespace Orange.Library.Values
 
       public Value Default() => new ValueAttributeVariable("default", this);
 
-      public Value Maybe() => new ValueAttributeVariable("is_maybe", this);
+      public Value Maybe() => new ValueAttributeVariable("isMaybe", this);
 
       public Value GetMaybe() => maybe;
 
@@ -1611,6 +1624,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          foreach (var item in source)
             newArray[item.Key] = item.Value;
+
          using (var assistant = new ParameterAssistant(arguments))
          {
             var block = assistant.Block();
@@ -1636,6 +1650,7 @@ namespace Orange.Library.Values
                foreach (var key in other.Keys)
                   newArray[key] = other[key];
             }
+
             return newArray;
          }
       }
@@ -1647,6 +1662,7 @@ namespace Orange.Library.Values
          {
             if (Length <= 1)
                return this;
+
             var value = this[0];
             var source = value.IsArray ? (Array)value : new Array
             {
@@ -1655,14 +1671,13 @@ namespace Orange.Library.Values
             for (var i = 1; i < Length; i++)
             {
                var value1 = this[i];
-               var target = value1.IsArray ? (Array)value1 : new Array
-               {
-                  value1
-               };
+               var target = value1.IsArray ? (Array)value1 : new Array { value1 };
                source = merge(source, target, Arguments);
             }
+
             return source;
          }
+
          return merge(this, other, Arguments);
       }
 
@@ -1671,10 +1686,12 @@ namespace Orange.Library.Values
          var countValue = Arguments[0];
          if (countValue.IsEmpty)
             return Length == 0 ? (Value)new None() : new Some(this[0]);
+
          var count = Math.Min((int)countValue.Number, Length);
          var newArray = new Array();
          for (var i = 0; i < count; i++)
             newArray.Add(this[i]);
+
          return new Some(newArray);
       }
 
@@ -1683,11 +1700,13 @@ namespace Orange.Library.Values
          var countValue = Arguments[0];
          if (countValue.IsEmpty)
             return Length == 0 ? (Value)new None() : new Some(this[-1]);
+
          var count = Math.Min((int)countValue.Number, Length);
          var newArray = new Array();
          var lastIndex = Length - count;
          for (var i = Length - 1; i >= lastIndex; i--)
             newArray.Add(this[i]);
+
          return new Some(newArray);
       }
 
@@ -1707,6 +1726,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -1714,13 +1734,16 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (value.IsTrue)
                      keys.Add(item.Key);
                }
                foreach (var key in keys)
                   Remove(key);
+
                return this;
             }
+
             return this;
          }
       }
@@ -1755,6 +1778,7 @@ namespace Orange.Library.Values
          }
          else
             Insert(offset, listValue);
+
          return spliceResult(result);
       }
 
@@ -1775,7 +1799,6 @@ namespace Orange.Library.Values
       {
          var newArray = new Array();
          foreach (var item in this)
-         {
             if (item.Value.IsArray)
             {
                var valueArray = (Array)item.Value.SourceArray;
@@ -1787,14 +1810,13 @@ namespace Orange.Library.Values
                current = arrayify(current, item.Key);
                newArray[item.Value.Text] = current;
             }
-         }
+
          return newArray;
       }
 
       static void invertArray(Array newArray, string key, Array valueArray)
       {
          foreach (var item in valueArray)
-         {
             if (item.Value.IsArray)
             {
                var innerArray = (Array)item.Value.SourceArray;
@@ -1806,17 +1828,14 @@ namespace Orange.Library.Values
                current = arrayify(current, key);
                newArray[item.Value.Text] = current;
             }
-         }
       }
 
       static Value arrayify(Value currentValue, Value newValue)
       {
          if (currentValue.IsEmpty)
             return newValue;
-         var innerArray = currentValue.IsArray ? (Array)currentValue.SourceArray : new Array
-         {
-            currentValue
-         };
+
+         var innerArray = currentValue.IsArray ? (Array)currentValue.SourceArray : new Array { currentValue };
          innerArray.Add(newValue);
          return innerArray;
       }
@@ -1829,20 +1848,21 @@ namespace Orange.Library.Values
             var index = State.Random(Length);
             return this[index];
          }
+
          var newArray = new Array();
          var length = Length;
          for (var i = 0; i < count; i++)
-         {
             while (true)
             {
                var index = State.Random(length);
                var value = this[index];
                if (newArray.ContainsValue(value))
                   continue;
+
                newArray.Add(value);
                break;
             }
-         }
+
          return newArray;
       }
 
@@ -1858,6 +1878,7 @@ namespace Orange.Library.Values
             newArray.Add(copy[index]);
             copy.Remove(index);
          }
+
          return newArray;
       }
 
@@ -1878,6 +1899,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -1885,11 +1907,14 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (value.IsTrue)
                      count++;
                }
+
                return func(count);
             }
+
             return false;
          }
       }
@@ -1901,19 +1926,18 @@ namespace Orange.Library.Values
             return length == 0;
          if (length == 0)
             return false;
+
          var bindings = new Hash<string, Value>();
 
          var last = length - 1;
          Value left;
          Value right;
-         IMaybe<Placeholder> placeholder;
          for (var i = 0; i < last; i++)
          {
             left = this[i];
             right = comparisand[i];
-            placeholder = right.As<Placeholder>();
-            if (placeholder.IsSome)
-               bindings[placeholder.Value.Text] = left;
+            if (right is Placeholder placeholder)
+               bindings[placeholder.Text] = left;
             else if (!Case.Match(left, right, required, null))
                return false;
          }
@@ -1923,52 +1947,40 @@ namespace Orange.Library.Values
          else if (Length < length)
             left = new Array();
          else
-         {
-            left = new Array
-            {
-               this[last]
-            };
-         }
+            left = new Array { this[last] };
          right = comparisand[last];
 
          bool matched;
-         placeholder = right.As<Placeholder>();
-         if (placeholder.IsSome)
+         if (right is Placeholder placeholder1)
          {
-            bindings[placeholder.Value.Text] = left;
+            bindings[placeholder1.Text] = left;
             matched = true;
          }
          else
             matched = Case.Match(left, right, required, null);
          if (matched)
-         {
             foreach (var item in bindings)
                Regions.SetParameter(item.Key, item.Value);
-         }
+
          return matched;
       }
 
-      public bool MatchArray(Array comparisand, bool required)
+      public bool MatchArray(Array comparisand, bool required, bool assigning)
       {
          var length = comparisand.Length;
          if (length == 0 && Length == 0)
             return true;
          if (Length != length)
             return false;
-         var bindings = new Hash<string, Value>();
+
          for (var i = 0; i < length; i++)
          {
             var left = this[i];
             var right = comparisand[i];
-            var placeholder = right.As<Placeholder>();
-            if (placeholder.IsSome)
-               bindings[placeholder.Value.Text] = left;
-            if (!Case.Match(left, right, required, null))
+            if (!Case.Match(left, right, required, null, assigning: assigning))
                return false;
          }
 
-         foreach (var item in bindings)
-            Regions.SetParameter(item.Key, item.Value);
          return true;
       }
 
@@ -1977,6 +1989,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          for (var i = index; i < Length; i++)
             newArray.Add(this[i]);
+
          return newArray;
       }
 
@@ -1990,18 +2003,18 @@ namespace Orange.Library.Values
             var var2 = Arguments.VariableName(1, VAR_Y);
             var newArray = new Array();
             foreach (var item in this)
+            foreach (var item2 in other)
             {
-               foreach (var item2 in other)
-               {
-                  Regions.SetLocal(var1, item.Value);
-                  Regions.SetLocal(var2, item2.Value);
-                  var value = Arguments.Executable.Evaluate();
-                  if (value != null)
-                     newArray.Add(value);
-               }
+               Regions.SetLocal(var1, item.Value);
+               Regions.SetLocal(var2, item2.Value);
+               var value = Arguments.Executable.Evaluate();
+               if (value != null)
+                  newArray.Add(value);
             }
+
             return newArray;
          }
+
          var connector = Arguments[0].Text;
          return array.ValueArray().Select(v => v.Text).Listify(connector);
       }
@@ -2010,25 +2023,22 @@ namespace Orange.Library.Values
       {
          var newArray = new Array();
          foreach (var outer in this)
+         foreach (var inner in other)
          {
-            foreach (var inner in other)
-            {
-               var innerArray = new Array();
-               flatJoin(innerArray, outer.Value);
-               flatJoin(innerArray, inner.Value);
-               newArray.Add(innerArray);
-            }
+            var innerArray = new Array();
+            flatJoin(innerArray, outer.Value);
+            flatJoin(innerArray, inner.Value);
+            newArray.Add(innerArray);
          }
+
          return newArray;
       }
 
       static void flatJoin(Array array, Value value)
       {
          if (value.IsArray)
-         {
             foreach (var item in (Array)value.SourceArray)
                flatJoin(array, item.Value);
-         }
          else
             array.Add(value);
       }
@@ -2044,9 +2054,11 @@ namespace Orange.Library.Values
                var value = Arguments[0];
                if (value.IsEmpty)
                   return Length;
+
                count = this.Count(i => i.Value.Compare(value) == 0);
                return count;
             }
+
             assistant.ArrayParameters();
             count = 0;
             foreach (var item in this)
@@ -2056,6 +2068,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -2063,46 +2076,53 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (result.IsTrue)
                   count++;
             }
+
             return count;
          }
       }
 
-      public Value Find()
-      {
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            var block = assistant.Block();
-            if (block != null)
+      /*      public Value Find()
             {
-               assistant.ArrayParameters();
-               foreach (var item in this)
+               using (var assistant = new ParameterAssistant(Arguments))
                {
-                  assistant.SetParameterValues(item);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                     break;
-                  switch (signal)
+                  var block = assistant.Block();
+                  if (block != null)
                   {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
+                     assistant.ArrayParameters();
+                     foreach (var item in this)
+                     {
+                        assistant.SetParameterValues(item);
+                        var result = block.Evaluate();
+                        var signal = Signal();
+                        if (signal == Breaking)
+                           break;
+
+                        switch (signal)
+                        {
+                           case Continuing:
+                              continue;
+                           case ReturningNull:
+                              return null;
+                        }
+
+                        if (result.IsTrue)
+                           return new Some(item.Value);
+                     }
+
+                     return new None();
                   }
-                  if (result.IsTrue)
-                     return new Some(item.Value);
+
+                  var value = Arguments[0];
+                  foreach (var item in this.Where(item => item.Value.Compare(value) == 0))
+                     return new Some(item.Index);
+
+                  return new None();
                }
-               return new None();
-            }
-            var value = Arguments[0];
-            foreach (var item in this.Where(item => item.Value.Compare(value) == 0))
-               return new Some(item.Index);
-            return new None();
-         }
-      }
+            }*/
 
       public Value FindIndex()
       {
@@ -2119,6 +2139,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2126,14 +2147,18 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (result.IsTrue)
                      return new Some(item.Index);
                }
+
                return new None();
             }
+
             var value = Arguments[0];
             foreach (var item in this.Where(item => item.Value.Compare(value) == 0))
                return new Some(item.Index);
+
             return new None();
          }
       }
@@ -2163,6 +2188,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2170,11 +2196,14 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (compare.Compare(maxCompare) <= 0)
                      continue;
+
                   maxCompare = compare;
                   max = item.Value;
                }
+
                return max;
             }
 
@@ -2185,6 +2214,7 @@ namespace Orange.Library.Values
                if (value.Compare(max) > 0)
                   max = value;
             }
+
             return max;
          }
       }
@@ -2214,6 +2244,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2221,11 +2252,14 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (compare.Compare(minCompare) >= 0)
                      continue;
+
                   minCompare = compare;
                   min = item.Value;
                }
+
                return min;
             }
 
@@ -2236,6 +2270,7 @@ namespace Orange.Library.Values
                if (value.Compare(min) < 0)
                   min = value;
             }
+
             return min;
          }
       }
@@ -2258,6 +2293,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2265,14 +2301,18 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (value != null)
                      this[key] = value;
                }
+
                return this;
             }
+
             value = Arguments[0];
             foreach (var key in Keys)
                this[key] = value.Clone();
+
             return this;
          }
       }
@@ -2290,10 +2330,9 @@ namespace Orange.Library.Values
       {
          var newArray = new Array();
          for (var i = 0; i < count; i++)
-         {
             foreach (var item in this)
                newArray.Add(item.Value.AssignmentValue());
-         }
+
          return newArray;
       }
 
@@ -2316,6 +2355,7 @@ namespace Orange.Library.Values
          }
          else
             result.Add(this[source.Text]);
+
          return result;
       }
 
@@ -2331,16 +2371,18 @@ namespace Orange.Library.Values
          }
          else
             result.Add(this[(int)source.Number]);
+
          return result;
       }
 
-      Value ifValue(Value value) => value.As<Pattern>().Map(ifPattern, () => ifText(value.Text));
+      Value ifValue(Value value) => value is Pattern pattern ? ifPattern(pattern) : ifText(value.Text);
 
       Value ifPattern(Pattern pattern)
       {
          var result = new Array();
          foreach (var item in this.Where(i => pattern.IsMatch(i.Value.Text)))
             result[item.Key] = item.Value;
+
          return result;
       }
 
@@ -2349,16 +2391,18 @@ namespace Orange.Library.Values
          var result = new Array();
          foreach (var item in this.Where(i => i.Value.Text.Has(text)))
             result[item.Key] = item.Value;
+
          return result;
       }
 
-      Value unlessValue(Value value) => value.As<Pattern>().Map(unlessPattern, () => unlessText(value.Text));
+      Value unlessValue(Value value) => value is Pattern pattern ? unlessPattern(pattern) : unlessText(value.Text);
 
       Value unlessPattern(Pattern pattern)
       {
          var result = new Array();
          foreach (var item in this.Where(i => !pattern.IsMatch(i.Value.Text)))
             result[item.Key] = item.Value;
+
          return result;
       }
 
@@ -2367,68 +2411,9 @@ namespace Orange.Library.Values
          var result = new Array();
          foreach (var item in this.Where(i => !i.Value.Text.Has(text)))
             result[item.Key] = item.Value;
+
          return result;
       }
-
-      /*      public Value If()
-            {
-               using (var assistant = new ParameterAssistant(Arguments))
-               {
-                  var block = assistant.Block();
-                  if (block == null)
-                     return ifValue(Arguments[0]);
-                  assistant.ArrayParameters();
-                  var result = new Array();
-                  foreach (var item in this)
-                  {
-                     assistant.SetParameterValues(item);
-                     var value = block.Evaluate();
-                     var signal = Signal();
-                     if (signal == Breaking)
-                        break;
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
-                     if (value.IsTrue)
-                        result[item.Key] = item.Value;
-                  }
-                  return result;
-               }
-            }
-
-            public Value Unless()
-            {
-               using (var assistant = new ParameterAssistant(Arguments))
-               {
-                  var block = assistant.Block();
-                  if (block == null)
-                     return unlessValue(Arguments[0]);
-                  assistant.ArrayParameters();
-                  var result = new Array();
-                  foreach (var item in this)
-                  {
-                     assistant.SetParameterValues(item);
-                     var value = block.Evaluate();
-                     var signal = Signal();
-                     if (signal == Breaking)
-                        break;
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
-                     if (!value.IsTrue)
-                        result[item.Key] = item.Value;
-                  }
-                  return result;
-               }
-            }*/
 
       public Value While()
       {
@@ -2446,6 +2431,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2453,13 +2439,16 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (value.IsTrue)
                      result[item.Key] = item.Value;
                   else
                      break;
                }
+
                return result;
             }
+
             return null;
          }
       }
@@ -2480,6 +2469,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2487,13 +2477,16 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (!value.IsTrue)
                      result[item.Key] = item.Value;
                   else
                      break;
                }
+
                return result;
             }
+
             return null;
          }
       }
@@ -2517,6 +2510,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2524,13 +2518,17 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (value.IsTrue && !active)
                      continue;
+
                   active = true;
                   result.Add(item.Value);
                }
+
                return result;
             }
+
             return null;
          }
       }
@@ -2554,6 +2552,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2564,11 +2563,14 @@ namespace Orange.Library.Values
 
                   if (!value.IsTrue && !active)
                      continue;
+
                   active = true;
                   result.Add(item.Value);
                }
+
                return result;
             }
+
             return null;
          }
       }
@@ -2599,24 +2601,29 @@ namespace Orange.Library.Values
                case ValueType.Array:
                   foreach (var item in (Array)value)
                      Insert(index, item.Value);
+
                   break;
                default:
                   Insert(index, value);
                   break;
             }
+
             return this;
          }
+
          var keyText = key.Text;
          switch (value.Type)
          {
             case ValueType.Array:
                foreach (var item in (Array)value)
                   Insert(keyText, item.Value);
+
                break;
             default:
                Insert(keyText, value);
                break;
          }
+
          return this;
       }
 
@@ -2655,20 +2662,21 @@ namespace Orange.Library.Values
 
       IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-      public Array Unique()
-      {
-         var unique = new Array();
-         foreach (var value in Values)
-            unique.AddUnique(value);
-         return unique;
-      }
+      /*      public Array Unique()
+            {
+               var unique = new Array();
+               foreach (var value in Values)
+                  unique.AddUnique(value);
+               return unique;
+            }*/
 
       public Value Zip()
       {
          var other = Arguments.AsArray();
          if (other == null)
             return this;
-         return zip(other); //options[OptionType.Flat] ? flatZip(other) : zip(other);
+
+         return zip(other);
       }
 
       public Value ZipDo()
@@ -2676,6 +2684,7 @@ namespace Orange.Library.Values
          var other = Arguments.AsArray();
          if (other == null)
             return this;
+
          using (var assistant = new ParameterAssistant(Arguments))
          {
             var newArray = new Array();
@@ -2689,6 +2698,7 @@ namespace Orange.Library.Values
                if (value != null)
                   newArray.Add(value);
             }
+
             return newArray;
          }
       }
@@ -2698,6 +2708,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          for (var i = 0; i < Math.Min(Length, other.Length); i++)
             newArray.Add(OTuple.Concatenate(this[i], other[i]));
+
          using (var popper = new RegionPopper(new Region(), "zip"))
          {
             popper.Push();
@@ -2706,6 +2717,7 @@ namespace Orange.Library.Values
                var block = assistant.Block();
                if (block == null)
                   return newArray;
+
                var parameters = Arguments.Parameters;
                parameters.Splatting = true;
                var resultArray = new Array();
@@ -2716,6 +2728,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -2723,8 +2736,10 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   resultArray.Add(result);
                }
+
                return resultArray;
             }
          }
@@ -2745,8 +2760,10 @@ namespace Orange.Library.Values
                   newArray.Add(this[i]);
                   newArray.Add(other[i]);
                }
+
                return newArray;
             }
+
             assistant.TwoValueParameters();
             length = options[OptionType.Max] ? Math.Max(Length, other.Length) : Math.Min(Length, other.Length);
             for (var i = 0; i < length; i++)
@@ -2756,6 +2773,7 @@ namespace Orange.Library.Values
                if (value != null)
                   newArray.Add(value);
             }
+
             return newArray;
          }
       }
@@ -2765,10 +2783,12 @@ namespace Orange.Library.Values
          var other = Arguments.AsArray();
          if (other == null)
             return this;
+
          var length = Math.Min(Length, other.Length);
          var newArray = new Array();
          for (var i = 0; i < length; i++)
             newArray[this[i].Text] = other[i];
+
          return newArray;
       }
 
@@ -2791,6 +2811,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -2810,35 +2831,6 @@ namespace Orange.Library.Values
          }
       }
 
-      /*      public Value For()
-            {
-               using (var assistant = new ParameterAssistant(Arguments))
-               {
-                  var block = assistant.Block(false);
-                  RejectNull(block, LOCATION, "No block found for for");
-
-                  assistant.ArrayParameters();
-
-                  foreach (var item in this)
-                  {
-                     assistant.SetParameterValues(item);
-                     block.Evaluate();
-                     var signal = Signal();
-                     if (signal == Breaking)
-                        break;
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
-                  }
-
-                  return null;
-               }
-            }*/
-
       public Value Map()
       {
          using (var assistant = new ParameterAssistant(Arguments))
@@ -2846,6 +2838,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
 
             var newArray = new Array();
@@ -2857,6 +2850,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -2864,11 +2858,12 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return newArray;
                }
+
                if (value.IsNil)
                   continue;
-               var keyedValue = value.As<KeyedValue>();
-               if (keyedValue.IsSome)
-                  newArray[keyedValue.Value.Key] = keyedValue.Value.Value;
+
+               if (value is KeyedValue keyedValue)
+                  newArray[keyedValue.Key] = keyedValue.Value;
                else
                   newArray[item.Key] = value;
             }
@@ -2884,6 +2879,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
 
             var newArray = (Array)Clone();
@@ -2895,6 +2891,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -2902,6 +2899,7 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return newArray;
                }
+
                if (value.Type != ValueType.Nil)
                   newArray.Add(value);
             }
@@ -2920,6 +2918,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
 
             var newArray = new Array();
@@ -2930,9 +2929,9 @@ namespace Orange.Library.Values
                var value = block.Evaluate();
                if (value.Type == ValueType.Nil)
                   continue;
-               var keyedValue = value.As<KeyedValue>();
-               if (keyedValue.IsSome)
-                  value = keyedValue.Value.Value;
+
+               if (value is KeyedValue keyedValue)
+                  value = keyedValue.Value;
                if (value.IsArray)
                {
                   var innerArray = (Array)value.SourceArray;
@@ -2958,12 +2957,19 @@ namespace Orange.Library.Values
 
       public override string ToString()
       {
-         return "(" + Keys.Select(key => IsAutoAssignedKey(key) ? array[key].ToString() : $"{key.Quotify("`\"")} => {array[key]}").Listify() + ")";
+         return "(" + Keys.Select(key => IsAutoAssignedKey(key) ? array[key].ToString() : $"{key.Quotify("`\"")} => {array[key]}")
+            .Listify() + ")";
       }
 
       public INSGenerator GetGenerator() => new NSGenerator(this);
 
-      public Value Next(int index) => index.Between(0).Until(Length) ? this[index] : NilValue;
+      public Value Next(int index)
+      {
+         if (Length == 0)
+            return NilValue;
+
+         return index.Between(0).Until(Length) ? this[index] : NilValue;
+      }
 
       public bool IsGeneratorAvailable => true;
 
@@ -2971,7 +2977,8 @@ namespace Orange.Library.Values
 
       public Value JSON()
       {
-         return "[" + Keys.Select(key => IsAutoAssignedKey(key) ? array[key].ToString() : $"{key.Quotify("`\"")} : {array[key]}").Listify() + "]";
+         return "[" + Keys.Select(key => IsAutoAssignedKey(key) ? array[key].ToString() : $"{key.Quotify("`\"")} : {array[key]}")
+            .Listify() + "]";
       }
 
       static Value evaluateSortBlock(KeyValueBase item, ParameterAssistant assistant, Block block)
@@ -2979,6 +2986,18 @@ namespace Orange.Library.Values
          assistant.ArrayParameters();
          assistant.SetParameterValues(item.Value, item.Key, 0);
          return block.Evaluate();
+      }
+
+      Array sort(bool ascending)
+      {
+         var parameters = Arguments.Parameters;
+         var length = parameters?.Length ?? 0;
+         if (length < 1)
+            return this;
+         if (length == 1)
+            return Sort(ascending);
+
+         return Order();
       }
 
       public Array Sort(bool ascending)
@@ -2990,7 +3009,8 @@ namespace Orange.Library.Values
             if (block != null)
             {
                assistant.ArrayParameters();
-               sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Text, this) : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Text, this);
+               sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Text, this)
+                  : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Text, this);
             }
             else
                sortedArray = ascending ? array.OrderBy(i => i.Value.Text, this) : array.OrderByDescending(i => i.Value.Text, this);
@@ -3007,7 +3027,8 @@ namespace Orange.Library.Values
             if (block != null)
             {
                assistant.ArrayParameters();
-               sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Number, this) : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Number, this);
+               sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Number, this)
+                  : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Number, this);
             }
             else
                sortedArray = ascending ? array.OrderBy(i => i.Value.Number, this) : array.OrderByDescending(i => i.Value.Number, this);
@@ -3022,6 +3043,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.TwoValueParameters();
             var items = Items;
             System.Array.Sort(items, (i1, i2) => evaluateOrderBlock(i1.Value, i2.Value, assistant, block));
@@ -3035,58 +3057,6 @@ namespace Orange.Library.Values
          return (int)block.Evaluate().Number;
       }
 
-      /*      public Value Group()
-            {
-               var count = (int)Arguments[0].Number;
-               if (count > 0)
-               {
-                  var newArray = new Array();
-                  for (var i = 0; i < Length; i += count)
-                  {
-                     var subArray = new Array();
-                     for (var j = 0; j < count; j++)
-                        subArray.Add(this[i + j]);
-                     newArray.Add(subArray);
-                  }
-                  return newArray;
-               }
-               using (var assistant = new ParameterAssistant(Arguments))
-               {
-                  var block = assistant.Block();
-                  var hash = new AutoHash<string, List<Value>>
-                  {
-                     Default = DefaultType.Lambda,
-                     DefaultLambda = k => new List<Value>(),
-                     AutoAddDefault = true
-                  };
-                  if (block == null)
-                     foreach (var item in this)
-                     {
-                        var value = item.Value;
-                        if (!value.IsArray)
-                           continue;
-                        var inner = (Array)value.SourceArray;
-                        var key = inner[0].Text;
-                        value = inner[1];
-                        hash[key].Add(value);
-                     }
-                  else
-                  {
-                     assistant.ArrayParameters();
-                     foreach (var item in this)
-                     {
-                        assistant.SetParameterValues(item);
-                        var key = block.Evaluate().Text;
-                        hash[key].Add(item.Value);
-                     }
-                  }
-                  var newArray = new Array();
-                  foreach (var item in hash)
-                     newArray[item.Key] = new Array(item.Value);
-                  return newArray;
-               }
-            }*/
-
       public Value GroupNumeric()
       {
          using (var assistant = new ParameterAssistant(Arguments))
@@ -3099,18 +3069,17 @@ namespace Orange.Library.Values
                AutoAddDefault = true
             };
             if (block == null)
-            {
                foreach (var item in this)
                {
                   var value = item.Value;
                   if (!value.IsArray)
                      continue;
+
                   var inner = (Array)value.SourceArray;
                   var key = inner[0].Number;
                   value = inner[1];
                   hash[key].Add(value);
                }
-            }
             else
             {
                assistant.ArrayParameters();
@@ -3121,9 +3090,11 @@ namespace Orange.Library.Values
                   hash[key].Add(item.Value);
                }
             }
+
             var newArray = new Array();
             foreach (var item in hash)
                newArray[item.Key.ToString()] = new Array(item.Value);
+
             return newArray;
          }
       }
@@ -3143,10 +3114,7 @@ namespace Orange.Library.Values
                var values = Values;
                var value = values[0];
 
-               var result = new Array
-               {
-                  value
-               };
+               var result = new Array { value };
 
                for (var i = 1; i < values.Length; i++)
                {
@@ -3158,6 +3126,7 @@ namespace Orange.Library.Values
 
                return result;
             }
+
             return new Array();
          }
       }
@@ -3177,10 +3146,7 @@ namespace Orange.Library.Values
                var values = Values;
                var value = values[values.Length - 1];
 
-               var result = new Array
-               {
-                  value
-               };
+               var result = new Array { value };
 
                for (var i = values.Length - 2; i > -1; i--)
                {
@@ -3192,13 +3158,14 @@ namespace Orange.Library.Values
 
                return result;
             }
+
             return new Array();
          }
       }
 
       public void RemoveAllValues(Value value)
       {
-         var keysToDelete = (this.Where(i => value.Compare(i.Value) == 0).Select(i => i.Key)).ToList();
+         var keysToDelete = this.Where(i => value.Compare(i.Value) == 0).Select(i => i.Key).ToList();
          foreach (var key in keysToDelete)
             Remove(key);
       }
@@ -3215,6 +3182,7 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          foreach (var item in this.Where(i => i.Value.Compare(value) == 0))
             return item.Index;
+
          return -1;
       }
 
@@ -3223,6 +3191,7 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          foreach (var item in this.Where(i => i.Value.Compare(value) == 0))
             return item.Key;
+
          return "";
       }
 
@@ -3235,13 +3204,11 @@ namespace Orange.Library.Values
             handled = false;
             return null;
          }
+
          var key = messageName.Substring(1);
          handled = true;
-         var block = new Block
-         {
-            new Push(key)
-         };
-         return new ChooseIndexer(this, block); //new KeyIndexer(this, block);
+         var block = new Block { new Push(key) };
+         return new ChooseIndexer(this, block);
       }
 
       public bool RespondsTo(string messageName) => messageName.StartsWith("$");
@@ -3257,6 +3224,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          foreach (var item in this.Where(item => !item.Value.IsEmpty))
             newArray.Add(item.Value.AssignmentValue());
+
          return newArray;
       }
 
@@ -3269,10 +3237,12 @@ namespace Orange.Library.Values
          {
             for (var j = 0; j < size; j++)
                list.Add(this[i + j]);
+
             var innerArray = new Array(list.ToArray());
             newArray.Add(innerArray);
             list.Clear();
          }
+
          return newArray;
       }
 
@@ -3285,10 +3255,12 @@ namespace Orange.Library.Values
          {
             for (var j = 0; j < size; j++)
                list.Add(this[i + j]);
+
             var innerArray = new Array(list.ToArray());
             newArray.Add(innerArray);
             list.Clear();
          }
+
          return newArray;
       }
 
@@ -3299,6 +3271,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             var newArray = new Array();
             assistant.ArrayParameters();
             foreach (var item in this)
@@ -3307,16 +3280,12 @@ namespace Orange.Library.Values
                var key = block.Evaluate().Text;
                if (key.IsEmpty())
                   continue;
+
                var value = newArray[key];
                if (value.IsEmpty)
                   newArray[key] = item.Value;
                else if (value.IsArray)
-               {
-                  newArray[key] = new Array
-                  {
-                     value, item.Value
-                  };
-               }
+                  newArray[key] = new Array { value, item.Value };
                else
                {
                   var innerArray = (Array)value.SourceArray;
@@ -3324,6 +3293,7 @@ namespace Orange.Library.Values
                   newArray[key] = innerArray;
                }
             }
+
             return newArray;
          }
       }
@@ -3334,13 +3304,15 @@ namespace Orange.Library.Values
          return asArray == null ? ConcatenateValue(this, Arguments[0]) : Concatenate(this, asArray);
       }
 
-      public Value Range() => new IntRange(0, Length - 1, new None<int>());
+      public Value Range() => new NSIntRange(0, Length, false);
 
       public Value Assoc()
       {
          var value = Arguments[0];
-         foreach (var assoc in this.Where(item => item.Value.IsArray).Select(item => (Array)item.Value.SourceArray).Where(assoc => assoc.ContainsValue(value)))
+         foreach (var assoc in this.Where(i => i.Value.IsArray).Select(i => (Array)i.Value.SourceArray)
+            .Where(a => a.ContainsValue(value)))
             return assoc;
+
          return new Nil();
       }
 
@@ -3354,16 +3326,12 @@ namespace Orange.Library.Values
             if (value.IsArray)
                subArray = (Array)value.SourceArray;
             else
-            {
-               subArray = new Array
-               {
-                  value
-               };
-            }
+               subArray = new Array { value };
             list.Add(subArray);
             if (subArray.Length > maxLength)
                maxLength = subArray.Length;
          }
+
          var newArray = new List<Array>();
          for (var i = 0; i < maxLength; i++)
          {
@@ -3372,6 +3340,7 @@ namespace Orange.Library.Values
             for (var j = 0; j < list.Count; j++)
                subArray[j] = list[j][i];
          }
+
          return new Array(newArray.ToArray());
       }
 
@@ -3391,6 +3360,7 @@ namespace Orange.Library.Values
             foreach (var item in this.Where(item => item.Value.Text.Has(source, true)))
                newArray[item.Key] = item.Value;
          }
+
          return newArray;
       }
 
@@ -3404,6 +3374,7 @@ namespace Orange.Library.Values
       {
          if (Length <= 1)
             return new Array();
+
          return new Array(this.Where((item, i) => i > 0).Select(i => i.Value));
       }
 
@@ -3447,8 +3418,7 @@ namespace Orange.Library.Values
          var splitter = Arguments[0];
          if (splitter.IsEmpty)
             splitter = State.FieldPattern;
-         var pattern = splitter as Pattern;
-         return pattern != null ? fields(pattern, awkify) : fields(splitter.Text, awkify);
+         return splitter is Pattern pattern ? fields(pattern, awkify) : fields(splitter.Text, awkify);
       }
 
       Value fields(Pattern pattern, bool awkify)
@@ -3467,11 +3437,14 @@ namespace Orange.Library.Values
                      fields.Unshift(value);
                   newArray.Add(fields);
                }
+
                return newArray;
             }
+
             var parameters = Arguments.Parameters;
             if (parameters == null || parameters.Length == 0)
                return this;
+
             foreach (var item in this)
             {
                var value = item.Value;
@@ -3483,6 +3456,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -3490,8 +3464,10 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                newArray.Add(result);
             }
+
             return newArray;
          }
       }
@@ -3512,11 +3488,14 @@ namespace Orange.Library.Values
                      fields.Unshift(item.Value);
                   newArray.Add(fields);
                }
+
                return newArray;
             }
+
             var parameters = Arguments.Parameters;
             if (parameters == null || parameters.Length == 0)
                return this;
+
             foreach (var item in this)
             {
                var fields = new Array(item.Value.Text.Split(pattern));
@@ -3527,6 +3506,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -3534,8 +3514,10 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                newArray.Add(result);
             }
+
             return newArray;
          }
       }
@@ -3555,6 +3537,7 @@ namespace Orange.Library.Values
             var breakBlock = breakAssistant.Block();
             if (breakBlock == null)
                return this;
+
             using (var onAssistant = new ParameterAssistant(Arguments))
             {
                var onBlock = onAssistant.Block();
@@ -3586,12 +3569,13 @@ namespace Orange.Library.Values
                   var value = onBlock.Evaluate();
                   newArray.Add(value);
                }
+
                return newArray;
             }
          }
       }
 
-      Value beginValue(Value value) => value.As<Pattern>().Map(betweenPattern, () => betweenText(value.Text));
+      Value beginValue(Value value) => value is Pattern pattern ? betweenPattern(pattern) : betweenText(value.Text);
 
       Value betweenPattern(Pattern pattern)
       {
@@ -3605,6 +3589,7 @@ namespace Orange.Library.Values
                break;
             }
          }
+
          return this;
       }
 
@@ -3620,6 +3605,7 @@ namespace Orange.Library.Values
                break;
             }
          }
+
          return this;
       }
 
@@ -3630,6 +3616,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return beginValue(Arguments[0]);
+
             assistant.ArrayParameters();
             betweening = -1;
             exclusive = betweenExclusive;
@@ -3640,6 +3627,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -3647,17 +3635,19 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (value.IsTrue)
                {
                   betweening = i;
                   break;
                }
             }
+
             return this;
          }
       }
 
-      Value andValue(Value value) => value.As<Pattern>().Map(andPattern, () => andText(value.Text));
+      Value andValue(Value value) => value is Pattern pattern ? andPattern(pattern) : andText(value.Text);
 
       Value andPattern(Pattern pattern)
       {
@@ -3672,8 +3662,10 @@ namespace Orange.Library.Values
                   newArray.Add(value);
                break;
             }
+
             newArray.Add(value);
          }
+
          betweening = -1;
          return newArray;
       }
@@ -3691,8 +3683,10 @@ namespace Orange.Library.Values
                   newArray.Add(value);
                break;
             }
+
             newArray.Add(value);
          }
+
          betweening = -1;
          return newArray;
       }
@@ -3701,11 +3695,13 @@ namespace Orange.Library.Values
       {
          if (betweening == -1)
             return new Array();
+
          using (var assistant = new ParameterAssistant(Arguments))
          {
             var block = assistant.Block();
             if (block == null)
                return andValue(Arguments[0]);
+
             assistant.ArrayParameters();
             var newArray = new Array();
             for (var i = exclusive ? betweening - 1 : betweening; i < Length; i++)
@@ -3716,6 +3712,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -3723,14 +3720,17 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (evaluation.IsTrue)
                {
                   if (!exclusive)
                      newArray.Add(value);
                   break;
                }
+
                newArray.Add(value);
             }
+
             betweening = -1;
             return newArray;
          }
@@ -3741,14 +3741,11 @@ namespace Orange.Library.Values
          var newArray = Copy();
          foreach (var block in Arguments.Blocks)
             newArray.Add(block.Evaluate());
+
          return newArray;
       }
 
-      public CompareType Comparison
-      {
-         get;
-         set;
-      }
+      public CompareType Comparison { get; set; }
 
       public Value SetAny()
       {
@@ -3792,6 +3789,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -3799,18 +3797,23 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   index = i;
                   if (!result.IsTrue)
                      break;
                }
+
                newArray = new Array();
                for (var i = index; i < Length; i++)
                   newArray.Add(this[i]);
+
                return newArray;
             }
+
             var count = (int)Arguments[0].Number;
             if (count == 0)
                return this;
+
             if (count > 0)
             {
                if (count > Length)
@@ -3818,8 +3821,10 @@ namespace Orange.Library.Values
                newArray = new Array();
                for (var i = count; i < Length; i++)
                   newArray.Add(this[i]);
+
                return newArray;
             }
+
             count = -count;
             if (count > Length)
                count = Length;
@@ -3827,6 +3832,7 @@ namespace Orange.Library.Values
             newArray = new Array();
             for (var i = 0; i < count; i++)
                newArray.Add(this[i]);
+
             return newArray;
          }
       }
@@ -3837,7 +3843,6 @@ namespace Orange.Library.Values
          var connector = value.IsEmpty ? State.FieldSeparator.Text : value.Text;
          var newArray = new Array();
          foreach (var item in this)
-         {
             if (item.Value.IsArray)
             {
                var newItem = ((Array)item.Value.SourceArray).Values.Listify(connector);
@@ -3845,7 +3850,7 @@ namespace Orange.Library.Values
             }
             else
                newArray.Add(item.Value);
-         }
+
          return newArray;
       }
 
@@ -3854,33 +3859,31 @@ namespace Orange.Library.Values
       public Value When()
       {
          foreach (var value in Values)
-         {
             switch (value.Type)
             {
                case ValueType.When:
-                  {
-                     var result = ((When)value).Invoke();
-                     if (result.Type != ValueType.Nil)
-                        return result;
-                  }
+               {
+                  var result = ((When)value).Invoke();
+                  if (result.Type != ValueType.Nil)
+                     return result;
+               }
+
                   break;
                case ValueType.Block:
                   return ((Block)value).Evaluate();
                default:
                   return value;
             }
-         }
 
-         return new Nil();
+         return NilValue;
       }
 
       public Value MapIf()
       {
          var value = Arguments[0];
-         var aWhen = value.As<When>();
-         if (aWhen.IsNone)
+         if (!(value is When when))
             return this;
-         var when = aWhen.Value;
+
          var otherwiseExists = when.Otherwise != null;
          var otherwise = otherwiseExists ? (Block)when.Otherwise : null;
          using (var mapAssistant = new ParameterAssistant(when.Result))
@@ -3888,12 +3891,14 @@ namespace Orange.Library.Values
             var mapBlock = mapAssistant.Block();
             if (mapBlock == null)
                return this;
+
             mapAssistant.ArrayParameters();
             using (var ifAssistant = new ParameterAssistant(when.Condition))
             {
                var ifBlock = ifAssistant.Block();
                if (ifBlock == null)
                   return this;
+
                ifAssistant.ArrayParameters();
                var newArray = new Array();
                foreach (var item in this)
@@ -3906,6 +3911,7 @@ namespace Orange.Library.Values
                      var signal = Signal();
                      if (signal == Breaking)
                         return newArray;
+
                      switch (signal)
                      {
                         case Continuing:
@@ -3913,6 +3919,7 @@ namespace Orange.Library.Values
                         case ReturningNull:
                            return null;
                      }
+
                      if (result.Type != ValueType.Nil)
                         newArray[item.Key] = result;
                   }
@@ -3923,6 +3930,7 @@ namespace Orange.Library.Values
                      var signal = Signal();
                      if (signal == Breaking)
                         return newArray;
+
                      switch (signal)
                      {
                         case Continuing:
@@ -3930,12 +3938,14 @@ namespace Orange.Library.Values
                         case ReturningNull:
                            return null;
                      }
+
                      if (result.Type != ValueType.Nil)
                         newArray[item.Key] = result;
                   }
                   else
                      newArray[item.Key] = item.Value;
                }
+
                return newArray;
             }
          }
@@ -3952,9 +3962,11 @@ namespace Orange.Library.Values
             State.RegisterBlock(block);
             foreach (var item in this.Where(item => !IsAutoAssignedKey(item.Key)))
                Regions.SetLocal(item.Key, item.Value);
+
             block.Evaluate();
             State.UnregisterBlock();
          }
+
          return this;
       }
 
@@ -3969,6 +3981,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
             var newArray = new Array();
             while (Length > 0)
@@ -3979,6 +3992,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -3986,11 +4000,13 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (!result.IsTrue)
                   newArray.Add(value);
                else
                   break;
             }
+
             return newArray;
          }
       }
@@ -4004,6 +4020,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
             var newArray = new Array();
             while (Length > 0)
@@ -4014,6 +4031,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -4021,11 +4039,13 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (result.IsTrue)
                   newArray.Add(value);
                else
                   break;
             }
+
             return newArray;
          }
       }
@@ -4039,6 +4059,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             var newArray = new Array();
             assistant.ArrayParameters();
             foreach (var item in this)
@@ -4048,6 +4069,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -4055,10 +4077,13 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (result.IsTrue)
                   return newArray;
+
                newArray.Add(item.Value);
             }
+
             return newArray;
          }
       }
@@ -4072,6 +4097,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             var newArray = new Array();
             assistant.ArrayParameters();
             foreach (var item in this)
@@ -4081,6 +4107,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -4088,11 +4115,14 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return null;
                }
+
                if (!result.IsTrue)
                   return newArray;
+
                newArray[item.Key] = item.Value;
                newArray.Add(item.Value);
             }
+
             return newArray;
          }
       }
@@ -4102,6 +4132,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          foreach (var item in this)
             newArray[item.Key] = SendMessage(item.Value, "succ");
+
          return newArray;
       }
 
@@ -4110,6 +4141,7 @@ namespace Orange.Library.Values
          var newArray = new Array();
          foreach (var item in this)
             newArray[item.Key] = SendMessage(item.Value, "pred");
+
          return newArray;
       }
 
@@ -4122,6 +4154,7 @@ namespace Orange.Library.Values
             var value = this[i + 1];
             newArray[key] = value;
          }
+
          return newArray;
       }
 
@@ -4133,6 +4166,7 @@ namespace Orange.Library.Values
             newArray.Add(item.Key);
             newArray.Add(item.Value);
          }
+
          return newArray;
       }
 
@@ -4143,6 +4177,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
 
             var newArray = new Array();
@@ -4154,6 +4189,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -4161,11 +4197,12 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return newArray;
                }
+
                if (value.Type == ValueType.Nil)
                   continue;
-               var keyedValue = value.As<KeyedValue>();
-               if (keyedValue.IsSome)
-                  newArray[keyedValue.Value.Key] = keyedValue.Value.Value;
+
+               if (value is KeyedValue keyedValue)
+                  newArray[keyedValue.Key] = keyedValue.Value;
                else
                   newArray[item.Key] = value;
             }
@@ -4180,30 +4217,25 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Index()
-      {
-         var value = Arguments[0];
-         var range = value.As<IntRange>();
-         if (range.IsSome)
-         {
-            range.Value.ArrayLength = Length.Some();
-            range.Value.Inside = true;
-            var wrapping = range.Value.As<IWrapping>();
-            if (wrapping.IsSome)
-               wrapping.Value.SetLength(Length);
-            return new IndexIndexer(this, (Array)value.SourceArray);
-         }
-         var keys = Arguments.AsArray(Length);
-         if (keys == null)
-         {
-            return new IndexIndexer(this, new Array
+      /*      public Value Index()
             {
-               Arguments[0]
-            });
-         }
-         keys = (Array)keys.Flatten();
-         return new IndexIndexer(this, keys);
-      }
+               var value = Arguments[0];
+               var range = value.As<NSIntRange>();
+               if (range.IsSome)
+               {
+                  range.Value.Length = Length.Some();
+                  range.Value.Inside = true;
+                  var wrapping = range.Value.As<IWrapping>();
+                  if (wrapping.IsSome)
+                     wrapping.Value.SetLength(Length);
+                  return new IndexIndexer(this, (Array)value.SourceArray);
+               }
+               var keys = Arguments.AsArray(Length);
+               if (keys == null)
+                  return new IndexIndexer(this, new Array { Arguments[0] });
+               keys = (Array)keys.Flatten();
+               return new IndexIndexer(this, keys);
+            }*/
 
       public Value Get()
       {
@@ -4254,6 +4286,7 @@ namespace Orange.Library.Values
       {
          if (Length == 0)
             return "";
+
          return this[0];
       }
 
@@ -4268,8 +4301,10 @@ namespace Orange.Library.Values
             var subArray = new Array();
             for (var j = 0; j < cols; j++)
                subArray.Add(this[index++]);
+
             newArray.Add(subArray);
          }
+
          return newArray;
       }
 
@@ -4291,6 +4326,7 @@ namespace Orange.Library.Values
                   var signal = Signal();
                   if (signal == Breaking)
                      break;
+
                   switch (signal)
                   {
                      case Continuing:
@@ -4298,6 +4334,7 @@ namespace Orange.Library.Values
                      case ReturningNull:
                         return null;
                   }
+
                   if (!result.IsTrue)
                      taking = false;
                   if (taking)
@@ -4322,10 +4359,8 @@ namespace Orange.Library.Values
                   skipped[key] = this[i];
                }
             }
-            return new Array
-            {
-               taken, skipped
-            };
+
+            return new Array { taken, skipped };
          }
       }
 
@@ -4336,6 +4371,7 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             assistant.ArrayParameters();
 
             var newArray = new Array();
@@ -4347,6 +4383,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   return newArray;
+
                switch (signal)
                {
                   case Continuing:
@@ -4354,16 +4391,17 @@ namespace Orange.Library.Values
                   case ReturningNull:
                      return newArray;
                }
+
                if (value.Type == ValueType.Nil)
                   continue;
+
                string key;
                Value newValue;
                var subArray = new Array();
-               var keyedValue = value.As<KeyedValue>();
-               if (keyedValue.IsSome)
+               if (value is KeyedValue keyedValue)
                {
-                  key = keyedValue.Value.Key;
-                  newValue = keyedValue.Value.Value;
+                  key = keyedValue.Key;
+                  newValue = keyedValue.Value;
                   newArray[key] = newValue;
                }
                else
@@ -4375,6 +4413,7 @@ namespace Orange.Library.Values
                subArray.Add(newValue);
                newArray[key] = subArray;
             }
+
             return newArray;
          }
       }
@@ -4386,25 +4425,17 @@ namespace Orange.Library.Values
          {
             if (indicators.Values.All(v => v.Type == ValueType.Number))
                return new IndexIndexer(this, indicators);
-            var block = new Block
-            {
-               new Push(indicators)
-            };
-            return new ChooseIndexer(this, block); //new KeyIndexer(this, block);
+
+            var block = new Block { new Push(indicators) };
+            return new ChooseIndexer(this, block);
          }
+
          var indicator = Arguments[0];
          if (indicator.Type == ValueType.Number)
-         {
-            return new IndexIndexer(this, new Array
-            {
-               indicator
-            });
-         }
-         var keyBlock = new Block
-         {
-            new Push(indicator)
-         };
-         return new ChooseIndexer(this, keyBlock); //new KeyIndexer(this, keyBlock);
+            return new IndexIndexer(this, new Array { indicator });
+
+         var keyBlock = new Block { new Push(indicator) };
+         return new ChooseIndexer(this, keyBlock);
       }
 
       public Value SplitMap()
@@ -4412,9 +4443,11 @@ namespace Orange.Library.Values
          var pattern = Arguments[0] as Pattern;
          if (pattern == null)
             return this;
+
          var newArray = new Array();
          foreach (var item in this)
             newArray[item.Key] = new Array(pattern.Split(item.Value.Text));
+
          return newArray;
       }
 
@@ -4423,191 +4456,34 @@ namespace Orange.Library.Values
          var count = (int)Arguments[0].Number;
          if (count < 2)
             return this;
+
          var newArray = new Array();
          for (var i = 0; i < Length; i += count)
          {
             var subarray = new Array();
             for (var j = 0; j < count; j++)
                subarray.Add(this[i + j]);
+
             newArray.Add(subarray);
          }
+
          return newArray;
       }
-
-      /*      public Value SplitWhile() => splitWhile(Arguments);
-
-            Value splitWhile(Arguments arguments)
-            {
-               var argument0 = arguments[0];
-               var skipFoundElement = !argument0.IsEmpty && argument0.IsTrue;
-
-               using (var assistant = new ParameterAssistant(arguments))
-               {
-                  var block = assistant.Block();
-                  RejectNull(block, LOCATION, "No block found for split");
-                  var array1 = new Array();
-                  var array2 = new Array();
-                  var keeping = true;
-                  assistant.ArrayParameters();
-                  foreach (var item in this)
-                  {
-                     if (keeping)
-                     {
-                        assistant.SetParameterValues(item);
-                        var result = block.Evaluate();
-                        var signal = Signal();
-                        if (signal == Breaking)
-                           break;
-                        switch (signal)
-                        {
-                           case Continuing:
-                              continue;
-                           case ReturningNull:
-                              return null;
-                        }
-                        if (result.IsTrue)
-                           array1[item.Key] = item.Value;
-                        else
-                        {
-                           keeping = false;
-                           if (skipFoundElement)
-                              continue;
-                           array2[item.Key] = item.Value;
-                        }
-                     }
-                     else
-                        array2[item.Key] = item.Value;
-                  }
-                  return new Array
-                  {
-                     array1,
-                     array2
-                  };
-               }
-            }
-
-            public Value Split()
-            {
-               using (var assistant = new ParameterAssistant(Arguments))
-               {
-                  var array1 = new Array();
-                  var array2 = new Array();
-                  var block = assistant.Block();
-                  if (block == null)
-                  {
-                     var count = (int)Arguments[0].Number;
-                     if (count == 0)
-                        return this;
-                     if (count < 0)
-                        count = Length + count;
-                     if (count > Length)
-                        count = Length;
-                     var stop = count - 1;
-                     for (var i = 0; i <= stop; i++)
-                        array1.Add(this[i]);
-                     for (var i = stop + 1; i < Length; i++)
-                        array2.Add(this[i]);
-                     return new Array
-                     {
-                        array1,
-                        array2
-                     };
-                  }
-                  assistant.ArrayParameters();
-                  foreach (var item in this)
-                  {
-                     assistant.SetParameterValues(item);
-                     var result = block.Evaluate();
-                     var signal = Signal();
-                     if (signal == Breaking)
-                        break;
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
-                     if (result.IsTrue)
-                        array1.Add(item.Value);
-                     else
-                        array2.Add(item.Value);
-                  }
-                  return new Array
-                  {
-                     array1,
-                     array2
-                  };
-               }
-            }
-
-            public Value SplitUntil()
-            {
-               return splitUntil(Arguments);
-            }
-
-            Value splitUntil(Arguments arguments)
-            {
-               var argument0 = arguments[0];
-               var skipFoundElement = !argument0.IsEmpty && argument0.IsTrue;
-
-               using (var assistant = new ParameterAssistant(arguments))
-               {
-                  var block = assistant.Block();
-                  RejectNull(block, LOCATION, "No block found for split");
-                  var array1 = new Array();
-                  var array2 = new Array();
-                  var keeping = true;
-                  assistant.ArrayParameters();
-                  foreach (var item in this)
-                  {
-                     if (keeping)
-                     {
-                        assistant.SetParameterValues(item);
-                        var result = block.Evaluate();
-                        var signal = Signal();
-                        if (signal == Breaking)
-                           break;
-                        switch (signal)
-                        {
-                           case Continuing:
-                              continue;
-                           case ReturningNull:
-                              return null;
-                        }
-                        if (!result.IsTrue)
-                           array1.Add(item.Value);
-                        else
-                        {
-                           keeping = false;
-                           if (skipFoundElement)
-                              continue;
-                           array2.Add(item.Value);
-                        }
-                     }
-                     else
-                        array2.Add(item.Value);
-                  }
-                  return new Array
-                  {
-                     array1,
-                     array2
-                  };
-               }
-            }*/
 
       public Value Cross(bool rightAssociate)
       {
          var rightArray = Arguments.AsArray();
          if (rightArray == null)
             return this;
+
          var sourceArray = (Array)Zip();
          using (var assistant = new ParameterAssistant(Arguments))
          {
             var block = assistant.Block();
             RejectNull(block, LOCATION, "No block found for cross");
             var newArray = new Array();
-            var func = rightAssociate ? (Func<Array, Value>)(a => new NSGenerator(a).FoldR()) : (a => new NSGenerator(a).FoldL());
+            var function = rightAssociate ? func<Array, Value>(a => new NSGenerator(a).FoldR())
+               : func<Array, Value>(a => new NSGenerator(a).FoldL());
             foreach (var item in sourceArray)
             {
                var value = item.Value;
@@ -4615,10 +4491,11 @@ namespace Orange.Library.Values
                {
                   var inner = (Array)value.SourceArray;
                   inner.Arguments = Arguments.Clone();
-                  value = func(inner);
+                  value = function(inner);
                   newArray.Add(value);
                }
             }
+
             return newArray;
          }
       }
@@ -4651,7 +4528,6 @@ namespace Orange.Library.Values
          var cumulative = false;
          var returnBlock = false;
          while (source.IsMatch("^ ['bc']"))
-         {
             switch (source[0])
             {
                case 'c':
@@ -4666,7 +4542,7 @@ namespace Orange.Library.Values
                   source = source.Substring(1);
                   break;
             }
-         }
+
          var verbType = TwoCharacterOperatorParser.Operator(source);
          RejectNull(verbType, LOCATION, $"Didn't understand '{source}'");
          var verb = (Verb)Activator.CreateInstance(verbType);
@@ -4680,10 +4556,7 @@ namespace Orange.Library.Values
             {
                value = this[0];
                builder.Value(value);
-               accumulator = new Array
-               {
-                  value
-               };
+               accumulator = new Array { value };
                for (var i = 1; i < Length; i++)
                {
                   builder.Comma();
@@ -4696,15 +4569,14 @@ namespace Orange.Library.Values
                      builder.Value(accumulator[j]);
                   }
                }
+
                block = builder.Block;
                return returnBlock ? block : block.Evaluate();
             }
+
             value = this[Length - 1];
             builder.Value(value);
-            accumulator = new Array
-            {
-               value
-            };
+            accumulator = new Array { value };
             for (var i = Length - 2; i >= 0; i--)
             {
                builder.Comma();
@@ -4715,11 +4587,14 @@ namespace Orange.Library.Values
                   builder.Verb(verb);
                   builder.Value(accumulator[j]);
                }
+
                accumulator.Add(value);
             }
+
             block = builder.Block;
             return returnBlock ? block : block.Evaluate();
          }
+
          builder.Value(this[0]);
          builder.Verb(verb);
          builder.Value(this[1]);
@@ -4728,6 +4603,7 @@ namespace Orange.Library.Values
             builder.Verb(verb);
             builder.Value(this[i]);
          }
+
          var returnedBlock = builder.Block;
          return returnBlock ? returnedBlock : returnedBlock.Evaluate();
       }
@@ -4747,6 +4623,7 @@ namespace Orange.Library.Values
                   this[index] = value;
                   return new Some(oldValue);
                }
+
                return new None();
             default:
                var text = key.Text;
@@ -4756,6 +4633,7 @@ namespace Orange.Library.Values
                   this[text] = value;
                   return new Some(oldValue);
                }
+
                return new None();
          }
       }
@@ -4768,6 +4646,7 @@ namespace Orange.Library.Values
             Remove(index);
             return new Some(element);
          }
+
          return new None();
       }
 
@@ -4779,6 +4658,7 @@ namespace Orange.Library.Values
             Remove(key);
             return new Some(element);
          }
+
          return new None();
       }
 
@@ -4789,8 +4669,10 @@ namespace Orange.Library.Values
          {
             case ValueType.Array:
                var returning = new Array();
-               foreach (var value in ((Array)key).Select(item => item.Value).Select(value => value.Type == ValueType.Number ? removeAt((int)value.Number) : removeAt(value.Text)))
+               foreach (var value in ((Array)key).Select(item => item.Value).Select(value =>
+                  value.Type == ValueType.Number ? removeAt((int)value.Number) : removeAt(value.Text)))
                   returning.Add(value);
+
                return returning;
             case ValueType.Number:
                return removeAt((int)key.Number);
@@ -4802,11 +4684,9 @@ namespace Orange.Library.Values
       public Value Pairs()
       {
          var newArray = new Array();
-         foreach (var subArray in Items.Select(item => new Array
-         {
-            item.Key, item.Value
-         }))
+         foreach (var subArray in Items.Select(item => new Array { item.Key, item.Value }))
             newArray.Add(subArray);
+
          return newArray;
       }
 
@@ -4814,6 +4694,7 @@ namespace Orange.Library.Values
       {
          if (Length == 0)
             return new Array();
+
          return new Array(this.Where((item, i) => i < Length - 1).Select(i => i.Value));
       }
 
@@ -4829,6 +4710,7 @@ namespace Orange.Library.Values
       {
          if (Length < 2)
             return this;
+
          var i = Arguments[0].Int;
          var j = Arguments[1].Int;
          i = WrapIndex(i, Length, true);
@@ -4856,8 +4738,15 @@ namespace Orange.Library.Values
                innerArray = new Array();
             }
          }
+
          newArray.Add(innerArray);
          return newArray;
+      }
+
+      public Value Exists()
+      {
+         var key = Arguments[0].Text;
+         return ContainsKey(key);
       }
    }
 }

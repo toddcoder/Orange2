@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using Core.Numbers;
+using Core.RegularExpressions;
 using Orange.Library.Managers;
-using Standard.Types.Numbers;
-using Standard.Types.RegularExpressions;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant.SignalType;
+using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
@@ -15,27 +16,31 @@ namespace Orange.Library.Values
       Matcher matcher;
       bool ignoreCase;
       bool multiline;
+      bool global;
 
-      public Regex(string pattern, bool ignoreCase, bool multiline)
+      public Regex(string pattern, bool ignoreCase, bool multiline, bool global)
       {
          this.pattern = pattern.Trim();
          matcher = new Matcher();
          this.ignoreCase = ignoreCase;
          this.multiline = multiline;
+         this.global = global;
       }
 
-      string getExpandedPattern()
+      string getExpandedPattern(bool resolve = true)
       {
-         if (matcher.IsMatch(pattern, @"'\' /(-['\']+) '\'"))
+         if (matcher.IsMatch(pattern, $@"'#' /({REGEX_VARIABLE}) /b"))
          {
             for (var i = 0; i < matcher.MatchCount; i++)
             {
                var variableName = matcher[i, 1];
-               var value = Regions[variableName].Text;
+               var value = resolve ? Regions[variableName].Text : $"#{variableName}";
                matcher[i, 0] = value;
             }
+
             return matcher.ToString();
          }
+
          return pattern;
       }
 
@@ -43,44 +48,33 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return getExpandedPattern();
-         }
-         set
-         {
-            pattern = value;
-         }
+         get => getExpandedPattern();
+         set => pattern = value;
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Regex;
 
       public override bool IsTrue => false;
 
-      public override Value Clone() => new Regex(pattern, ignoreCase, multiline);
+      public override Value Clone() => new Regex(pattern, ignoreCase, multiline, global);
 
       protected override void registerMessages(MessageManager manager)
       {
          manager.RegisterMessage(this, "apply", v => ((Regex)v).Apply());
          manager.RegisterMessage(this, "replaceAll", v => ((Regex)v).ReplaceAll());
-         manager.RegisterMessage(this, "is_replaceAll", v => ((Regex)v).ReplaceAllOpt());
+         manager.RegisterMessage(this, "isReplaceAll", v => ((Regex)v).ReplaceAllOpt());
          manager.RegisterMessage(this, "replace", v => ((Regex)v).Replace());
-         manager.RegisterMessage(this, "is_replace", v => ((Regex)v).ReplaceOpt());
+         manager.RegisterMessage(this, "isReplace", v => ((Regex)v).ReplaceOpt());
          manager.RegisterMessage(this, "for", v => ((Regex)v).For());
          manager.RegisterMessage(this, "matches", v => ((Regex)v).Matches());
          manager.RegisterMessage(this, "match", v => ((Regex)v).Match());
          manager.RegisterMessage(this, "split", v => ((Regex)v).Spit());
-         manager.RegisterProperty(this, "ignoreCase", v => ((Regex)v).GetIgnoreCase(),
-            v => ((Regex)v).SetIgnoreCase());
-         manager.RegisterProperty(this, "multiline", v => ((Regex)v).GetMultiline(),
-            v => ((Regex)v).SetMultiline());
+         manager.RegisterProperty(this, "ignoreCase", v => ((Regex)v).GetIgnoreCase(), v => ((Regex)v).SetIgnoreCase());
+         manager.RegisterProperty(this, "multiline", v => ((Regex)v).GetMultiline(), v => ((Regex)v).SetMultiline());
          manager.RegisterMessage(this, "all", v => ((Regex)v).All());
+         manager.RegisterMessage(this, "iter", v => ((Regex)v).Iter());
       }
 
       public Value IgnoreCase() => new ValueAttributeVariable("ignoreCase", this);
@@ -107,9 +101,10 @@ namespace Orange.Library.Values
       {
          for (var i = 0; i < matcher.GroupCount(0); i++)
          {
-            var name = matcher.NameFromIndex(i);
-            if (name.IsSome)
-               Regions[name.Value] = matcher[0, i];
+            if (matcher.NameFromIndex(i).If(out var name))
+            {
+               Regions[name] = matcher[0, i];
+            }
          }
       }
 
@@ -122,9 +117,13 @@ namespace Orange.Library.Values
             createVariables();
             var list = new List<Matcher.Match>();
             for (var i = 0; i < matcher.MatchCount; i++)
+            {
                list.Add(matcher.GetMatch(i));
+            }
+
             return new RegexResult(input, list.ToArray());
          }
+
          return new RegexResult();
       }
 
@@ -137,22 +136,25 @@ namespace Orange.Library.Values
 
       public Value ReplaceAll(string input, string replacement)
       {
-         matcher.IsMatch("", pattern);
          var expandedPattern = getExpandedPattern();
+         matcher.IsMatch("", expandedPattern);
          using (var assistant = new ParameterAssistant(Arguments))
          using (var popper = new RegionPopper(new Region(), "regex-replace"))
          {
             popper.Push();
             var block = assistant.Block();
             if (block == null)
+            {
                return input.Substitute(expandedPattern, replacement, ignoreCase, multiline);
+            }
+
             assistant.ReplacementParameters();
             return getRegex().Replace(input, m =>
             {
                var value = m.Value;
                var index = m.Index;
                var length = m.Length;
-               assistant.SetReplacement(value, index, length);
+               assistant.SetReplacement(value, index, length, 0);
                return block.Evaluate().Text;
             });
          }
@@ -163,7 +165,10 @@ namespace Orange.Library.Values
          var input = Arguments[0].Text;
          var replacement = Arguments[1].Text;
          if (matcher.IsMatch(input, getExpandedPattern(), ignoreCase, multiline))
+         {
             return new Some(input.Substitute(matcher.Pattern, replacement, ignoreCase, multiline));
+         }
+
          return new None();
       }
 
@@ -182,14 +187,19 @@ namespace Orange.Library.Values
          var replacement = Arguments[1].Text;
          var count = Arguments[2].Int;
          if (count == 0)
+         {
             count = 1;
+         }
+
          return Replace(input, replacement, count);
       }
 
       public Value Replace(string input, string replacement, int count = 1)
       {
          if (count == 0)
+         {
             count = 1;
+         }
 
          matcher.IsMatch("", pattern);
          var expandedPattern = getExpandedPattern();
@@ -199,14 +209,17 @@ namespace Orange.Library.Values
             popper.Push();
             var block = assistant.Block();
             if (block == null)
+            {
                return input.Substitute(expandedPattern, replacement, count, ignoreCase, multiline);
+            }
+
             assistant.ReplacementParameters();
             return getRegex().Replace(input, m =>
             {
                var value = m.Value;
                var index = m.Index;
                var length = m.Length;
-               assistant.SetReplacement(value, index, length);
+               assistant.SetReplacement(value, index, length, 0);
                return block.Evaluate().Text;
             }, count);
          }
@@ -221,6 +234,7 @@ namespace Orange.Library.Values
             var regex = getRegex();
             return new Some(regex.Replace(input, replacement, 1));
          }
+
          return new None();
       }
 
@@ -232,29 +246,43 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return new None();
+            }
+
             assistant.ReplacementParameters();
             if (matcher.IsMatch(text, getExpandedPattern(), ignoreCase, multiline))
             {
                for (var i = 0; i < matcher.MatchCount; i++)
-                  for (var j = 1; j < matcher.GroupCount(i); j++)
+               for (var j = 1; j < matcher.GroupCount(i); j++)
+               {
+                  var (_, index, length) = matcher.GetGroup(i, j);
+                  assistant.SetReplacement(matcher[i, j], index, length, j);
+                  var value = block.Evaluate();
+                  if (value.IsNil || value.IsNull || value.IsIgnore)
                   {
-                     var group = matcher.GetGroup(i, j);
-                     assistant.SetReplacement(matcher[i, j], group.Index, group.Length);
-                     matcher[i, j] = block.Evaluate().Text;
-                     var signal = ParameterAssistant.Signal();
-                     if (signal == Breaking)
-                        return new Some(matcher.ToString());
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
+                     continue;
                   }
+
+                  matcher[i, j] = value.Text;
+                  var signal = ParameterAssistant.Signal();
+                  if (signal == Breaking)
+                  {
+                     return new Some(matcher.ToString());
+                  }
+
+                  switch (signal)
+                  {
+                     case Continuing:
+                        continue;
+                     case ReturningNull:
+                        return null;
+                  }
+               }
+
                return new Some(matcher.ToString());
             }
+
             return new None();
          }
       }
@@ -271,9 +299,13 @@ namespace Orange.Library.Values
          {
             var array = new Array();
             for (var i = 0; i < matcher.MatchCount; i++)
+            {
                array.Add(new Array(matcher.Groups(i)));
+            }
+
             return new Some(array);
          }
+
          return new None();
       }
 
@@ -285,9 +317,21 @@ namespace Orange.Library.Values
 
       void assignToArray(Array array, int matchIndex, int groupIndex)
       {
-         matcher.NameFromIndex(groupIndex)
-            .If(name => array[name] = matcher[matchIndex, groupIndex])
-            .Else(() => array.Add(matcher[matchIndex, groupIndex]));
+         var value = matcher[matchIndex, groupIndex];
+         if (matcher.NameFromIndex(groupIndex).If(out var name))
+         {
+            array[name] = value;
+            if (name.IsMatch("^ 'out' /d*"))
+            {
+               State.ConsoleManager.ConsolePrintln(value);
+            }
+
+            Regions.Parent(Regions.Level - 2).CreateAndSet(name, value);
+         }
+         else
+         {
+            array.Add(value);
+         }
       }
 
       public Value Match(string text)
@@ -295,12 +339,43 @@ namespace Orange.Library.Values
          if (matcher.IsMatch(text, getExpandedPattern(), ignoreCase, multiline))
          {
             var array = new Array();
+            if (global)
+            {
+               for (var i = 0; i < matcher.MatchCount; i++)
+               for (var j = 0; j < matcher.GroupCount(i); j++)
+               {
+                  assignToArray(array, i, j);
+               }
+            }
+
             for (var i = 0; i < matcher.GroupCount(0); i++)
+            {
                assignToArray(array, 0, i);
+            }
+
             return new Some(array);
          }
+
          return new None();
       }
+
+      public Value Iter(string text)
+      {
+         if (matcher.IsMatch(text, getExpandedPattern(), ignoreCase, multiline))
+         {
+            var array = new Array();
+            for (var i = 0; i < matcher.MatchCount; i++)
+            {
+               assignToArray(array, i, 0);
+            }
+
+            return (Value)array.GetGenerator();
+         }
+
+         return Nil.NilValue;
+      }
+
+      public Value Iter() => Iter(Arguments[0].Text);
 
       bool isMatch(string input) => input.IsMatch(getExpandedPattern(), ignoreCase, multiline);
 
@@ -313,7 +388,10 @@ namespace Orange.Library.Values
       public Value Split(string text)
       {
          if (matcher.IsMatch(text, getExpandedPattern(), ignoreCase, multiline))
+         {
             return new Array(text.Split(matcher.Pattern, ignoreCase, multiline, false));
+         }
+
          return new Array { text };
       }
 
@@ -325,28 +403,48 @@ namespace Orange.Library.Values
          {
             var array = new Array();
             for (var i = 0; i < matcher.MatchCount; i++)
+            {
                assignToArray(array, i, 0);
+            }
+
             return new Some(array);
          }
+
          return new None();
       }
 
       public string Slice(string text, int index)
       {
          if (matcher.IsMatch(text, getExpandedPattern(), ignoreCase, multiline))
+         {
             return matcher[0, index];
+         }
+
          return "";
       }
 
       public override string ToString()
       {
-         matcher.IsMatch("", getExpandedPattern());
-         var result = new StringBuilder(matcher.Pattern);
-         if (ignoreCase)
-            result.Append(" ;i");
-         if (multiline)
-            result.Append(" ;m");
-         return result.ToString();
+         try
+         {
+            matcher.IsMatch("", getExpandedPattern());
+            var result = new StringBuilder(matcher.Pattern);
+            if (ignoreCase)
+            {
+               result.Append(" ;i");
+            }
+
+            if (multiline)
+            {
+               result.Append(" ;m");
+            }
+
+            return result.ToString();
+         }
+         catch
+         {
+            return pattern;
+         }
       }
    }
 }

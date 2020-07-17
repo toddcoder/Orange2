@@ -6,23 +6,17 @@ namespace Orange.Library.Values
 	{
 		Region region;
 
-		public Binding(Region region)
-		{
-			this.region = region;
-		}
+		public Binding(Region region) => this.region = region;
 
-		public Binding()
+	   public Binding()
 		{
 			region = new Region();
 			RegionManager.Regions.Current.CopyAllVariablesTo(region);
 		}
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+		public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;
@@ -34,28 +28,13 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Binding;
-			}
-		}
+		public override ValueType Type => ValueType.Binding;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return new Binding(region);
-		}
+	   public override Value Clone() => new Binding(region);
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "use", v => ((Binding)v).Use());
 		}

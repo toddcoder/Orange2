@@ -1,10 +1,8 @@
-﻿using System;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
 using Standard.Types.Maybe;
 using static Orange.Library.Parsers.StatementParser;
-using static Standard.Types.Tuples.TupleFunctions;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers.Special
 {
@@ -12,19 +10,18 @@ namespace Orange.Library.Parsers.Special
    {
       bool addEnd;
 
-      public OneLineBlockParser(bool addEnd)
-      {
-         this.addEnd = addEnd;
-      }
+      public OneLineBlockParser(bool addEnd) => this.addEnd = addEnd;
 
-      public override IMaybe<Tuple<Block, int>> Parse(string source, int index)
+      public override IMaybe<(Block, int)> Parse(string source, int index)
       {
-         return OneLineStatement(source, index).Map((b, i) =>
+         if (OneLineStatement(source, index).If(out var block, out var i))
          {
             if (addEnd)
-               b.Add(new End());
-            return tuple(b, i);
-         });
+               block.Add(new End());
+            return (block, i).Some();
+         }
+
+         return none<(Block, int)>();
       }
    }
 }

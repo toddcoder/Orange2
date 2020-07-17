@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block at;
 
 		public AtBlockElement(Block at)
-			: base(0)
-		{
-			this.at = at;
-		}
+			: base(0) => this.at = at;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 		   position = (int)(at.Evaluate()?.Number ?? 0);
 			return base.Evaluate(input);

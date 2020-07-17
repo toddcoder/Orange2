@@ -1,16 +1,14 @@
 ﻿using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 
 namespace Orange.Library.Parsers
 {
    public class ClassSetterParser : Parser
    {
       public ClassSetterParser()
-         : base($"^ /(|sp|) /'@' /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}")
-      {
-      }
+         : base($"^ /(|sp|) /'@' /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -23,11 +21,13 @@ namespace Orange.Library.Parsers
 
          var assignParser = new AssignParser();
          var start = position + tokens[1].Length + 1 + message.Length + tokens[3].Length;
-         return assignParser.Parse(source, start).Map((assigment, index) =>
+         if (assignParser.Parse(source, start).If(out var assigment, out var index))
          {
             overridePosition = index;
             return new ClassSetter(message, assigment.Verb, assigment.Expression);
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "class setter";

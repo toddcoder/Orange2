@@ -8,12 +8,9 @@ namespace Orange.Library.Patterns
 		Block textBlock;
 
 		public MBreakBlockElement(Block textBlock, int count = -1)
-			: base("", count)
-		{
-			this.textBlock = textBlock;
-		}
+			: base("", count) => this.textBlock = textBlock;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			text = Expand(textBlock.Evaluate().Text);
 			return base.Evaluate(input);
@@ -30,10 +27,7 @@ namespace Orange.Library.Patterns
 				text = Expand(textBlock.Evaluate().Text);
 				return base.Alternate;
 			}
-			set
-			{
-				base.Alternate = value;
-			}
-		}
+			set => base.Alternate = value;
+	   }
 	}
 }

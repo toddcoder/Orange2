@@ -3,38 +3,26 @@ using Orange.Library.Values;
 
 namespace Orange.Library.Verbs
 {
-	public class MessageVerb : Verb
-	{
-		const string LOCATION = "Message verb";
+   public class MessageVerb : Verb
+   {
+      const string LOCATION = "Message verb";
 
-		string message;
-		ValueStack stack;
+      string message;
+      ValueStack stack;
 
-		public MessageVerb(string message)
-		{
-			this.message = message;
-		}
+      public MessageVerb(string message) => this.message = message;
 
-		public override Value Evaluate()
-		{
-			stack = Runtime.State.Stack;
-			Value argumentValue = stack.Pop(true, LOCATION);
-			Value target = stack.Pop(true, LOCATION);
-			var arguments = new Arguments(argumentValue);
-			return Runtime.SendMessage(target, message, arguments);
-		}
+      public override Value Evaluate()
+      {
+         stack = Runtime.State.Stack;
+         var argumentValue = stack.Pop(true, LOCATION);
+         var target = stack.Pop(true, LOCATION);
+         var arguments = new Arguments(argumentValue);
+         return Runtime.SendMessage(target, message, arguments);
+      }
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+      public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return message + ":";
-		}
-	}
+      public override string ToString() => message + ":";
+   }
 }

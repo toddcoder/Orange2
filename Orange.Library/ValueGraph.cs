@@ -36,26 +36,14 @@ namespace Orange.Library
 
 	   public Value Value
 		{
-			get
-			{
-				return value;
-			}
-			set
-			{
-				this.value = value;
-			}
-		}
+			get => value;
+	      set => this.value = value;
+	   }
 
 		public ValueGraph this[string name]
 		{
-			get
-			{
-				return children[name];
-			}
-			set
-			{
-				children[name] = value;
-			}
+			get => children[name];
+		   set => children[name] = value;
 		}
 
 		public Hash<string, ValueGraph> Children => children;

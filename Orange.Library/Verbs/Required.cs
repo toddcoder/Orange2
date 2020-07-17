@@ -7,22 +7,10 @@ namespace Orange.Library.Verbs
 	{
 		const string LOCATION = "Required";
 
-		public override Value Evaluate()
-		{
-			return When.EvaluateWhen(true, LOCATION);
-		}
+		public override Value Evaluate() => When.EvaluateWhen(true, LOCATION);
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "Required";
-		}
+	   public override string ToString() => "Required";
 	}
 }

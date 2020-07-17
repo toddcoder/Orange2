@@ -36,12 +36,9 @@ namespace Orange.Library.Values
 			return this;
 		}
 
-		public override Value Clone()
-		{
-			return new ScalarStream(seed.Clone(), limit);
-		}
+		public override Value Clone() => new ScalarStream(seed.Clone(), limit);
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "map", v => ((ScalarStream)v).Map());
 			manager.RegisterMessage(this, "if", v => ((ScalarStream)v).IfMessage());

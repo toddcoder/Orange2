@@ -2,19 +2,10 @@
 {
 	public class NegateElement : Element
 	{
-		public override bool Evaluate(string input)
-		{
-			return false;
-		}
+		public override bool Evaluate(string input) => false;
 
-		public override Element Clone()
-		{
-			return clone(new NegateElement());
-		}
+	   public override Element Clone() => clone(new NegateElement());
 
-		public override string ToString()
-		{
-			return "!";
-		}
+	   public override string ToString() => "!";
 	}
 }

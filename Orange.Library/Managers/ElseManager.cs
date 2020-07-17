@@ -2,32 +2,29 @@
 
 namespace Orange.Library.Managers
 {
-	public class ElseManager
-	{
-		Stack<bool> elses;
+   public class ElseManager
+   {
+      Stack<bool> elses;
 
-		public ElseManager()
-		{
-			elses = new Stack<bool>();
-		}
+      public ElseManager() => elses = new Stack<bool>();
 
-		public void IfSuccess()
-		{
-			elses.Push(false);
-		}
+      public void IfSuccess()
+      {
+         elses.Push(false);
+      }
 
-		public void IfFail()
-		{
-			elses.Push(true);
-		}
+      public void IfFail()
+      {
+         elses.Push(true);
+      }
 
-		public bool PendingElse()
-		{
-			bool pending = elses.Pop();
-			if (pending)
-				return true;
-			elses.Push(false);
-			return false;
-		}
-	}
+      public bool PendingElse()
+      {
+         var pending = elses.Pop();
+         if (pending)
+            return true;
+         elses.Push(false);
+         return false;
+      }
+   }
 }

@@ -5,38 +5,14 @@ namespace Orange.Library.Verbs
 {
 	public class SafeDivide : TwoValueVerb
 	{
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Divide;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Divide;
 
-		public override Value Evaluate(Value x, Value y)
-		{
-			return y.Number == 0 ? 0 : x.Number / y.Number;
-		}
+	   public override Value Evaluate(Value x, Value y) => y.Number == 0 ? 0 : x.Number / y.Number;
 
-		public override string Location
-		{
-			get
-			{
-				return "Safe Divide";
-			}
-		}
+	   public override string Location => "Safe Divide";
 
-		public override string Message
-		{
-			get
-			{
-				return "sdiv";
-			}
-		}
+	   public override string Message => "sdiv";
 
-		public override string ToString()
-		{
-			return "//";
-		}
+	   public override string ToString() => "//";
 	}
 }

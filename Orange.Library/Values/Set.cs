@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Enumerables;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
 
@@ -57,10 +55,16 @@ namespace Orange.Library.Values
       static Set getOtherSet(Arguments arguments)
       {
          var value = arguments[0];
-         Set otherSet;
-         Assert(value.As<Set>().Assign(out otherSet), LOCATION, $"{value} isn't a set");
-         return otherSet;
+         if (value is Set otherSet)
+         {
+            return otherSet;
+         }
+
+         Throw(LOCATION, $"{value} isn't a set");
+         return null;
       }
+
+      public Set getOtherSet() => getOtherSet(Arguments);
 
       public Value IsSubsetOf() => IsSubsetOf(getOtherSet(Arguments));
 
@@ -94,10 +98,10 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "mult", v => ((Set)v).Intersection());
          manager.RegisterMessage(this, "in", v => ((Set)v).In());
          manager.RegisterMessage(this, "notIn", v => ((Set)v).NotIn());
-         manager.RegisterMessage(this, "is_subset", v => ((Set)v).IsSubsetOf());
-         manager.RegisterMessage(this, "is_propSubset", v => ((Set)v).IsProperSubsetOf());
-         manager.RegisterMessage(this, "is_superset", v => ((Set)v).IsSupersetOf());
-         manager.RegisterMessage(this, "is_propSuperset", v => ((Set)v).IsProperSupersetOf());
+         manager.RegisterMessage(this, "isSubset", v => ((Set)v).IsSubsetOf());
+         manager.RegisterMessage(this, "isPropSubset", v => ((Set)v).IsProperSubsetOf());
+         manager.RegisterMessage(this, "isSuperset", v => ((Set)v).IsSupersetOf());
+         manager.RegisterMessage(this, "isPropSuperset", v => ((Set)v).IsProperSupersetOf());
          manager.RegisterMessage(this, "head", v => ((Set)v).Head());
          manager.RegisterMessage(this, "tail", v => ((Set)v).Tail());
          manager.RegisterMessage(this, "concat", v => ((Set)v).Concatenate());
@@ -111,39 +115,37 @@ namespace Orange.Library.Values
       {
          var value = Arguments[0];
          if (!value.IsNil)
+         {
             hashSet.Add(value);
+         }
+
          return this;
       }
 
       public void Add(Value value)
       {
-         Set other;
-         if (value.As<Set>().Assign(out other))
+         if (value is Set other)
          {
             foreach (var innerValue in other.hashSet)
+            {
                Add(innerValue);
+            }
          }
          else
+         {
             hashSet.Add(value);
+         }
       }
 
-      Set getSetFromArguments()
-      {
-         Set other;
-         var value = Arguments[0];
-         Assert(value.As<Set>().Assign(out other), "Set", "Other argument not a set");
-         return other;
-      }
+      public Value Union() => new Set(hashSet.Union(getOtherSet().hashSet));
 
-      public Value Union() => new Set(hashSet.Union(getSetFromArguments().hashSet));
+      public Value Difference() => new Set(hashSet.Except(getOtherSet().hashSet));
 
-      public Value Difference() => new Set(hashSet.Except(getSetFromArguments().hashSet));
-
-      public Value Intersection() => new Set(hashSet.Intersect(getSetFromArguments().hashSet));
+      public Value Intersection() => new Set(hashSet.Intersect(getOtherSet().hashSet));
 
       public override Value AlternateValue(string message) => new Array(hashSet);
 
-      public override string ToString() => $"({hashSet.Listify(" ^^ ")})";
+      public override string ToString() => $"({hashSet.Stringify(" ^^ ")})";
 
       public bool Equals(Value x, Value y) => x.Compare(y) == 0;
 
@@ -158,7 +160,10 @@ namespace Orange.Library.Values
       public Value Head()
       {
          if (hashSet.Count == 0)
+         {
             return new Null();
+         }
+
          var first = hashSet.First();
          var set = new Set();
          set.Add(first);
@@ -171,11 +176,13 @@ namespace Orange.Library.Values
 
       public Value Concatenate()
       {
-         Set otherSet;
-         Assert(Arguments[0].As<Set>().Assign(out otherSet), LOCATION, "Can only concatenate to another set");
+         var otherSet = getOtherSet();
          var newSet = new Set(hashSet);
          foreach (var otherValue in otherSet.hashSet)
+         {
             newSet.Add(otherValue);
+         }
+
          return newSet;
       }
 
@@ -195,7 +202,10 @@ namespace Orange.Library.Values
       public Value Next(int index)
       {
          if (index < hashSet.Count)
+         {
             return values.Value[index];
+         }
+
          setValues();
          return NilValue;
       }
@@ -203,6 +213,5 @@ namespace Orange.Library.Values
       public bool IsGeneratorAvailable => true;
 
       public Array ToArray() => GeneratorToArray(this);
-
    }
 }

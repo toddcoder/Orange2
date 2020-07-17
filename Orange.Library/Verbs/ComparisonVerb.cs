@@ -121,7 +121,7 @@ namespace Orange.Library.Verbs
 		bool compareArrayOne(Array x, Value y)
 		{
 			var found = false;
-			foreach (var item in x.Where(item => Compare(item.Value.Compare(y))))
+			foreach (var _ in x.Where(item => Compare(item.Value.Compare(y))))
 			{
 				if (found)
 					return false;
@@ -133,7 +133,7 @@ namespace Orange.Library.Verbs
 		bool compareArrayOne(Value x, Array y)
 		{
 			var found = false;
-			foreach (var item in y.Where(item => Compare(x.Compare(item.Value))))
+			foreach (var _ in y.Where(item => Compare(x.Compare(item.Value))))
 			{
 				if (found)
 					return false;

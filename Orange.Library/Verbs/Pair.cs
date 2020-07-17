@@ -15,17 +15,8 @@ namespace Orange.Library.Verbs
 			return new Values.Pair(left, right);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.KeyedValue;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.KeyedValue;
 
-		public override string ToString()
-		{
-			return @"\";
-		}
+	   public override string ToString() => @"\";
 	}
 }

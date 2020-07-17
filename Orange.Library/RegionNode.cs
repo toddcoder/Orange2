@@ -11,24 +11,12 @@
 			this.parent = parent;
 		}
 
-		public Region Region
-		{
-			get
-			{
-				return region;
-			}
-		}
+		public Region Region => region;
 
-		public RegionNode Parent
+	   public RegionNode Parent
 		{
-			get
-			{
-				return parent;
-			}
-			set
-			{
-				parent = value;
-			}
+			get => parent;
+		   set => parent = value;
 		}
 	}
 }

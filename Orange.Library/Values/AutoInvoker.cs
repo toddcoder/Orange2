@@ -13,12 +13,9 @@ namespace Orange.Library.Values
 			invokeableAsValue = (Value)this.invokeable;
 		}
 
-		public override int Compare(Value value)
-		{
-			return invokeableAsValue.Compare(value);
-		}
+		public override int Compare(Value value) => invokeableAsValue.Compare(value);
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -40,49 +37,22 @@ namespace Orange.Library.Values
 			}
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.AutoInvoker;
-			}
-		}
+		public override ValueType Type => ValueType.AutoInvoker;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return invokeableAsValue.IsTrue;
-			}
-		}
+	   public override bool IsTrue => invokeableAsValue.IsTrue;
 
-		public override Value Clone()
-		{
-			return new AutoInvoker(invokeable);
-		}
+	   public override Value Clone() => new AutoInvoker(invokeable);
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 
-		public override Value Resolve()
-		{
-			return invoke();
-		}
+		public override Value Resolve() => invoke();
 
-		public override Value ArgumentValue()
-		{
-			return invoke();
-		}
+	   public override Value ArgumentValue() => invoke();
 
-		public override Value AssignmentValue()
-		{
-			return invoke();
-		}
+	   public override Value AssignmentValue() => invoke();
 
-		Value invoke()
-		{
-			return invokeable.Invoke(new Arguments());
-		}
+	   Value invoke() => invokeable.Invoke(new Arguments());
 	}
 }

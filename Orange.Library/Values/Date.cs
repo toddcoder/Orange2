@@ -21,48 +21,29 @@ namespace Orange.Library.Values
 
 	   DateTime dateTime;
 
-		public Date(DateTime dateTime)
-		{
-			this.dateTime = dateTime;
-		}
+		public Date(DateTime dateTime) => this.dateTime = dateTime;
 
-		public Date(double ticks)
-		{
-			dateTime = new DateTime((long)ticks);
-		}
+	   public Date(double ticks) => dateTime = new DateTime((long)ticks);
 
-		public Date(Value value)
+	   public Date(Value value)
 		{
 			if (value.Type == ValueType.Date)
 				dateTime = ((Date)value).dateTime;
-			DateTime converted;
-			dateTime = DateTime.TryParse(value.Text, out converted) ? converted : new DateTime((long)value.Number);
+		   dateTime = DateTime.TryParse(value.Text, out var converted) ? converted : new DateTime((long)value.Number);
 		}
 
 		public override int Compare(Value value) => dateTime.Ticks.CompareTo((long)value.Number);
 
 	   public override string Text
 		{
-			get
-			{
-				return dateTime.ToString();
-			}
-			set
-			{
-				dateTime = DateTime.Parse(value);
-			}
-		}
+			get => dateTime.ToString();
+	      set => dateTime = DateTime.Parse(value);
+	   }
 
 		public override double Number
 		{
-			get
-			{
-				return dateTime.Ticks;
-			}
-			set
-			{
-				dateTime = new DateTime((long)value);
-			}
+			get => dateTime.Ticks;
+		   set => dateTime = new DateTime((long)value);
 		}
 
 		public override ValueType Type => ValueType.Date;
@@ -121,32 +102,23 @@ namespace Orange.Library.Values
 
 	   public override Value AlternateValue(string message) => Text;
 
-	   public static Value Months()
-		{
-			return new Array(new[]
-			{
-				"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November",
-            "December"
-			});
-		}
+	   public static Value Months() => new Array(new[]
+	   {
+	      "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November",
+	      "December"
+	   });
 
-		public static Value DaysInMonth()
+	   public static Value DaysInMonth() => new Array(new Value[]
 		{
-			return new Array(new Value[]
-			{
-				31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-			});
-		}
+		   31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+		});
 
-		public static Value DaysInWeek()
+	   public static Value DaysInWeek() => new Array(new[]
 		{
-			return new Array(new[]
-			{
-				"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
-			});
-		}
+		   "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+		});
 
-		public Value Year() => dateTime.Year;
+	   public Value Year() => dateTime.Year;
 
 	   public Value Month() => dateTime.Month;
 

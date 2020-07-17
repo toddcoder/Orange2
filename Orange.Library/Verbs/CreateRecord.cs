@@ -2,7 +2,6 @@
 using Orange.Library.Values;
 using Standard.Types.Collections;
 using Standard.Types.Enumerables;
-using Standard.Types.Objects;
 using Standard.Types.Strings;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
@@ -25,13 +24,16 @@ namespace Orange.Library.Verbs
       {
          if (fieldName.IsEmpty())
             return new Record(members, Regions.Current);
+
          var value = Regions[fieldName];
-         var sourceRecord = value.As<Record>();
-         Assert(sourceRecord.IsSome, "Create record", $"{value} isn't record");
-         return new Record(sourceRecord.Value, members, Regions.Current);
+         if (value is Record sourceRecord)
+            return new Record(sourceRecord, members, Regions.Current);
+
+         Throw("Create record", $"{value} isn't record");
+         return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
       public Hash<string, Thunk> Members => members;
 
@@ -39,8 +41,7 @@ namespace Orange.Library.Verbs
 
       public override string ToString()
       {
-         return $"(rec{(fieldName.IsEmpty() ? " " : $" of {fieldName}")} " +
-            $"{members.Select(i => $"{i.Key} = {i.Value}").Listify()}";
+         return $"(rec{(fieldName.IsEmpty() ? " " : $" of {fieldName}")} " + $"{members.Select(i => $"{i.Key} = {i.Value}").Listify()}";
       }
    }
 }

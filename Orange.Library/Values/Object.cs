@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Monads;
+using Core.Objects;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
 using Orange.Library.Parsers;
-using Standard.Types.Collections;
-using Standard.Types.Tuples;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -26,10 +25,7 @@ namespace Orange.Library.Values
          Object obj;
 
          public ObjectGenerator(Object generatorSource)
-            : base(generatorSource)
-         {
-            obj = generatorSource;
-         }
+            : base(generatorSource) => obj = generatorSource;
 
          public override void Reset() => obj.SendToSelf("reset");
 
@@ -47,7 +43,7 @@ namespace Orange.Library.Values
 
       const string LOCATION = "Object";
 
-      public static string InvokeableName(string className, bool isObj, string name)
+      public static string InvokableName(string className, bool isObj, string name)
       {
          return $"{(isObj ? "obj" : "cls")}/{className}/{name}";
       }
@@ -65,6 +61,7 @@ namespace Orange.Library.Values
             case "locked":
                return Locked;
          }
+
          return Parser.CurrentVisibility;
       }
 
@@ -84,23 +81,27 @@ namespace Orange.Library.Values
       public void Initialize(ObjectBuildingRegion buildingRegion, bool isObj, string clsName, bool lockedDown)
       {
          region = buildingRegion.NewRegion(this, isObj);
-         region.SetReadOnly("id", id, _override: true);
+         region.SetReadOnly("id", id, @override: true);
          visibilityTypes = buildingRegion.VisibilityTypes;
          isObject = isObj;
          className = clsName;
          if (lockedDown)
+         {
             region = Region.LockedDown();
+         }
+
          initialized = true;
       }
 
-      void setObjectPropertyVariable(string name, ObjectPropertyVariable2 variable,
-         Action<ObjectPropertyVariable2, IInvokeable> action)
+      void setObjectPropertyVariable(string name, ObjectPropertyVariable2 variable, Action<ObjectPropertyVariable2, IInvokeable> action)
       {
          if (!region.Variables.ContainsKey(name))
+         {
             return;
+         }
 
          var value = region.Variables[name];
-         var reference = value.As<InvokeableReference>().Required($"{name} must be an invokeable");
+         var reference = value.RequiredCast<InvokeableReference>(() => $"{name} must be an invokable");
          action(variable, reference.Invokeable);
       }
 
@@ -113,9 +114,11 @@ namespace Orange.Library.Values
       public Value SendToSelf(string messageName, Arguments arguments, Func<Value> func = null)
       {
          if (func == null)
+         {
             func = () => defaultFunc(messageName);
-         bool handled;
-         return RespondsTo(messageName) ? Send(this, messageName, arguments, out handled) : func();
+         }
+
+         return RespondsTo(messageName) ? Send(this, messageName, arguments, out _) : func();
       }
 
       public Value SendToSelf(string messageName, Value value, Func<Value> func = null)
@@ -124,29 +127,17 @@ namespace Orange.Library.Values
          return SendToSelf(messageName, arguments, func);
       }
 
-      public Value SendToSelf(string messageName, Func<Value> func = null)
-      {
-         return SendToSelf(messageName, new Arguments(), func);
-      }
+      public Value SendToSelf(string messageName, Func<Value> func = null) => SendToSelf(messageName, new Arguments(), func);
 
       public override int Compare(Value value) => Match(this, value, false, null) ? 0 : 1;
 
       public override string Text
       {
-         get
-         {
-            return ToString();
-         }
-         set
-         {
-         }
+         get => ToString();
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Object;
 
@@ -155,12 +146,16 @@ namespace Orange.Library.Values
       public override Value Clone()
       {
          var obj = new Object();
-         var lockedDownRegion = region.As<LockedDownRegion>();
-         if (lockedDownRegion.IsSome)
-            obj.Initialize(lockedDownRegion.Value.ObjectBuildingNamespace(), isObject, className, true);
+         if (region is LockedDownRegion lockedDownRegion)
+         {
+            obj.Initialize(lockedDownRegion.ObjectBuildingNamespace(), isObject, className, true);
+         }
          else
+         {
             obj.Initialize((ObjectBuildingRegion)region.Clone(), isObject, className,
                region is LockedDownRegion);
+         }
+
          return obj;
       }
 
@@ -179,6 +174,7 @@ namespace Orange.Library.Values
             Throw(LOCATION, "Object messages can't be invoked in initializer");
             return null;
          }
+
          if (!IsPublic(messageName) && !arguments.FromSelf)
          {
             if (region.ContainsMessage(messageName))
@@ -187,64 +183,67 @@ namespace Orange.Library.Values
                Throw(LOCATION, $"Message {unmanagledMessage} is not public");
                return null;
             }
+
             handled = false;
             return null;
          }
-         InvokeableReference reference;
+
          if (region.ContainsMessage(messageName))
          {
             var retrieved = region[messageName];
             handled = true;
-            if (retrieved.As<InvokeableReference>().Assign(out reference))
+            switch (retrieved)
             {
-               var result = invoke(reference, arguments);
-               return result;
+               case InvokeableReference invokableReference:
+               {
+                  var result = invoke(invokableReference, arguments.AddLambdaAsArgument());
+                  return result;
+               }
+               case ObjectPropertyVariable2 _:
+                  return retrieved;
+               default:
+                  return new ObjectVariable(this, region, messageName);
             }
-            if (retrieved is ObjectPropertyVariable2)
-               return retrieved;
-            return new ObjectVariable(this, region, messageName);
          }
+
          if (IsXMethodAvailable(messageName))
          {
             handled = true;
-            return InvokeXMethod(messageName, this, arguments);
+            return InvokeXMethod(messageName, this, arguments.AddLambdaAsArgument());
          }
-         reference = State.GetExtender(className, messageName);
+
+         var reference = State.GetExtender(className, messageName);
          if (reference != null)
          {
             handled = true;
-            return invoke(reference, arguments);
+            return invoke(reference, arguments.AddLambdaAsArgument());
          }
+
          if (DefaultRespondsTo(messageName))
          {
             handled = false;
             return null;
          }
+
          if (region.ContainsMessage("unknown"))
          {
             var retrieved = region["unknown"];
             handled = true;
-            if (retrieved.As<InvokeableReference>().Assign(out reference))
+            if (retrieved is InvokeableReference)
             {
                arguments.Unshift(messageName);
-               var result = invoke(reference, arguments);
+               var result = invoke(reference, arguments.AddLambdaAsArgument());
                return result;
             }
          }
+
          handled = false;
          return null;
       }
 
-      public InvokeableReference Invokeable(string message)
+      public InvokeableReference Invokable(string message)
       {
-         if (region.ContainsMessage(message))
-         {
-            var retrieved = region[message];
-            var reference = retrieved.As<InvokeableReference>();
-            if (reference.IsSome)
-               return reference.Value;
-         }
-         return null;
+         return region.ContainsMessage(message) && region[message] is InvokeableReference reference ? reference : null;
       }
 
       Value invoke(InvokeableReference reference, Arguments arguments)
@@ -253,18 +252,20 @@ namespace Orange.Library.Values
          using (var popper = new RegionPopper(region, name))
          {
             popper.Push();
+            reference.ObjectRegion = region.Some();
             var result = reference.Invoke(arguments);
             result = State.UseReturnValue(result);
             return result;
          }
       }
 
-      public Value Invoke(IInvokeable invokeable, Arguments arguments)
+      public Value Invoke(IInvokeable invokable, Arguments arguments)
       {
-         using (var popper = new RegionPopper(region, "Invoking invokeable"))
+         using (var popper = new RegionPopper(region, "Invoking invokable"))
          {
             popper.Push();
-            var result = invokeable.Invoke(arguments);
+            invokable.ObjectRegion = region.Some();
+            var result = invokable.Invoke(arguments);
             result = State.UseReturnValue(result);
             return result;
          }
@@ -282,13 +283,17 @@ namespace Orange.Library.Values
             _public.CopyVariablesTo(region);
             State.UnregisterBlock();
          }
+
          return this;
       }
 
       public bool RespondsTo(string messageName)
       {
          if (!initialized)
+         {
             return false;
+         }
+
          return RespondsNoDefault(messageName) || DefaultRespondsTo(messageName) ||
             IsXMethodAvailable(messageName) || State.CanExtend(className, messageName);
       }
@@ -296,9 +301,15 @@ namespace Orange.Library.Values
       public bool RespondsNoDefault(string messageName)
       {
          if (!initialized)
+         {
             return false;
+         }
+
          if (region.ContainsMessage("unknown"))
+         {
             return true;
+         }
+
          return region.ContainsMessage(messageName) || IsXMethodAvailable(messageName) ||
             State.CanExtend(className, messageName);
       }
@@ -308,8 +319,11 @@ namespace Orange.Library.Values
          get
          {
             if (className == "base")
+            {
                return null;
-            return Regions[className].As<Class>().Map(cls => cls, () => null);
+            }
+
+            return Regions[className] is Class cls ? cls : null;
          }
       }
 
@@ -319,24 +333,21 @@ namespace Orange.Library.Values
 
       public void Stack(Trait trait)
       {
-         foreach (var item in trait.Members.Where(i => i.Value.Type != ValueType.Signature))
+         foreach (var (key, value) in trait.Members.Where(i => i.Value.Type != ValueType.Signature))
          {
-            Lambda traitLambda;
-            Assert(item.Value.As<Lambda>().Assign(out traitLambda), LOCATION, $"Trait member {item.Key} must be a lambda");
-            if (region.ContainsMessage(item.Key))
+            var traitLambda = value.RequiredCast<Lambda>(() => $"Trait member {key} must be a lambda");
+            if (region.ContainsMessage(key))
             {
-               InvokeableReference reference;
-               var localValue = region[item.Key];
-               if (localValue.As<InvokeableReference>().Assign(out reference))
+               if (region[key] is InvokeableReference reference)
                {
-                  var invokeable = reference.Invokeable;
-                  LambdaApp app;
-                  if (invokeable.As<LambdaApp>().Assign(out app))
+                  var invokable = reference.Invokeable;
+                  if (invokable is LambdaApp app)
+                  {
                      app.Add(traitLambda);
+                  }
                   else
                   {
-                     Lambda lambda;
-                     if (invokeable.As<Lambda>().Assign(out lambda))
+                     if (invokable is Lambda lambda)
                      {
                         app = new LambdaApp(lambda, traitLambda);
                         reference.Invokeable = app;
@@ -346,23 +357,22 @@ namespace Orange.Library.Values
             }
             else
             {
-               var invokeableName = InvokeableName(className, true, item.Key);
+               var invokableName = InvokableName(className, true, key);
                traitLambda.ImmediatelyInvokeable = true;
-               State.SetInvokeable(invokeableName, traitLambda);
+               State.SetInvokeable(invokableName, traitLambda);
             }
          }
       }
 
-      public INSGenerator GetGenerator() => new ObjectGenerator(this);
+      public INSGenerator GetGenerator() => (INSGenerator)(RespondsNoDefault("iter") ? SendToSelf("iter") : new ObjectGenerator(this));
 
       public Value Next(int index)
       {
-         bool handled;
-         var value = Send(this, "next", new Arguments(index), out handled);
+         var value = Send(this, "next", new Arguments(index), out var handled);
          return handled ? value : NilValue;
       }
 
-      public bool IsGeneratorAvailable => RespondsNoDefault("reset") && RespondsNoDefault("next");
+      public bool IsGeneratorAvailable => RespondsNoDefault("iter") || RespondsNoDefault("reset") && RespondsNoDefault("next");
 
       public Array ToArray() => GeneratorToArray(this);
 
@@ -370,11 +380,11 @@ namespace Orange.Library.Values
       {
          get
          {
-            return region?.VariableNameList?.Select(k => new
-            {
-               key = k,
-               value = region[k]
-            }).Where(i => isComparison(i.key, i.value)).Select(i => i.value).Listify();
+            return region?.VariableNameList?
+               .Select(k => new { key = k, value = region[k] })
+               .Where(i => isComparison(i.key, i.value))
+               .Select(i => i.value)
+               .Stringify();
          }
       }
 
@@ -387,27 +397,31 @@ namespace Orange.Library.Values
          var abstractsToPurge = new List<string>();
          foreach (var item in region.Variables)
          {
-            string type;
-            string name;
-            if (!IsPrefixed(item.Key, out type, out name))
+            if (!IsPrefixed(item.Key, out var type, out var name))
+            {
                continue;
+            }
 
             if (!region.ContainsMessage(name))
-               continue;
-
-            var value = region[name].As<Abstract>();
-            if (value.IsNone)
-               continue;
-
-            switch (type)
             {
-               case "get":
-                  abstractsToPurge.Add(item.Key);
-                  break;
-               case "set":
-                  if (!region.IsReadOnly(name))
+               continue;
+            }
+
+            if (region[name] is Abstract)
+            {
+               switch (type)
+               {
+                  case "get":
                      abstractsToPurge.Add(item.Key);
-                  break;
+                     break;
+                  case "set":
+                     if (!region.IsReadOnly(name))
+                     {
+                        abstractsToPurge.Add(item.Key);
+                     }
+
+                     break;
+               }
             }
          }
 
@@ -421,9 +435,12 @@ namespace Orange.Library.Values
             .Where(i => i.Value != Private && i.Value != Temporary && !isBuiltIn(i.Key) && !other.ContainsMessage(i.Key))
             .Select(item => item.Key))
          {
-            other.CreateVariable(variableName, visibility: visibilityTypes[variableName], _override: true);
+            other.CreateVariable(variableName, visibility: visibilityTypes[variableName], @override: true);
             if (region.IsReadOnly(variableName))
+            {
                other.SetReadOnly(variableName);
+            }
+
             var value = region[variableName];
             other.SetLocal(variableName, value, visibilityTypes[variableName], true);
          }
@@ -431,15 +448,15 @@ namespace Orange.Library.Values
 
       public Value InvokeSuper(string messageName, Arguments arguments)
       {
-         var reference = superInvokeable(messageName);
+         var reference = superInvokable(messageName);
          return invoke(reference, arguments);
       }
 
-      InvokeableReference superInvokeable(string messageName)
+      InvokeableReference superInvokable(string messageName)
       {
          var super = Super;
          RejectNull(super, LOCATION, "Couldn't retrieve super");
-         var name = InvokeableName(super.Name, isObject, messageName);
+         var name = InvokableName(super.Name, isObject, messageName);
          var reference = new InvokeableReference(name);
          return reference;
       }
@@ -448,83 +465,87 @@ namespace Orange.Library.Values
       {
          var super = Super;
          if (super == null)
+         {
             return false;
-         var name = InvokeableName(super.Name, isObject, messageName);
+         }
+
+         var name = InvokableName(super.Name, isObject, messageName);
          return Regions.VariableExists(name);
       }
 
-      public override bool IsArray => RespondsTo("array") || RespondsTo("next") && RespondsTo("reset");
+      public override bool IsArray => RespondsTo("iter") || RespondsTo("next") && RespondsTo("reset");
 
       public override Value SourceArray
       {
          get
          {
-            if (RespondsTo("array"))
+            if (RespondsTo("iter"))
             {
-               var value = SendMessage(this, "array");
-               return value.SourceArray;
+               return SendMessage(this, "iter");
             }
+
             var array = new Array();
             SendMessage(this, "reset");
             for (var i = 0; i < MAX_ARRAY; i++)
             {
                var value = SendMessage(this, "next", i);
                if (value == null || value.IsNil)
+               {
                   break;
+               }
+
                array.Add(value);
             }
+
             return array;
          }
       }
 
       public Hash<string, Value> AllPublic
       {
-         get
-         {
-            return region.Variables.Where(i => IsPublic(i.Key)).ToHash(i => i.Key, i => i.Value);
-         }
+         get => region.Variables.Where(i => IsPublic(i.Key)).ToHash(i => i.Key, i => i.Value);
       }
 
       public Hash<string, Value> AllPublicNonBuiltIn
       {
-         get
-         {
-            return region.Variables.Where(i => IsPublic(i.Key) && !isBuiltIn(i.Key)).ToHash(i => i.Key, i => i.Value);
-         }
+         get => region.Variables.Where(i => IsPublic(i.Key) && !isBuiltIn(i.Key)).ToHash(i => i.Key, i => i.Value);
       }
 
       public Hash<string, Value> AllPublicVariables
       {
          get
          {
-            return region.Variables.Where(i => IsPublic(i.Key) && i.Value.Type != ValueType.InvokeableReference)
+            return region.Variables.Where(i => IsPublic(i.Key) && i.Value.Type != ValueType.InvokableReference)
                .ToHash(i => i.Key, i => i.Value);
          }
       }
 
-      public Hash<string, InvokeableReference> AllPublicInvokeables
+      public Hash<string, InvokeableReference> AllPublicInvokables
       {
          get
          {
-            return region.Variables.Where(i => IsPublic(i.Key) && i.Value.Type == ValueType.InvokeableReference)
+            return region.Variables.Where(i => IsPublic(i.Key) && i.Value.Type == ValueType.InvokableReference)
                .ToHash(i => i.Key, i => (InvokeableReference)i.Value);
          }
       }
 
       public Hash<string, Value> ComparisonVariables
       {
-         get
-         {
-            return region.Variables.Where(i => isComparison(i.Key, i.Value)).ToHash(i => i.Key, i => i.Value);
-         }
+         get => region.Variables.Where(i => isComparison(i.Key, i.Value)).ToHash(i => i.Key, i => i.Value);
       }
 
       bool isComparison(string name, Value value)
       {
          if (!IsPublic(name))
+         {
             return false;
-         if (value.Type == ValueType.InvokeableReference)
+         }
+
+         if (value.Type == ValueType.InvokableReference)
+         {
             return false;
+         }
+
          return !isBuiltIn(name);
       }
 
@@ -555,29 +576,32 @@ namespace Orange.Library.Values
             State.UnregisterBlock();
             _public.CopyVariablesTo(region);
          }
+
          return this;
       }
 
       public int Compare(Object obj, Hash<string, MessagePath> chains, MessagePath currentPath,
-         Hash<string, Value> bindings, ref bool repeat)
+         Hash<string, Value> bindings, ref bool repeat, bool assigning = false)
       {
          repeat = false;
          var comparison = string.Compare(className, obj.className, StringComparison.Ordinal);
          if (comparison != 0)
+         {
             return comparison;
+         }
+
          var comparisandVariables = obj.ComparisonVariables;
          var variables = ComparisonVariables;
          foreach (var item in comparisandVariables)
          {
             var comparisandValue = item.Value;
             var currentValue = variables[item.Key];
-            string boundName;
-            Value boundValue;
-            if (comparisandValue.Unbind().Assign(out boundName, out boundValue))
+            if (BoundValue.Unbind(comparisandValue, out var boundName, out var boundValue))
             {
                bindings[boundName] = boundValue;
                comparisandValue = boundValue;
             }
+
             switch (comparisandValue.Type)
             {
                case ValueType.Any:
@@ -588,11 +612,14 @@ namespace Orange.Library.Values
                   chains[comparisandValue.Text] = newChain;
                   continue;
             }
+
             if ((comparisandValue.Type == ValueType.Abstract || comparisandValue.Type == ValueType.ToDo) &&
                variables.ContainsKey(item.Key))
+            {
                continue;
-            Alternation alternation;
-            if (comparisandValue.As<Alternation>().Assign(out alternation))
+            }
+
+            if (comparisandValue is Alternation alternation)
             {
                if (repeat)
                {
@@ -605,17 +632,18 @@ namespace Orange.Library.Values
                   repeat = comparisandValue.Type != ValueType.Nil;
                }
             }
-            Pattern pattern;
-            if (comparisandValue.As<Pattern>().Assign(out pattern) && pattern.IsMatch(currentValue.Text))
+
+            if (comparisandValue is Pattern pattern && pattern.IsMatch(currentValue.Text))
+            {
                continue;
+            }
+
             if (variables.ContainsKey(item.Key))
             {
                var value = currentValue;
-               Object obj1;
-               if (value.As<Object>().Assign(out obj1))
+               if (value is Object obj1)
                {
-                  Object obj2;
-                  if (comparisandValue.As<Object>().Assign(out obj2))
+                  if (comparisandValue is Object obj2)
                   {
                      var newChain = new MessagePath(currentPath);
                      newChain.Add(item.Key);
@@ -624,49 +652,73 @@ namespace Orange.Library.Values
                      {
                         comparison = obj1.Compare(obj2, chains, newChain, bindings, ref repeating);
                         if (comparison != 0)
+                        {
                            return comparison;
+                        }
+
                         if (!repeating)
+                        {
                            break;
+                        }
                      }
+
                      continue;
                   }
+
                   comparison = value.Compare(comparisandValue);
                   if (comparison != 0)
+                  {
                      return comparison;
+                  }
                }
                else
                {
-                  Object obj2;
-                  if (comparisandValue.As<Object>().Assign(out obj2))
+                  if (comparisandValue is Object obj2)
                   {
                      var cls2 = obj2.Class;
                      var cls = Class;
                      if (cls == null)
+                     {
                         return 1;
+                     }
+
                      if (!cls2.RespondsTo("parse"))
+                     {
                         return cls.Compare(cls2);
+                     }
+
                      value = SendMessage(cls2, cls2.RespondsTo("parse") ? "parse" : "str", value);
                      if (value.IsNil)
+                     {
                         return 1;
+                     }
+
                      Assert(value.Type == ValueType.Object, LOCATION, $"parse must return an Object or a nil {value}");
                      obj1 = value as Object;
                      RejectNull(obj, LOCATION, "Value must be null");
 
-                     if (MatchObjects(obj1, obj2, false))
+                     if (MatchObjects(obj1, obj2, false, assigning))
                      {
                         bindings[item.Key] = obj1;
                         continue;
                      }
+
                      return 1;
                   }
+
                   comparison = value.Compare(comparisandValue);
                   if (comparison != 0)
+                  {
                      return comparison;
+                  }
                }
+
                continue;
             }
+
             return 1;
          }
+
          return 0;
       }
 
@@ -683,32 +735,25 @@ namespace Orange.Library.Values
       public Value IsA()
       {
          var value = Arguments[0];
-         Class otherBuilder;
-         Trait trait;
-         var builder = Class;
-         return value.As<Class>().Assign(out otherBuilder) && builder.Compare(otherBuilder) == 0 ||
-            value.As<Trait>().Assign(out trait) && builder.ImplementsTrait(trait);
+         var cls = Class;
+         return value is Class otherBuilder && cls.Compare(otherBuilder) == 0 ||
+            value is Trait trait && cls.ImplementsTrait(trait);
       }
 
-      public bool ImplementsInterface(Trait interf)
+      public bool ImplementsInterface(Trait @interface)
       {
          using (var popper = new RegionPopper(region, "implements-interface"))
          {
             popper.Push();
-            foreach (var item in interf.Members)
+            foreach (var (key, value) in @interface.Members)
             {
-               Signature signature;
-               if (item.Value.As<Signature>().Assign(out signature))
-                  if (RespondsNoDefault(item.Key))
-                  {
-                     InvokeableReference reference;
-                     if (region[item.Key].As<InvokeableReference>().Assign(out reference))
-                        if (!reference.MatchesSignature(signature))
-                           return false;
-                  }
-                  else
-                     return signature.Optional;
+               if (value is Signature signature && RespondsNoDefault(key))
+               {
+                  return (!(region[key] is InvokeableReference reference) || reference.MatchesSignature(signature)) &&
+                     signature.Optional;
+               }
             }
+
             return true;
          }
       }
@@ -720,23 +765,31 @@ namespace Orange.Library.Values
          {
             var name = item.Key;
             var value = item.Value;
-            InvokeableReference reference;
-            if (value.As<InvokeableReference>().Assign(out reference))
+            if (value is InvokeableReference reference)
+            {
                value = (Value)reference.Invokeable;
+            }
+
             array[name] = value;
          }
+
          return array;
       }
 
       public override Value AlternateValue(string message)
       {
          if (IsGeneratorAvailable)
+         {
             return (Value)PossibleGenerator().Value;
+         }
+
          return null;
       }
 
       public override int GetHashCode() => ToString().GetHashCode();
 
       public override bool Equals(object obj) => ToString() == obj.ToNonNullString();
+
+      public override bool ProvidesGenerator => RespondsNoDefault("reset") && RespondsNoDefault("next");
    }
 }

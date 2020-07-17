@@ -3,29 +3,20 @@ using Orange.Library.Values;
 
 namespace Orange.Library.Verbs
 {
-	public class NewMessage : Verb
-	{
-		const string LOCATION = "New Message";
+   public class NewMessage : Verb
+   {
+      const string LOCATION = "New Message";
 
-		public override Value Evaluate()
-		{
-			ValueStack stack = Runtime.State.Stack;
-			Value member = stack.Pop(true, LOCATION);
-			Value target = stack.Pop(true, LOCATION);
-			return Runtime.SendMessage(target, "newMessage", member);
-		}
+      public override Value Evaluate()
+      {
+         var stack = Runtime.State.Stack;
+         var member = stack.Pop(true, LOCATION);
+         var target = stack.Pop(true, LOCATION);
+         return Runtime.SendMessage(target, "newMessage", member);
+      }
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Statement;
-			}
-		}
+      public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Statement;
 
-		public override string ToString()
-		{
-			return "=:";
-		}
-	}
+      public override string ToString() => "=:";
+   }
 }

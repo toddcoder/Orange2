@@ -9,12 +9,9 @@ namespace Orange.Library.Patterns
 		protected string needle;
 		protected char[] needleChars;
 
-		public SpanElement(string text)
-		{
-			this.text = Expand(text);
-		}
+		public SpanElement(string text) => this.text = Expand(text);
 
-		public SpanElement()
+	   public SpanElement()
 			: this("")
 		{
 		}
@@ -44,14 +41,8 @@ namespace Orange.Library.Patterns
 
       public override IReplacement Replacement
       {
-         get
-         {
-            return replacement;
-         }
-         set
-         {
-            setOverridenReplacement(value);
-         }
+         get => replacement;
+         set => setOverridenReplacement(value);
       }
    }
 }

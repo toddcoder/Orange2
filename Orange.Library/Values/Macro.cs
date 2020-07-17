@@ -2,49 +2,29 @@
 
 namespace Orange.Library.Values
 {
-	public class Macro : Value
-	{
-		const string LOCATION = "Macro";
+   public class Macro : Value
+   {
+      public override int Compare(Value value) => 0;
 
-		static Depth depth;
+      public override string Text
+      {
+         get => "";
+         set { }
+      }
 
-		static Macro()
-		{
-			depth = new Depth(Runtime.MAX_VAR_DEPTH, LOCATION);
-		}
+      public override double Number { get; set; }
 
-		public override int Compare(Value value) => 0;
+      public override ValueType Type => ValueType.Macro;
 
-	   public override string Text
-		{
-			get
-			{
-				return "";
-			}
-			set
-			{
-			}
-		}
+      public override bool IsTrue => false;
 
-		public override double Number
-		{
-			get;
-			set;
-		}
+      public override Value Clone() => new Macro();
 
-		public override ValueType Type => ValueType.Macro;
+      protected override void registerMessages(MessageManager manager) =>
+         manager.RegisterMessage(this, "invoke", v => ((Macro)v).Invoke());
 
-	   public override bool IsTrue => false;
+      public Value Invoke() => Invoke(Arguments);
 
-	   public override Value Clone() => new Macro();
-
-	   protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "invoke", v => ((Macro)v).Invoke());
-		}
-
-		public Value Invoke() => Invoke(Arguments);
-
-	   public Value Invoke(Arguments arguments, Region regionToUse = null) => null;
-	}
+      public Value Invoke(Arguments arguments, Region regionToUse = null) => null;
+   }
 }

@@ -1,9 +1,9 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Values.Object.VisibilityType;
-using Standard.Types.Tuples;
 
 namespace Orange.Library.Parsers
 {
@@ -12,16 +12,13 @@ namespace Orange.Library.Parsers
       FunctionBodyParser functionBodyParser;
 
       public InitBlockParser()
-         : base("^ /(|tabs| 'init') /b")
-      {
-         functionBodyParser = new FunctionBodyParser();
-      }
+         : base("^ /(|tabs| 'init') /b") => functionBodyParser = new FunctionBodyParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, tokens[1].Length, KeyWords);
          Color(tokens[2].Length, Structures);
-         return functionBodyParser.Parse(source, NextPosition).Map((block, index) =>
+         if (functionBodyParser.Parse(source, NextPosition).If(out var block, out var index))
          {
             overridePosition = index;
             var staticBlock = new Block
@@ -31,7 +28,9 @@ namespace Orange.Library.Parsers
             };
             AddStaticBlock(staticBlock);
             return new NullOp();
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "init block";

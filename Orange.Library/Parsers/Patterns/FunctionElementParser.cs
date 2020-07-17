@@ -1,6 +1,5 @@
 ﻿using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
@@ -10,10 +9,7 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class FunctionElementParser : Parser, IElementParser
    {
-      public FunctionElementParser()
-         : base($"^ /(/s*) /({REGEX_VARIABLE}) '('")
-      {
-      }
+      public FunctionElementParser() : base($"^ /(/s*) /({REGEX_VARIABLE}) '('") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -21,21 +17,19 @@ namespace Orange.Library.Parsers.Patterns
          var functionName = tokens[2];
          Color(functionName.Length, Variables);
          Color(1, Structures);
-         return GetExpression(source, NextPosition, CloseParenthesis()).Map((block, index) =>
+         if (GetExpression(source, NextPosition, CloseParenthesis()).If(out var block, out var index))
          {
             var arguments = new Arguments(block);
             Element = new FunctionElement(functionName, arguments);
             overridePosition = index;
             return new NullOp();
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "function element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

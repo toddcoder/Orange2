@@ -7,6 +7,7 @@ using Orange.Library.Parsers;
 using Orange.Library.Patterns;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Computer;
 using Standard.Types.Booleans;
 using Standard.Types.Collections;
 using Standard.Types.Exceptions;
@@ -18,10 +19,10 @@ using Standard.Types.Strings;
 using static System.String;
 using static Orange.Library.Debugging.Debugger;
 using static Orange.Library.Managers.RegionManager;
+using static Standard.Types.Maybe.MaybeFunctions;
 using Array = Orange.Library.Values.Array;
 using Object = Orange.Library.Values.Object;
 using String = Orange.Library.Values.String;
-using static Standard.Types.Tuples.TupleFunctions;
 
 namespace Orange.Library
 {
@@ -59,15 +60,15 @@ namespace Orange.Library
       public const string REGEX_VARIABLE = "['A-Za-z_$'] (['A-Za-z_0-9']*)";
       //public const string REGEX_VARIABLE = "['A-Za-z_'] (['A-Za-z_0-9']*)";
       public const string REGEX_VARIABLE1 = "['A-Za-z_$'";
-      public const string REGEX_BEGIN_PATTERN = "'{'";//"'“'";
-      public const string REGEX_END_PATTERN = "'}'";//"'”'";
+      public const string REGEX_BEGIN_PATTERN = "'{'"; //"'“'";
+      public const string REGEX_END_PATTERN = "'}'"; //"'”'";
       public const string REGEX_PARAMETER = "'|' /('*')? (> ('?'" + REGEX_VARIABLE + ") | '|')";
       public const string REGEX_SEND_MESSAGE = "/(/s*) /('::'? | '&') /(" + REGEX_VARIABLE + ") /('(' | '{:(')?";
       public const string REGEX_ATTRIBUTE_MESSAGE = "^ '__$' /('set' | 'get' | 'bef' | 'aft' | 'req' | 'ens' | 'inv') '_' -(> 'item' /b) /(.+) $";
       public const string REGEX_END = "/((^ /r/n) | (^ /r) | (^ /n))";
       public const string REGEX_END1 = "/((/r/n) | (/r) | (/n))";
       public const string REGEX_EXP_END = "[',:)]}']";
-      public const string REGEX_ASSIGN = "/(' '*) /('**' | '*' | '+' | '-' | '//' | '~' | '%' | '??')? /('=')";
+      public const string REGEX_ASSIGN = "/(' '*) /('**' | '*' | '+' | '-' | '//' | '~' | '%' | '??')? /('=' /s*)";
 
       public const string STRING_SPACES = " \r\n\t";
       public const string STRING_DIGITS = "0123456789";
@@ -86,11 +87,12 @@ namespace Orange.Library
       public const string STRING_CRLF = "\r\n";
       public const string STRING_CR = "\r";
       public const string STRING_LF = "\n";
+
       public const string STRING_ACCENTS = "A`ÀA'ÁA^ÂA~ÃA:ÄA.ÅAEÆC,ÇE`ÈE'ÉE^ÊE:ËI`ÌI'ÍI^ÎI:ÏD-ÐN~ÑO`ÒO'ÓO^ÔO~ÕO:ÖO/" +
          "ØU`ÙU'ÚU^ÛU:ÜY'Ýa`àa'áa^âa~ãa:äa.åaeæc,çe`èe'ée^êe:ëi`ìi'íi^îi:ïn~ño`òo'óo^ôo~õo:öo/øu`ùu'úu^ûu:üy'ýy:ÿ";
 
-      public const string STRING_BEGIN_PATTERN = "{";//"“";
-      public const string STRING_END_PATTERN = "}";//"”";
+      public const string STRING_BEGIN_PATTERN = "{"; //"“";
+      public const string STRING_END_PATTERN = "}"; //"”";
       public const string STRING_TRUE = "True";
 
       public const string MESSAGE_BUILDER = "className";
@@ -104,6 +106,7 @@ namespace Orange.Library
             return 0;
          if (index < 0)
             return wrapNegativeIndex(index, length);
+
          return wrap ? (index >= length ? length % Math.Abs(index) : index) : index;
       }
 
@@ -111,6 +114,7 @@ namespace Orange.Library
       {
          if (length == 0)
             return 0;
+
          var candidate = index + length;
          return candidate >= length ? length % Math.Abs(index) : candidate;
       }
@@ -124,6 +128,7 @@ namespace Orange.Library
          matcher.Evaluate(text, "/w ':' /w");
          for (var i = 0; i < matcher.MatchCount; i++)
             matcher[i] = matcher[i].IsMatch("^ /d") ? expandNumeric(matcher[i]) : expandAlpha(matcher[i]);
+
          var expanded = matcher.ToString();
          if (matcher.IsMatch(expanded, "/(/w+) '-' /(/w+)"))
          {
@@ -133,6 +138,7 @@ namespace Orange.Library
                .Aggregate(keep, (current, chr) => current.Replace(chr, ""));
             return keep;
          }
+
          return expanded;
       }
 
@@ -150,8 +156,10 @@ namespace Orange.Library
             var result = new StringBuilder();
             for (var j = first; j <= last; j++)
                result.Append((char)j);
+
             matcher[i] = result.ToString();
          }
+
          return matcher.ToString();
       }
 
@@ -169,15 +177,14 @@ namespace Orange.Library
             var result = new StringBuilder();
             for (var j = first; j <= last; j++)
                result.Append(j);
+
             matcher[i] = result.ToString();
          }
+
          return matcher.ToString();
       }
 
-      public static bool InText(string subject, string character, StringComparison comparison)
-      {
-         return subject.IndexOf(character, comparison) > -1;
-      }
+      public static bool InText(string subject, string character, StringComparison comparison) => subject.IndexOf(character, comparison) > -1;
 
       public static bool Find(string text, StringComparison comparison, int start, string needle, bool not, ref int index,
          ref int length)
@@ -187,17 +194,21 @@ namespace Orange.Library
             var character = text.Skip(i).Take(1);
             if (character == "")
                return false;
+
             var inside = InText(needle, character, comparison);
             if (!not && !inside)
             {
                length = i - index;
                return length > 0;
             }
+
             if (!not || !inside)
                continue;
+
             length = i - index;
             return length > -1;
          }
+
          length = text.Length - index;
          return length > 0;
       }
@@ -226,33 +237,33 @@ namespace Orange.Library
       public static void Assert(bool test, string location, string message)
       {
          if (CanAssert)
-            DebuggingState.Assert(test, message);
+            Assertions.Assert(test, message);
          else
-            test.Assert($"at {location}: {message}");
+            Assertions.Assert(test, $"at {location}: {message}");
       }
 
       public static void Assert(bool test, string location, Func<string> message)
       {
          if (CanAssert)
-            DebuggingState.Assert(test, message());
+            Assertions.Assert(test, message);
          else
-            test.Assert(() => $"at {location}: {message()}");
+            Assertions.Assert(test, $"at {location}: {message}");
       }
 
       public static void Reject(bool test, string location, string message)
       {
          if (CanAssert)
-            DebuggingState.Reject(test, message);
+            Assertions.Reject(test, message);
          else
-            test.Reject($"at {location}: {message}");
+            Assertions.Reject(test, $"at {location}: {message}");
       }
 
       public static void RejectNull(object obj, string location, string message)
       {
          if (CanAssert)
-            DebuggingState.RejectNull(obj, message);
+            Assertions.Reject(obj.IsNull(), message);
          else
-            obj.AssertIsNotNull($"at {location}: {message}");
+            Assertions.Reject(obj.IsNull(), $"at {location}: {message}");
       }
 
       public static void Throw(string location, string message)
@@ -264,6 +275,7 @@ namespace Orange.Library
       {
          if (source.IsEmpty)
             return 0;
+
          var sourceText = source.Text;
          Parser parser = new FloatParser();
          var coloring = Parser.Coloring;
@@ -273,12 +285,14 @@ namespace Orange.Library
             Parser.Coloring = coloring;
             return parser.Result.Value;
          }
+
          parser = new IntegerParser();
          if (parser.Scan(sourceText, 0))
          {
             Parser.Coloring = coloring;
             return parser.Result.Value;
          }
+
          Parser.Coloring = coloring;
          return 0;
       }
@@ -290,26 +304,34 @@ namespace Orange.Library
          {
             for (var i = 0; i < matcher.MatchCount; i++)
                matcher[i] = getCharFromInt(HexParser.GetNumber(matcher[i, 1]));
+
             text = matcher.ToString();
          }
+
          if (matcher.IsMatch(text, "'`o_' /(['0-7_']+)"))
          {
             for (var i = 0; i < matcher.MatchCount; i++)
                matcher[i] = getCharFromInt(OctParser.GetNumber(matcher[i, 1]));
+
             text = matcher.ToString();
          }
+
          if (matcher.IsMatch(text, "'`b_' /(['01_']+)"))
          {
             for (var i = 0; i < matcher.MatchCount; i++)
                matcher[i] = getCharFromInt(BinParser.GetNumber(matcher[i, 1]));
+
             text = matcher.ToString();
          }
+
          if (matcher.IsMatch(text, "'`' /(['0-9_']+)"))
          {
             for (var i = 0; i < matcher.MatchCount; i++)
                matcher[i] = getCharFromInt(matcher[i, 1].Replace("_", "").ToInt());
+
             text = matcher.ToString();
          }
+
          return text;
       }
 
@@ -321,6 +343,7 @@ namespace Orange.Library
             return true;
          if (value.IsMatch("^ ['eE'] /d+ $"))
             return false;
+
          return value.IsNumeric() && !value.StartsWith("0") && !value.StartsWith("+") || value.IsFloat();
       }
 
@@ -328,6 +351,7 @@ namespace Orange.Library
       {
          if (value == null)
             return "";
+
          switch (value.Type)
          {
             case Value.ValueType.Number:
@@ -352,14 +376,15 @@ namespace Orange.Library
          return verb;
       }
 
-      public static IMaybe<Tuple<Block, bool>> OperatorBlock(Value value)
+      public static IMaybe<(Block, bool)> OperatorBlock(Value value)
       {
          Verb verb;
          if (value.Type == Value.ValueType.Block)
          {
             var block = (Block)value;
             if (block.Count == 0)
-               return new None<Tuple<Block, bool>>();
+               return none<(Block, bool)>();
+
             verb = regularizeVerb(block[0]);
          }
          else
@@ -370,10 +395,11 @@ namespace Orange.Library
             var instance = (Verb)Activator.CreateInstance(type);
             verb = regularizeVerb(instance);
          }
+
          return OperatorBlock(verb);
       }
 
-      public static IMaybe<Tuple<Block, bool>> OperatorBlock(Type type)
+      public static IMaybe<(Block, bool)> OperatorBlock(Type type)
       {
          try
          {
@@ -382,17 +408,17 @@ namespace Orange.Library
          }
          catch
          {
-            return new None<Tuple<Block, bool>>();
+            return none<(Block, bool)>();
          }
       }
 
-      public static IMaybe<Tuple<Block, bool>> OperatorBlock(Verb verb)
+      public static IMaybe<(Block, bool)> OperatorBlock(Verb verb)
       {
          var builder = new CodeBuilder();
          builder.Variable(DefaultParameterNames.VAR_VALUE1);
          builder.Verb(verb);
          builder.Variable(DefaultParameterNames.VAR_VALUE2);
-         return tuple(builder.Block, verb.LeftToRight).Some();
+         return (builder.Block, verb.LeftToRight).Some();
       }
 
       public static Value BitOperationOnText(Value x, Value y, Func<int, int, int> func)
@@ -406,6 +432,7 @@ namespace Orange.Library
             var value = func(left[i], right[i]);
             result.Append((char)value);
          }
+
          return result.ToString();
       }
 
@@ -421,16 +448,19 @@ namespace Orange.Library
          {
             if (isHex)
                return value.ToInt();
+
             return value.ToDouble();
          }
+
          if (value.IsDate())
             return value.ToDateTime();
          if (value.Same("false") || value.Same("true"))
             return value.ToBool();
+
          return value;
       }
 
-      public static Array GeneratorToArray(Value value) => value.PossibleGenerator().Map(ToArray, () => new Array());
+      public static Array GeneratorToArray(Value value) => value.PossibleGenerator().FlatMap(ToArray, () => new Array());
 
       public static Array ToArray(INSGenerator generator)
       {
@@ -442,16 +472,14 @@ namespace Orange.Library
             var next = iterator.Next();
             if (next.IsNil)
                break;
+
             array.Add(next);
          }
+
          return array;
       }
 
-      public static Runtime State
-      {
-         get;
-         set;
-      }
+      public static Runtime State { get; set; }
 
       ValueStack stack;
       BlockManager blockManager;
@@ -467,6 +495,7 @@ namespace Orange.Library
       Hash<string, IInvokeable> invokeables;
       Hash<string, InvokeableReference> extenders;
       ConsoleManager consoleManager;
+      string indent;
 
       public Runtime(string text = "", IFileCache fileCache = null)
       {
@@ -494,62 +523,29 @@ namespace Orange.Library
          extenders = new Hash<string, InvokeableReference>();
          Parser.InClassDefinition = false;
          consoleManager = new ConsoleManager();
+         indent = "";
       }
 
-      public Pattern RecordPattern
-      {
-         get;
-         set;
-      }
+      public Pattern RecordPattern { get; set; }
 
-      public String RecordSeparator
-      {
-         get;
-         set;
-      }
+      public String RecordSeparator { get; set; }
 
-      public Pattern FieldPattern
-      {
-         get;
-         set;
-      }
+      public Pattern FieldPattern { get; set; }
 
-      public String FieldSeparator
-      {
-         get;
-         set;
-      }
+      public String FieldSeparator { get; set; }
 
-      public Pattern ArrayPattern
-      {
-         get;
-         set;
-      }
+      public Pattern ArrayPattern { get; set; }
 
-      public String ArraySeparator
-      {
-         get;
-         set;
-      }
+      public String ArraySeparator { get; set; }
 
       public ValueStack Stack => stack;
 
-      public IFileCache FileCache
-      {
-         get;
-         set;
-      }
+      public IFileCache FileCache { get; set; }
 
       public IConsole UIConsole
       {
-         get
-         {
-            return consoleManager.UIConsole;
-         }
-         set
-         {
-            consoleManager.UIConsole = value;
-         }
+         get => consoleManager.UIConsole;
+         set => consoleManager.UIConsole = value;
       }
 
       public ConsoleManager ConsoleManager => consoleManager;
@@ -606,89 +602,46 @@ namespace Orange.Library
 
       public int Position
       {
-         get
-         {
-            return patternManager.Position;
-         }
-         set
-         {
-            patternManager.Position = value;
-         }
+         get => patternManager.Position;
+         set => patternManager.Position = value;
       }
 
       public bool Anchored
       {
-         get
-         {
-            return patternManager.Anchored;
-         }
-         set
-         {
-            patternManager.Anchored = value;
-         }
+         get => patternManager.Anchored;
+         set => patternManager.Anchored = value;
       }
-
 
       public bool IgnoreCase
       {
-         get
-         {
-            return patternManager.IgnoreCase;
-         }
-         set
-         {
-            patternManager.IgnoreCase = value;
-         }
+         get => patternManager.IgnoreCase;
+         set => patternManager.IgnoreCase = value;
       }
 
       public string Input
       {
-         get
-         {
-            return patternManager.Input;
-         }
-         set
-         {
-            patternManager.Input = value;
-         }
+         get => patternManager.Input;
+         set => patternManager.Input = value;
       }
 
       public bool Aborted
       {
-         get
-         {
-            return patternManager.Aborted;
-         }
-         set
-         {
-            patternManager.Aborted = value;
-         }
+         get => patternManager.Aborted;
+         set => patternManager.Aborted = value;
       }
 
       public bool FirstScan
       {
-         get
-         {
-            return patternManager.FirstScan;
-         }
-         set
-         {
-            patternManager.FirstScan = value;
-         }
+         get => patternManager.FirstScan;
+         set => patternManager.FirstScan = value;
       }
 
       public Stack<AlternateData> Alternates => patternManager.Alternates;
 
       public string WorkingInput
       {
-         get
-         {
-            return patternManager.WorkingInput;
-         }
-         set
-         {
-            patternManager.WorkingInput = value;
-         }
+         get => patternManager.WorkingInput;
+         set => patternManager.WorkingInput = value;
       }
 
       public void SaveWorkingInput() => patternManager.SaveWorkingInput();
@@ -701,60 +654,41 @@ namespace Orange.Library
 
       public bool Trace
       {
-         get
-         {
-            return patternManager.Trace;
-         }
-         set
-         {
-            patternManager.Trace = value;
-         }
+         get => patternManager.Trace;
+         set => patternManager.Trace = value;
       }
 
       public void PushPatternManager() => patternManager.Push();
 
       public void PopPatternManager() => patternManager.Pop();
 
-      public int PatternDepth
-      {
-         get;
-         set;
-      }
+      public int PatternDepth { get; set; }
 
       public bool Multi
       {
-         get
-         {
-            return patternManager.Multi;
-         }
-         set
-         {
-            patternManager.Multi = value;
-         }
+         get => patternManager.Multi;
+         set => patternManager.Multi = value;
       }
 
       public Value Result
       {
-         get
-         {
-            return patternManager.Result;
-         }
-         set
-         {
-            patternManager.Result = value;
-         }
+         get => patternManager.Result;
+         set => patternManager.Result = value;
       }
 
       public static Array Array(string variableName)
       {
-         return Regions.ValueFromVariable(variableName)
-            .Map(value => value.As<Array>().Required($"at {LOCATION}: Variable doesn't refer to an array"),
-               () =>
-               {
-                  var array = new Array();
-                  Regions[variableName] = array;
-                  return array;
-               });
+         if (Regions.ValueFromVariable(variableName).If(out var value))
+         {
+            if (value is Array array)
+               return array;
+
+            throw new ApplicationException($"at {LOCATION}: Variable doesn't refer to an array");
+         }
+
+         var newArray = new Array();
+         Regions[variableName] = newArray;
+         return newArray;
       }
 
       public int Random(int value) => random.Next(value);
@@ -763,11 +697,7 @@ namespace Orange.Library
 
       public int RandomInt() => random.Next();
 
-      public Sys Sys
-      {
-         get;
-         set;
-      }
+      public Sys Sys { get; set; }
 
       public ExpressionManager Expressions => expressionManager;
 
@@ -779,11 +709,7 @@ namespace Orange.Library
 
       public void PopValueStack() => stack = valueStacks.Pop();
 
-      public Func<string> Asker
-      {
-         get;
-         set;
-      }
+      public Func<string> Asker { get; set; }
 
       public static Value SendMessage(Value value, string message) => SendMessage(value, message, new Arguments());
 
@@ -796,35 +722,15 @@ namespace Orange.Library
       public static Value SendMessage(Value value, Message message) => MessageManager.MessagingState
          .SendMessage(value, message.MessageName, message.MessageArguments);
 
-      public bool ExitSignal
-      {
-         get;
-         set;
-      }
+      public bool ExitSignal { get; set; }
 
-      public bool SkipSignal
-      {
-         get;
-         set;
-      }
+      public bool SkipSignal { get; set; }
 
-      public Value ReturnValue
-      {
-         get;
-         set;
-      }
+      public Value ReturnValue { get; set; }
 
-      public bool ReturnSignal
-      {
-         get;
-         set;
-      }
+      public bool ReturnSignal { get; set; }
 
-      public Block LateBlock
-      {
-         get;
-         set;
-      }
+      public Block LateBlock { get; set; }
 
       public Value UseReturnValue(Value result)
       {
@@ -835,17 +741,18 @@ namespace Orange.Library
             ReturnValue = null;
             return stripFromThunk(returnResult);
          }
+
          if (ResultValue != null)
          {
             var resultValue = ResultValue;
             ResultValue = null;
             return stripFromThunk(resultValue);
          }
+
          return stripFromThunk(result);
       }
 
-      static Value stripFromThunk(Value value) => value.As<Thunk>().Map(thunk => thunk.AlternateValue("return"),
-         () => value);
+      static Value stripFromThunk(Value value) => value is Thunk thunk ? thunk.AlternateValue("return") : value;
 
       public void Give(Value value) => takeArray.Add(value);
 
@@ -856,11 +763,7 @@ namespace Orange.Library
          return result;
       }
 
-      public bool Tracing
-      {
-         get;
-         set;
-      }
+      public bool Tracing { get; set; }
 
       public DefaultParameterNames PushDefaultParameterNames()
       {
@@ -890,27 +793,20 @@ namespace Orange.Library
       public static Message MessageFromArguments(Arguments arguments)
       {
          var value = arguments[0];
-         var message = value.As<Message>();
-         if (message.IsSome)
-            return message.Value;
+         if (value is Message message)
+            return message;
+
          var variable = arguments.VariableName(0);
          if (variable.IsNotEmpty())
             return new Message(variable, new Arguments());
+
          var messageName = value.Text;
          return messageName.IsNotEmpty() ? new Message(messageName, new Arguments()) : null;
       }
 
-      public int ArgumentDepth
-      {
-         get;
-         set;
-      }
+      public int ArgumentDepth { get; set; }
 
-      public Value ResultValue
-      {
-         get;
-         set;
-      }
+      public Value ResultValue { get; set; }
 
       public static bool IsXMethodAvailable(string message)
       {
@@ -918,15 +814,15 @@ namespace Orange.Library
          return Regions.VariableExists(variableName) && Regions[variableName].IsTrue;
       }
 
-      public static IMaybe<IXMethod> XMethodAvailable(string message) => Regions[message].As<IXMethod>();
+      public static IMaybe<IXMethod> XMethodAvailable(string message) => Regions[message].IfCast<IXMethod>();
 
       public static void MarkAsXMethod(string message, IXMethod xMethod)
       {
-         if (xMethod == null || !xMethod.XMethod)
+         if (!xMethod?.XMethod != true)
             return;
 
          var variableName = Format(VAR_XMETHOD, message);
-         Regions.CreateVariable(variableName, true, _override: true);
+         Regions.CreateVariable(variableName, true, @override: true);
          Regions[variableName] = true;
       }
 
@@ -939,6 +835,7 @@ namespace Orange.Library
             newArguments.Unshift(obj);
             return SendMessage((Value)xMethod.Value, "invoke", newArguments);
          }
+
          return null;
       }
 
@@ -952,6 +849,7 @@ namespace Orange.Library
             Throw(LOCATION, $"Invokeable reference {name} not found");
             return null;
          }
+
          return invokeable;
       }
 
@@ -979,6 +877,7 @@ namespace Orange.Library
       {
          if (x.Type == Value.ValueType.Object && ((Object)x).RespondsNoDefault("cmp"))
             return (int)SendMessage(x, "cmp", y).Number;
+
          return x.Compare(y);
       }
 
@@ -986,15 +885,13 @@ namespace Orange.Library
       {
          if (x.Type == Value.ValueType.Object && ((Object)x).RespondsNoDefault("str"))
             return SendMessage(x, "str").Text;
+
          return x.Text;
       }
 
       public Value Seed
       {
-         get
-         {
-            return seed;
-         }
+         get => seed;
          set
          {
             seed = (int)value.Number;
@@ -1054,8 +951,10 @@ namespace Orange.Library
 
       public static string SetterName(string name) => MangledName($"set_{name}");
 
-      public static string Unmangle(string name) => name.Matches("^ '__$' /(/w+) '_' /(/w+)")
-         .Map(m => $"{m.FirstGroup} {m.SecondGroup}", () => name);
+      public static string Unmangle(string name)
+      {
+         return name.Matches("^ '__$' /(/w+) '_' /(/w+)").FlatMap(m => $"{m.FirstGroup} {m.SecondGroup}", () => name);
+      }
 
       public static bool IsPrefixed(string name, out string type, out string plainName)
       {
@@ -1066,20 +965,38 @@ namespace Orange.Library
             plainName = matcher[0, 2];
             return true;
          }
+
          type = "";
          plainName = "";
          return false;
       }
 
-      public static bool IsPrefixed(string name, string type) => name.IsMatch("^ '__$'" + type + "'_'");
+      public static bool IsPrefixed(string name, string type) => name.IsMatch($@"^ '__$'{type}'_'");
 
       public static void ExecuteWhere(IWhere where)
       {
          var block = where.Where;
          if (block == null)
             return;
+
          block.AutoRegister = false;
          block.Evaluate();
       }
+
+      public void Indent(int count) => indent = "\t".Repeat(count);
+
+      public void IndentBy(int count)
+      {
+         if (count > 0)
+            indent += "\t".Repeat(count);
+         else if (count < 0 && indent.IsNotEmpty())
+            indent = indent.Skip(count);
+      }
+
+      public string Indentation() => indent;
+
+      public FolderName[] ModuleFolders { get; set; } = new FolderName[0];
+
+      public static bool IsClassName(string name) => char.IsUpper(name[0]);
    }
 }

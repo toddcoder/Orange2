@@ -10,14 +10,8 @@
 			return true;
 		}
 
-		public override Element Clone()
-		{
-			return clone(new UseCaseElement());
-		}
+		public override Element Clone() => clone(new UseCaseElement());
 
-		public override string ToString()
-		{
-			return "&";
-		}
+	   public override string ToString() => "&";
 	}
 }

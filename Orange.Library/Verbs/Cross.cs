@@ -41,6 +41,6 @@ namespace Orange.Library.Verbs
 
       protected virtual Value modifyInnerArray(Array array) => array;
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
    }
 }

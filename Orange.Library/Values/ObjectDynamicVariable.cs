@@ -5,18 +5,12 @@
 		Value obj;
 
 		public ObjectDynamicVariable(string name, Value obj)
-			: base(name)
-		{
-			this.obj = obj;
-		}
+			: base(name) => this.obj = obj;
 
-		public override Value Value
+	   public override Value Value
 		{
-			get
-			{
-				return Runtime.SendMessage(obj, "get", Name);
-			}
-			set
+			get => Runtime.SendMessage(obj, "get", Name);
+		   set
 			{
 				var arguments = new Arguments();
 				arguments.AddArgument(Name);
@@ -25,22 +19,10 @@
 			}
 		}
 
-		public override string ContainerType
-		{
-			get
-			{
-				return ValueType.ObjectDynamicVariable.ToString();
-			}
-		}
+		public override string ContainerType => ValueType.ObjectDynamicVariable.ToString();
 
-		public override Value Resolve()
-		{
-			return this;
-		}
+	   public override Value Resolve() => this;
 
-		public override string ToString()
-		{
-			return Value.ToString();
-		}
+	   public override string ToString() => Value.ToString();
 	}
 }

@@ -13,25 +13,10 @@ namespace Orange.Library.Verbs
 			return new StopIncrement(stop, increment);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.StopIncrement;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.StopIncrement;
 
-		public override bool LeftToRight
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool LeftToRight => false;
 
-		public override string ToString()
-		{
-			return ":";
-		}
+	   public override string ToString() => ":";
 	}
 }

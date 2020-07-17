@@ -2,212 +2,187 @@
 using Orange.Library.Managers;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using static Orange.Library.Values.Nil;
+using static Orange.Library.Values.Null;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
-	public class If : Value
-	{
+   public class If : Value, IStatementResult
+   {
+      Block condition;
+      Block result;
+      If next;
+      Block elseBlock;
 
+      public If(Block condition, Block result)
+      {
+         this.condition = condition;
+         this.result = result;
+         elseBlock = null;
+      }
 
-	   Block condition;
-		Block result;
-		If next;
-		Block elseBlock;
+      public If()
+      {
+         condition = new Block();
+         result = new Block();
+      }
 
-		public If(Block condition, Block result)
-		{
-			this.condition = condition;
-			this.result = result;
-			elseBlock = null;
-		}
+      public If Next
+      {
+         get => next;
+         set => next = value;
+      }
 
-		public If()
-		{
-			condition = new Block();
-			result = new Block();
-		}
+      public Block ElseBlock
+      {
+         get => elseBlock;
+         set => elseBlock = value;
+      }
 
-		public If Next
-		{
-			get
-			{
-				return next;
-			}
-			set
-			{
-				next = value;
-			}
-		}
+      public override int Compare(Value value) => 0;
 
-		public Block ElseBlock
-		{
-			get
-			{
-				return elseBlock;
-			}
-			set
-			{
-				elseBlock = value;
-			}
-		}
+      public override string Text
+      {
+         get { return ""; }
+         set { }
+      }
 
-		public override int Compare(Value value) => 0;
+      public override double Number { get; set; }
 
-	   public override string Text
-		{
-			get
-			{
-				return "";
-			}
-			set
-			{
-			}
-		}
+      public override ValueType Type => ValueType.If;
 
-		public override double Number
-		{
-			get;
-			set;
-		}
+      public override bool IsTrue => Invoke().IsTrue;
 
-		public override ValueType Type => ValueType.If;
+      public IMaybe<CaseExecute> Case { get; set; } = none<CaseExecute>();
 
-	   public override bool IsTrue => Invoke().IsTrue;
+      public override Value Clone() => new If((Block)condition.Clone(), (Block)result.Clone())
+      {
+         Next = (If)Next?.Clone(),
+         Case = Case
+      };
 
-	   public IMaybe<CaseExecute> Case
-	   {
-	      get;
-         set;
-	   } = new None<CaseExecute>();
+      protected override void registerMessages(MessageManager manager)
+      {
+         manager.RegisterMessage(this, "invoke", v => ((If)v).Invoke());
+         manager.RegisterMessage(this, "else", v => ((If)v).Else());
+      }
 
-	   public override Value Clone() => new If((Block)condition.Clone(), (Block)result.Clone())
-	   {
-	      Next = (If)Next?.Clone(),
-	      Case = Case
-	   };
+      public Value Invoke()
+      {
+         var statementResult = (IStatementResult)this;
+         statementResult.Result = "";
+         statementResult.TypeName = "";
 
-	   protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "invoke", v => ((If)v).Invoke());
-			manager.RegisterMessage(this, "else", v => ((If)v).Else());
-		}
+         for (var current = this; current != null; current = current.Next)
+            if (current.condition.IsTrue)
+            {
+               Location = current.condition.ToString();
+               var currentResult = current.result.Evaluate();
+               statementResult.Result = currentResult.ToString();
+               statementResult.TypeName = currentResult.Type.ToString();
+               return currentResult;
+            }
 
-	   public Value Invoke()
-		{
-			for (var current = this; current != null; current = current.Next)
-				if (current.condition.IsTrue)
-				{
-				   Location = current.condition.ToString();
-				   return current.result.Evaluate();
-				}
-			if (elseBlock != null)
-			{
-			   Location = elseBlock.ToString();
-			   return elseBlock.Evaluate();
-			}
-	      Location = "nil";
-	      return NilValue;
-		}
+         if (elseBlock != null)
+         {
+            Location = elseBlock.ToString();
+            var elseResult = elseBlock.Evaluate();
+            statementResult.Result = elseResult.ToString();
+            statementResult.TypeName = elseResult.Type.ToString();
+            return elseResult;
+         }
 
-		public bool Build(out Block execute, out Block returnSignal)
-		{
-			for (var current = this; current != null; current = current.Next)
-				if (current.condition.Evaluate().IsTrue)
-				{
-					evaluateResultBlock(current.result, out execute, out returnSignal);
-					return true;
-				}
-			if (elseBlock != null)
-			{
-				evaluateResultBlock(elseBlock, out execute, out returnSignal);
-				return true;
-			}
-			execute = null;
-			returnSignal = null;
-			return false;
-		}
+         statementResult.Result = "null";
+         statementResult.TypeName = "Null";
+         Location = "null";
+         return NullValue;
+      }
 
-		static void evaluateResultBlock(Block block, out Block executeBlock, out Block returnBlock)
-		{
-			var builder = new CodeBuilder();
-			executeBlock = null;
-			returnBlock = null;
-			var execute = true;
-			foreach (var verb in block)
-			{
-				if (execute)
-				{
-				   var returnSignal = verb.As<ReturnSignal>();
-					if (returnSignal.IsSome)
-					{
-						builder.RemoveLastEnd();
-						executeBlock = builder.Block;
-						builder = new CodeBuilder();
-						execute = false;
-						continue;
-					}
-				}
-				builder.Verb(verb);
-			}
-			builder.RemoveLastEnd();
-			if (execute)
-				executeBlock = builder.Block;
-			else
-				returnBlock = builder.Block;
-		}
+      public bool Build(out Block execute, out Block returnSignal)
+      {
+         for (var current = this; current != null; current = current.Next)
+            if (current.condition.Evaluate().IsTrue)
+            {
+               evaluateResultBlock(current.result, out execute, out returnSignal);
+               return true;
+            }
 
-		public Value Else()
-		{
-			elseBlock = Arguments.Block;
-			return null;
-		}
+         if (elseBlock != null)
+         {
+            evaluateResultBlock(elseBlock, out execute, out returnSignal);
+            return true;
+         }
 
-		public override string ToString()
-		{
-			using (var writer = new StringWriter())
-			{
-				writer.Write($"if ({condition}) {{{result}}}");
-				if (elseBlock != null)
-					writer.Write($" else {{{elseBlock}}}");
-				if (next != null)
-					writer.Write($"else{next}");
-				return writer.ToString();
-			}
-		}
+         execute = null;
+         returnSignal = null;
+         return false;
+      }
 
-		public Block Condition
-		{
-			get
-			{
-				return condition;
-			}
-			set
-			{
-				condition = value;
-			}
-		}
+      static void evaluateResultBlock(Block block, out Block executeBlock, out Block returnBlock)
+      {
+         var builder = new CodeBuilder();
+         executeBlock = null;
+         returnBlock = null;
+         var execute = true;
+         foreach (var verb in block)
+         {
+            if (execute && verb is ReturnSignal)
+            {
+               builder.RemoveLastEnd();
+               executeBlock = builder.Block;
+               builder = new CodeBuilder();
+               execute = false;
+               continue;
+            }
 
-		public Block Result
-		{
-			get
-			{
-				return result;
-			}
-			set
-			{
-				result = value;
-			}
-		}
+            builder.Verb(verb);
+         }
 
-	   public bool IsGeneratorAvailable => result.Yielding || (next?.IsGeneratorAvailable ?? false) ||
+         builder.RemoveLastEnd();
+         if (execute)
+            executeBlock = builder.Block;
+         else
+            returnBlock = builder.Block;
+      }
+
+      public Value Else()
+      {
+         elseBlock = Arguments.Block;
+         return null;
+      }
+
+      public override string ToString()
+      {
+         using (var writer = new StringWriter())
+         {
+            writer.Write($"if {condition} [{result}]");
+            if (elseBlock != null)
+               writer.Write($" else [{elseBlock}]");
+            if (next != null)
+               writer.Write($"else{next}");
+            return writer.ToString();
+         }
+      }
+
+      public Block Condition
+      {
+         get => condition;
+         set => condition = value;
+      }
+
+      public Block Result
+      {
+         get => result;
+         set => result = value;
+      }
+
+      public string TypeName { get; set; }
+
+      public bool IsGeneratorAvailable => result.Yielding || (next?.IsGeneratorAvailable ?? false) ||
          (elseBlock?.Yielding ?? false);
 
-	   public string Location
-	   {
-	      get;
-	      set;
-	   } = "";
-	}
+      public string Location { get; set; } = "";
+
+      string IStatementResult.Result { get; set; }
+   }
 }

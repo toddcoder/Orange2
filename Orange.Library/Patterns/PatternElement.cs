@@ -12,6 +12,7 @@ namespace Orange.Library.Patterns
       public PatternElement(Pattern pattern)
       {
          this.pattern = pattern;
+         // ReSharper disable once VirtualMemberCallInConstructor
          Replacement = pattern.Replacement;
          pattern.Replacement = null;
       }
@@ -29,15 +30,12 @@ namespace Orange.Library.Patterns
             State.Anchored = anchored;
             return true;
          }
+
          State.Anchored = anchored;
          return false;
       }
 
-      public override IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public override IReplacement Replacement { get; set; }
 
       public override bool PositionAlreadyUpdated => true;
 

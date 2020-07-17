@@ -35,17 +35,8 @@ namespace Orange.Library.Verbs
 			return concatenation;
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.CreateArray;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.CreateArray;
 
-		public override string ToString()
-		{
-			return "&&";
-		}
+	   public override string ToString() => "&&";
 	}
 }

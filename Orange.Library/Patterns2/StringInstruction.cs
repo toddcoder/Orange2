@@ -60,9 +60,6 @@ namespace Orange.Library.Patterns2
 			return false;
 		}
 
-		public override string ToString()
-		{
-			return "'" + text.Replace("'", "`'") + "'";
-		}
+		public override string ToString() => "'" + text.Replace("'", "`'") + "'";
 	}
 }

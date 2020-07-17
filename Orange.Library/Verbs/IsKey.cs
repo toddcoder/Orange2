@@ -5,33 +5,12 @@ namespace Orange.Library.Verbs
 {
 	public class IsKey : TwoValueVerb
 	{
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Equals;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Equals;
 
-		public override Value Evaluate(Value x, Value y)
-		{
-			return MessageManager.MessagingState.SendMessage(x, "key?", new Arguments(y));
-		}
+	   public override Value Evaluate(Value x, Value y) => MessageManager.MessagingState.SendMessage(x, "key?", new Arguments(y));
 
-		public override string Location
-		{
-			get
-			{
-				return "Is key";
-			}
-		}
+	   public override string Location => "Is key";
 
-		public override string Message
-		{
-			get
-			{
-				return "is-key";
-			}
-		}
+	   public override string Message => "is-key";
 	}
 }

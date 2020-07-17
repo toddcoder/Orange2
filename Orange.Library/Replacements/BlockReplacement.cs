@@ -1,6 +1,7 @@
 ﻿using Orange.Library.Values;
 using Standard.Types.Maybe;
 using static Orange.Library.Compiler;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Replacements
 {
@@ -19,10 +20,7 @@ namespace Orange.Library.Replacements
          id = CompilerState.ObjectID();
       }
 
-      public BlockReplacement()
-      {
-         id = CompilerState.ObjectID();
-      }
+      public BlockReplacement() => id = CompilerState.ObjectID();
 
       Value evaluateBlock()
       {
@@ -45,11 +43,7 @@ namespace Orange.Library.Replacements
          }
       }
 
-      public bool Immediate
-      {
-         get;
-         set;
-      }
+      public bool Immediate { get; set; }
 
       public override string ToString() => block.ToString();
 
@@ -63,16 +57,8 @@ namespace Orange.Library.Replacements
          id = id
       };
 
-      public Arguments Arguments
-      {
-         get;
-         set;
-      }
+      public Arguments Arguments { get; set; }
 
-      public IMaybe<long> FixedID
-      {
-         get;
-         set;
-      } = new None<long>();
+      public IMaybe<long> FixedID { get; set; } = none<long>();
    }
 }

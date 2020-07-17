@@ -8,7 +8,7 @@ namespace Orange.Library.Verbs
 
 	   public override string ToString() => "!=";
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.NotEqual;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.NotEqual;
 
 	   public override string Location => "Not equal";
 	}

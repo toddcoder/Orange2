@@ -14,11 +14,8 @@
 
 		public override Value Value
 		{
-			get
-			{
-				return graph.Value;
-			}
-			set
+			get => graph.Value;
+		   set
 			{
 				if (value.IsNil && parent != null)
 				{
@@ -31,12 +28,6 @@
 			}
 		}
 
-		public override string ContainerType
-		{
-			get
-			{
-				return ValueType.GraphVariable.ToString();
-			}
-		}
+		public override string ContainerType => ValueType.GraphVariable.ToString();
 	}
 }

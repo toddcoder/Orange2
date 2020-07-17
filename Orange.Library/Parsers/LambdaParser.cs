@@ -1,7 +1,7 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
@@ -16,10 +16,7 @@ namespace Orange.Library.Parsers
 
       public LambdaParser()
          : base($"^ /(' '* '(') /({REGEX_VARIABLE} | '_' | '(' {REGEX_VARIABLE} (/s* ',' /s* {REGEX_VARIABLE})+ ')')? " +
-              "/(/s*) /('->' | '=>')")
-      {
-         parameterParser = new ParametersParser();
-      }
+              "/(/s*) /('->' | '=>')") => parameterParser = new ParametersParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -38,7 +35,7 @@ namespace Orange.Library.Parsers
             var leftLength = tokens[1].Length + 1;
             index = position + leftLength;
             Color(position, leftLength, Structures);
-            if (!parameterParser.Parse(source, index).Assign(out parameters, out index))
+            if (!parameterParser.Parse(source, index).If(out parameters, out index))
                return null;
             index = NextPosition;
          }
@@ -50,14 +47,16 @@ namespace Orange.Library.Parsers
          Color(position + tokens[1].Length + tokens[2].Length, tokens[3].Length, Whitespaces);
          Color(type.Length, Structures);
          parameters.Splatting = type == "=>";
-         return GetExpression(source, index, CloseParenthesis()).Map((block, i) =>
+         if (GetExpression(source, index, CloseParenthesis()).If(out var block, out var i))
          {
             block.Expression = false;
             var lambda = new Lambda(new Region(), block, parameters, false) { Splatting = parameters.Splatting };
             result.Value = lambda;
             overridePosition = i;
             return new CreateLambda(parameters, block, parameters.Splatting);
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "lambda";

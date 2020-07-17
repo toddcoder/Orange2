@@ -1,16 +1,19 @@
 ﻿using System;
-using System.Windows.Forms;
+using Standard.Computer;
+using static System.Windows.Forms.Application;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace OrangePlayground
 {
-   static class Program
+   internal static class Program
    {
       [STAThread]
-      static void Main()
+      static void Main(string[] args)
       {
-         Application.EnableVisualStyles();
-         Application.SetCompatibleTextRenderingDefault(false);
-         Application.Run(new Playground());
+         var passedFile = when(args.Length > 0, () => (FileName)args[0]);
+         EnableVisualStyles();
+         SetCompatibleTextRenderingDefault(false);
+         Run(new Playground { PassedFileName = passedFile });
       }
    }
 }

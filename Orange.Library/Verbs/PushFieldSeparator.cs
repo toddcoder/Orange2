@@ -5,22 +5,10 @@ namespace Orange.Library.Verbs
 {
 	public class PushFieldSeparator : Verb
 	{
-		public override Value Evaluate()
-		{
-			return Runtime.State.FieldSeparator;
-		}
+		public override Value Evaluate() => Runtime.State.FieldSeparator;
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.NotApplicable;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.NotApplicable;
 
-		public override string ToString()
-		{
-			return ",";
-		}
+	   public override string ToString() => ",";
 	}
 }

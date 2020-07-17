@@ -8,28 +8,19 @@ namespace Orange.Library.Values
 	{
 		Array array;
 
-		public ArrayGenerator()
-		{
-			array = new Array();
-		}
+		public ArrayGenerator() => array = new Array();
 
-		public ArrayGenerator(Array array)
-		{
-			this.array = array;
-		}
+	   public ArrayGenerator(Array array) => this.array = array;
 
-		public Value Yield(Value value)
+	   public Value Yield(Value value)
 		{
 			array.Add(value);
 			return this;
 		}
 
-		public override int Compare(Value value)
-		{
-			return array.Compare(value);
-		}
+		public override int Compare(Value value) => array.Compare(value);
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -51,62 +42,29 @@ namespace Orange.Library.Values
 			}
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.ArrayGenerator;
-			}
-		}
+		public override ValueType Type => ValueType.ArrayGenerator;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return array.IsTrue;
-			}
-		}
+	   public override bool IsTrue => array.IsTrue;
 
-		public override Value Clone()
-		{
-			return new ArrayGenerator(array);
-		}
+	   public override Value Clone() => new ArrayGenerator(array);
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 
-		public override string ToString()
-		{
-			return array.ToString();
-		}
+		public override string ToString() => array.ToString();
 
-		public override Value AlternateValue(string message)
-		{
-			return array;
-		}
+	   public override Value AlternateValue(string message) => array;
 
-		public override Value ArgumentValue()
-		{
-			return array;
-		}
+	   public override Value ArgumentValue() => array;
 
-		public override Value AssignmentValue()
-		{
-			return array;
-		}
+	   public override Value AssignmentValue() => array;
 
-		public void Clear()
+	   public void Clear()
 		{
 			array.Clear();
 		}
 
-		public bool HasYielded
-		{
-			get
-			{
-				return array.Length > 0;
-			}
-		}
+		public bool HasYielded => array.Length > 0;
 	}
 }

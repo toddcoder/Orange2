@@ -1,5 +1,5 @@
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
@@ -12,9 +12,7 @@ namespace Orange.Library.Parsers
    {
       public AssignToNewFieldParser()
          : base("^ /(|tabs|) /(('public' | 'hidden' | 'imported' | 'temp') /s+)? /('var' | 'val') /(/s+)" +
-              $" /({REGEX_VARIABLE}) /(/s* '=' /s*)")
-      {
-      }
+            $" /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -30,11 +28,13 @@ namespace Orange.Library.Parsers
          Color(fieldName.Length, Variables);
          Color(tokens[6].Length, Structures);
 
-         return GetExpression(source, NextPosition, EndOfLine()).Map((expression, index) =>
+         if (GetExpression(source, NextPosition, EndOfLine()).If(out var expression, out var index))
          {
             overridePosition = index;
             return new AssignToNewField(fieldName, readOnly, expression, visibility) { Index = NextPosition };
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "assign to new field";

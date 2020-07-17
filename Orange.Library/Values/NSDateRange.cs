@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Orange.Library.Managers;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
@@ -12,10 +13,7 @@ namespace Orange.Library.Values
          protected DateTime start;
 
          public NSDateRangeGenerator(INSGeneratorSource generatorSource, DateTime start)
-            : base(generatorSource)
-         {
-            this.start = start;
-         }
+            : base(generatorSource) => this.start = start;
       }
 
       DateTime start;
@@ -38,17 +36,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Range;
 
@@ -59,6 +49,10 @@ namespace Orange.Library.Values
       protected override void registerMessages(MessageManager manager)
       {
          manager.RegisterMessage(this, "array", v => ((NSDateRange)v).ToArray());
+         manager.RegisterMessage(this, "in", v => ((NSDateRange)v).In());
+         manager.RegisterMessage(this, "notIn", v => ((NSDateRange)v).NotIn());
+         manager.RegisterProperty(this, "min", v => ((NSDateRange)v).Min());
+         manager.RegisterProperty(this, "max", v => ((NSDateRange)v).Max());
       }
 
       public INSGenerator GetGenerator() => new NSDateRangeGenerator(this, start);
@@ -68,6 +62,7 @@ namespace Orange.Library.Values
          var current = start.AddDays(index);
          if (inclusive)
             return current <= stop ? (Value)current : NilValue;
+
          return current < stop ? (Value)current : NilValue;
       }
 
@@ -75,10 +70,32 @@ namespace Orange.Library.Values
 
       public Array ToArray() => GeneratorToArray(this);
 
-      public override string ToString() => ToArray().ToString();
+      public override string ToString() => $"{start}{(inclusive ? ".." : "...")}{stop}";
 
-      public override Value AlternateValue(string message) => ToArray();
+      public override Value AlternateValue(string message)
+      {
+         switch (message)
+         {
+            case "__$get_item":
+            case "__$set_item":
+            case "len":
+               return ToArray();
+            default:
+               return (Value)GetGenerator();
+         }
+      }
 
-      public override Value AssignmentValue() => ToArray();
+      public Value In()
+      {
+         var needle = Arguments[0];
+         var iterator = new NSIterator(GetGenerator());
+         return iterator.Any(value => needle.Compare(value) == 0);
+      }
+
+      public Value NotIn() => !In().IsTrue;
+
+      public Value Min() => start < stop ? start : stop;
+
+      public Value Max() => stop > start ? stop : start;
    }
 }

@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -13,15 +12,23 @@ namespace Orange.Library.Verbs
       {
          var stack = State.Stack;
          var y = stack.Pop(true, LOCATION);
-         var lambda = y.As<Lambda>();
-         Assert(lambda.IsSome, LOCATION, "Lambda required as right-hand argument");
+         if (!(y is Lambda lambda))
+         {
+            Throw(LOCATION, "Lambda required as right-hand argument");
+            return null;
+         }
+
          var x = stack.Pop(true, LOCATION);
-         var source = x.As<INSGeneratorSource>();
-         Assert(source.IsSome, LOCATION, "Left hand side must provide generator source");
-         return new Scanner(source.Value, lambda.Value);
+         if (!(x is INSGeneratorSource source))
+         {
+            Throw(LOCATION, "Left hand side must provide generator source");
+            return null;
+         }
+
+         return new Scanner(source, lambda);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "<>";
    }

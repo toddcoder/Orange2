@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Core.Monads;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
-using static Standard.Types.Tuples.TupleFunctions;
-using Standard.Types.Tuples;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers.Special
 {
@@ -18,10 +16,7 @@ namespace Orange.Library.Parsers.Special
 
       ParametersType type;
 
-      public ParametersParser(ParametersType type = ParametersType.Standard)
-      {
-         this.type = type;
-      }
+      public ParametersParser(ParametersType type = ParametersType.Standard) => this.type = type;
 
       IMaybe<SpecialParser<List<Parameter>>> getParserForType()
       {
@@ -35,26 +30,25 @@ namespace Orange.Library.Parsers.Special
                parser = new PatternParameterListParser2();
                break;
             default:
-               return new None<SpecialParser<List<Parameter>>>();
+               return none<SpecialParser<List<Parameter>>>();
          }
+
          return parser.Some();
       }
 
-      public override IMaybe<Tuple<Parameters, int>> Parse(string source, int index)
+      public override IMaybe<(Parameters, int)> Parse(string source, int index)
       {
-         return getParserForType().Map(parser => parser.Parse(source, index).Map((list, i) =>
+         if (getParserForType().If(out var parser) && parser.Parse(source, index).If(out var list, out var i))
          {
             var returns = (IReturnsParameterList)parser;
-            var parameters = new Parameters(list) {Multi = returns.Multi};
+            var parameters = new Parameters(list) { Multi = returns.Multi };
             Currying = returns.Currying;
-            return tuple(parameters, i);
-         }));
+            return (parameters: parameters, index: i).Some();
+         }
+
+         return none<(Parameters, int)>();
       }
 
-      public bool Currying
-      {
-         get;
-         set;
-      }
+      public bool Currying { get; set; }
    }
 }

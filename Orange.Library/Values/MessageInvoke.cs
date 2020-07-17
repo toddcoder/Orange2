@@ -13,12 +13,9 @@ namespace Orange.Library.Values
 			this.message = message;
 		}
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+		public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;
@@ -30,28 +27,13 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.MessageInvoke;
-			}
-		}
+		public override ValueType Type => ValueType.MessageInvoke;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return new MessageInvoke(value.Clone(), (Message)message.Clone());
-		}
+	   public override Value Clone() => new MessageInvoke(value.Clone(), (Message)message.Clone());
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "invoke", v => ((MessageInvoke)v).Invoke());
 		}
@@ -63,9 +45,6 @@ namespace Orange.Library.Values
 			return message.Invoke(value);
 		}
 
-		public override string ToString()
-		{
-			return value + " : " + message;
-		}
+		public override string ToString() => value + " : " + message;
 	}
 }

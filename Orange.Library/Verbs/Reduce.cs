@@ -1,7 +1,5 @@
 ﻿using Orange.Library.Managers;
 using Orange.Library.Values;
-using Standard.Types.Objects;
-using Standard.Types.Tuples;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -16,21 +14,21 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var operatorValue = stack.Pop(true, LOCATION);
          var value = stack.Pop(true, LOCATION);
-         var lambda = operatorValue.As<Lambda>();
-         if (lambda.IsSome)
+         if (operatorValue is Lambda lambda)
          {
-            var arguments = Arguments.FromValue(lambda.Value);
+            var arguments = Arguments.FromValue(lambda);
             return SendMessage(value, "reduce", arguments);
          }
-         Block block;
-         bool leftToRight;
-         if (!OperatorBlock(operatorValue).Assign(out block, out leftToRight))
+
+         if (!OperatorBlock(operatorValue).If(out var tuple))
             return value;
+
+         (var block, var leftToRight) = tuple;
          var message = leftToRight ? "reduce" : "rreduce";
          return MessageManager.MessagingState.SendMessage(value, message, new Arguments(new Block(), block));
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "reduce";
    }

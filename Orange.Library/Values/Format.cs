@@ -45,10 +45,7 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      public override Value Clone()
-      {
-         return new Format((Parameters)parameters.Clone(), (IStringify)((Value)stringify).Clone());
-      }
+      public override Value Clone() => new Format((Parameters)parameters.Clone(), (IStringify)((Value)stringify).Clone());
 
       protected override void registerMessages(MessageManager manager)
       {

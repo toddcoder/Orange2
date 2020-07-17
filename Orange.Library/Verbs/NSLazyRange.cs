@@ -13,26 +13,24 @@ namespace Orange.Library.Verbs
       {
          if (increment.Type == ValueType.Lambda)
             return new Values.NSLazyRange(seed, (Lambda)increment);
+
          Throw(LOCATION, "Not a range");
          return null;
       }
 
       protected bool inclusive;
 
-      public NSLazyRange()
-      {
-         inclusive = true;
-      }
+      public NSLazyRange() => inclusive = true;
 
       public override Value Evaluate()
       {
          var stack = State.Stack;
          var increment = stack.Pop(true, LOCATION);
          var seed = stack.Pop(true, LOCATION);
-         return GetGenerator(seed, increment);
+         return GetGenerator(seed.Self, increment.Self);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Range;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Range;
 
       public override string ToString() => ".*";
    }

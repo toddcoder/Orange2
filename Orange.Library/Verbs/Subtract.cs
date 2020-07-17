@@ -1,49 +1,29 @@
-﻿using Orange.Library.Managers;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
+using static Orange.Library.Managers.ExpressionManager;
+using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class Subtract : TwoValueVerb
-	{
-		public override Value Evaluate(Value x, Value y)
-		{
-			return x.Number - y.Number;
-		}
+   public class Subtract : TwoValueVerb
+   {
+      public override Value Evaluate(Value x, Value y) => x.Number - y.Number;
 
-		public override Value Exception(Value x, Value y)
-		{
-			if (x.IsArray && y.Type == Value.ValueType.String)
-				return Runtime.SendMessage(x, Message, y);
-			return null;
-		}
+      public override Value Exception(Value x, Value y)
+      {
+         /*         if (x.ProvidesGenerator)
+                     return SendMessage(x, y.IsNumeric() ? "skip" : "skipUntil", Arguments.FromValue(y));*/
+         if (x.IsArray && y.Type == Value.ValueType.String)
+            return SendMessage(x, Message, y);
 
-		public override string Location
-		{
-			get
-			{
-				return "Subtract";
-			}
-		}
+         return null;
+      }
 
-		public override string Message
-		{
-			get
-			{
-				return "sub";
-			}
-		}
+      public override string Location => "Subtract";
 
-		public override string ToString()
-		{
-			return "-";
-		}
+      public override string Message => "sub";
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Subtract;
-			}
-		}
-	}
+      public override string ToString() => "-";
+
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Subtract;
+   }
 }

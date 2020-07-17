@@ -7,15 +7,18 @@ namespace Orange.Library.Verbs
    public class Yield : Verb, IStatement
    {
       Block expression;
+      string typeName;
 
       public Yield(Block expression)
       {
          this.expression = expression;
+         typeName = "";
       }
 
       public override Value Evaluate()
       {
          var value = expression.Evaluate().AssignmentValue();
+         typeName = value.Type.ToString();
          State.ReturnValue = value;
          State.ReturnSignal = true;
          return value;
@@ -23,16 +26,14 @@ namespace Orange.Library.Verbs
 
       public Block Expression => expression;
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => $"yield {expression}";
 
       public string Result => expression.ToString();
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
+
+      public int Index { get; set; }
    }
 }

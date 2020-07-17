@@ -9,7 +9,7 @@ namespace Orange.Library.Verbs
    {
       public override Value Evaluate() => null;
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.PreIncrement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
 
       public VisibilityType VisibilityType
       {

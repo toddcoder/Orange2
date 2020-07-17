@@ -5,7 +5,7 @@ namespace Orange.Library.Verbs
 {
 	public class NumericComparison : TwoValueVerb
 	{
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Equals;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Equals;
 
 	   public override Value Evaluate(Value x, Value y) => x.Compare(y);
 

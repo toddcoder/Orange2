@@ -1,9 +1,6 @@
 ﻿using Orange.Library.Values;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
-using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Values.Null;
 
 namespace Orange.Library.Verbs
 {
@@ -15,6 +12,7 @@ namespace Orange.Library.Verbs
       IMaybe<Block> ifFalse;
       IMaybe<Block> guardBlock;
       string result;
+      string typeName;
 
       public Maybe(string fieldName, Block expression, Block ifTrue, IMaybe<Block> ifFalse, IMaybe<Block> guardBlock)
       {
@@ -24,68 +22,84 @@ namespace Orange.Library.Verbs
          this.ifFalse = ifFalse;
          this.guardBlock = guardBlock;
          result = "";
+         typeName = "";
       }
 
       public override Value Evaluate()
       {
          var evaluated = expression.Evaluate();
-         var none = evaluated.As<None>();
          Value returned;
-         if (none.IsSome)
+         if (evaluated is None)
          {
             if (guardBlock.IsSome)
             {
                returned = ifTrue.Evaluate();
                result = ifTrue.ToString();
+               typeName = returned.Type.ToString();
                return returned;
             }
+
             if (ifFalse.IsSome)
             {
                returned = ifFalse.Value.Evaluate();
                result = ifFalse.ToString();
+               typeName = returned.Type.ToString();
                return returned;
             }
+
             return null;
          }
 
-         var value = evaluated.As<Some>().Map(s => s.Value(), () => evaluated);
+         //var maybe = evaluated.As<Some>();
+         if (evaluated is Some)
+         {
+            if (ifFalse.IsSome)
+            {
+               returned = ifFalse.Value.Evaluate();
+               result = returned.ToString();
+               typeName = returned.Type.ToString();
+               return returned;
+            }
+
+            return null;
+         }
+
+         //var value = maybe.Value();
          if (guardBlock.IsSome)
          {
-            Regions.Current.SetParameter(fieldName, value);
+            //Regions.Current.SetParameter(fieldName, value);
             if (guardBlock.Value.IsTrue)
             {
                result = guardBlock.Value.ToString();
+               typeName = guardBlock.Value.Type.ToString();
                return null;
             }
+
             returned = ifTrue.Evaluate();
             result = ifTrue.ToString();
+            typeName = returned.Type.ToString();
             return returned;
          }
 
-         returned = NullValue;
          using (var popper = new RegionPopper(new Region(), "maybe"))
          {
             popper.Push();
-            Regions.Current.SetParameter(fieldName, value);
+            //Regions.Current.SetParameter(fieldName, value);
             returned = ifTrue.Evaluate();
             result = ifTrue.ToString();
+            typeName = returned.Type.ToString();
          }
          return returned;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString()
-      {
-         return $"maybe {fieldName} = {expression} ({ifTrue}){ifFalse.Map(f => $" ({f})", () => "")}";
-      }
+      public override string ToString() => $"maybe {fieldName} = {expression} ({ifTrue}){ifFalse.FlatMap(f => $" ({f})", () => "")}";
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
+
+      public int Index { get; set; }
    }
 }

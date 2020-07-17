@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using Standard.Types.RegularExpressions;
 using Standard.Types.Strings;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.Maybe;
+using static Standard.Types.Maybe.MaybeFunctions;
 using Array = Orange.Library.Values.Array;
 using If = Orange.Library.Verbs.If;
-using static Standard.Types.Tuples.TupleFunctions;
 
 namespace Orange.Library.Parsers.Special
 {
@@ -36,9 +33,9 @@ namespace Orange.Library.Parsers.Special
          condition = null;
       }
 
-      public override IMaybe<Tuple<List<Parameter>, int>> Parse(string source, int index)
+      public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
-         return GetExpression(source, index, stop).Map(t => When(Parse(t.Item1), () => tuple(list, t.Item2)));
+         return GetExpression(source, index, stop).Map(t => when(Parse(t.Item1), () => (list, t.Item2)));
       }
 
       public bool Parse(Block block)
@@ -66,119 +63,112 @@ namespace Orange.Library.Parsers.Special
                continue;
             }
 
-            Push push;
-            FunctionInvoke functionInvoke;
-            PushArrayLiteral pushArrayLiteral;
-            CreateLambda createLambda;
-            SendMessage sendMessage;
-            SendMessageToClass sendMessageToClass;
-            Bind bind;
-            CreateSet createSet;
-            ToList toList;
+            switch (verb)
+            {
+               case Push push:
+                  var value = push.Value;
+                  switch (value)
+                  {
+                     case Variable variable1:
+                        var name = variable1.Name;
+                        value = name == "_" ? (Value)new Any() : new Placeholder(name);
+                        break;
+                     case Block arrayBlock when arrayBlock.AsAdded.Any(v => v is AppendToArray):
+                        value = ReplacePlaceholders(arrayBlock);
+                        break;
+                  }
 
-            if (verb.As<Push>().Assign(out push))
-            {
-               var value = push.Value;
-               Block arrayBlock;
-               if (value.As<Variable>().Assign(out variable))
+                  list.Add(getParameter(list.Count, value, ref bindingName));
+                  break;
+               case PushArrayLiteral pushArrayLiteral:
+                  var array = pushArrayLiteral.Array;
+                  list.Add(getParameter(list.Count, array, ref bindingName));
+                  break;
+               case FunctionInvoke functionInvoke:
                {
-                  var name = variable.Name;
-                  value = name == "_" ? (Value)new Any() : new Placeholder(name);
+                  var functionName = functionInvoke.FunctionName;
+                  var arguments = functionInvoke.Arguments;
+                  var innerParser = new PatternParameterListParser();
+                  if (innerParser.Parse(arguments.ArgumentsBlock))
+                  {
+                     var sublist = innerParser.List;
+                     var builder = new CodeBuilder();
+                     foreach (var parameter in sublist)
+                        builder.Argument(parameter.Comparisand);
+
+                     builder.FunctionInvoke(functionName);
+                     list.Add(getParameter(list.Count, builder.Block, ref bindingName));
+                  }
+
+                  break;
                }
-               else if (value.As<Block>().Assign(out arrayBlock) && arrayBlock.AsAdded.Any(v => v is AppendToArray))
-                  value = ReplacePlaceholders(arrayBlock);
-               list.Add(getParameter(list.Count, value, ref bindingName));
-            }
-            else if (verb.As<PushArrayLiteral>().Assign(out pushArrayLiteral))
-            {
-               var array = pushArrayLiteral.Array;
-               list.Add(getParameter(list.Count, array, ref bindingName));
-            }
-            else if (verb.As<FunctionInvoke>().Assign(out functionInvoke))
-            {
-               var functionName = functionInvoke.FunctionName;
-               var arguments = functionInvoke.Arguments;
-               var innerParser = new PatternParameterListParser();
-               if (innerParser.Parse(arguments.ArgumentsBlock))
+               case CreateLambda createLambda:
+                  var closure = (Lambda)createLambda.Evaluate();
+                  list.Add(getParameter(list.Count, closure, ref bindingName));
+                  break;
+               case SendMessage sendMessage when variable != null:
                {
-                  var sublist = innerParser.List;
-                  var builder = new CodeBuilder();
-                  foreach (var parameter in sublist)
-                     builder.Argument(parameter.Comparisand);
-                  builder.FunctionInvoke(functionName);
-                  list.Add(getParameter(list.Count, builder.Block, ref bindingName));
+                  var variableName = variable.Name;
+                  var arguments = sendMessage.Arguments;
+                  removeLastParameter(list, ref bindingName);
+                  var innerParser = new PatternParameterListParser();
+                  if (innerParser.Parse(arguments.ArgumentsBlock))
+                  {
+                     var sublist = innerParser.List;
+                     var builder = new CodeBuilder();
+                     foreach (var parameter in sublist)
+                        builder.Argument(parameter.Comparisand);
+
+                     builder.Variable(variableName);
+                     builder.SendMessage(sendMessage.Message, builder.Arguments);
+                     list.Add(getParameter(list.Count, builder.Block, ref bindingName));
+                  }
+
+                  break;
                }
-            }
-            else if (verb.As<CreateLambda>().Assign(out createLambda))
-            {
-               var closure = (Lambda)createLambda.Evaluate();
-               list.Add(getParameter(list.Count, closure, ref bindingName));
-            }
-            else if (verb.As<SendMessage>().Assign(out sendMessage) && variable != null)
-            {
-               var variableName = variable.Name;
-               var arguments = sendMessage.Arguments;
-               removeLastParameter(list, ref bindingName);
-               var innerParser = new PatternParameterListParser();
-               if (innerParser.Parse(arguments.ArgumentsBlock))
+               case SendMessageToClass sendMessageToClass:
                {
-                  var sublist = innerParser.List;
-                  var builder = new CodeBuilder();
-                  foreach (var parameter in sublist)
-                     builder.Argument(parameter.Comparisand);
-                  builder.Variable(variableName);
-                  builder.SendMessage(sendMessage.Message, builder.Arguments);
-                  list.Add(getParameter(list.Count, builder.Block, ref bindingName));
+                  var arguments = sendMessageToClass.Arguments;
+                  var innerParser = new PatternParameterListParser();
+                  if (innerParser.Parse(arguments.ArgumentsBlock))
+                  {
+                     var sublist = innerParser.List;
+                     var builder = new CodeBuilder();
+                     foreach (var parameter in sublist)
+                        builder.Argument(parameter.Comparisand);
+
+                     builder.SendMessageToClass(sendMessageToClass.Message, builder.Arguments);
+                     list.Add(getParameter(list.Count, builder.Block, ref bindingName));
+                  }
+
+                  break;
                }
-            }
-            else if (verb.As<SendMessageToClass>().Assign(out sendMessageToClass))
-            {
-               var arguments = sendMessageToClass.Arguments;
-               var innerParser = new PatternParameterListParser();
-               if (innerParser.Parse(arguments.ArgumentsBlock))
-               {
-                  var sublist = innerParser.List;
-                  var builder = new CodeBuilder();
-                  foreach (var parameter in sublist)
-                     builder.Argument(parameter.Comparisand);
-                  builder.SendMessageToClass(sendMessageToClass.Message, builder.Arguments);
-                  list.Add(getParameter(list.Count, builder.Block, ref bindingName));
-               }
-            }
-            else if (verb.As<Bind>().Assign(out bind) && variable != null)
-            {
-               list.RemoveAt(list.Count - 1);
-               bindingName = variable.Name;
-            }
-            else if (verb.As<CreateSet>().Assign(out createSet))
-               list.Add(getParameter(list.Count, createSet.Create(), ref bindingName));
-            else if (verb is If)
-            {
-               addingToCondition = true;
-               condition = new Block();
-            }
-            else if (verb.As<ToList>().Assign(out toList))
-            {
-               var newlist = ReplacePlaceholdersInList(toList.Block);
-               list.Add(getParameter(list.Count, newlist, ref bindingName));
+               case Bind _ when variable != null:
+                  list.RemoveAt(list.Count - 1);
+                  bindingName = variable.Name;
+                  break;
+               case CreateSet createSet:
+                  list.Add(getParameter(list.Count, createSet.Create(), ref bindingName));
+                  break;
+               case If _:
+                  addingToCondition = true;
+                  condition = new Block();
+                  break;
+               case ToList toList:
+                  var newlist = ReplacePlaceholdersInList(toList.Block);
+                  list.Add(getParameter(list.Count, newlist, ref bindingName));
+                  break;
             }
          }
+
          if (condition != null)
             condition.AutoRegister = false;
          return true;
       }
 
-      public bool Multi
-      {
-         get;
-         set;
-      }
+      public bool Multi { get; set; }
 
-      public bool Currying
-      {
-         get;
-         set;
-      }
+      public bool Currying { get; set; }
 
       public Block Condition => condition;
 
@@ -201,23 +191,26 @@ namespace Orange.Library.Parsers.Special
          foreach (var verb in block.AsAdded)
          {
             Value value;
-            Push push;
-            PushArrayLiteral pushArrayLiteral;
-            if (verb.As<Push>().Assign(out push))
-               value = push.Value;
-            else if (verb.As<PushArrayLiteral>().Assign(out pushArrayLiteral))
-               value = pushArrayLiteral.Array;
-            else
-               continue;
+            switch (verb)
+            {
+               case Push push:
+                  value = push.Value;
+                  break;
+               case PushArrayLiteral pushArrayLiteral:
+                  value = pushArrayLiteral.Array;
+                  break;
+               default:
+                  continue;
+            }
 
-            Variable variable;
-            if (value.As<Variable>().Assign(out variable))
+            if (value is Variable variable)
             {
                var name = variable.Name;
                value = name == "_" ? (Value)new Any() : new Placeholder(name);
             }
             array.Add(value);
          }
+
          return array;
       }
 
@@ -227,23 +220,26 @@ namespace Orange.Library.Parsers.Special
          foreach (var verb in listBlock.AsAdded)
          {
             Value value;
-            Push push;
-            PushArrayLiteral pushArrayLiteral;
-            if (verb.As<Push>().Assign(out push))
-               value = push.Value;
-            else if (verb.As<PushArrayLiteral>().Assign(out pushArrayLiteral))
-               value = pushArrayLiteral.Array;
-            else
-               continue;
+            switch (verb)
+            {
+               case Push push:
+                  value = push.Value;
+                  break;
+               case PushArrayLiteral pushArrayLiteral:
+                  value = pushArrayLiteral.Array;
+                  break;
+               default:
+                  continue;
+            }
 
-            Variable variable;
-            if (value.As<Variable>().Assign(out variable))
+            if (value is Variable variable)
             {
                var name = variable.Name;
                value = name == "_" ? (Value)new Any() : new Placeholder(name);
             }
             list = list.Add(value);
          }
+
          return list;
       }
 

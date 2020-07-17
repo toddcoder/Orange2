@@ -16,7 +16,7 @@ namespace Orange.Library.Verbs
          return SendMessage(target, "invoke", source);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "|>";
    }

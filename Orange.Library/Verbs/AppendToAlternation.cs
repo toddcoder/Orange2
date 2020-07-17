@@ -28,7 +28,7 @@ namespace Orange.Library.Verbs
 			return alternation;
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.CreateAlternator;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.CreateAlternator;
 
 	   public override string ToString() => "but";
 	}

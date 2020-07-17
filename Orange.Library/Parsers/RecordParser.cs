@@ -2,9 +2,9 @@
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Collections;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 
@@ -15,8 +15,7 @@ namespace Orange.Library.Parsers
       class OneLineMemberParser : Parser
       {
          public OneLineMemberParser()
-            : base($"^ /(|sp|) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
-         { }
+            : base($"^ /(|sp|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
          public override Verb CreateVerb(string[] tokens)
          {
@@ -26,13 +25,15 @@ namespace Orange.Library.Parsers
             Color(memberName.Length, Variables);
             Color(tokens[3].Length, Structures);
 
-            return GetExpression(source, NextPosition, CommaOrCloseParenthesis()).Map((exp, index) =>
+            if (GetExpression(source, NextPosition, CommaOrCloseParenthesis()).If(out var exp, out var index))
             {
                overridePosition = index;
                MemberName = memberName;
                Thunk = new Thunk(exp);
                return new NullOp();
-            }, () => null);
+            }
+
+            return null;
          }
 
          public override string VerboseName => "one line member parser";
@@ -45,8 +46,7 @@ namespace Orange.Library.Parsers
       class MultiLineMemberParser : Parser
       {
          public MultiLineMemberParser()
-            : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
-         { }
+            : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
          public override Verb CreateVerb(string[] tokens)
          {
@@ -56,13 +56,15 @@ namespace Orange.Library.Parsers
             Color(memberName.Length, Variables);
             Color(tokens[3].Length, Structures);
 
-            return GetExpression(source, NextPosition, EndOfLineConsuming()).Map((exp, index) =>
+            if (GetExpression(source, NextPosition, EndOfLineConsuming()).If(out var exp, out var index))
             {
                overridePosition = index;
                MemberName = memberName;
                Thunk = new Thunk(exp);
                return new NullOp();
-            }, () => null);
+            }
+
+            return null;
          }
 
          public override string VerboseName => "one line member parser";
@@ -75,10 +77,7 @@ namespace Orange.Library.Parsers
       FreeParser freeParser;
 
       public RecordParser()
-         : base($"^ /(|sp|) /'('? /'rec' (/(/s+ 'of' /s+) /({REGEX_VARIABLE}))? ")
-      {
-         freeParser = new FreeParser();
-      }
+         : base($"^ /(|sp|) /'('? /'rec' (/(/s+ 'of' /s+) /({REGEX_VARIABLE}))? ") => freeParser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -104,6 +103,7 @@ namespace Orange.Library.Parsers
                   index = freeParser.Position;
                   continue;
                }
+
                if (freeParser.Scan(source, parser.Position, "^ |sp| ')'"))
                {
                   overridePosition = freeParser.Position;
@@ -131,6 +131,7 @@ namespace Orange.Library.Parsers
             overridePosition = index;
             return new CreateRecord(members, sourceRecord);
          }
+
          return null;
       }
 

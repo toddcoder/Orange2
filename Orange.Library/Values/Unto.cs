@@ -2,105 +2,75 @@
 
 namespace Orange.Library.Values
 {
-	public class Unto : Value
-	{
-		Value start;
-		Value stop;
-		bool matching;
+   public class Unto : Value
+   {
+      Value start;
+      Value stop;
+      bool matching;
 
-		public Unto()
-		{
-			start = new Any();
-			stop = new Any();
-			matching = false;
-		}
+      public Unto()
+      {
+         start = new Any();
+         stop = new Any();
+         matching = false;
+      }
 
-		public void SetStartAndStop(Value aStart, Value aStop)
-		{
-			start = aStart;
-			stop = aStop;
-		}
+      public void SetStartAndStop(Value aStart, Value aStop)
+      {
+         start = aStart;
+         stop = aStop;
+      }
 
-		public override int Compare(Value value)
-		{
-			if (matching)
-			{
-				if (Case.Match(value, stop, false, null))
-					matching = false;
-				return 0;
-			}
-			if (Case.Match(value, start, false, null))
-			{
-				matching = true;
-				return 0;
-			}
-			return -1;
-		}
+      public override int Compare(Value value)
+      {
+         if (matching)
+         {
+            if (Case.Match(value, stop, false, null))
+               matching = false;
+            return 0;
+         }
 
-		public bool CompareTo(Value value)
-		{
-			if (matching)
-			{
-				if (Case.Match(value, stop, false, null))
-				{
-					matching = false;
-					return true;
-				}
-			}
-			else if (Case.Match(value, start, false, null))
-				matching = true;
-			return matching;
-		}
+         if (Case.Match(value, start, false, null))
+         {
+            matching = true;
+            return 0;
+         }
 
-		public override string Text
-		{
-			get
-			{
-				return "";
-			}
-			set
-			{
-			}
-		}
+         return -1;
+      }
 
-		public override double Number
-		{
-			get;
-			set;
-		}
+      public bool CompareTo(Value value)
+      {
+         if (matching)
+         {
+            if (Case.Match(value, stop, false, null))
+            {
+               matching = false;
+               return true;
+            }
+         }
+         else if (Case.Match(value, start, false, null))
+            matching = true;
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Unto;
-			}
-		}
+         return matching;
+      }
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return matching;
-			}
-		}
+      public override string Text
+      {
+         get => "";
+         set { }
+      }
 
-		public override Value Clone()
-		{
-			return new Unto
-			{
-				start = start.Clone(),
-				stop = stop.Clone()
-			};
-		}
+      public override double Number { get; set; }
 
-		protected override void registerMessages(MessageManager manager)
-		{
-		}
+      public override ValueType Type => ValueType.Unto;
 
-		public override string ToString()
-		{
-			return string.Format("{0} unto {1}", start, stop);
-		}
-	}
+      public override bool IsTrue => matching;
+
+      public override Value Clone() => new Unto { start = start.Clone(), stop = stop.Clone() };
+
+      protected override void registerMessages(MessageManager manager) { }
+
+      public override string ToString() => $"{start} unto {stop}";
+   }
 }

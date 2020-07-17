@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -14,21 +13,24 @@ namespace Orange.Library.Verbs
          var left = stack.Pop(true, Location);
          var generator = left.PossibleGenerator();
          Assert(generator.IsSome, Location, $"{left} is not a generator");
-         var lambda = right.As<Lambda>();
-         Assert(lambda.IsSome, Location, $"{right} is not a lambda");
+/*         var lambda = right.As<Lambda>();
+         Assert(lambda.IsSome, Location, $"{right} is not a lambda");*/
 
-         var iterator = new NSIterator(generator.Value);
-         return Evaluate(iterator, lambda.Value);
+         if (right is Lambda lambda)
+         {
+            var iterator = new NSIterator(generator.Value);
+            return Evaluate(iterator, lambda);
+         }
+
+         Throw(Location, $"{right} is not a lamba");
+         return null;
       }
 
       public abstract Value Evaluate(NSIterator iterator, Lambda lambda);
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
-      public abstract string Location
-      {
-         get;
-      }
+      public abstract string Location { get; }
 
       public override string ToString() => Location;
    }

@@ -7,10 +7,7 @@ namespace Orange.Library.Verbs
    {
       Block expression;
 
-      public PushSome(Block expression)
-      {
-         this.expression = expression;
-      }
+      public PushSome(Block expression) => this.expression = expression;
 
       public override Value Evaluate()
       {
@@ -18,7 +15,7 @@ namespace Orange.Library.Verbs
          return new Some(value);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
       public override string ToString() => $"$[{expression}]";
 

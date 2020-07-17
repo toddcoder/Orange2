@@ -52,12 +52,9 @@ namespace Orange.Library.Patterns
 
 		protected string text;
 
-		public StringElement(string text)
-		{
-			this.text = text;
-		}
+		public StringElement(string text) => this.text = text;
 
-		public override bool EvaluateFirst(string input)
+	   public override bool EvaluateFirst(string input)
 		{
 			if (Not)
 				return Evaluate(input);

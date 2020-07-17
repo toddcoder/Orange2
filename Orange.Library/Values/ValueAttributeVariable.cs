@@ -23,14 +23,8 @@ namespace Orange.Library.Values
 
 		public override Value Value
 		{
-			get
-			{
-				return SendMessage(value, getter);
-			}
-			set
-			{
-				SendMessage(this.value, setter, value);
-			}
+			get => SendMessage(value, getter);
+		   set => SendMessage(this.value, setter, value);
 		}
 
 		public override string ContainerType => ValueType.ValueAttributeVariable.ToString();

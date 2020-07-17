@@ -15,17 +15,8 @@ namespace Orange.Library.Verbs
 			return Runtime.SendMessage(x, "gcd", y);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Mod;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Mod;
 
-		public override string ToString()
-		{
-			return "gcd";
-		}
+	   public override string ToString() => "gcd";
 	}
 }

@@ -23,6 +23,7 @@ namespace Orange.Library.Verbs
             case ValueType.MessagePath:
                return SendMessage(target, "apply", subject);
          }
+
          var arguments = new Arguments();
          if (subject.IsVariable)
          {
@@ -38,7 +39,7 @@ namespace Orange.Library.Verbs
          return MessagingState.SendMessage(target, "apply", arguments);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "|";
    }

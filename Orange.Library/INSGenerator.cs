@@ -12,7 +12,11 @@ namespace Orange.Library
 
       Value If();
 
+      Value IfNot();
+
       Value Map();
+
+      Value MapIf();
 
       Value Skip();
 
@@ -48,17 +52,18 @@ namespace Orange.Library
 
       Value SplitUntil();
 
-      Region Region
-      {
-         get;
-         set;
-      }
+      Value Unique();
 
-      INSGeneratorSource GeneratorSource
-      {
-         get;
-      }
+      Value Flat();
+
+      Value First();
+
+      Region Region { get; set; }
+
+      INSGeneratorSource GeneratorSource { get; }
 
       void Visit(Value value);
+
+      bool More { get; }
    }
 }

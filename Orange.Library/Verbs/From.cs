@@ -16,17 +16,8 @@ namespace Orange.Library.Verbs
 			return Runtime.SendMessage(target, "from", arguments);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "from";
-		}
+	   public override string ToString() => "from";
 	}
 }

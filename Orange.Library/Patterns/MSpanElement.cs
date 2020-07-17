@@ -9,12 +9,9 @@ namespace Orange.Library.Patterns
 		protected int count;
 
 		public MSpanElement(string text, int count = -1)
-			: base(text)
-		{
-			this.count = count;
-		}
+			: base(text) => this.count = count;
 
-		public MSpanElement()
+	   public MSpanElement()
 			: this("")
 		{
 		}
@@ -59,10 +56,7 @@ namespace Orange.Library.Patterns
 					Next = next
 				};
 			}
-			set
-			{
-				alternate = value;
-			}
+			set => alternate = value;
 		}
 
 		public override string ToString() => $"++{{'{needle}'}}";

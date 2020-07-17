@@ -2,10 +2,7 @@
 using Orange.Library.Managers;
 using Orange.Library.Verbs;
 using Standard.Types.Collections;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using Standard.Types.Strings;
-using Standard.Types.Tuples;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 
@@ -51,27 +48,15 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      }
+      public override string Text { get; set; }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Case;
 
       public override bool IsTrue => Match(value, comparisand, required, condition);
 
-      public Block If
-      {
-         get;
-         set;
-      }
+      public Block If { get; set; }
 
       public override Value Clone()
       {
@@ -97,63 +82,58 @@ namespace Orange.Library.Values
       }
 
       public static bool Match(Value left, Value right, Region region, bool usePopper, bool required, Block condition,
-         string bindingName = "")
+         string bindingName = "", bool assigning = false)
       {
          if (usePopper)
             using (var popper = new RegionPopper(region, "case match"))
             {
                popper.Push();
-               return Match(left, right, required, condition, bindingName);
+               return Match(left, right, required, condition, bindingName, assigning);
             }
-         return Match(left, right, required, condition, bindingName);
+
+         return Match(left, right, required, condition, bindingName, assigning);
       }
 
-      public static bool Match(Value left, Value right, bool required, Block condition, string bindingName = "")
+      public static bool Match(Value left, Value right, bool required, Block condition, string bindingName = "", bool assigning = false)
       {
-         BoundValue boundValue;
-         if (right.As<BoundValue>().Assign(out boundValue))
+         if (left is IMatch matching)
+            return returnMatched(matching.Match(right), required, condition);
+
+         if (right is BoundValue boundValue)
          {
             var fieldName = boundValue.Name;
             var realResult = Match(left, boundValue.InnerValue, required, condition, fieldName);
             if (realResult && !(boundValue.InnerValue is Class))
-               Regions.SetLocal(fieldName, left);
+               Regions.SetBinding(fieldName, left, assigning);
             return realResult;
          }
 
-         right.As<Block>().If(block => right = block.Evaluate());
-         var leftSome = left.As<Some>();
-         if (leftSome.IsSome)
+         if (right is Block block)
+            right = block.Evaluate();
+
+         if (left is Some leftSome)
          {
-            bool someMatched;
-            string cargoName;
-            Value cargo;
-            leftSome.Value.Match(right).Assign(out someMatched, out cargoName, out cargo);
+            (var someMatched, var cargoName, var cargo) = leftSome.Match(right);
             if (someMatched && cargoName != "_")
-               Regions.SetLocal(cargoName, cargo);
+               Regions.SetBinding(cargoName, cargo, assigning);
             return returnMatched(someMatched, required, condition);
          }
 
          if (left.Type == ValueType.None && right.Type == ValueType.None)
             return returnMatched(true, required, condition);
 
-         var leftFailure = left.As<Failure>();
-         if (leftFailure.IsSome)
+         if (left is Failure leftFailure)
          {
-            bool someMatched;
-            string messageName;
-            Value message;
-            leftFailure.Value.Match(right).Assign(out someMatched, out messageName, out message);
+            (var someMatched, var messageName, var message) = leftFailure.Match(right);
             if (someMatched && messageName != "_")
-               Regions.SetLocal(messageName, message);
+               Regions.SetBinding(messageName, message, assigning);
             return returnMatched(someMatched, required, condition);
          }
 
-         var leftList = left.As<List>();
-         var rightList = right.As<List>();
-         if (leftList.IsSome)
+         if (left is List leftList)
          {
-            if (rightList.IsSome)
-               return returnMatched(leftList.Value.Match(rightList.Value), required, condition);
+            if (right is List rightList)
+               return returnMatched(leftList.Match(rightList), required, condition);
             if (right.IsNil)
                return returnMatched(false, required, condition);
          }
@@ -162,60 +142,55 @@ namespace Orange.Library.Values
          bool matched;
          if (right.Type != ValueType.Any && right.Type != ValueType.Placeholder)
          {
-            matched = matchToLeftObject(left, right, required, condition, out leftWasAnObject, bindingName);
+            matched = matchToLeftObject(left, right, required, condition, out leftWasAnObject, bindingName, assigning);
             if (leftWasAnObject)
                return returnMatched(matched, required, condition);
          }
 
-         var rightObject = right.As<Object>();
-         if (rightObject.IsSome)
+         if (right is Object rightObject)
          {
-            var rightClass = rightObject.Value.Class;
+            var rightClass = rightObject.Class;
             if (rightClass.RespondsTo("match"))
             {
                left = rightClass.StaticObject.SendToSelf("match", left);
                if (left?.IsNil ?? true)
                   return returnMatched(false, required, condition);
-               matched = matchToLeftObject(left, right, required, condition, out leftWasAnObject, bindingName);
+
+               matched = matchToLeftObject(left, right, required, condition, out leftWasAnObject, bindingName, assigning);
                if (leftWasAnObject)
                   return returnMatched(matched, required, condition);
             }
          }
 
-         var leftRecord = left.As<Record>();
-         if (leftRecord.IsSome)
-         {
-            var rightRecord = right.As<Record>();
-            if (rightRecord.IsSome)
-               return returnMatched(leftRecord.Value.Match(rightRecord.Value, required), required, condition);
-         }
+         if (left is Record leftRecord && right is Record rightRecord)
+            return returnMatched(leftRecord.Match(rightRecord, required), required, condition);
 
-         var autoInvoker = right.As<AutoInvoker>();
-         if (autoInvoker.IsSome)
-            right = autoInvoker.Value.Resolve();
-         /*         if (left == null || right == null)
-                     return returnMatched(false, required, condition);*/
+         if (right is AutoInvoker autoInvoker)
+            right = autoInvoker.Resolve();
          if (left.IsNil || right.IsNil)
             return returnMatched(false, required, condition);
-         Regions.SetLocal(State.DefaultParameterNames.ValueVariable, left);
-         var alternation = right.As<Alternation>();
-         if (alternation.IsSome)
+
+         if (right is Alternation alternation)
          {
-            alternation.Value.Reset();
+            alternation.Reset();
             while (true)
             {
-               var value = alternation.Value.Dequeue();
+               var value = alternation.Dequeue();
                if (value.IsNil)
                   return returnMatched(false, required, condition);
+
                var result = Match(left, value, required, condition);
                if (result)
                   return returnMatched(true, required, condition);
             }
          }
+
          if (left.ID == right.ID)
             return returnMatched(true, required, condition);
          if (left.Type == ValueType.String && right.Type == ValueType.String)
-            return returnMatched(string.Compare(left.Text, right.Text, StringComparison.Ordinal) == 0, required, condition);
+            return returnMatched(string.Compare(left.Text, right.Text, StringComparison.Ordinal) == 0, required,
+               condition);
+
          switch (right.Type)
          {
             case ValueType.Any:
@@ -223,41 +198,44 @@ namespace Orange.Library.Values
             case ValueType.TypeName:
                return returnMatched(right.Compare(left) == 0, required, condition);
             case ValueType.Placeholder:
-               Regions.SetLocal(right.Text, left);
+               Regions.SetBinding(right.Text, left, assigning);
                return returnMatched(true, required, condition);
             case ValueType.Symbol:
                return returnMatched(string.Compare(right.Text, left.Text, StringComparison.Ordinal) == 0, required,
                   condition);
          }
+
          if (right.IsArray)
          {
             var rightArray = (Array)right.SourceArray;
-            var generator = left.As<Generator>();
-            if (generator.IsSome)
-               return returnMatched(generator.Value.Match(rightArray, required), required, condition);
+            if (left is Generator generator)
+               return returnMatched(generator.Match(rightArray, required, assigning), required, condition);
+
             if (left.IsArray)
             {
                var leftArray = (Array)left.SourceArray;
-               return returnMatched(leftArray.MatchArray(rightArray, required), required, condition);
+               return returnMatched(leftArray.MatchArray(rightArray, required, assigning), required, condition);
             }
+
             var verb = new Equals();
             return returnMatched(verb.DoComparison(left, rightArray).IsTrue, required, condition);
          }
+
          if (right.Type == ValueType.Tuple && left.Type == ValueType.Tuple)
          {
             var leftTuple = (OTuple)left;
             var rightTuple = (OTuple)right;
-            return returnMatched(leftTuple.Match(rightTuple, required), required, condition);
+            return returnMatched(leftTuple.Match(rightTuple, required, assigning), required, condition);
          }
+
          switch (right.Type)
          {
             case ValueType.Block:
-               var block = (Block)right;
-               return returnMatched(block.IsTrue, required, condition);
+               return returnMatched(((Block)right).IsTrue, required, condition);
             case ValueType.Lambda:
                var closure = (Lambda)right;
                var variableName = closure.Parameters.VariableName(0, State.DefaultParameterNames.ValueVariable);
-               Regions.SetLocal(variableName, left);
+               Regions.SetBinding(variableName, left, assigning);
                return returnMatched(closure.Block.Evaluate().IsTrue, required, condition);
             case ValueType.Message:
                var message = (Message)right;
@@ -273,50 +251,55 @@ namespace Orange.Library.Values
                return returnMatched(set.Contains(left), required, condition);
          }
 
-         var unto = right.As<Unto>();
-         if (unto.IsSome)
-            return returnMatched(unto.Value.CompareTo(left), required, condition);
+         if (right is Unto unto)
+            return returnMatched(unto.CompareTo(left), required, condition);
 
-         return returnMatched(right.As<Pattern>().Map(pattern => pattern.MatchAndBind(left.Text),
-            () => Runtime.Compare(left, right) == 0), required, condition);
+         if (right is Regex regex)
+            return returnMatched(regex.Match(left.Text).IsTrue, required, condition);
+
+         return returnMatched(right is Pattern pattern ? pattern.MatchAndBind(left.Text) : Runtime.Compare(left, right) == 0, required,
+            condition);
       }
 
       static bool matchToLeftObject(Value left, Value right, bool required, Block condition, out bool leftWasAnObject,
-         string bindingName)
+         string bindingName, bool assigning)
       {
-         var leftObject = left.As<Object>();
-         leftWasAnObject = leftObject.IsSome;
-         if (leftWasAnObject)
+         leftWasAnObject = false;
+         if (left is Object leftObject)
          {
-            var rightObject = right.As<Object>();
-            if (rightObject.IsSome)
+            leftWasAnObject = true;
+            if (right is Object rightObject)
             {
-               if (leftObject.Value.RespondsNoDefault("cmp") && rightObject.Value.RespondsNoDefault("cmp"))
-                  return returnMatched(leftObject.Value.SendToSelf("cmp", right) == 0, required, condition);
-               return MatchObjects(leftObject.Value, rightObject.Value, required);
+               if (leftObject.RespondsNoDefault("cmp") && rightObject.RespondsNoDefault("cmp"))
+                  return returnMatched(leftObject.SendToSelf("cmp", right) == 0, required, condition);
+
+               return MatchObjects(leftObject, rightObject, required, assigning);
             }
-            var rightClass = right.As<Class>();
-            if (rightClass.IsSome)
+
+            if (right is Class rightClass)
             {
-               if (rightClass.Value.RespondsTo("match"))
+               if (rightClass.RespondsTo("match"))
                {
-                  var response = rightClass.Value.StaticObject.SendToSelf("match", left);
-                  if (response.IsNil || response.Type == ValueType.None || response.Type != ValueType.Some)
+                  var response = rightClass.StaticObject.SendToSelf("match", left);
+                  if (response == null || response.IsNil || response.Type == ValueType.None || response.Type != ValueType.Some)
                      return returnMatched(false, required, condition);
+
                   if (bindingName.IsNotEmpty())
-                     Regions.SetLocal(bindingName, ((Some)response).Value());
+                     Regions.SetBinding(bindingName, ((Some)response).Value(), assigning);
                   return returnMatched(true, required, condition);
                }
-               return returnMatched(leftObject.Value.Class.IsChildOf(rightClass.Value), required, condition);
+
+               return returnMatched(leftObject.Class.IsChildOf(rightClass), required, condition);
             }
-            var trait = right.As<Trait>();
-            if (trait.IsSome)
-               return returnMatched(leftObject.Value.Class.ImplementsTrait(trait.Value), required, condition);
+
+            if (right is Trait trait)
+               return returnMatched(leftObject.Class.ImplementsTrait(trait), required, condition);
          }
+
          return false;
       }
 
-      public static bool MatchObjects(Object obj1, Object obj2, bool required)
+      public static bool MatchObjects(Object obj1, Object obj2, bool required, bool assigning)
       {
          var chains = new Hash<string, MessagePath>();
          var bindings = new AutoHash<string, Value>
@@ -332,14 +315,17 @@ namespace Orange.Library.Values
             if (comparison == 0)
             {
                foreach (var item in chains)
-                  Regions.SetLocal(item.Key, item.Value.Invoke(obj1).Resolve());
+                  Regions.SetBinding(item.Key, item.Value.Invoke(obj1).Resolve(), assigning);
                foreach (var item in bindings)
-                  Regions.SetLocal(item.Key, item.Value.Resolve());
+                  Regions.SetBinding(item.Key, item.Value.Resolve(), assigning);
+
                return returnMatched(comparison == 0, required, null);
             }
+
             if (!repeating)
                break;
          }
+
          return comparison == 0;
       }
 
@@ -364,6 +350,7 @@ namespace Orange.Library.Values
                result = block.Evaluate(region);
             return this;
          }
+
          matched = wasMatched && If.Evaluate(region).IsTrue;
          if (matched)
             result = block.Evaluate(region);
@@ -380,6 +367,7 @@ namespace Orange.Library.Values
       {
          if (mapped)
             return matched ? result : new Nil();
+
          return this;
       }
 
@@ -397,26 +385,14 @@ namespace Orange.Library.Values
 
       public bool Matched
       {
-         get
-         {
-            return matched;
-         }
-         set
-         {
-            matched = value;
-         }
+         get => matched;
+         set => matched = value;
       }
 
       public Value Result
       {
-         get
-         {
-            return result;
-         }
-         set
-         {
-            result = value;
-         }
+         get => result;
+         set => result = value;
       }
 
       public override void AssignTo(Variable variable)

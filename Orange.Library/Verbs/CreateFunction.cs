@@ -1,6 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -39,41 +37,44 @@ namespace Orange.Library.Verbs
       }
 
       public CreateFunction()
-         : this("", null, false, Public, false, null) {}
+         : this("", null, false, Public, false, null) { }
 
       public override Value Evaluate()
       {
          if (multiCapable)
          {
-            MultiLambda multiLambda;
+            MultiLambda multiLambda = null;
             InvokeableReference reference = null;
             var isAReference = false;
             if (Regions.VariableExists(functionName))
             {
                var value = Regions[functionName];
 
-               isAReference = value.As<InvokeableReference>().Assign(out reference);
-               if (isAReference)
+               //isAReference = value.As<InvokeableReference>().Assign(out reference);
+               if (value is InvokeableReference invokeableReference)
                {
-                  var invokeable = reference.Invokeable;
+                  isAReference = true;
+                  var invokeable = invokeableReference.Invokeable;
                   RejectNull(invokeable, "Create function", "Not an invokeable");
                   value = (Value)invokeable;
                }
-               if (!value.As<MultiLambda>().Assign(out multiLambda))
+               if (!(value is MultiLambda multi))
                {
                   var lambdaItem = (Lambda)value;
                   var multiLambdaItem = new MultiLambdaItem(lambdaItem, false, condition);
-                  multiLambda = lambdaItem.Expand ? new ExpansibleLambda(functionName, memoize) :
-                     new MultiLambda(functionName, memoize);
-                  multiLambda.Add(multiLambdaItem);
+                  multi = lambdaItem.Expand ? new ExpansibleLambda(functionName, memoize) : new MultiLambda(functionName, memoize);
+                  multi.Add(multiLambdaItem);
+                  multiLambda = multi;
                }
             }
             else
             {
-               multiLambda = lambda.Expand ? new ExpansibleLambda(functionName, memoize) :
-                  new MultiLambda(functionName, memoize);
+               multiLambda = lambda.Expand ? new ExpansibleLambda(functionName, memoize) : new MultiLambda(functionName, memoize);
                Regions.CreateVariable(functionName, global, visibility, _override);
             }
+            if (multiLambda is null)
+               return null;
+
             var item = new MultiLambdaItem(lambda, false, condition);
             multiLambda.Add(item);
             if (isAReference)
@@ -84,9 +85,10 @@ namespace Orange.Library.Verbs
                multiLambda.Where = lambda.Where;
             MarkAsXMethod(functionName, lambda);
             lambda.Message = functionName;
-            result = multiLambda.ToString();
-            return multiLambda;
+            result = representation();
+            return null;
          }
+
          if (_override)
             Regions.UnsetReadOnly(functionName);
          Regions.CreateVariable(functionName, global, visibility, _override);
@@ -94,11 +96,13 @@ namespace Orange.Library.Verbs
          Regions[functionName] = assignedValue;
          Regions.SetReadOnly(functionName);
          MarkAsXMethod(functionName, lambda);
-         result = lambda.ToString();
-         return lambda;
+         result = representation();
+         return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      string representation() => $"func {functionName}({lambda.Parameters})";
+
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public string FunctionName => functionName;
 
@@ -108,11 +112,13 @@ namespace Orange.Library.Verbs
 
       public bool EvaluateFirst => true;
 
-      public override string ToString() => $"func {functionName} = {lambda}";
+      public override string ToString() => $"func {functionName}";
 
       public Signature Signature => new Signature(functionName, lambda.ParameterCount, false);
 
       public string Result => result;
+
+      public string TypeName => "Lambda";
 
       public int Index { get; set; }
 

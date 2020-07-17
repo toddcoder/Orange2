@@ -25,7 +25,7 @@ namespace Orange.Library.Verbs
 			return Invoke.Evaluate(value, arguments);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Invoke;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Invoke;
 
 	   public override string ToString() => $"{functionName}({arguments})";
 	}

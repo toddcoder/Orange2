@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Exceptions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
@@ -17,11 +18,10 @@ namespace Orange.Library.Verbs
          bool blockGenerating;
          Value sourceValue;
 
-         public ForGenerator(ForExecute forExecute)
-            : base(forExecute)
+         public ForGenerator(ForExecute forExecute) : base(forExecute)
          {
             parameters = forExecute.parameters;
-            sourceGenerator = forExecute.value.GetGenerator();
+            sourceGenerator = forExecute.value.Evaluate().PossibleGenerator().Required("Value is not a generator");
             blockGenerator = forExecute.block.GetGenerator();
             blockGenerating = false;
             sourceValue = NilValue;
@@ -50,16 +50,24 @@ namespace Orange.Library.Verbs
                   parameters.SetValues(sourceValue, index);
                   var value = blockGenerator.Next();
                   if (!value.IsNil)
+                  {
+                     index++;
                      return value;
+                  }
+
                   blockGenerating = false;
                }
+
                sourceValue = sourceGenerator.Next();
                if (sourceValue.IsNil)
+               {
                   return sourceValue;
+               }
+
                blockGenerator.Reset();
-               parameters.SetValues(sourceValue, ++index);
+               index++;
                blockGenerating = true;
-               return blockGenerator.Next();
+               return Values.Ignore.IgnoreValue;
             }
          }
 
@@ -79,14 +87,20 @@ namespace Orange.Library.Verbs
                index = i;
                var next = iterator.Next();
                if (next.IsNil)
+               {
                   break;
+               }
+
                parameters.SetValues(next, i);
                block.Evaluate();
                var signal = Signal();
                if (signal == Breaking || signal == ReturningNull)
+               {
                   break;
+               }
             }
          }
+
          return index == 1 ? "1 iteration" : $"{index} iterations";
       }
 
@@ -99,7 +113,8 @@ namespace Orange.Library.Verbs
       {
          this.parameters = parameters;
          this.parameters.Splatting = true;
-         this.value = value;
+         this.value = CodeBuilder.ParenthesizeBlock(value);
+         //this.value = value;
          this.block = block;
          result = "";
       }
@@ -107,13 +122,19 @@ namespace Orange.Library.Verbs
       public override Value Evaluate()
       {
          var evaluated = value.Evaluate();
-         var source = evaluated.PossibleGenerator();
-         Assert(source.IsSome, "for", "Value must be a generator");
-         result = Iterate(source.Value, parameters, block);
+         if (evaluated.PossibleGenerator().If(out var generator))
+         {
+            result = Iterate(generator, parameters, block);
+         }
+         else
+         {
+            throw "Value must be a generator".Throws();
+         }
+
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public INSGenerator GetGenerator() => new ForGenerator(this);
 
@@ -129,10 +150,14 @@ namespace Orange.Library.Verbs
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => "";
+
+      public int Index { get; set; }
+
+      public Parameters Parameters => parameters;
+
+      public Block Value => value;
+
+      public Block Block => block;
    }
 }

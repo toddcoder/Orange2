@@ -1,7 +1,7 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
@@ -13,10 +13,8 @@ namespace Orange.Library.Parsers
       FunctionBodyParser functionBodyParser;
 
       public OperatorParser()
-         : base("^ /(|tabs|) /('nofix' | 'prefix' | 'suffix' | 'infix') /(/s+) /(['a-z'] ['a-z0-9']* '?'?) /(/s* '(')")
-      {
+         : base("^ /(|tabs|) /('nofix' | 'prefix' | 'suffix' | 'infix') /(/s+) /(['a-z'] ['a-z0-9']* '?'?) /(/s* '(')") =>
          functionBodyParser = new FunctionBodyParser();
-      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -32,9 +30,8 @@ namespace Orange.Library.Parsers
          var index = position + length;
          var parametersParser = new ParametersParser();
          var parsed = parametersParser.Parse(source, index);
-         Parameters parameters;
-         Assert(parsed.Assign(out parameters, out index), "Operator parser", "Parameters malformed");
-         return functionBodyParser.Parse(source, index).Map((block, newIndex) =>
+         Assert(parsed.If(out var parameters, out index), "Operator parser", "Parameters malformed");
+         if (functionBodyParser.Parse(source, index).If(out var block, out var newIndex))
          {
             overridePosition = newIndex;
             var lambda = new Lambda(new Region(), block, parameters, false);
@@ -56,10 +53,13 @@ namespace Orange.Library.Parsers
                   affinity = 2;
                   break;
             }
+
             var userDefinedOperator = new UserDefinedOperator(affinity, pre, lambda);
             CompilerState.RegisterOperator(name, userDefinedOperator);
             return new NullOp();
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "operator";

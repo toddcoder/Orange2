@@ -33,26 +33,14 @@ namespace Orange.Library.Values
 
 		public Generator Generator
 		{
-			get
-			{
-				return generator;
-			}
-			set
-			{
-				generator = value;
-			}
+			get => generator;
+		   set => generator = value;
 		}
 
 		public Block IfBlock
 		{
-			get
-			{
-				return ifBlock;
-			}
-			set
-			{
-				ifBlock = value;
-			}
+			get => ifBlock;
+		   set => ifBlock = value;
 		}
 
 		public override int Compare(Value value) => 0;

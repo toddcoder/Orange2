@@ -1,20 +1,17 @@
-﻿using Orange.Library.Verbs;
+﻿using Core.Strings;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using Standard.Types.Strings;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class IndexedGetterMessageParser : Parser
    {
-      public IndexedGetterMessageParser()
-         : base($"^ /(' '*) /({REGEX_VARIABLE}) /(/s* '.') /({REGEX_VARIABLE}) /('$'{REGEX_VARIABLE} | '[')")
-      {
-      }
+      public IndexedGetterMessageParser() : base($"^ /(' '*) /({REGEX_VARIABLE}) /(/s* '.') /({REGEX_VARIABLE}) /('$'{REGEX_VARIABLE} | '[')") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -30,23 +27,22 @@ namespace Orange.Library.Parsers
          if (type.StartsWith("$"))
          {
             Color(type.Length, Messaging);
-            var arguments = new Arguments(type.Skip(1));
+            var arguments = new Arguments(type.Drop(1));
             return new SendMessageToProperty(fieldName, messageName, new Arguments(), GetterName("item"),
-               arguments, VerbPresidenceType.SendMessage);
+               arguments, VerbPrecedenceType.SendMessage);
          }
 
          Color(1, Structures);
 
-         return GetExpression(source, NextPosition, CloseBracket(), true).Map((expression, index) =>
+         if (GetExpression(source, NextPosition, CloseBracket(), true).If(out var expression, out var index))
          {
             overridePosition = index;
             var arguments = new Arguments(expression);
             return new SendMessageToProperty(fieldName, messageName, new Arguments(), GetterName("item"),
-               arguments, VerbPresidenceType.SendMessage)
-            {
-               Index = position
-            };
-         }, () => null);
+               arguments, VerbPrecedenceType.SendMessage) { Index = position };
+         }
+
+         return null;
       }
 
       public override string VerboseName => "indexed getter message";

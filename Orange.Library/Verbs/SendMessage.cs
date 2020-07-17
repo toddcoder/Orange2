@@ -1,7 +1,5 @@
 ﻿using System.Text;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Runtime;
@@ -30,28 +28,23 @@ namespace Orange.Library.Verbs
       }
 
       public SendMessage()
-         : this("", null)
-      {
-      }
+         : this("", null) { }
 
       public override Value Evaluate()
       {
          var stack = State.Stack;
          var value = stack.Pop(false, LOCATION);
          arguments.FromSelf = arguments.FromSelf;
-         Variable variable;
-         if (value.As<Variable>().Assign(out variable) && variable.Name == "super")
-         {
-            var super = variable.Value.As<Class>();
-            if (super.IsSome)
-               return SendSuperMessage(super.Value, message, arguments);
-         }
+         if (value is Variable variable && variable.Name == "super" && variable.Value is Class super)
+            return SendSuperMessage(super, message, arguments);
+
          if (registerCall)
             MessagingState.RegisterMessageCall(message);
          value = value.Resolve();
          var responds = MessagingState.RespondsTo(value, message);
          if (optional && !responds)
             return new Nil();
+
          if (!optional && !responds)
          {
             message = GetterName(message);
@@ -59,17 +52,33 @@ namespace Orange.Library.Verbs
             if (optional && !responds)
                return new Nil();
          }
+
          Assert(optional || responds, LOCATION, () => $"{value} doesn't understand {Unmangle(message)} message");
          var result = MessagingState.SendMessage(value, message, arguments);
-         if (variable != null && inPlace)
+         if (result is ObjectVariable objectVariable && objectVariable.Value is Class cls)
+            return SendMessage(cls, "invoke", arguments);
+
+         if (optional)
+            if (result is ObjectVariable innerValue)
+            {
+               if (innerValue.Value is Some some)
+                  return some.Value();
+
+               if (innerValue.Value is None)
+                  return None.NoneValue;
+
+               return innerValue.Value;
+            }
+
+         if (value is Variable variable1 && inPlace)
          {
-            Reject(variable.Name.StartsWith(VAR_ANONYMOUS), LOCATION, "Can't reassign to an anonymous variable");
-            variable.Value = result;
+            Reject(variable1.Name.StartsWith(VAR_ANONYMOUS), LOCATION, "Can't reassign to an anonymous variable");
+            variable1.Value = result;
          }
          return result;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.SendMessage;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.SendMessage;
 
       public override string ToString()
       {

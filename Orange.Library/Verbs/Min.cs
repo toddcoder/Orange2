@@ -5,38 +5,14 @@ namespace Orange.Library.Verbs
 {
 	public class Min : TwoValueVerb
 	{
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.LessThan;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.LessThan;
 
-		public override Value Evaluate(Value x, Value y)
-		{
-			return x.Compare(y) < 0 ? x : y;
-		}
+	   public override Value Evaluate(Value x, Value y) => x.Compare(y) < 0 ? x : y;
 
-		public override string Location
-		{
-			get
-			{
-				return "Upper limit";
-			}
-		}
+	   public override string Location => "Upper limit";
 
-		public override string Message
-		{
-			get
-			{
-				return "min";
-			}
-		}
+	   public override string Message => "min";
 
-		public override string ToString()
-		{
-			return "min";
-		}
+	   public override string ToString() => "min";
 	}
 }

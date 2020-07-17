@@ -1,5 +1,6 @@
-﻿using System;
+﻿using System.Linq;
 using Orange.Library.Values;
+using Standard.Computer;
 using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -13,12 +14,11 @@ namespace Orange.Library
       IFileCache fileCache;
       IConsole console;
 
-      public event EventHandler<BlockEventArgs> Statement;
-
       public OrangeRuntime(Block block, string text = "", IFileCache fileCache = null, IConsole console = null)
       {
          this.block = block;
-         this.block.Statement += (sender, e) => Statement?.Invoke(this, e);
+         //this.block.Statement += (sender, e) => Statement?.Invoke(this, e);
+         Block.ClearResults();
          this.text = text;
          this.fileCache = fileCache;
          this.console = console;
@@ -28,8 +28,10 @@ namespace Orange.Library
       {
          State = new Runtime(text, fileCache)
          {
-            UIConsole = console
+            UIConsole = console,
+            ModuleFolders = ModuleFolders.Select(f => (FolderName)f).ToArray()
          };
+         block.AutoRegister = false;
          var result = block.Evaluate();
          if (result != null)
          {
@@ -46,16 +48,10 @@ namespace Orange.Library
          return buffer.IsNotEmpty() ? buffer : "";
       }
 
-      public string LastValue
-      {
-         get;
-         set;
-      }
+      public string LastValue { get; set; }
 
-      public string LastType
-      {
-         get;
-         set;
-      }
+      public string LastType { get; set; }
+
+      public string[] ModuleFolders { get; set; } = new string[0];
    }
 }

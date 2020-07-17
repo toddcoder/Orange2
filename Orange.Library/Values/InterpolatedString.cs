@@ -5,7 +5,7 @@ using Orange.Library.Managers;
 using Standard.Types.Numbers;
 using Standard.Types.RegularExpressions;
 using Standard.Types.Strings;
-using Standard.Types.Tuples;
+using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
@@ -15,21 +15,13 @@ namespace Orange.Library.Values
       Block[] blocks;
 
       public InterpolatedString(string text, List<Block> blocks)
-         : base(text)
-      {
-         this.blocks = blocks.ToArray();
-      }
+         : base(text) => this.blocks = blocks.ToArray();
 
       public InterpolatedString()
-         : this("", new List<Block>())
-      {
-      }
+         : this("", new List<Block>()) { }
 
       public InterpolatedString(string text)
-         : this(text, new List<Block>())
-      {
-
-      }
+         : this(text, new List<Block>()) { }
 
       protected override string getText() => getText(text);
 
@@ -46,7 +38,8 @@ namespace Orange.Library.Values
                matcher[i, 2] = Text(block.Evaluate());
                matcher[i, 3] = "";
             }
-         return matcher.ToString().Replace("`#", "#");
+
+         return matcher.ToString().Replace("`#", "#").Replace("`i", State.Indentation());
       }
 
       public InterpolatedString Interpolated => new InterpolatedString(getText(), new List<Block>());
@@ -68,22 +61,25 @@ namespace Orange.Library.Values
             var array = (Array)applyValue.SourceArray;
             return applyToArray(array);
          }
+
          switch (applyValue.Type)
          {
             case ValueType.Parameters:
                var parameters = (Parameters)applyValue;
                return new Format(parameters, this);
          }
+
          return this;
       }
 
       Value applyToArray(Array array)
       {
-         RegionManager.Regions.Push(new Region(), "fill");
+         Regions.Push(new Region(), "fill");
          foreach (var item in array)
-            RegionManager.Regions.SetLocal(GetReadableKey(item), item.Value);
+            Regions.SetLocal(GetReadableKey(item), item.Value);
+
          var result = getText();
-         RegionManager.Regions.Pop("fill");
+         Regions.Pop("fill");
          return result;
       }
 
@@ -102,6 +98,7 @@ namespace Orange.Library.Values
                matcher[i, 2] = Text(block.ToString());
                matcher[i, 3] = "";
             }
+
          return matcher.ToString().Replace("`#", "#");
       }
 
@@ -110,15 +107,18 @@ namespace Orange.Library.Values
          var array = Arguments.AsArray();
          if (array == null)
             return this;
-         RegionManager.Regions.Push("format");
+
+         Regions.Push("format");
          foreach (var item in array.Where(i => !i.Key.IsNumeric()))
-            RegionManager.Regions.SetLocal(item.Key, item.Value);
+            Regions.SetLocal(item.Key, item.Value);
+
          var matcher = new Matcher();
          matcher.Evaluate(text, @"'\' /(/d+)");
          for (var i = 0; i < matcher.MatchCount; i++)
             matcher[i] = array[matcher[i, 1].ToInt()].Text;
+
          var result = getText(matcher.ToString());
-         RegionManager.Regions.Pop("format");
+         Regions.Pop("format");
          return result;
       }
 
@@ -130,12 +130,9 @@ namespace Orange.Library.Values
          {
             popper.Push();
             foreach (var value in Arguments.Values)
-            {
-               string boundName;
-               Value boundValue;
-               if (value.Unbind().Assign(out boundName, out boundValue))
-                  RegionManager.Regions.SetLocal(boundName, boundValue);
-            }
+               if (BoundValue.Unbind(value, out var boundName, out var boundValue))
+                  Regions.SetLocal(boundName, boundValue);
+
             return getText();
          }
       }

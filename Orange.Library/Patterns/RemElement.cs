@@ -9,19 +9,13 @@
 			return true;
 		}
 
-		public override Element Clone()
+		public override Element Clone() => new RemElement
 		{
-			return new RemElement
-			{
-				Next = cloneNext(),
-				Alternate = cloneAlternate(),
-				Replacement = cloneReplacement()
-			};
-		}
+		   Next = cloneNext(),
+		   Alternate = cloneAlternate(),
+		   Replacement = cloneReplacement()
+		};
 
-		public override string ToString()
-		{
-			return "%";
-		}
+	   public override string ToString() => "%";
 	}
 }

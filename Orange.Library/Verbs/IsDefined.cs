@@ -8,19 +8,16 @@ namespace Orange.Library.Verbs
 	{
 		string variableName;
 
-		public IsDefined(string variableName)
-		{
-			this.variableName = variableName;
-		}
+		public IsDefined(string variableName) => this.variableName = variableName;
 
-		public IsDefined()
+	   public IsDefined()
 			: this("")
 		{
 		}
 
 		public override Value Evaluate() => Regions.VariableExists(variableName) ? Regions[variableName] : new Nil();
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
 	   public override string ToString() => $"?{variableName}";
 	}

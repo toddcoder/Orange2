@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Orange.Library.Parsers.Line;
 using Orange.Library.Scanning;
-using Standard.Types.Objects;
 
 namespace Orange.Library.Parsers.Scanning
 {
@@ -9,22 +8,20 @@ namespace Orange.Library.Parsers.Scanning
    {
       public override IEnumerable<Parser> Parsers
       {
-         get
+         get { yield return new MoveParser(); }
+      }
+
+      public override bool Continue(Parser parser, string source)
+      {
+         if (parser is IScanItem scanItem)
          {
-            yield return new MoveParser();
+            ScanItem = scanItem.ScanItem;
+            return true;
          }
+
+         return false;
       }
 
-      public override bool Continue(Parser parser, string source) => parser.As<IScanItem>().Map(scanItem =>
-      {
-         ScanItem = scanItem.ScanItem;
-         return true;
-      }, () => false);
-
-      public ScanItem ScanItem
-      {
-         get;
-         set;
-      }
+      public ScanItem ScanItem { get; set; }
    }
 }

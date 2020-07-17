@@ -2,15 +2,10 @@
 {
    public interface IStatement
    {
-      string Result
-      {
-         get;
-      }
+      string Result { get; }
 
-      int Index
-      {
-         get;
-         set;
-      }
+      string TypeName { get; }
+
+      int Index { get; set; }
    }
 }

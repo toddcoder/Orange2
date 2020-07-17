@@ -9,22 +9,13 @@ namespace Orange.Library.Values
 	{
 		List<Value> values;
 
-		public Concatenation()
-		{
-			values = new List<Value>();
-		}
+		public Concatenation() => values = new List<Value>();
 
-		public Concatenation(List<Value> values)
-		{
-			this.values = values;
-		}
+	   public Concatenation(List<Value> values) => this.values = values;
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+	   public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;

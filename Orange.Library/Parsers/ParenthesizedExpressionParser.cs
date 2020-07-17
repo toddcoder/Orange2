@@ -1,5 +1,6 @@
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
+using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 
 namespace Orange.Library.Parsers
@@ -7,27 +8,25 @@ namespace Orange.Library.Parsers
    public class ParenthesizedExpressionParser : Parser
    {
       public ParenthesizedExpressionParser()
-         : base("^ ' '* '('")
-      {
-      }
+         : base("^ ' '* '('") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length, IDEColor.EntityType.Structures);
-         return ExpressionParser.GetExpression(source, NextPosition, CloseParenthesis()).Map((block, index) =>
+         if (GetExpression(source, NextPosition, CloseParenthesis()).If(out var block, out var index))
          {
             overridePosition = index;
             return new Push(block);
-         }, () =>
+         }
+
+         var shortLambdaParser = new ShortLambdaParser("");
+         if (shortLambdaParser.Scan(source, NextPosition))
          {
-            var shortLambdaParser = new ShortLambdaParser("");
-            if (shortLambdaParser.Scan(source, NextPosition))
-            {
-               overridePosition = shortLambdaParser.Position;
-               return shortLambdaParser.Verb;
-            }
-            return null;
-         });
+            overridePosition = shortLambdaParser.Position;
+            return shortLambdaParser.Verb;
+         }
+
+         return null;
       }
 
       public override string VerboseName => "parenthesized";

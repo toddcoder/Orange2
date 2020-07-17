@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Managers;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Values.Nil;
 
@@ -9,35 +8,22 @@ namespace Orange.Library.Values
    {
       string message;
 
-      public InternalGetter(string message)
-      {
-         this.message = message;
-      }
+      public InternalGetter(string message) => this.message = message;
 
-      Value getValue() => Regions["self"].As<Object>().Map(obj => obj.SendToSelf(message), () => NilValue);
+      Value getValue() => Regions["self"] is Object obj ? obj.SendToSelf(message) : NilValue;
 
       public override int Compare(Value value) => getValue().Compare(value);
 
       public override string Text
       {
-         get
-         {
-            return getValue().Text;
-         }
-         set
-         {
-         }
+         get => getValue().Text;
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return getValue().Number;
-         }
-         set
-         {
-         }
+         get => getValue().Number;
+         set { }
       }
 
       public override ValueType Type => getValue().Type;
@@ -46,9 +32,7 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new InternalGetter(message);
 
-      protected override void registerMessages(MessageManager manager)
-      {
-      }
+      protected override void registerMessages(MessageManager manager) { }
 
       public override Value Resolve() => getValue();
 

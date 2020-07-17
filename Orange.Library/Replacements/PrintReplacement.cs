@@ -1,6 +1,7 @@
 ﻿using Standard.Types.Maybe;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Replacements
 {
@@ -8,10 +9,7 @@ namespace Orange.Library.Replacements
    {
       long id;
 
-      public PrintReplacement()
-      {
-         id = CompilerState.ObjectID();
-      }
+      public PrintReplacement() => id = CompilerState.ObjectID();
 
       public override string ToString() => "!";
 
@@ -24,11 +22,7 @@ namespace Orange.Library.Replacements
          }
       }
 
-      public bool Immediate
-      {
-         get;
-         set;
-      }
+      public bool Immediate { get; set; }
 
       public long ID => id;
 
@@ -40,16 +34,8 @@ namespace Orange.Library.Replacements
          id = id
       };
 
-      public Arguments Arguments
-      {
-         get;
-         set;
-      }
+      public Arguments Arguments { get; set; }
 
-      public IMaybe<long> FixedID
-      {
-         get;
-         set;
-      } = new None<long>();
+      public IMaybe<long> FixedID { get; set; } = none<long>();
    }
 }

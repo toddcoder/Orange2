@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block at;
 
 		public TabLeftBlockElement(Block at)
-			: base(0)
-		{
-			this.at = at;
-		}
+			: base(0) => this.at = at;
 
-		public TabLeftBlockElement()
+	   public TabLeftBlockElement()
 			: this(null)
 		{
 		}

@@ -26,7 +26,7 @@ namespace Orange.Library.Verbs
 			return GetPredecessor(value);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Decrement;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Decrement;
 
 	   public override string ToString() => "--";
 

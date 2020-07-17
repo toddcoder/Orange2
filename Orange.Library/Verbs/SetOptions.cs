@@ -9,19 +9,16 @@ namespace Orange.Library.Verbs
 	{
 		string[] options;
 
-		public SetOptions(string[] options)
-		{
-			this.options = options;
-		}
+		public SetOptions(string[] options) => this.options = options;
 
-		public override Value Evaluate()
+	   public override Value Evaluate()
 		{
 			var value = State.Stack.Pop(true, "Set options");
 			value.SetOptions(options);
 			return value;
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Increment;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
 
 	   public override string ToString() => $":[{options.Listify(" ")}]";
 	}

@@ -4,12 +4,9 @@
 	{
 		protected int position;
 
-		public TabLeftElement(int position)
-		{
-			this.position = position;
-		}
+		public TabLeftElement(int position) => this.position = position;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			var inputLength = input.Length;
 			if (position == -1 || position >= inputLength)

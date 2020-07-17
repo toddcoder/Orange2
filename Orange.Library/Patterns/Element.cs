@@ -1,159 +1,124 @@
 ﻿using Orange.Library.Conditionals;
 using Orange.Library.Replacements;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Compiler;
 
 namespace Orange.Library.Patterns
 {
-	public abstract class Element
-	{
-		protected int index;
-		protected int length;
-		protected Element next;
-		protected Element alternate;
-		protected Element lastNext;
-		protected Element lastAlternate;
-		protected IReplacement replacement;
+   public abstract class Element
+   {
+      protected int index;
+      protected int length;
+      protected Element next;
+      protected Element alternate;
+      protected Element lastNext;
+      protected Element lastAlternate;
+      protected IReplacement replacement;
 
-		public Element()
-		{
-			index = -1;
-			length = 0;
-			next = null;
-			alternate = null;
-		}
+      public Element()
+      {
+         index = -1;
+         length = 0;
+         next = null;
+         alternate = null;
+      }
 
-		public abstract bool Evaluate(string input);
+      public abstract bool Evaluate(string input);
 
-		public virtual bool EvaluateFirst(string input) => Evaluate(input);
+      public virtual bool EvaluateFirst(string input) => Evaluate(input);
 
-	   public int Index => index;
+      public int Index => index;
 
-	   public int Length => length;
+      public int Length => length;
 
-	   public virtual IReplacement Replacement
-		{
-			get
-			{
-				return replacement;
-			}
-			set
-			{
-				replacement = value;
-			}
-		}
+      public virtual IReplacement Replacement
+      {
+         get => replacement;
+         set => replacement = value;
+      }
 
-		public virtual Element Next
-		{
-			get
-			{
-				return next;
-			}
-			set
-			{
-				next = value;
-			}
-		}
+      public virtual Element Next
+      {
+         get => next;
+         set => next = value;
+      }
 
-		public virtual Element Alternate
-		{
-			get
-			{
-				return alternate;
-			}
-			set
-			{
-				alternate = value;
-			}
-		}
+      public virtual Element Alternate
+      {
+         get => alternate;
+         set => alternate = value;
+      }
 
-		public long ID
-		{
-			get;
-			set;
-		}
+      public long ID { get; set; }
 
-		public long OwnerID
-		{
-			get;
-			set;
-		}
+      public long OwnerID { get; set; }
 
-		public virtual void AppendNext(Element element)
-		{
-			if (element == null)
-				return;
-			if (lastNext == null)
-				next = element;
-			else
-				lastNext.next = element;
-			lastNext = element;
-		}
+      public virtual void AppendNext(Element element)
+      {
+         if (element == null)
+            return;
 
-		public virtual void AppendAlternate(Element element)
-		{
-			if (element == null)
-				return;
-			if (lastAlternate == null)
-				alternate = element;
-			else
-				lastAlternate.alternate = element;
-			lastAlternate = element;
-		}
+         if (lastNext == null)
+            next = element;
+         else
+            lastNext.next = element;
+         lastNext = element;
+      }
 
-		public virtual bool PositionAlreadyUpdated => false;
+      public virtual void AppendAlternate(Element element)
+      {
+         if (element == null)
+            return;
 
-	   public bool Not
-		{
-			get;
-			set;
-		}
+         if (lastAlternate == null)
+            alternate = element;
+         else
+            lastAlternate.alternate = element;
+         lastAlternate = element;
+      }
 
-		public abstract Element Clone();
+      public virtual bool PositionAlreadyUpdated => false;
 
-		protected Element cloneNext() => next?.Clone();
+      public bool Not { get; set; }
 
-	   protected Element cloneAlternate() => alternate?.Clone();
+      public abstract Element Clone();
 
-	   protected IReplacement cloneReplacement() => replacement?.Clone();
+      protected Element cloneNext() => next?.Clone();
 
-	   public override int GetHashCode() => ID.GetHashCode();
+      protected Element cloneAlternate() => alternate?.Clone();
 
-	   public override bool Equals(object obj) => obj.As<Element>().Map(element => element.ID == ID, () => false);
+      protected IReplacement cloneReplacement() => replacement?.Clone();
 
-	   public virtual void Initialize()
-		{
-		}
+      public override int GetHashCode() => ID.GetHashCode();
 
-		public virtual bool Valid => Conditional == null || Conditional.Evaluate(this);
+      public override bool Equals(object obj) => obj is Element element && element.ID == ID;
 
-	   public Conditional Conditional
-		{
-			get;
-			set;
-		}
+      public virtual void Initialize() { }
 
-		public virtual bool Failed => false;
+      public virtual bool Valid => Conditional?.Evaluate(this) ?? false;
 
-	   public virtual bool Aborted => false;
+      public Conditional Conditional { get; set; }
 
-	   protected Element clone(Element element)
-		{
-			element.Next = cloneNext();
-			element.Alternate = cloneAlternate();
-			element.Replacement = cloneReplacement();
-			element.Not = Not;
-			return element;
-		}
+      public virtual bool Failed => false;
 
-		public virtual bool AutoOptional => false;
+      public virtual bool Aborted => false;
 
-	   protected void setOverridenReplacement(IReplacement value)
-	   {
-	      replacement = value;
-	      if (replacement != null && replacement.FixedID.IsNone)
-	         replacement.FixedID = CompilerState.ObjectID().Some();
-	   }
-	}
+      protected Element clone(Element element)
+      {
+         element.Next = cloneNext();
+         element.Alternate = cloneAlternate();
+         element.Replacement = cloneReplacement();
+         element.Not = Not;
+         return element;
+      }
+
+      public virtual bool AutoOptional => false;
+
+      protected void setOverridenReplacement(IReplacement value)
+      {
+         replacement = value;
+         if (replacement?.FixedID.IsNone == true)
+            replacement.FixedID = CompilerState.ObjectID().Some();
+      }
+   }
 }

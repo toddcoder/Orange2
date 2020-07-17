@@ -20,42 +20,21 @@ namespace Orange.Library
 			index = -1;
 		}
 
-		public VerbStack VerbStack
-		{
-			get
-			{
-				return verbStack;
-			}
-		}
+		public VerbStack VerbStack => verbStack;
 
-		public ValueStack ValueStack
-		{
-			get
-			{
-				return valueStack;
-			}
-		}
+	   public ValueStack ValueStack => valueStack;
 
-		public IStringify Stringify
+	   public IStringify Stringify
 		{
 			get;
 			set;
 		}
 
-		public int Index
-		{
-			get
-			{
-				return index;
-			}
-		}
+		public int Index => index;
 
-		public bool Next()
-		{
-			return index++ < block.Count;
-		}
+	   public bool Next() => index++ < block.Count;
 
-		public Value ReturnValue
+	   public Value ReturnValue
 		{
 			get;
 			set;

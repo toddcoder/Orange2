@@ -5,38 +5,14 @@ namespace Orange.Library.Verbs
 {
 	public class XOr : TwoValueVerb
 	{
-		public override Value Evaluate(Value x, Value y)
-		{
-			return x.IsTrue ^ y.IsTrue;
-		}
+		public override Value Evaluate(Value x, Value y) => x.IsTrue ^ y.IsTrue;
 
-		public override string Location
-		{
-			get
-			{
-				return "XOr";
-			}
-		}
+	   public override string Location => "XOr";
 
-		public override string Message
-		{
-			get
-			{
-				return "xor";
-			}
-		}
+	   public override string Message => "xor";
 
-		public override string ToString()
-		{
-			return "xor";
-		}
+	   public override string ToString() => "xor";
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Or;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Or;
 	}
 }

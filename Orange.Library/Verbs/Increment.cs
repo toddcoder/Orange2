@@ -26,7 +26,7 @@ namespace Orange.Library.Verbs
 			return GetSuccessor(value);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Increment;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
 
 	   public override string ToString() => "++";
 

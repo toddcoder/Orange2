@@ -40,16 +40,14 @@ namespace Orange.Library.Verbs
             current.CreateVariable(fieldName, visibility: visibility);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => $"{type} {fieldName}";
 
-      public string Result => ToString();
+      public string Result => fieldName;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => "";
+
+      public int Index { get; set; }
    }
 }

@@ -6,9 +6,9 @@ using static System.Activator;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.TwoCharacterOperatorParser;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers.Line
 {
@@ -18,7 +18,8 @@ namespace Orange.Library.Parsers.Line
       {
          var type = Operator(op);
          if (type == null)
-            return new None<Block>();
+            return none<Block>();
+
          var verb = (Verb)CreateInstance(type);
          var builder = new CodeBuilder();
          builder.Variable(fieldName);
@@ -28,9 +29,7 @@ namespace Orange.Library.Parsers.Line
       }
 
       public AssignToFieldParser()
-         : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /('&')? {REGEX_ASSIGN}")
-      {
-      }
+         : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /('&')? {REGEX_ASSIGN}") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -45,7 +44,7 @@ namespace Orange.Library.Parsers.Line
          Color(op.Length, Structures);
          Color(tokens[6].Length, Structures);
 
-         return GetExpression(source, NextPosition, EndOfLine()).Map((expression, index) =>
+         if (GetExpression(source, NextPosition, EndOfLine()).If(out var expression, out var index))
          {
             overridePosition = index;
             if (op.IsNotEmpty())
@@ -53,10 +52,14 @@ namespace Orange.Library.Parsers.Line
                var combined = combineOperation(fieldName, op, expression);
                if (combined.IsNone)
                   return null;
+
                expression = combined.Value;
             }
+
             return new AssignToField(fieldName, expression, reference) { Index = position };
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "Assign to field";

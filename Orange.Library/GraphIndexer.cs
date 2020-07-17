@@ -4,14 +4,8 @@
 	{
 		int index;
 
-		public GraphIndexer()
-		{
-			index = 0;
-		}
+		public GraphIndexer() => index = 0;
 
-		public override string ToString()
-		{
-			return "$" + (index++);
-		}
+	   public override string ToString() => "$" + index++;
 	}
 }

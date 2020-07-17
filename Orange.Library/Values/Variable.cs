@@ -35,11 +35,8 @@ namespace Orange.Library.Values
 
 		public virtual Value Value
 		{
-			get
-			{
-				return Regions[Name];
-			}
-			set
+			get => Regions[Name];
+		   set
 			{
 				RejectNull(value, "Variable", $"Value intended for {Name} unknown");
 				Regions[Name] = value;
@@ -53,26 +50,14 @@ namespace Orange.Library.Values
 
 	   public override string Text
 		{
-			get
-			{
-				return Value.Text;
-			}
-			set
-			{
-				Value.Text = value;
-			}
-		}
+			get => Value.Text;
+	      set => Value.Text = value;
+	   }
 
 		public override double Number
 		{
-			get
-			{
-				return Value.Number;
-			}
-			set
-			{
-				Value.Number = value;
-			}
+			get => Value.Number;
+		   set => Value.Number = value;
 		}
 
 		public override ValueType Type

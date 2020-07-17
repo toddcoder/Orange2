@@ -6,21 +6,15 @@ namespace Orange.Library.Values
 	{
 		BlockMatcher matcher;
 
-		public BlockPattern(Block input, Block pattern)
+		public BlockPattern(Block input, Block pattern) => matcher = new BlockMatcher
 		{
-			matcher = new BlockMatcher
-			{
-				Input = input,
-				Pattern = pattern
-			};
-		}
+		   Input = input,
+		   Pattern = pattern
+		};
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+	   public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -37,47 +31,23 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.BlockPattern;
-			}
-		}
+		public override ValueType Type => ValueType.BlockPattern;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return null;
-		}
+	   public override Value Clone() => null;
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "replace", v => ((BlockPattern)v).Replace());
 		}
 
 		public Block Replacment
 		{
-			get
-			{
-				return matcher.Replacement;
-			}
-			set
-			{
-				matcher.Replacement = value;
-			}
+			get => matcher.Replacement;
+		   set => matcher.Replacement = value;
 		}
 
-		public Value Replace()
-		{
-			return matcher.Replace();
-		}
+		public Value Replace() => matcher.Replace();
 	}
 }

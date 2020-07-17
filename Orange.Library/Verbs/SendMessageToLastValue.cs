@@ -24,15 +24,9 @@ namespace Orange.Library.Verbs
 			return MessageManager.MessagingState.Send(value, message, arguments);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.SendMessage;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.SendMessage;
 
-		public override string ToString()
+	   public override string ToString()
 		{
 			var result = new StringBuilder();
 			result.AppendFormat("?.{0}", message);

@@ -14,7 +14,7 @@ namespace Orange.Library.Verbs
 			return value.ToString();
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.ChangeSign;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.ChangeSign;
 
 	   public override string ToString() => "~";
 	}

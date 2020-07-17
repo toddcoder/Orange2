@@ -1,81 +1,69 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 
 namespace Orange.Library
 {
-	public class ParameterBlock
-	{
-		const string LOCATION = "Parameter block";
+   public class ParameterBlock
+   {
+      const string LOCATION = "Parameter block";
 
-		public static ParameterBlock FromExecutable(Value value)
-		{
-			var closure = value as Lambda;
-			if (closure != null)
-			{
-				closure.Block.Options = closure.Options;
-				return new ParameterBlock(closure);
-			}
-			var block = value as Block;
-			return block != null ? new ParameterBlock(block) : null;
-		}
+      public static ParameterBlock FromExecutable(Value value)
+      {
+         var closure = value as Lambda;
+         if (closure != null)
+         {
+            closure.Block.Options = closure.Options;
+            return new ParameterBlock(closure);
+         }
 
-		Parameters parameters;
-		Block block;
+         var block = value as Block;
+         return block != null ? new ParameterBlock(block) : null;
+      }
 
-		public ParameterBlock(Parameters parameters, Block block, bool splatting)
-		{
-			this.parameters = parameters;
-			this.block = block;
-			Splatting = splatting;
-		}
+      Parameters parameters;
+      Block block;
 
-		public ParameterBlock(Block block)
-			: this(new NullParameters(), block, false)
-		{
-		}
+      public ParameterBlock(Parameters parameters, Block block, bool splatting)
+      {
+         this.parameters = parameters;
+         this.block = block;
+         Splatting = splatting;
+      }
 
-		public ParameterBlock(Lambda lambda)
-			: this(lambda.Parameters, lambda.Block, lambda.Splatting)
-		{
-		}
+      public ParameterBlock(Block block)
+         : this(new NullParameters(), block, false) { }
 
-		public ParameterBlock(Value value)
-		{
-		   var lambda = value.As<Lambda>();
-			if (lambda.IsSome)
-			{
-				parameters = lambda.Value.Parameters;
-				block = lambda.Value.Block;
-			}
-			else
-			{
-				block = (Block)value;
-				parameters = new NullParameters();
-			}
-		}
+      public ParameterBlock(Lambda lambda)
+         : this(lambda.Parameters, lambda.Block, lambda.Splatting) { }
 
-		public ParameterBlock()
-		{
-			parameters = new Parameters();
-			block = new Block();
-			Splatting = false;
-		}
+      public ParameterBlock(Value value)
+      {
+         if (value is Lambda lambda)
+         {
+            parameters = lambda.Parameters;
+            block = lambda.Block;
+         }
+         else
+         {
+            block = (Block)value;
+            parameters = new NullParameters();
+         }
+      }
 
-		public Parameters Parameters => parameters;
+      public ParameterBlock()
+      {
+         parameters = new Parameters();
+         block = new Block();
+         Splatting = false;
+      }
 
-	   public Block Block => block;
+      public Parameters Parameters => parameters;
 
-	   public ParameterBlock Clone()
-		{
-			return new ParameterBlock((Parameters)parameters.Clone(), (Block)block.Clone(), Splatting);
-		}
+      public Block Block => block;
 
-		public override string ToString() => $"|{Parameters}| {{{Block}}}";
+      public ParameterBlock Clone() => new ParameterBlock((Parameters)parameters.Clone(), (Block)block.Clone(), Splatting);
 
-	   public bool Splatting
-		{
-			get;
-			set;
-		}
-	}
+      public override string ToString() => $"|{Parameters}| {{{Block}}}";
+
+      public bool Splatting { get; set; }
+   }
 }

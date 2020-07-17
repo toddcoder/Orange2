@@ -25,15 +25,9 @@ namespace Orange.Library.Values
 
 	   public Arguments MessageArguments
 		{
-			get
-			{
-				return arguments;
-			}
-			set
-			{
-				arguments = value;
-			}
-		}
+			get => arguments;
+	      set => arguments = value;
+	   }
 
 		public override int Compare(Value value) => 0;
 

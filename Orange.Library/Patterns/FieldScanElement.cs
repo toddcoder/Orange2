@@ -6,12 +6,9 @@ namespace Orange.Library.Patterns
 	{
 		int count;
 
-		public FieldScanElement(int count)
-		{
-			this.count = count;
-		}
+		public FieldScanElement(int count) => this.count = count;
 
-		public override bool Evaluate(string input) => find(input, State.Position);
+	   public override bool Evaluate(string input) => find(input, State.Position);
 
 	   bool find(string input, int start)
 		{

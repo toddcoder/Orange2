@@ -15,17 +15,8 @@ namespace Orange.Library.Verbs
 			return new ArrayStream(seed, ParameterBlock.FromExecutable(limit));
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "during";
-		}
+	   public override string ToString() => "during";
 	}
 }

@@ -12,10 +12,7 @@ namespace Orange.Library.Parsers
       {
       }
 
-      protected override Verb getVerb(string type, string message, Arguments arguments, int index)
-      {
-         return new Push(getMessagePath(message, arguments, index));
-      }
+      protected override Verb getVerb(string type, string message, Arguments arguments, int index) => new Push(getMessagePath(message, arguments, index));
 
       protected Value getMessagePath(string firstMessage, Arguments arguments, int index)
       {

@@ -18,7 +18,7 @@ namespace Orange.Library.Verbs
          return SendMessage(value, "split", arguments);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "split";
 

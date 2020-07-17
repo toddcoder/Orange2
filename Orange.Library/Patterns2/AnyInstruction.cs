@@ -4,12 +4,9 @@
 	{
 		CharSet charSet;
 
-		public AnyInstruction(string source)
-		{
-			charSet = new CharSet(source);
-		}
+		public AnyInstruction(string source) => charSet = new CharSet(source);
 
-		public override bool Execute(State state)
+	   public override bool Execute(State state)
 		{
 			if (charSet.Contains(state.CurrentCharacter, state.IgnoreCase))
 			{

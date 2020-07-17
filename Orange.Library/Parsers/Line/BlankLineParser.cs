@@ -3,9 +3,9 @@ using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers.Line
 {
-   public class SkippedLineParser : Parser
+   public class BlankLineParser : Parser
    {
-      public SkippedLineParser()
+      public BlankLineParser()
          : base("(^ /r /n) | (^ /r) | (^ /n)")
       {
       }
@@ -13,7 +13,7 @@ namespace Orange.Library.Parsers.Line
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length, Whitespaces);
-         return new NullOp();
+         return new BlankLine { Index = position };
       }
 
       public override string VerboseName => "skipped line";

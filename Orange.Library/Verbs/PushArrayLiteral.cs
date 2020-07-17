@@ -7,14 +7,11 @@ namespace Orange.Library.Verbs
 	{
 		Array literal;
 
-		public PushArrayLiteral(Array literal)
-		{
-			this.literal = literal;
-		}
+		public PushArrayLiteral(Array literal) => this.literal = literal;
 
-		public override Value Evaluate() => literal.Clone();
+	   public override Value Evaluate() => literal.Clone();
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
 	   public override string ToString() => literal.ToString();
 

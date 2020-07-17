@@ -7,16 +7,18 @@ namespace Orange.Library.Verbs
    public class SendMessageToField : SendMessage, IStatement
    {
       protected string fieldName;
-      protected VerbPresidenceType presidenceType;
+      protected VerbPrecedenceType precedenceType;
       protected string result;
+      protected string typeName;
 
-      public SendMessageToField(string fieldName, string message, Arguments arguments, VerbPresidenceType presidenceType,
+      public SendMessageToField(string fieldName, string message, Arguments arguments, VerbPrecedenceType precedenceType,
          bool inPlace = false, bool registerCall = false, bool optional = false)
          : base(message, arguments, inPlace, registerCall, optional)
       {
          this.fieldName = fieldName;
-         this.presidenceType = presidenceType;
+         this.precedenceType = precedenceType;
          result = "";
+         typeName = "";
       }
 
       public override Value Evaluate()
@@ -25,17 +27,16 @@ namespace Orange.Library.Verbs
          State.Stack.Push(variable);
          var value = base.Evaluate();
          result = variable.Value.ToString();
+         typeName = variable.Value.Type.ToString();
          return value;
       }
 
-      public override VerbPresidenceType Presidence => presidenceType;
+      public override VerbPrecedenceType Precedence => precedenceType;
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
+
+      public int Index { get; set; }
    }
 }

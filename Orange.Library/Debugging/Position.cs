@@ -13,12 +13,9 @@
 			sum = StartIndex + Length;
 		}
 
-		public override int GetHashCode()
-		{
-			return sum.GetHashCode();
-		}
+		public override int GetHashCode() => sum.GetHashCode();
 
-		public override bool Equals(object obj)
+	   public override bool Equals(object obj)
 		{
 			if (obj is Position)
 			{

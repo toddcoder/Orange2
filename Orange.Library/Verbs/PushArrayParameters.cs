@@ -76,7 +76,7 @@ namespace Orange.Library.Verbs
 			}
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
 	   public override string ToString() => $"-> |{parameters}|";
 	}

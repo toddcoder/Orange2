@@ -13,7 +13,7 @@ namespace Orange.Library.Parsers.Line
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length, Structures);
-         return new NullOp();
+         return new End();
       }
 
       public override string VerboseName => "end of line";

@@ -3,97 +3,54 @@ using Standard.Types.Strings;
 
 namespace Orange.Library.Values
 {
-	public class EnumerationItem : Value
-	{
-		string enumerationName;
-		string name;
-		int value;
+   public class EnumerationItem : Value
+   {
+      string enumerationName;
+      string name;
+      int value;
 
-		public EnumerationItem(string enumerationName, string name, int value)
-		{
-			this.enumerationName = enumerationName;
-			this.name = name;
-			this.value = value;
-		}
+      public EnumerationItem(string enumerationName, string name, int value)
+      {
+         this.enumerationName = enumerationName;
+         this.name = name;
+         this.value = value;
+      }
 
-		public override int Compare(Value value)
-		{
-			return this.value.CompareTo((int)value.Number);
-		}
+      public override int Compare(Value value) => this.value.CompareTo((int)value.Number);
 
-		public override string Text
-		{
-			get
-			{
-				return name;
-			}
-			set
-			{
-			}
-		}
+      public override string Text
+      {
+         get => name;
+         set { }
+      }
 
-		public override double Number
-		{
-			get
-			{
-				return value;
-			}
-			set
-			{
-			}
-		}
+      public override double Number
+      {
+         get => value;
+         set { }
+      }
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.EnumerationItem;
-			}
-		}
+      public override ValueType Type => ValueType.EnumerationItem;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return value != 0;
-			}
-		}
+      public override bool IsTrue => value != 0;
 
-		public override Value Clone()
-		{
-			return new EnumerationItem(enumerationName.Copy(), name.Copy(), value);
-		}
+      public override Value Clone() => new EnumerationItem(enumerationName.Copy(), name.Copy(), value);
 
-		protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "name", v => ((EnumerationItem)v).Name());
-			manager.RegisterMessage(this, "value", v => ((EnumerationItem)v).Value());
-			manager.RegisterMessage(this, "enum", v => ((EnumerationItem)v).Enum());
-		}
+      protected override void registerMessages(MessageManager manager)
+      {
+         manager.RegisterMessage(this, "name", v => ((EnumerationItem)v).Name());
+         manager.RegisterMessage(this, "value", v => ((EnumerationItem)v).Value());
+         manager.RegisterMessage(this, "enum", v => ((EnumerationItem)v).Enum());
+      }
 
-		public Value Name()
-		{
-			return name;
-		}
+      public Value Name() => name;
 
-		public Value Value()
-		{
-			return value;
-		}
+      public Value Value() => value;
 
-		public Value Enum()
-		{
-			return enumerationName;
-		}
+      public Value Enum() => enumerationName;
 
-		public override Value AlternateValue(string message)
-		{
-			return value;
-		}
+      public override Value AlternateValue(string message) => value;
 
-		public override string ToString()
-		{
-			return string.Format("{0}.{1} => {2}", enumerationName, name, value);
-		}
-	}
+      public override string ToString() => $"{enumerationName}.{name} => {value}";
+   }
 }

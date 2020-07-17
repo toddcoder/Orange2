@@ -17,10 +17,7 @@ namespace Orange.Library.Values
          File file;
 
          public FileLineGenerator(INSGeneratorSource generatorSource)
-            : base(generatorSource)
-         {
-            file = (File)generatorSource;
-         }
+            : base(generatorSource) => file = (File)generatorSource;
 
          public override void Reset()
          {
@@ -40,40 +37,22 @@ namespace Orange.Library.Values
       FileName fileName;
       Block filter;
 
-      public File(string fileName)
-      {
-         this.fileName = fileName;
-      }
+      public File(string fileName) => this.fileName = fileName;
 
-      public File(FileName fileName)
-      {
-         this.fileName = fileName;
-      }
+      public File(FileName fileName) => this.fileName = fileName;
 
       public override int Compare(Value value) => string.Compare(fileName.ToString(), value.ToString(), Ordinal);
 
       public override string Text
       {
-         get
-         {
-            return fileName.Text;
-         }
-         set
-         {
-            fileName.Text = value;
-         }
+         get { return fileName.Text; }
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return Text.ToDouble();
-         }
-         set
-         {
-            Text = value.ToString();
-         }
+         get { return Text.ToDouble(); }
+         set { }
       }
 
       public override ValueType Type => ValueType.File;
@@ -113,6 +92,7 @@ namespace Orange.Library.Values
          var block = assistant.Block();
          if (block == null)
             return this;
+
          assistant.LoopParameters();
          using (var fileNameReader = fileName.Reader())
          {
@@ -125,6 +105,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -134,6 +115,7 @@ namespace Orange.Library.Values
                }
             }
          }
+
          return this;
       }
 
@@ -142,6 +124,7 @@ namespace Orange.Library.Values
          var block = assistant.Block();
          if (block == null)
             return this;
+
          assistant.LoopParameters();
          using (var fileNameReader = fileName.Reader())
          {
@@ -155,6 +138,7 @@ namespace Orange.Library.Values
                var signal = Signal();
                if (signal == Breaking)
                   break;
+
                switch (signal)
                {
                   case Continuing:
@@ -164,16 +148,13 @@ namespace Orange.Library.Values
                }
             }
          }
+
          return this;
       }
 
       public override string ToString() => fileName.ToString();
 
-      public StreamReader Reader
-      {
-         get;
-         set;
-      }
+      public StreamReader Reader { get; set; }
 
       public INSGenerator GetGenerator() => new FileLineGenerator(this);
 

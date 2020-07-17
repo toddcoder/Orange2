@@ -24,7 +24,7 @@ namespace Orange.Library.Verbs
          return GetGenerator(left, right, true);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Range;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Range;
 
       public override string ToString() => ".:";
    }

@@ -11,7 +11,7 @@ namespace Orange.Library.Parsers.Line
             yield return new ThreeCharacterOperatorParser();
             yield return new TwoCharacterOperatorParser();
             yield return new OneCharacterOperatorParser();
-            yield return new DisjoinMessageParser();
+            yield return new DisjointMessageParser();
             yield return new WordOperatorParser();
          }
       }

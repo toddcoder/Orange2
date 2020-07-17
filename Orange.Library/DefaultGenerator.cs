@@ -6,24 +6,18 @@ namespace Orange.Library
 	{
 		Value value;
 
-		public DefaultGenerator(Value value)
-		{
-			this.value = value;
-		}
+		public DefaultGenerator(Value value) => this.value = value;
 
-		public void Before()
+	   public void Before()
 		{
 		}
 
-		public Value Next(int index)
+		public Value Next(int index) => index == 0 ? (Value)new Array
 		{
-			return index == 0 ? (Value)new Array
-			{
-				value
-			} : new Nil();
-		}
+		   value
+		} : new Nil();
 
-		public void End()
+	   public void End()
 		{
 		}
 	}

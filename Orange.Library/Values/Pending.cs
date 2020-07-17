@@ -2,72 +2,45 @@
 
 namespace Orange.Library.Values
 {
-	public class Pending : Value
-	{
-		const string LOCATION = "Pending";
+   public class Pending : Value
+   {
+      const string LOCATION = "Pending";
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+      public override int Compare(Value value) => 0;
 
-		public override string Text
-		{
-			get
-			{
-				throwException();
-				return null;
-			}
-			set
-			{
-			}
-		}
+      public override string Text
+      {
+         get
+         {
+            throwException();
+            return null;
+         }
+         set { }
+      }
 
-		static void throwException()
-		{
-			Runtime.Throw(LOCATION, "Variable not initialized");
-		}
+      static void throwException()
+      {
+         Runtime.Throw(LOCATION, "Variable not initialized");
+      }
 
-		public override double Number
-		{
-			get
-			{
-				throwException();
-				return 0;
-			}
-			set
-			{
-			}
-		}
+      public override double Number
+      {
+         get
+         {
+            throwException();
+            return 0;
+         }
+         set { }
+      }
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Pending;
-			}
-		}
+      public override ValueType Type => ValueType.Pending;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+      public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return null;
-		}
+      public override Value Clone() => null;
 
-		protected override void registerMessages(MessageManager manager)
-		{
-		}
+      protected override void registerMessages(MessageManager manager) { }
 
-		public override string ToString()
-		{
-			return "pending";
-		}
-	}
+      public override string ToString() => "pending";
+   }
 }

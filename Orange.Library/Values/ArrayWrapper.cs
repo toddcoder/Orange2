@@ -6,78 +6,36 @@ namespace Orange.Library.Values
 	{
 		Array array;
 
-		public ArrayWrapper(Array array)
-		{
-			this.array = array;
-		}
+		public ArrayWrapper(Array array) => this.array = array;
 
-		public override int Compare(Value value)
-		{
-			return array.Compare(value);
-		}
+	   public override int Compare(Value value) => array.Compare(value);
 
-		public override string Text
+	   public override string Text
 		{
-			get
-			{
-				return array.Text;
-			}
-			set
-			{
-				array.Text = value;
-			}
-		}
+			get => array.Text;
+	      set => array.Text = value;
+	   }
 
 		public override double Number
 		{
-			get
-			{
-				return array.Number;
-			}
-			set
-			{
-				array.Number = value;
-			}
+			get => array.Number;
+		   set => array.Number = value;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.ArrayWrapper;
-			}
-		}
+		public override ValueType Type => ValueType.ArrayWrapper;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return array.IsTrue;
-			}
-		}
+	   public override bool IsTrue => array.IsTrue;
 
-		public override Value Clone()
-		{
-			return new ArrayWrapper(array);
-		}
+	   public override Value Clone() => new ArrayWrapper(array);
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 
-		public override Value AlternateValue(string message)
-		{
-			return array;
-		}
+		public override Value AlternateValue(string message) => array;
 
-		public override Value AssignmentValue()
-		{
-			return array;
-		}
+	   public override Value AssignmentValue() => array;
 
-		public override Value ArgumentValue()
-		{
-			return array;
-		}
+	   public override Value ArgumentValue() => array;
 	}
 }

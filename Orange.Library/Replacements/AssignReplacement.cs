@@ -2,6 +2,7 @@
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Replacements
 {
@@ -20,10 +21,7 @@ namespace Orange.Library.Replacements
          id = CompilerState.ObjectID();
       }
 
-      public AssignReplacement()
-      {
-         id = CompilerState.ObjectID();
-      }
+      public AssignReplacement() => id = CompilerState.ObjectID();
 
       public string Text
       {
@@ -34,11 +32,7 @@ namespace Orange.Library.Replacements
          }
       }
 
-      public bool Immediate
-      {
-         get;
-         set;
-      }
+      public bool Immediate { get; set; }
 
       public long ID => id;
 
@@ -56,7 +50,7 @@ namespace Orange.Library.Replacements
                Regions[variableName] = input;
             else
             {
-               current.CreateVariableIfNonexistant(variableName);
+               current.CreateVariableIfNonexistent(variableName);
                current[variableName] = input;
             }
          }
@@ -67,17 +61,9 @@ namespace Orange.Library.Replacements
          Immediate = Immediate
       };
 
-      public Arguments Arguments
-      {
-         get;
-         set;
-      }
+      public Arguments Arguments { get; set; }
 
-      public IMaybe<long> FixedID
-      {
-         get;
-         set;
-      } = new None<long>();
+      public IMaybe<long> FixedID { get; set; } = none<long>();
 
       public override string ToString() => variableName;
    }

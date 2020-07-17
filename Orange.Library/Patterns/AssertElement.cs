@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 	{
 		protected string text;
 
-		public AssertElement(string text)
-		{
-			this.text = text;
-		}
+		public AssertElement(string text) => this.text = text;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			index = State.Position;
 			length = text.Length;

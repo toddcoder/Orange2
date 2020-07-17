@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -14,24 +13,18 @@ namespace Orange.Library.Verbs
 			var stack = State.Stack;
 			var y = stack.Pop(true, LOCATION);
 			var x = stack.Pop(true, LOCATION);
-		   var cls = y.As<Class>();
-			if (cls.IsSome)
-			{
-			   var obj = x.As<Object>();
-			   if (obj.IsSome && obj.Value.Class.IsChildOf(cls.Value))
-			      return new Some(obj.Value);
-			}
-		   var trait = y.As<Trait>();
-			if (trait.IsSome)
-			{
-            var obj = x.As<Object>();
-			   if (obj.IsSome && (obj.Value.Class.ImplementsTrait(trait.Value) || obj.Value.ImplementsInterface(trait.Value)))
-			      return new Some(obj.Value);
-			}
-			return new None();
+         if (x is Object obj)
+         {
+            if (y is Class cls && obj.Class.IsChildOf(cls))
+               return new Some(obj);
+            if (y is Trait trait && (obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait)))
+               return new Some(obj);
+         }
+
+		   return new None();
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
 	   public override string ToString() => "as";
 	}

@@ -28,7 +28,7 @@ namespace Orange.Library.Verbs
 
 		public override Value Evaluate() => null;
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
 	   public override string ToString() => $"<{functionName}({verbs.Listify(" ")})>";
 	}

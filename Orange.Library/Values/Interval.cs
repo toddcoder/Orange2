@@ -50,12 +50,9 @@ namespace Orange.Library.Values
 
 		TimeSpan timeSpan;
 
-		public Interval(TimeSpan timeSpan)
-		{
-			this.timeSpan = timeSpan;
-		}
+		public Interval(TimeSpan timeSpan) => this.timeSpan = timeSpan;
 
-		public override int Compare(Value value) => Number.CompareTo(value.Number);
+	   public override int Compare(Value value) => Number.CompareTo(value.Number);
 
 	   public override string Text
 		{

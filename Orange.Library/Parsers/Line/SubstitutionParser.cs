@@ -10,10 +10,7 @@ namespace Orange.Library.Parsers.Line
       FillInValueParser parser;
 
       public SubstitutionParser(FillInValueParser parser)
-         : base("^ ' '* '$' /(/d+)")
-      {
-         this.parser = parser;
-      }
+         : base("^ ' '* '$' /(/d+)") => this.parser = parser;
 
       public override Verb CreateVerb(string[] tokens)
       {

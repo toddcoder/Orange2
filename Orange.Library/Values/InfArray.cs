@@ -37,10 +37,7 @@ namespace Orange.Library.Values
 				RegionManager.Regions.Pop("inf-array");
 				return result;
 			}
-			set
-			{
-				base[index] = value;
-			}
+			set => base[index] = value;
 		}
 	}
 }

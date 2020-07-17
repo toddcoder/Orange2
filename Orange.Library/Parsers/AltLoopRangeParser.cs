@@ -4,9 +4,9 @@ using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using Block = Orange.Library.Values.Block;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -15,10 +15,7 @@ namespace Orange.Library.Parsers
       FreeParser freeParser;
 
       public AltLoopRangeParser()
-         : base($"^ /(|sp|) /'(' /({REGEX_VARIABLE}) /(/s* '<-' /s*)")
-      {
-         freeParser = new FreeParser();
-      }
+         : base($"^ /(|sp|) /'(' /({REGEX_VARIABLE}) /(/s* '<-' /s*)") => freeParser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -28,48 +25,50 @@ namespace Orange.Library.Parsers
          Color(variable.Length, Variables);
          Color(tokens[4].Length, Structures);
 
-         return GetExpression(source, NextPosition, Comma()).Map((init, i) =>
+         if (GetExpression(source, NextPosition, Comma()).If(out var init, out var i) &&
+            GetExpression(source, i, CommaOrCloseParenthesis()).If(out var condition, out var j))
          {
-            return GetExpression(source, i, CommaOrCloseParenthesis()).Map((condition, j) =>
+            var index = j;
+            Block increment;
+            if (freeParser.Scan(source, index, "^ |sp| ','"))
             {
-               var index = j;
-               Block increment;
-               if (freeParser.Scan(source, index, "^ |sp| ','"))
+               freeParser.ColorAll(Structures);
+               index = freeParser.Position;
+               var pIncrement = GetExpression(source, index, Comma());
+               if (!pIncrement.If(out increment, out index))
+                  return null;
+
+               if (freeParser.Scan(source, index, "^ |sp| ')'"))
                {
                   freeParser.ColorAll(Structures);
                   index = freeParser.Position;
-                  var pIncrement = GetExpression(source, index, Comma());
-                  if (!pIncrement.Assign(out increment, out index))
-                     return null;
-                  if (freeParser.Scan(source, index, "^ |sp| ')'"))
-                  {
-                     freeParser.ColorAll(Structures);
-                     index = freeParser.Position;
-                  }
-                  else
-                     return null;
                }
                else
+                  return null;
+            }
+            else
+            {
+               if (freeParser.Scan(source, index, "^ |sp| ')'"))
                {
-                  if (freeParser.Scan(source, index, "^ |sp| ')'"))
-                  {
-                     freeParser.ColorAll(Structures);
-                     index = freeParser.Position;
-                     var builder = new CodeBuilder();
-                     builder.Variable(variable);
-                     builder.Verb(new Add());
-                     builder.Value(1);
-                     increment = builder.Block;
-                  }
-                  else
-                     return null;
+                  freeParser.ColorAll(Structures);
+                  index = freeParser.Position;
+                  var builder = new CodeBuilder();
+                  builder.Variable(variable);
+                  builder.Verb(new Add());
+                  builder.Value(1);
+                  increment = builder.Block;
                }
-               overridePosition = index;
-               var value = new LoopRange(variable, init, true, condition, increment, new None<Block>());
-               result.Value = value;
-               return value.PushedVerb;
-            }, () => null);
-         }, () => null);
+               else
+                  return null;
+            }
+
+            overridePosition = index;
+            var value = new LoopRange(variable, init, true, condition, increment, none<Block>());
+            result.Value = value;
+            return value.PushedVerb;
+         }
+
+         return null;
       }
 
       public override string VerboseName => "loop range";

@@ -1,7 +1,7 @@
-﻿using Orange.Library.Patterns;
+﻿using Core.Numbers;
+using Core.Strings;
+using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Numbers;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 
@@ -10,9 +10,7 @@ namespace Orange.Library.Parsers.Patterns
    public class AnyClassElementParser : Parser, IElementParser
    {
       public AnyClassElementParser()
-         : base("^ /s* /('++' | '--' | '+' | '-' | /d+)? /('`' ['a-z']1%2)", true)
-      {
-      }
+         : base("^ /s* /('++' | '--' | '+' | '-' | /d+)? /('`' ['a-z']1%2)", true) { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -75,6 +73,7 @@ namespace Orange.Library.Parsers.Patterns
             default:
                return null;
          }
+
          switch (type)
          {
             case "+":
@@ -94,20 +93,22 @@ namespace Orange.Library.Parsers.Patterns
                break;
             default:
                if (text.IsNumeric())
+               {
                   Element = new AnyElement(text, text.ToInt());
+               }
                else
+               {
                   return null;
+               }
+
                break;
          }
+
          return new NullOp();
       }
 
       public override string VerboseName => "any class element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

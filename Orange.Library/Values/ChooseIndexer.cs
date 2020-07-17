@@ -47,14 +47,8 @@ namespace Orange.Library.Values
 
       public override Value Value
       {
-         get
-         {
-            return getIndexer().Value;
-         }
-         set
-         {
-            getIndexer().Value = value;
-         }
+         get => getIndexer().Value;
+         set => getIndexer().Value = value;
       }
 
       public override Value AlternateValue(string message) => getIndexer();

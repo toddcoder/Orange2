@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Orange.Library.Managers;
 using Standard.Types.Enumerables;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Case;
 using static Orange.Library.Values.Nil;
 using static Orange.Library.Values.Parameters;
-using static Standard.Types.Tuples.TupleFunctions;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -38,17 +38,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      }
+      public override string Text { get; set; }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.MultiLambda;
 
@@ -97,36 +89,37 @@ namespace Orange.Library.Values
             var values = parameters1.GetArguments(arguments);
             popper.Push();
 
-            string checkVariable;
-            Block checkExpression;
-            firstComparisand(lambda0.Parameters).Assign(out checkExpression, out checkVariable);
-            var expander = new Expander(functionName, item1.Lambda.Block, checkExpression, checkVariable, lambda0.Block,
-               region);
+            (var checkExpression, var checkVariable) = firstComparisand(lambda0.Parameters);
+            var expander = new Expander(functionName, item1.Lambda.Block, checkExpression, checkVariable, lambda0.Block, region);
 
             SetArguments(values);
             foreach (var parameter in parameters1.GetParameters())
                expander.AddParameter(parameter);
+
             var block = expander.Expand();
             return block;
          }
       }
 
-      static Tuple<Block, string> firstComparisand(Parameters parameters)
+      static (Block, string) firstComparisand(Parameters parameters)
       {
          var selectedParameter = parameters.GetParameters().FirstOrDefault(p => p.Comparisand != null);
          RejectNull(selectedParameter, LOCATION, $"No comparisands in parameters {parameters}");
-         return tuple(selectedParameter.Comparisand, selectedParameter.Name);
+         return (selectedParameter.Comparisand, selectedParameter.Name);
       }
 
       public override string ToString() => items.Select(i => i.ToString()).Listify();
 
       protected static bool canInvoke(Parameters parameters, List<ParameterValue> values, bool required)
       {
-         if (parameters.Length == 0)
-            return true;
-         if (parameters.Length == 1 && parameters[0].Comparisand[0].PushType
-            .Map(pt => pt, () => ValueType.Nil) == ValueType.Any)
-            return true;
+         switch (parameters.Length)
+         {
+            case 0:
+               return true;
+            case 1 when parameters[0].Comparisand[0].PushType.FlatMap(pt => pt, () => ValueType.Nil) == ValueType.Any:
+               return true;
+         }
+
          if (parameters.Length != values.Count)
             return false;
 
@@ -136,8 +129,10 @@ namespace Orange.Library.Values
             var value = values[i].Value;
             if (canInvoke(parameter, value, required))
                continue;
+
             return false;
          }
+
          return true;
       }
 
@@ -147,6 +142,7 @@ namespace Orange.Library.Values
          var right = comparisand?.Evaluate();
          if (right == null)
             return true;
+
          return Match(value, right, required, null) && (parameter.Condition?.IsTrue ?? true);
       }
 
@@ -156,9 +152,8 @@ namespace Orange.Library.Values
             return InvokeExpanded(arguments);
 
          arguments.DefaultValue = new Nil();
-         for (var i = 0; i < items.Count; i++)
+         foreach (var item in items)
          {
-            var item = items[i];
             var region = new Region();
             using (var popper = new RegionPopper(region, "multi-lambda"))
             {
@@ -175,24 +170,24 @@ namespace Orange.Library.Values
                      continue;
                   if (!(item.Condition?.Evaluate().IsTrue ?? true))
                      continue;
+
                   if (Region != null)
                      item.Lambda.Region = Region;
                   var item1 = item;
                   var result = memoize ? memo.Value.Evaluate(() => evaluate(arguments, item1)) : evaluate(arguments, item);
-/*                  if (result != null && result.IsNil)
-                     continue;*/
+                  /*                  if (result != null && result.IsNil)
+                                       continue;*/
                   return result ?? NilValue;
                }
             }
          }
+
          Throw(LOCATION, $"No match found for ({arguments})");
          return NilValue;
       }
 
-      static Value evaluate(Arguments arguments, MultiLambdaItem item)
-      {
-         return item.Lambda.Evaluate(arguments, register: true, setArguments: false);
-      }
+      static Value evaluate(Arguments arguments, MultiLambdaItem item) =>
+         item.Lambda.Evaluate(arguments, register: true, setArguments: false);
 
       public Value ExpandedBlock() => getExpandedBlock(Arguments);
 
@@ -200,41 +195,22 @@ namespace Orange.Library.Values
 
       public bool XMethod
       {
-         get
-         {
-            return items.All(i => i.Lambda.XMethod);
-         }
-         set
-         {
-         }
+         get => items.All(i => i.Lambda.XMethod);
+         set { }
       }
 
-      public Region Region
-      {
-         get;
-         set;
-      }
+      public Region Region { get; set; }
 
-      public bool ImmediatelyInvokeable
-      {
-         get;
-         set;
-      }
+      public bool ImmediatelyInvokeable { get; set; }
 
       public int ParameterCount => items.Select(i => i.Lambda.ParameterCount).Max();
 
       public bool Matches(Signature signature) => items.Any(i => i.Lambda.ParameterCount == signature.ParameterCount);
 
-      public bool Initializer
-      {
-         get;
-         set;
-      }
+      public bool Initializer { get; set; }
 
-      public Block Where
-      {
-         get;
-         set;
-      }
+      public IMaybe<ObjectRegion> ObjectRegion { get; set; } = none<ObjectRegion>();
+
+      public Block Where { get; set; }
    }
 }

@@ -1,55 +1,55 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class Invoke : Verb, ITailCallVerb
-	{
-		VerbPresidenceType presidence;
+   public class Invoke : Verb, ITailCallVerb
+   {
+      VerbPrecedenceType precedence;
 
-		public static Value Evaluate(Value value, Arguments arguments)
-		{
-			if (arguments.MessageArguments)
-			{
-				var messageArguments = (MessageArguments)arguments[0];
-				return messageArguments.SendMessage(value);
-			}
-		   var invokeable = value.As<IInvokeable>();
-			if (invokeable.IsSome)
-				return invokeable.Value.Invoke(arguments);
-		   var reference = value.As<InvokeableReference>();
-			if (reference.IsSome)
-				return reference.Value.Invoke(arguments);
-			var result = SendMessage(value, "invoke", arguments);
-			return result;
-		}
+      public static Value Evaluate(Value value, Arguments arguments)
+      {
+         if (arguments.MessageArguments)
+         {
+            var messageArguments = (MessageArguments)arguments[0];
+            return messageArguments.SendMessage(value);
+         }
 
-		Arguments arguments;
+         if (value is IInvokeable invokeable)
+            return invokeable.Invoke(arguments);
 
-		public Invoke(Arguments arguments, VerbPresidenceType presidence = VerbPresidenceType.Invoke)
-		{
-			this.arguments = arguments;
-			this.presidence = presidence;
-		}
+         if (value is InvokeableReference reference)
+            return reference.Invoke(arguments);
 
-		public override Value Evaluate()
-		{
-			var value = State.Stack.Pop(false, "Invoke");
-			return Evaluate(value.Resolve(), arguments);
-		}
+         var result = SendMessage(value, "invoke", arguments);
+         return result;
+      }
 
-		public override VerbPresidenceType Presidence => presidence;
+      Arguments arguments;
 
-	   public override string ToString() => $":({arguments})";
+      public Invoke(Arguments arguments, VerbPrecedenceType precedence = VerbPrecedenceType.Invoke)
+      {
+         this.arguments = arguments;
+         this.precedence = precedence;
+      }
 
-	   public TailCallSearchType TailCallSearchType => TailCallSearchType.PushVariable;
+      public override Value Evaluate()
+      {
+         var value = State.Stack.Pop(false, "Invoke");
+         return Evaluate(value.Resolve(), arguments);
+      }
 
-	   public string NameProperty => null;
+      public override VerbPrecedenceType Precedence => precedence;
 
-	   public Block NestedBlock => null;
+      public override string ToString() => $":({arguments})";
 
-	   public Arguments Arguments => arguments;
-	}
+      public TailCallSearchType TailCallSearchType => TailCallSearchType.PushVariable;
+
+      public string NameProperty => null;
+
+      public Block NestedBlock => null;
+
+      public Arguments Arguments => arguments;
+   }
 }

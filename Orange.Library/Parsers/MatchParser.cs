@@ -1,72 +1,54 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Tuples;
-using static Orange.Library.Managers.ExpressionManager;
-using static Orange.Library.Managers.ExpressionManager.VerbPresidenceType;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.Maybe;
+using static Orange.Library.Runtime;
 
 namespace Orange.Library.Parsers
 {
    public class MatchParser : Parser
    {
-      bool isStatement;
-      protected SpecialParser<Verb> caseParser;
+      protected CaseParser caseParser;
       protected CodeBuilder builder;
-      protected VerbPresidenceType presidence;
-      protected IMaybe<FreeParser> freeParser;
 
-      public MatchParser(string defaultPattern = "^ |tabs| 'match' /b",
-         VerbPresidenceType defaultPresidence = Statement)
-         : base(defaultPattern)
+      public MatchParser()
+         : base($"^ /(|tabs|) /'match' /b (/(/s+) /({REGEX_VARIABLE}) /(/s* '='))?")
       {
-         isStatement = defaultPresidence == Statement;
-         caseParser = isStatement ? (SpecialParser<Verb>)new CaseParser() : new CaseExpressionParser();
+         caseParser = new CaseParser();
          builder = new CodeBuilder();
-         presidence = defaultPresidence;
       }
 
       public override Verb CreateVerb(string[] tokens)
       {
-         Color(position, length, KeyWords);
-         var stop = isStatement ? EndOfLineConsuming() : PassAlong("^ |sp| '('");
-         freeParser = When(!isStatement, () => new FreeParser());
+         var fieldName = tokens[4];
+         Color(position, tokens[1].Length, Whitespaces);
+         Color(tokens[2].Length, KeyWords);
+         Color(tokens[3].Length, Whitespaces);
+         Color(fieldName.Length, Variables);
+         Color(tokens[5].Length, Structures);
 
-         return GetExpression(source, NextPosition, stop).Map((target, index) =>
+         var stop = EndOfLineConsuming();
+
+         if (GetExpression(source, NextPosition, stop).If(out var target, out var index))
          {
-            if (isStatement)
-               AdvanceTabs();
-            var continuing = true;
-            while (index < source.Length && continuing)
-            {
-               Verb verb;
-               int newIndex;
-               if (caseParser.Parse(source, index).Assign(out verb, out newIndex))
+            AdvanceTabs();
+            while (index < source.Length)
+               if (caseParser.Parse(source, index).If(out var verb, out var newIndex))
                {
                   index = newIndex;
                   builder.Verb(verb);
                }
                else
                   break;
-               freeParser.If(parser =>
-               {
-                  if (parser.Scan(source, index, "^ |sp| [',)']"))
-                  {
-                     index = parser.Position;
-                     parser.ColorAll(Structures);
-                     if (parser.Tokens[0].EndsWith(")"))
-                        continuing = false;
-                  }
-               });
-            }
-            if (isStatement)
-               RegressTabs();
+
+            RegressTabs();
             overridePosition = index;
-            return new MatchExecute(target, builder.Block, presidence) { Index = position };
-         }, () => null);
+            return new MatchExecute(target, builder.Block, fieldName) { Index = position };
+         }
+
+         return null;
       }
 
       public override string VerboseName => "match";

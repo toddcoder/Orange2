@@ -78,14 +78,8 @@ namespace Orange.Library.Patterns
 
       public override IReplacement Replacement
       {
-         get
-         {
-            return replacement;
-         }
-         set
-         {
-            setOverridenReplacement(value);
-         }
+         get => replacement;
+         set => setOverridenReplacement(value);
       }
 
 

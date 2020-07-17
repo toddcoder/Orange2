@@ -1,6 +1,6 @@
 ﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
@@ -11,10 +11,8 @@ namespace Orange.Library.Parsers
    public class DefineExpressionParser : Parser
    {
       public DefineExpressionParser()
-         : base($"^ /(|tabs| 'let' /s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
-      {
+         : base($"^ /(|tabs| 'let' /s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
-      }
       public override Verb CreateVerb(string[] tokens)
       {
          var fieldName = tokens[2];
@@ -23,13 +21,15 @@ namespace Orange.Library.Parsers
          Color(fieldName.Length, Variables);
          Color(tokens[3].Length, Operators);
 
-         return GetExpression(source, NextPosition, EndOfLine()).Map((block, i) =>
+         if (GetExpression(source, NextPosition, EndOfLine()).If(out var block, out var i))
          {
             overridePosition = i;
             var thunk = new Thunk(block);
             result.Value = thunk;
             return new DefineExpression(fieldName, thunk) { Index = NextPosition };
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "define expression";

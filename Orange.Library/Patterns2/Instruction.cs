@@ -31,12 +31,9 @@ namespace Orange.Library.Patterns2
 
 		public abstract bool Execute(State state);
 
-		public virtual bool ExecuteFirst(State state)
-		{
-			return Execute(state);
-		}
+		public virtual bool ExecuteFirst(State state) => Execute(state);
 
-		public virtual void Initialize()
+	   public virtual void Initialize()
 		{
 		}
 

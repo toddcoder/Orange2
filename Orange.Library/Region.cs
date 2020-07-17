@@ -1,15 +1,14 @@
 ﻿using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Values;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Strings;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Region.ReadOnlyType;
 using static Orange.Library.Runtime;
+using static Orange.Library.Values.Null;
 using static Orange.Library.Values.Object;
 using static Orange.Library.Values.Value;
 
@@ -55,18 +54,19 @@ namespace Orange.Library
          initializers = new Set<string>();
       }
 
-      public string Tag
-      {
-         get;
-         set;
-      }
+      public string Tag { get; set; }
 
       public void CopyVariablesTo(Region target)
       {
-         foreach (var item in variables)
-            target.SetParameter(item.Key, item.Value);
-         foreach (var item in readonlys.Where(item => item.Value == ReadOnly))
-            target.SetReadOnly(item.Key);
+         foreach (var (key, value) in variables)
+         {
+            target.SetParameter(key, value);
+         }
+
+         foreach (var (key, _) in readonlys.Where(item => item.Value == ReadOnly))
+         {
+            target.SetReadOnly(key);
+         }
       }
 
       public void CopyAllVariablesTo(Region target)
@@ -75,7 +75,9 @@ namespace Orange.Library
          {
             target.SetLocal(item.Key, item.Value);
             if (readonlys[item.Key] == ReadOnly)
+            {
                target.SetReadOnly(item.Key);
+            }
          }
       }
 
@@ -95,17 +97,9 @@ namespace Orange.Library
 
       public virtual Region ReferenceClone() => ReferenceClone(new Region());
 
-      public int Level
-      {
-         get;
-         set;
-      }
+      public int Level { get; set; }
 
-      public string Name
-      {
-         get;
-         set;
-      }
+      public string Name { get; set; }
 
       public virtual Value this[string name]
       {
@@ -117,7 +111,9 @@ namespace Orange.Library
          set
          {
             if (value == null || value.IsNil)
+            {
                return;
+            }
 
             Assert(variables.ContainsKey(name), LOCATION, $"Field {name} doesn't exist");
             SetVariable(name, value);
@@ -130,16 +126,21 @@ namespace Orange.Library
          Reject(readonlys[name] == ReadOnly, LOCATION, $"{name} is read-only");
          variables[name] = value;
          if (readonlys[name] == ReadOnlyNotSet)
+         {
             readonlys[name] = ReadOnly;
-         var reference = value.As<InvokeableReference>();
-         if (reference.IsNone)
-            return;
-         var invokeable = reference.Value.Invokeable;
-         if (invokeable == null)
-            return;
+         }
 
-         if (invokeable.Initializer)
+         if (!(value is InvokeableReference reference))
+         {
+            return;
+         }
+
+         var invokable = reference.Invokeable;
+
+         if (invokable?.Initializer == true)
+         {
             initializers.Add(name);
+         }
       }
 
       void checkDeinitialization(Value value, string name)
@@ -149,21 +150,25 @@ namespace Orange.Library
             deinitializations[name] = false;
             SendMessage(variables[name], "deinit");
          }
+
          deinitializations[name] = value.Type == ValueType.Object;
       }
 
       public virtual void SetLocal(string name, Value value, VisibilityType visibility = VisibilityType.Public,
-         bool _override = false, bool allowNil = false)
+         bool @override = false, bool allowNil = false, int index = -1)
       {
-         setValue(name, value, visibility, _override, allowNil);
+         setValue(name, value, visibility, @override, allowNil, index);
       }
 
-      protected virtual void setValue(string name, Value value, VisibilityType visibility, bool _override, bool allowNil)
+      protected virtual void setValue(string name, Value value, VisibilityType visibility, bool @override,
+         bool allowNil, int index)
       {
          RejectNull(value, LOCATION, $"Name {name} not properly set");
-         Reject(readonlys[name] == ReadOnly && !_override, LOCATION, $"{name} is read only");
+         Reject(readonlys[name] == ReadOnly && !@override, LOCATION, $"{name} is read only");
          if (name.IsEmpty() || value.Type == ValueType.Nil && !allowNil)
+         {
             return;
+         }
 
          if (IsSpecialVariable(name))
          {
@@ -172,23 +177,28 @@ namespace Orange.Library
          }
 
          if (!variables.ContainsKey(name))
-            CreateVariable(name, visibility: visibility, _override: _override);
+         {
+            CreateVariable(name, visibility: visibility, @override: @override);
+         }
+
          variables[name] = value;
          visibilityTypes[name] = visibility;
          if (readonlys[name] == ReadOnlyNotSet)
+         {
             readonlys[name] = ReadOnly;
+         }
       }
 
       public void SetParameter(string name, Value value, VisibilityType visibility = VisibilityType.Public,
-         bool _override = false, bool allowNil = false)
+         bool @override = false, bool allowNil = false)
       {
-         setValue(name, value, visibility, _override, allowNil);
+         setValue(name, value, visibility, @override, allowNil, -1);
       }
 
       public void SetReadOnly(string name, Value value, VisibilityType visibility = VisibilityType.Public,
-         bool _override = false, bool allowNil = false)
+         bool @override = false, bool allowNil = false)
       {
-         SetLocal(name, value, visibility, _override, allowNil);
+         SetLocal(name, value, visibility, @override, allowNil);
          readonlys[name] = ReadOnlyNotSet;
       }
 
@@ -217,32 +227,24 @@ namespace Orange.Library
          return text.Truncate(TRUNCATE_SIZE);
       }
 
-      public override string ToString() => $"{Name}:{Level} contains {VariableNameList.Listify()}";
+      public override string ToString() => $"{Name}:{Level} contains {VariableNameList.Stringify()}";
 
       public Hash<string, Value> AllVariables(Hash<string, Value> passedVariables = null)
       {
          var currentVariables = passedVariables ?? new Hash<string, Value>();
-         foreach (var item in variables)
+         foreach (var (key, value) in variables)
          {
-            Region region;
-            if (item.Value.As<Region>().Assign(out region) && region.Tag == Tag)
-               continue;
-            currentVariables[item.Key] = item.Value.ArgumentValue();
+            currentVariables[key] = value.ArgumentValue();
          }
+
          return currentVariables;
       }
 
       public Hash<string, Value> Variables => variables;
 
-      public void Dispose()
-      {
-      }
+      public void Dispose() { }
 
-      public Value Instance
-      {
-         get;
-         set;
-      }
+      public Value Instance { get; set; }
 
       public Hash<string, Value> Locals => variables;
 
@@ -255,7 +257,7 @@ namespace Orange.Library
 
       public string Dump() => "";
 
-      public bool ContainsMessage(string messageName) => variables.ContainsKey(messageName);
+      public virtual bool ContainsMessage(string messageName) => variables.ContainsKey(messageName);
 
       public string[] VariableNameList => variables.KeyArray();
 
@@ -276,52 +278,67 @@ namespace Orange.Library
             region[item.Key] = item.Value;
             region.readonlys[item.Key] = readonlys[item.Key];
          }
+
          return region;
       }
 
-      public virtual void CreateVariable(string variableName, bool global = false,
-         VisibilityType visibility = VisibilityType.Public, bool _override = false)
+      public virtual void CreateVariable(string variableName, bool global = false, VisibilityType visibility = VisibilityType.Public,
+         bool @override = false)
       {
-         Assert(canBeSet(variableName, _override, global), LOCATION, $"{variableName} already exists");
+         Assert(canBeSet(variableName, @override, global), LOCATION, $"{variableName} already exists");
          if (global)
-            Regions.Global.SetLocal(variableName, new Nil(), allowNil: true, visibility: visibility);
+         {
+            Regions.Global.SetLocal(variableName, NullValue, allowNil: true, visibility: visibility);
+         }
          else
          {
-            variables[variableName] = new Nil();
+            variables[variableName] = NullValue;
             visibilityTypes[variableName] = visibility;
          }
       }
 
-      public void CreateVariableIfNonexistant(string variableName, bool global = false,
-         VisibilityType visibility = VisibilityType.Public, bool _override = false)
+      public void CreateVariableIfNonexistent(string variableName, bool global = false, VisibilityType visibility = VisibilityType.Public,
+         bool @override = false)
       {
          if (variables.ContainsKey(variableName))
+         {
             return;
-         CreateVariable(variableName, global, visibility, _override);
+         }
+
+         CreateVariable(variableName, global, visibility, @override);
       }
 
-      bool canBeSet(string variableName, bool _override, bool global)
+      bool canBeSet(string variableName, bool @override, bool global)
       {
          if (global)
-            return canBeSetGlobal(variableName, _override);
+         {
+            return canBeSetGlobal(variableName, @override);
+         }
+
          if (!variables.ContainsKey(variableName))
+         {
             return true;
-         return _override || !variables.ContainsKey(variableName) || variables[variableName].Type == ValueType.Pending ||
+         }
+
+         return @override || !variables.ContainsKey(variableName) || variables[variableName].Type == ValueType.Pending ||
             variables[variableName].Type == ValueType.Abstract;
       }
 
-      static bool canBeSetGlobal(string variableName, bool _override)
+      static bool canBeSetGlobal(string variableName, bool @override)
       {
          if (!Regions.VariableExists(variableName))
+         {
             return true;
-         return _override || Regions[variableName].Type == ValueType.Pending ||
+         }
+
+         return @override || Regions[variableName].Type == ValueType.Pending ||
             Regions[variableName].Type == ValueType.Abstract;
       }
 
       public void CreateReadOnlyVariable(string variableName, bool global = false,
-         VisibilityType visibility = VisibilityType.Public, bool _override = false)
+         VisibilityType visibility = VisibilityType.Public, bool @override = false)
       {
-         CreateVariable(variableName, global, visibility, _override);
+         CreateVariable(variableName, global, visibility, @override);
          readonlys[variableName] = ReadOnlyNotSet;
       }
 
@@ -348,15 +365,17 @@ namespace Orange.Library
       public void FlagExistingVariable(string variableName, VisibilityType visibility)
       {
          if (variables.ContainsKey(variableName))
+         {
             visibilityTypes[variableName] = visibility;
+         }
       }
 
       public static LockedDownRegion LockedDown() => new LockedDownRegion("");
 
       public void CreateAndSet(string name, Value value, bool global = false,
-         VisibilityType visibility = VisibilityType.Public, bool _override = false)
+         VisibilityType visibility = VisibilityType.Public, bool @override = false)
       {
-         CreateVariableIfNonexistant(name, global, visibility, _override);
+         CreateVariableIfNonexistent(name, global, visibility, @override);
          this[name] = value;
       }
 

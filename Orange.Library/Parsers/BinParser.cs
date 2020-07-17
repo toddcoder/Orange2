@@ -8,7 +8,7 @@ namespace Orange.Library.Parsers
    public class BinParser : Parser
    {
       public BinParser()
-         : base("^ ' '* 'b_' /{01_}", true)
+         : base("^ ' '* '0b' /{01_}", true)
       {
       }
 

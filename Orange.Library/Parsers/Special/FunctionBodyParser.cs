@@ -1,49 +1,47 @@
-﻿using System;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Parser;
 using static Orange.Library.Parsers.StatementParser;
+using static Standard.Types.Maybe.MaybeFunctions;
 using If = Orange.Library.Verbs.If;
-using static Standard.Types.Tuples.TupleFunctions;
 
 namespace Orange.Library.Parsers.Special
 {
    public class FunctionBodyParser : SpecialParser<Block>
    {
-      public bool ExtractCondition
-      {
-         get;
-         set;
-      }
+      public bool ExtractCondition { get; set; }
 
-      public override IMaybe<Tuple<Block, int>> Parse(string source, int index)
+      public override IMaybe<(Block, int)> Parse(string source, int index)
       {
          if (freeParser.Scan(source, index, "^ /s* '=' /s*"))
          {
             Color(index, freeParser.Length, Structures);
             index = freeParser.Position;
-            return OneLineStatement(source, index).Map((b, i) =>
+            if (OneLineStatement(source, index).If(out var b1, out var i1))
             {
-               var block = b;
+               var block = b1;
                if (ExtractCondition)
                {
                   var newBlock = createCondition(block);
                   if (newBlock != null)
                      block = newBlock;
                }
-               return tuple(block, i);
-            });
+               return (block, i1).Some();
+            }
          }
 
-         return GetBlock(source, index, true).Map((b, i) =>
+         if (ConsumeEndOfLine(source, index).If(out var i2))
+            index = i2;
+
+         if (GetBlock(source, index, true).If(out var b2, out var i3))
          {
             MultiCapable = true;
-            return tuple(b, i);
-         });
+            return (b2, i3).Some();
+         }
+
+         return none<(Block, int)>();
       }
 
       Block createCondition(Block block)
@@ -60,42 +58,31 @@ namespace Orange.Library.Parsers.Special
                conditionBuilder.Verb(verb);
                continue;
             }
-            If _if;
-            Where where;
-            if (verb.As<If>().Assign(out _if))
+
+            switch (verb)
             {
-               buildingCondition = true;
-               continue;
+               case If _:
+                  buildingCondition = true;
+                  break;
+               case Where where:
+                  Where = where.Block;
+                  break;
+               default:
+                  blockBuilder.Verb(verb);
+                  break;
             }
-            if (verb.As<Where>().Assign(out where))
-            {
-               Where = where.Block;
-               continue;
-            }
-            blockBuilder.Verb(verb);
          }
+
          if (buildingCondition)
             Condition = conditionBuilder.Block;
          block = blockBuilder.Block;
          return block;
       }
 
-      public bool MultiCapable
-      {
-         get;
-         set;
-      }
+      public bool MultiCapable { get; set; }
 
-      public Block Condition
-      {
-         get;
-         set;
-      }
+      public Block Condition { get; set; }
 
-      public Block Where
-      {
-         get;
-         set;
-      }
+      public Block Where { get; set; }
    }
 }

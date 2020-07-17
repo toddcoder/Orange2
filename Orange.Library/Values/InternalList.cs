@@ -26,21 +26,12 @@ namespace Orange.Library.Values
          anonymousName = "a";
       }
 
-      public InternalList(AutoHash<string, Value> fields)
-      {
-         this.fields = fields;
-      }
+      public InternalList(AutoHash<string, Value> fields) => this.fields = fields;
 
       public Value this[string fieldName]
       {
-         get
-         {
-            return fields[fieldName];
-         }
-         set
-         {
-            fields[fieldName] = value;
-         }
+         get => fields[fieldName];
+         set => fields[fieldName] = value;
       }
 
       public override int Compare(Value value) => 0;

@@ -1,8 +1,7 @@
 ﻿using Orange.Library.Patterns;
-using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
 using Standard.Types.Exceptions;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
@@ -12,9 +11,7 @@ namespace Orange.Library.Parsers.Patterns
    public class SpanElementParser : Parser, IElementParser
    {
       public SpanElementParser()
-         : base("/(^ /s*) /(['+-']1%2) /(['($' quote])")
-      {
-      }
+         : base("/(^ /s*) /(['+-']1%2) /(['($' quote])") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -34,8 +31,7 @@ namespace Orange.Library.Parsers.Patterns
             case "(":
                Color(1, Structures);
                var initialPosition = position + length;
-               Block text;
-               if (GetExpression(source, initialPosition, CloseParenthesis()).Assign(out text, out initialPosition))
+               if (GetExpression(source, initialPosition, CloseParenthesis()).If(out var text, out initialPosition))
                {
                   if (not)
                      Element = mode ? (Element)new BreakBlockElement(text) : new MBreakBlockElement(text);
@@ -45,6 +41,7 @@ namespace Orange.Library.Parsers.Patterns
                }
                else
                   return null;
+
                break;
             case "'":
             case "\"":
@@ -61,20 +58,18 @@ namespace Orange.Library.Parsers.Patterns
                }
                else
                   throw "String open".Throws();
+
                overridePosition = parser.Result.Position;
                break;
             default:
                return null;
          }
+
          return new NullOp();
       }
 
       public override string VerboseName => "span element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

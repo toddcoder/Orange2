@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -11,6 +11,7 @@ namespace Orange.Library.Verbs
       protected IMatched<Verb> verb;
       protected Block expression;
       protected string result;
+      protected string typeName;
 
       public Setter(string message, IMatched<Verb> verb, Block expression)
       {
@@ -18,6 +19,7 @@ namespace Orange.Library.Verbs
          this.verb = verb;
          this.expression = expression;
          result = "";
+         typeName = "";
       }
 
       public override Value Evaluate()
@@ -25,12 +27,12 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var value1 = stack.Pop(true, "Setter");
          var assignedValue = expression.AssignmentValue();
-         if (verb.IsMatched)
+         if (verb.If(out var value))
          {
             var value2 = SendMessage(value1, message);
             stack.Push(value2);
             stack.Push(assignedValue);
-            var evaluated = verb.Value.Evaluate();
+            var evaluated = value.Evaluate();
             var arguments = new Arguments(evaluated);
             SendMessage(value1, SetterName(message), arguments);
          }
@@ -39,20 +41,20 @@ namespace Orange.Library.Verbs
             var arguments = new Arguments(assignedValue);
             SendMessage(value1, SetterName(message), arguments);
          }
+
          result = value1.ToString();
+         typeName = value1.Type.ToString();
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Setter;
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
 
-      public override string ToString() => $".{message} {verb.Map(v => v.ToString(), () => "")}= {expression}";
+      public int Index { get; set; }
+
+      public override string ToString() => $".{message} {verb.FlatMap(v => v.ToString(), () => "")}= {expression}";
    }
 }

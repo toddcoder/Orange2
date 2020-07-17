@@ -98,11 +98,8 @@
 
 		public override Value this[int index]
 		{
-			get
-			{
-				return base[index];
-			}
-			set
+			get => base[index];
+		   set
 			{
 				throwError();
 				base[index] = value;
@@ -111,11 +108,8 @@
 
 		public override Value this[int[] keys]
 		{
-			get
-			{
-				return base[keys];
-			}
-			set
+			get => base[keys];
+		   set
 			{
 				throwError();
 				base[keys] = value;
@@ -124,11 +118,8 @@
 
 		public override Value this[string key]
 		{
-			get
-			{
-				return base[key];
-			}
-			set
+			get => base[key];
+		   set
 			{
 				throwError();
 				base[key] = value;
@@ -137,11 +128,8 @@
 
 		public override Value this[string[] keys]
 		{
-			get
-			{
-				return base[keys];
-			}
-			set
+			get => base[keys];
+		   set
 			{
 				throwError();
 				base[keys] = value;
@@ -160,9 +148,6 @@
 			return null;
 		}
 
-		public override string ToString()
-		{
-			return "^" + base.ToString();
-		}
+		public override string ToString() => "^" + base.ToString();
 	}
 }

@@ -18,10 +18,9 @@ namespace Orange.Library.Parsers
          VariableBeginning,
          Variable
       }
+
       public RegexParser()
-         : base(@"^ ' '* '\'")
-      {
-      }
+         : base(@"^ ' '* '\'") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -31,6 +30,7 @@ namespace Orange.Library.Parsers
          var type = StatusType.Outside;
          var ignoreCaseOption = false;
          var multilineOption = false;
+         var globalOption = false;
 
          for (var i = position + length; i < source.Length; i++)
          {
@@ -42,7 +42,7 @@ namespace Orange.Library.Parsers
                   {
                      case '\\':
                         var rxPatern = regex.ToString();
-                        result.Value = new Regex(rxPatern, ignoreCaseOption, multilineOption);
+                        result.Value = new Regex(rxPatern, ignoreCaseOption, multilineOption, globalOption);
                         Color(1, Structures);
                         overridePosition = i + 1;
                         return new Push(result.Value);
@@ -89,9 +89,11 @@ namespace Orange.Library.Parsers
                                  color = Variables;
                               break;
                         }
+
                         Color(1, color);
                         break;
                   }
+
                   break;
                case StatusType.WaitingForSingleQuote:
                   switch (ch)
@@ -108,6 +110,7 @@ namespace Orange.Library.Parsers
                         regex.Append(ch);
                         break;
                   }
+
                   Color(1, Strings);
                   break;
                case StatusType.WaitingForDoubleQuote:
@@ -125,6 +128,7 @@ namespace Orange.Library.Parsers
                         regex.Append(ch);
                         break;
                   }
+
                   Color(1, Strings);
                   break;
                case StatusType.EscapedSingleQuote:
@@ -148,7 +152,16 @@ namespace Orange.Library.Parsers
                      case 'M':
                         multilineOption = true;
                         break;
+                     case 'g':
+                     case 'G':
+                        globalOption = true;
+                        break;
+                     default:
+                        type = StatusType.Outside;
+                        i--;
+                        continue;
                   }
+
                   type = StatusType.Outside;
                   Color(1, Symbols);
                   break;
@@ -161,6 +174,7 @@ namespace Orange.Library.Parsers
                         regex.Append(ch);
                         break;
                   }
+
                   type = StatusType.Outside;
                   goto case StatusType.Outside;
                case StatusType.Variable:
@@ -174,10 +188,12 @@ namespace Orange.Library.Parsers
                         Color(1, Variables);
                         break;
                   }
+
                   regex.Append(ch);
                   break;
             }
          }
+
          return null;
       }
 

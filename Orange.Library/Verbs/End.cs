@@ -3,21 +3,14 @@ using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
 {
-	public class End : Verb, IEnd
-	{
-		public override Value Evaluate()
-		{
-			return null;
-		}
+   public class End : Verb
+   {
+      public override Value Evaluate() => null;
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.NotApplicable;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-	   public override string ToString() => ";";
+      public override string ToString() => ";";
 
-	   public bool IsEnd => true;
-
-	   public bool EvaluateFirst => false;
-
-	   public override int OperandCount => 0;
-	}
+      public override int OperandCount => 0;
+   }
 }

@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Tuples;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Runtime;
-using static Standard.Types.Tuples.TupleFunctions;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -51,26 +47,23 @@ namespace Orange.Library.Parsers
          var index = NextPosition;
          var bracket = tokens[5];
          Lambda lambda = null;
-         var splatting = false;
          int newIndex;
          if (bracket == "(")
          {
             Color(1, Structures);
-            if (GetExpression(source, index, CloseParenthesis()).Assign(out actualArguments, out newIndex))
+            if (GetExpression(source, index, CloseParenthesis()).If(out actualArguments, out newIndex))
                index = newIndex;
             else
                actualArguments = new Block();
          }
          else
             actualArguments = new Block();
-         if (useBlockOrLambda && getBlock(blockOrLambdaParser, index)
-            .Assign(out parameters, out executable, out splatting, out newIndex))
+         var splatting = false;
+         if (useBlockOrLambda && getBlock(blockOrLambdaParser, index).If(out parameters, out executable, out splatting, out newIndex))
             index = newIndex;
          if (executable != null)
             lambda = new Lambda(new Region(), executable, new Parameters(), false);
-         string word;
-         Lambda wordLambda;
-         if (extraMessageWordParser.Parse(source, index).Assign(out newIndex, out word, out wordLambda))
+         if (extraMessageWordParser.Parse(source, index).If(out newIndex, out var word, out var wordLambda))
          {
             message += word;
             executable = wordLambda.Block;
@@ -79,13 +72,8 @@ namespace Orange.Library.Parsers
          }
          overridePosition = index;
          MessagingState.RegisterMessageCall(message);
-         var arguments = new Arguments(actualArguments, executable, parameters)
-         {
-            Splatting = splatting
-         };
-/*         if (lambda != null)
-            arguments.AddArgument(lambda);*/
-         result.Value = lambda;//new Message(message, arguments);
+         var arguments = new Arguments(actualArguments, executable, parameters) { Splatting = splatting };
+         result.Value = lambda;
          return getVerb(type, message, arguments, index);
       }
 
@@ -101,8 +89,6 @@ namespace Orange.Library.Parsers
                return new SendMessage(message, arguments, true);
             case ":":
                return new ApplyToMessage(new Message(message, arguments));
-/*            case ".:":
-               return new Push(getMessagePath(message, arguments, index));*/
             case ".?":
                return new SendMessage(message, arguments, optional: true);
             default:
@@ -110,14 +96,14 @@ namespace Orange.Library.Parsers
          }
       }
 
-      protected IMaybe<Tuple<Parameters, Block, bool, int>> getBlock(Parser parser, int index)
+      protected IMaybe<(Parameters, Block, bool, int)> getBlock(Parser parser, int index)
       {
          if (parser.Scan(source, index))
          {
             var value = parser.Result.Value;
-            Lambda lambda;
-            if (value.As<Lambda>().Assign(out lambda))
-               return tuple(lambda.Parameters, lambda.Block, lambda.Splatting, parser.Result.Position).Some();
+            if (value is Lambda lambda)
+               return (lambda.Parameters, lambda.Block, lambda.Splatting, parser.Result.Position).Some();
+
             var executable = (Block)value;
             var newIndex = parser.Result.Position;
             if (executable.Expression)
@@ -125,28 +111,11 @@ namespace Orange.Library.Parsers
                executable = null;
                newIndex = index;
             }
-            return tuple((Parameters)null, executable, false, newIndex).Some();
+            return ((Parameters)null, executable, false, newIndex).Some();
          }
-         return new None<Tuple<Parameters, Block, bool, int>>();
-      }
 
-/*      protected Value getMessagePath(string firstMessage, Arguments arguments, int index)
-      {
-         var messages = new List<Message>
-         {
-            new Message(firstMessage, arguments)
-         };
-         var parser = new SimpleSendMessageParser(blockOrLambdaParser);
-         while (parser.Scan(source, index))
-         {
-            messages.Add((Message)parser.Result.Value);
-            index = parser.Result.Position;
-         }
-         overridePosition = index;
-         var messagePath = new MessagePath(messages);
-         result.Value = messagePath;
-         return messagePath;
-      }*/
+         return none<(Parameters, Block, bool, int)>();
+      }
 
       public override string VerboseName => "send message";
    }

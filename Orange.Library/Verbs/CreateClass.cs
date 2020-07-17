@@ -5,52 +5,51 @@ using static Orange.Library.Managers.RegionManager;
 
 namespace Orange.Library.Verbs
 {
-	public class CreateClass : Verb, IEnd
-	{
-		public static void Create(string className, Class cls, IEnumerable<CreateFunction> helperFunctions = null,
-			Block helperBlock = null)
-		{
-			cls.Name = className;
-			Regions.CreateVariable(className, true);
-			Regions[className] = cls;
-			cls.CreateStaticObject();
-			if (helperFunctions != null)
-				foreach (var help in helperFunctions)
-					help.Evaluate();
-		   helperBlock?.Evaluate();
-		}
+   public class CreateClass : Verb, IStatement
+   {
+      public static void Create(string className, Class cls, IEnumerable<CreateFunction> helperFunctions = null,
+         Block helperBlock = null)
+      {
+         cls.Name = className;
+         var current = Regions.Current;
+         current.CreateVariable(className);
+         current[className] = cls;
+         cls.CreateStaticObject();
+         if (helperFunctions != null)
+            foreach (var help in helperFunctions)
+               help.Evaluate();
 
-		string className;
-		Class cls;
+         helperBlock?.Evaluate();
+      }
 
-		public CreateClass(string className, Class cls)
-		{
-			this.className = className;
-			this.cls = cls;
-		}
+      string className;
+      Class cls;
+      string result;
 
-		public IEnumerable<CreateFunction> HelperFunctions
-		{
-			get;
-			set;
-		}
+      public CreateClass(string className, Class cls)
+      {
+         this.className = className;
+         this.cls = cls;
+         result = "";
+      }
 
-		public Block HelperBlock
-		{
-			get;
-			set;
-		}
+      public IEnumerable<CreateFunction> HelperFunctions { get; set; }
 
-		public override Value Evaluate()
-		{
-			Create(className, cls, HelperFunctions, HelperBlock);
-			return null;
-		}
+      public Block HelperBlock { get; set; }
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override Value Evaluate()
+      {
+         Create(className, cls, HelperFunctions, HelperBlock);
+         result = cls.ToString();
+         return null;
+      }
 
-	   public bool IsEnd => true;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-	   public bool EvaluateFirst => true;
-	}
+      public string Result => result;
+
+      public string TypeName => "Class";
+
+      public int Index { get; set; }
+   }
 }

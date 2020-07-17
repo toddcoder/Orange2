@@ -6,26 +6,17 @@ namespace Orange.Library.Values
 	{
 		Array array;
 
-		public ArrayBuilder(Value left, Value right)
+		public ArrayBuilder(Value left, Value right) => array = new Array
 		{
-			array = new Array
-			{
-				left,
-				right
-			};
-		}
+		   left,
+		   right
+		};
 
-		public ArrayBuilder(Array array)
-		{
-			this.array = array;
-		}
+	   public ArrayBuilder(Array array) => this.array = array;
 
-		public override int Compare(Value value)
-		{
-			return array.Compare(value);
-		}
+	   public override int Compare(Value value) => array.Compare(value);
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -47,83 +38,41 @@ namespace Orange.Library.Values
 			}
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.ArrayBuilder;
-			}
-		}
+		public override ValueType Type => ValueType.ArrayBuilder;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return array.IsTrue;
-			}
-		}
+	   public override bool IsTrue => array.IsTrue;
 
-		public override Value Clone()
-		{
-			return new ArrayBuilder((Array)array.Clone());
-		}
+	   public override Value Clone() => new ArrayBuilder((Array)array.Clone());
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "append", v => ((ArrayBuilder)v).Append());
 		}
 
-		public Value Append()
-		{
-			return Append(Arguments[0]);
-		}
+		public Value Append() => Append(Arguments[0]);
 
-		public ArrayBuilder Append(Value value)
+	   public ArrayBuilder Append(Value value)
 		{
 			array.Add(value);
 			return this;
 		}
 
-		public override bool IsArray
-		{
-			get
-			{
-				return true;
-			}
-		}
+		public override bool IsArray => true;
 
-		public override Value SourceArray
-		{
-			get
-			{
-				return getArray();
-			}
-		}
+	   public override Value SourceArray => getArray();
 
-		public override Value AlternateValue(string message)
-		{
-			return getArray();
-		}
+	   public override Value AlternateValue(string message) => getArray();
 
-		public override Value AssignmentValue()
-		{
-			return getArray();
-		}
+	   public override Value AssignmentValue() => getArray();
 
-		public override Value ArgumentValue()
-		{
-			return getArray();
-		}
+	   public override Value ArgumentValue() => getArray();
 
-		public override void AssignTo(Variable variable)
+	   public override void AssignTo(Variable variable)
 		{
 			array.AssignTo(variable);
 		}
 
-		public override string ToString()
-		{
-			return array.ToString();
-		}
+		public override string ToString() => array.ToString();
 
 /*		public override Value Resolve()
 		{

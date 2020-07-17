@@ -4,12 +4,9 @@ namespace Orange.Library.Values
 {
 	public class Any : Value
 	{
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+		public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;
@@ -21,34 +18,16 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Any;
-			}
-		}
+		public override ValueType Type => ValueType.Any;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return true;
-			}
-		}
+	   public override bool IsTrue => true;
 
-		public override Value Clone()
-		{
-			return new Any();
-		}
+	   public override Value Clone() => new Any();
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 
-		public override string ToString()
-		{
-			return "any";
-		}
+		public override string ToString() => "any";
 	}
 }

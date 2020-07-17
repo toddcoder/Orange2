@@ -1,7 +1,4 @@
-﻿using System;
-using Orange.Library.Managers;
-using Standard.Types.Objects;
-using static Standard.Types.Tuples.TupleFunctions;
+﻿using Orange.Library.Managers;
 
 namespace Orange.Library.Values
 {
@@ -9,37 +6,20 @@ namespace Orange.Library.Values
    {
       InterpolatedString message;
 
-      public Failure(InterpolatedString message)
-      {
-         this.message = message;
-      }
+      public Failure(InterpolatedString message) => this.message = message;
 
       public Failure(string text)
-         : this(new InterpolatedString(text))
-      {
-      }
+         : this(new InterpolatedString(text)) { }
 
-      public override int Compare(Value value)
-      {
-         return value.As<Failure>().Map(f => message.Compare(f.message), () => -1);
-      }
+      public override int Compare(Value value) => value is Failure f ? message.Compare(f.message) : -1;
 
       public override string Text
       {
-         get
-         {
-            return message.Text;
-         }
-         set
-         {
-         }
+         get => message.Text;
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Failure;
 
@@ -53,7 +33,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "fmap", v => ((Failure)v).FlatMap());
          manager.RegisterMessage(this, "value", v => ((Failure)v).Value());
          manager.RegisterMessage(this, "else", v => ((Failure)v).Else());
-
       }
 
       public Value Map() => this;
@@ -69,14 +48,14 @@ namespace Orange.Library.Values
             var block = assistant.Block();
             if (block == null)
                return this;
+
             return new Some(block.Evaluate());
          }
       }
 
       public override string ToString() => $"#\"{message}\"";
 
-      public Tuple<bool, string, Value> Match(Value right) => right.As<Failure>()
-         .Map(f => tuple(Case.Match(message, f.message, false, null), "", (Value)message),
-            () => tuple(false, "", (Value)null));
+      public (bool, string, Value) Match(Value right) => right is Failure f ? (Case.Match(message, f.message, false, null), "", message) :
+         (false, "", (Value)null);
    }
 }

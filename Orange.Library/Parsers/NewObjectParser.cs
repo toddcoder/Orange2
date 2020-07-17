@@ -1,8 +1,8 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ClassParser;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Parsers.StatementParser.InclusionType;
@@ -14,33 +14,26 @@ namespace Orange.Library.Parsers
       ParametersParser parametersParser;
 
       public NewObjectParser()
-         : base("^ /(' '* 'new') /'('")
-      {
-         parametersParser = new ParametersParser();
-      }
+         : base("^ ' '* '.('") => parametersParser = new ParametersParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
-         Color(position, tokens[1].Length, KeyWords);
-         Color(tokens[2].Length, Structures);
-         return parametersParser.Parse(source, NextPosition).Map((parameters, index) =>
+         Color(position, length, Structures);
+         if (parametersParser.Parse(source, NextPosition).If(out var parameters, out var index))
          {
-            string superClass;
-            Parameters superParameters;
-            string[] traits;
-            Ancestors(source, index).Assign(out superClass, out superParameters, out traits, out index);
+            (var _, var _, var _, var newIndex) = Ancestors(source, index);
+            index = newIndex;
             InClassDefinition = true;
-            var objectBlock = GetBlock(source, index, true, InClass).Map(t =>
-            {
-               index = t.Item2;
-               return t.Item1;
-            }, () => new Block());
+            var objectBlock = new Block();
+            GetBlock(source, index, true, InClass).If(out objectBlock, out index);
             InClassDefinition = false;
-            var cls = new Class(parameters, objectBlock, new Block(), "", new string[0], null, false);
+            var cls = new Class(parameters, objectBlock);
             overridePosition = index;
             result.Value = cls;
-            return new CreateModule("", cls, false);
-         }, () => null);
+            return new CreateModule("", cls, false) { Index = position };
+         }
+
+         return null;
       }
 
       public override string VerboseName => "new object";

@@ -1,18 +1,15 @@
-﻿using Standard.Types.Objects;
-
-namespace Orange.Library.Values
+﻿namespace Orange.Library.Values
 {
    public class CurryingLambda : Lambda
    {
       public CurryingLambda(Region region, Block block, Parameters parameters, bool enclosing)
-         : base(region, block, parameters, enclosing)
-      {
-      }
+         : base(region, block, parameters, enclosing) { }
 
       public override Value Evaluate(Arguments arguments, Value instance = null, bool register = true, bool setArguments = true)
       {
          if (parameters.Length <= 1)
             return base.Evaluate(arguments, instance, register, setArguments);
+
          var allParameters = parameters.GetParameters();
          var firstParameter = allParameters[0];
          var blocks = arguments.Blocks;
@@ -26,6 +23,7 @@ namespace Orange.Library.Values
             var parameter = allParameters[i];
             builder.Parameter(parameter);
          }
+
          builder.Inline(block);
          var curryingLambda = builder.CurryingLambda();
          if (blocks.Length > 1)
@@ -34,13 +32,14 @@ namespace Orange.Library.Values
             for (var i = 1; i < blocks.Length; i++)
             {
                var value = blocks[i].Evaluate();
-               var invokeable = value.As<IInvokeable>();
-               if (invokeable.IsSome)
-                  value = invokeable.Value.Invoke(new Arguments());
+               if (value is IInvokeable invokeable)
+                  value = invokeable.Invoke(new Arguments());
                newArguments.AddArgument(value);
             }
+
             return curryingLambda.Evaluate(newArguments, instance, register, setArguments);
          }
+
          return curryingLambda;
       }
    }

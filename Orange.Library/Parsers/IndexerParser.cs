@@ -1,8 +1,7 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Tuples;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
@@ -13,10 +12,13 @@ namespace Orange.Library.Parsers
 {
    public class IndexerParser : Parser
    {
-      static IMaybe<Block> argumentMessageInvokation(Block block)
+      static IMaybe<Block> argumentMessageInvocation(Block block)
       {
          if (block.Count == 0)
-            return new None<Block>();
+         {
+            return none<Block>();
+         }
+
          var verbs = block.AsAdded;
          var builder = new CodeBuilder();
          builder.Push();
@@ -26,57 +28,52 @@ namespace Orange.Library.Parsers
          for (var i = 0; i < verbs.Count; i++)
          {
             var verb = verbs[i];
-            AppendToMessage append;
-            Push push;
-            if (messaging)
+            switch (verb)
             {
-               if (verb.As<AppendToMessage>().Assign(out append))
+               case AppendToMessage append when messaging:
                   invoke.AddMessage(append.MessageName);
-               else
-               {
-                  if (verb.As<Push>().Assign(out push))
-                  {
-                     var valueBlock = PushValue(push.Value);
-                     invoke.AddValue(valueBlock);
-                  }
-                  else
-                     return new None<Block>();
-               }
+                  break;
+               case AppendToMessage append:
+                  builder.PopAndParenthesize();
+                  messaging = true;
+                  invoke.AddMessage(append.MessageName);
+                  break;
+               case Push push when messaging:
+                  var valueBlock = PushValue(push.Value);
+                  invoke.AddValue(valueBlock);
+                  break;
+               case Push push when i == 0:
+                  builder.Verb(new Push(push.Value));
+                  break;
+               default:
+                  builder.Verb(verb);
+                  break;
             }
-            else if (verb.As<AppendToMessage>().Assign(out append))
-            {
-               builder.PopAndParenthesize();
-               messaging = true;
-               invoke.AddMessage(append.MessageName);
-            }
-            else if (verb.As<Push>().Assign(out push) && i == 0)
-               builder.Verb(new Push(push.Value));
-            else
-               builder.Verb(verb);
          }
+
          if (messaging)
          {
             builder.Verb(invoke);
             var newBlock = builder.Block;
             return newBlock.Some();
          }
-         return new None<Block>();
+
+         return none<Block>();
       }
 
-      public IndexerParser()
-         : base("^ /'['")
-      {
-      }
+      public IndexerParser() : base("^ /'['") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length, Structures);
 
-         return GetExpression(source, NextPosition, CloseBracket(), true).Map((argumentExp, i) =>
+         if (GetExpression(source, NextPosition, CloseBracket(), true).If(out var argumentExp, out var i))
          {
             overridePosition = i;
             return new SendMessage(GetterName("item"), new Arguments(argumentExp));
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "indexer";

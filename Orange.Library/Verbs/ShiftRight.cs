@@ -5,7 +5,7 @@ namespace Orange.Library.Verbs
 {
 	public class ShiftRight : TwoValueVerb
 	{
-		public override VerbPresidenceType Presidence => VerbPresidenceType.ShiftRight;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.ShiftRight;
 
 	   public override Value Evaluate(Value x, Value y) => (int)x.Number >> (int)y.Number;
 

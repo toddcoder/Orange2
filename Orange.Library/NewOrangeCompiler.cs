@@ -1,6 +1,7 @@
-﻿using Orange.Library.Values;
+﻿using System;
+using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.Parser;
 using static Orange.Library.Parsers.StatementParser;
 
@@ -11,18 +12,28 @@ namespace Orange.Library
       public static Block Compile(string source)
       {
          Tabs = "";
-         return GetBlock(source, 0, false, compileAll: true).Required("Block not generated").Map((block, index) =>
+         if (GetBlock(source, 0, false, compileAll: true) is Some<(Block, int)> some)
          {
-            while (block.Count > 0)
+            if (some.If(out var block, out _))
             {
-               var i = block.Count - 1;
-               if (block[i] is End)
-                  block.RemoveAt(i);
-               else
-                  break;
+               while (block.Count > 0)
+               {
+                  var i = block.Count - 1;
+                  if (block[i] is End)
+                  {
+                     block.RemoveAt(i);
+                  }
+                  else
+                  {
+                     break;
+                  }
+               }
+
+               return block;
             }
-            return block;
-         });
+         }
+
+         throw new ApplicationException("Block not generated");
       }
    }
 }

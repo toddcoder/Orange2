@@ -19,7 +19,7 @@ namespace Orange.Library.Verbs
          return array;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Increment;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "@";
    }

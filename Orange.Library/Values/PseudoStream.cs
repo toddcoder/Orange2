@@ -34,14 +34,8 @@
 			return this;
 		}
 
-		public override Value Clone()
-		{
-			return new PseudoStream(array);
-		}
+		public override Value Clone() => new PseudoStream(array);
 
-		public override Value AlternateValue(string message)
-		{
-			return array;
-		}
+	   public override Value AlternateValue(string message) => array;
 	}
 }

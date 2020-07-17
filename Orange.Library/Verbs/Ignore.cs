@@ -5,17 +5,8 @@ namespace Orange.Library.Verbs
 {
 	public class Ignore : Verb
 	{
-		public override Value Evaluate()
-		{
-			return null;
-		}
+		public override Value Evaluate() => null;
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Push;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Push;
 	}
 }

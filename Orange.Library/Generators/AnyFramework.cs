@@ -6,24 +6,15 @@ namespace Orange.Library.Generators
 	{
 		bool any;
 		public AnyFramework(Generator generator, Block block, Arguments arguments)
-			: base(generator, block, arguments)
-		{
-			any = false;
-		}
+			: base(generator, block, arguments) => any = false;
 
-		public override Value Map(Value value)
+	   public override Value Map(Value value)
 		{
 			return any = block.Evaluate().IsTrue;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return any;
-		}
+		public override bool Exit(Value value) => any;
 
-		public override Value ReturnValue()
-		{
-			return any;
-		}
+	   public override Value ReturnValue() => any;
 	}
 }

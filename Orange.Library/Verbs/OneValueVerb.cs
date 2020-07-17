@@ -2,19 +2,19 @@
 
 namespace Orange.Library.Verbs
 {
-	public abstract class OneValueVerb : Verb
-	{
-		public override Value Evaluate()
-		{
-			Value value = Runtime.State.Stack.Pop(true, Location);
-			return Evaluate(value);
-		}
+   public abstract class OneValueVerb : Verb
+   {
+      public override Value Evaluate()
+      {
+         var value = Runtime.State.Stack.Pop(true, Location);
+         return Evaluate(value);
+      }
 
-		public abstract Value Evaluate(Value value);
+      public abstract Value Evaluate(Value value);
 
-		public abstract string Location
-		{
-			get;
-		}
-	}
+      public abstract string Location
+      {
+         get;
+      }
+   }
 }

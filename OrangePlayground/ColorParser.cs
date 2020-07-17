@@ -3,10 +3,9 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Core.Collections;
 using Orange.Library;
 using Orange.Library.Parsers;
-using Standard.Types.Collections;
-using Standard.Types.RegularExpressions;
 using static System.Drawing.Color;
 using static System.Drawing.FontStyle;
 using static Orange.Library.Parsers.IDEColor;
@@ -16,11 +15,11 @@ namespace OrangePlayground
 {
    public class ColorParser : IColorizer
    {
-      public static void StopTextBoxUpdate(RichTextBox textBox) => SendMessage(textBox.Handle, WM_SETREDRAW, false, 0);
+      public static void StopTextBoxUpdate(RichTextBox textBox) => SendMessage(textBox.Handle, WM_SET_REDRAW, false, 0);
 
-      public static void ResumeTextBoxUpdate(RichTextBox textBox) => SendMessage(textBox.Handle, WM_SETREDRAW, true, 0);
+      public static void ResumeTextBoxUpdate(RichTextBox textBox) => SendMessage(textBox.Handle, WM_SET_REDRAW, true, 0);
 
-      const int WM_SETREDRAW = 11;
+      const int WM_SET_REDRAW = 11;
 
       [DllImport("user32.dll")]
       public static extern int SendMessage(IntPtr hWnd, int msg, bool wParam, int lParam);
@@ -39,55 +38,52 @@ namespace OrangePlayground
          var position = textBox.SelectionStart;
          var length = textBox.SelectionLength;
          var normalFont = textBox.Font;
-         using (var boldFont = new Font(textBox.Font, FontStyle.Bold))
+         using (var boldFont = new Font(textBox.Font, Bold))
+         using (var italicFont = new Font(textBox.Font, Italic))
+         using (var underlineFont = new Font("Monoid", textBox.Font.Size, Underline))
+         using (var specialFont = new Font("Monoid", textBox.Font.Size, Regular))
          {
-            using (var italicFont = new Font(textBox.Font, Italic))
+            StopTextBoxUpdate(textBox);
+
+            foreach (var color in colors.Select(item => item.Value))
             {
-               using (var specialFont = new Font("Monoid", textBox.Font.Size, Regular))
-               {
-                  StopTextBoxUpdate(textBox);
-
-                  foreach (var color in colors.Select(item => item.Value))
-                  {
-                     textBox.Select(color.Position, color.Length);
-                     textBox.SelectionColor = getForeColor(color);
-                     textBox.SelectionBackColor = getBackColor(color);
-                     Font selectionFont;
-                     if (isItalic(color.Type))
-                        selectionFont = italicFont;
-                     else if (isBold(color.Type))
-                        selectionFont = boldFont;
-                     else if (isSpecial(color.Type))
-                        selectionFont = specialFont;
-                     else
-                        selectionFont = normalFont;
-                     textBox.SelectionFont = selectionFont;
-                  }
-
-                  markText("/t", GhostWhite);
-                  markText("/s+ (/r /n | /r | /n)", PaleVioletRed);
-
-                  textBox.SelectionStart = position;
-                  textBox.SelectionLength = length;
-
-                  ResumeTextBoxUpdate(textBox);
-                  textBox.Refresh();
-               }
+               textBox.Select(color.Position, color.Length);
+               textBox.SelectionColor = getForeColor(color);
+               textBox.SelectionBackColor = getBackColor(color);
+               Font selectionFont;
+               if (isItalic(color.Type))
+                  selectionFont = italicFont;
+               else if (isBold(color.Type))
+                  selectionFont = boldFont;
+               else if (isUnderline(color.Type))
+                  selectionFont = underlineFont;
+               else if (isSpecial(color.Type))
+                  selectionFont = specialFont;
+               else
+                  selectionFont = normalFont;
+               textBox.SelectionFont = selectionFont;
             }
+
+            //markText("/t", GhostWhite);
+            markText("/s+ (/r /n | /r | /n)", PaleVioletRed);
+
+            textBox.SelectionStart = position;
+            textBox.SelectionLength = length;
+
+            ResumeTextBoxUpdate(textBox);
+            textBox.Refresh();
          }
       }
 
       void markText(string pattern, Color backColor)
       {
-         textBox.Text.Matches(pattern).If(matcher =>
-         {
+         if (textBox.Text.Matches(pattern).If(out var matcher))
             for (var i = 0; i < matcher.MatchCount; i++)
             {
                var match = matcher.GetMatch(i);
                textBox.Select(match.Index, match.Length);
                textBox.SelectionBackColor = backColor;
             }
-         });
       }
 
       static bool isBold(EntityType type)
@@ -113,6 +109,8 @@ namespace OrangePlayground
                return false;
          }
       }
+
+      static bool isUnderline(EntityType type) => type == Types;
 
       static bool isSpecial(EntityType type) => type == Strings || type == Interpolated;
 
@@ -163,6 +161,8 @@ namespace OrangePlayground
                return CadetBlue;
             case Interpolated:
                return DodgerBlue;
+            case Types:
+               return CadetBlue;
             default:
                return Black;
          }

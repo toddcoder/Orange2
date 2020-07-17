@@ -10,12 +10,13 @@ namespace Orange.Library.Parsers.Line
          {
             yield return new EmptyArrayLiteralParser();
             yield return new OuterComprehensionParser();
-            yield return new FunctionalIfParser();
+            //yield return new FunctionalIfParser();
             yield return new ShortLoopRangeParser();
             yield return new LoopRangeParser();
             yield return new AltLoopRangeParser();
             //yield return new LineBlockParser();
             yield return new LambdaBlockParser();
+            yield return new DoLambdaParser();
             yield return new LambdaParser();
             yield return new ShortLambdaParser("$(");
             yield return new ParenthesizedExpressionParser();
@@ -37,7 +38,7 @@ namespace Orange.Library.Parsers.Line
             yield return new ListParser();
             yield return new NewObjectParser();
             yield return new WithExpressionParser();
-            yield return new MatchExpressionParser();
+            //yield return new MatchExpressionParser();
             yield return new FunctionInvokeParser();
             yield return new RegexParser();
             yield return new MacroLiteralParser();

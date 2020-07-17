@@ -19,26 +19,24 @@ namespace Orange.Library.Verbs
             return new NSDateRange((Date)left, (Date)right, inclusive);
          if (left.Type == ValueType.Object && right.Type == ValueType.Object)
             return new NSObjectRange((Object)left, (Object)right);
+
          Throw(LOCATION, "Not a range");
          return null;
       }
 
       protected bool inclusive;
 
-      public NSRange()
-      {
-         inclusive = true;
-      }
+      public NSRange() => inclusive = true;
 
       public override Value Evaluate()
       {
          var stack = State.Stack;
          var right = stack.Pop(true, LOCATION);
          var left = stack.Pop(true, LOCATION);
-         return GetGenerator(left, right, inclusive);
+         return GetGenerator(left.Self, right.Self, inclusive);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Range;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Range;
 
       public override string ToString() => "..";
    }

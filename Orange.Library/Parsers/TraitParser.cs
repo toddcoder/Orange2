@@ -3,7 +3,6 @@ using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using Standard.Types.Collections;
-using Standard.Types.Objects;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
@@ -30,7 +29,7 @@ namespace Orange.Library.Parsers
       {
          Color(position, tokens[1].Length, KeyWords);
          var name = tokens[2];
-         Color(name.Length, Invokeables);
+         Color(name.Length, Types);
          var index = NextPosition;
          if (doesParser.Scan(source, index))
          {
@@ -48,6 +47,7 @@ namespace Orange.Library.Parsers
             foreach (var item in trait.Value.Members)
                members[item.Key] = item.Value;
          }
+
          try
          {
             AdvanceTabs();
@@ -56,10 +56,9 @@ namespace Orange.Library.Parsers
                {
                   var parser = bodyParser.Parser.Value;
                   index = parser.Position;
-                  var aTraitName = parser.As<ITraitName>();
-                  if (aTraitName.IsSome)
+                  if (parser is ITraitName aTraitName)
                   {
-                     var traitName = aTraitName.Value;
+                     var traitName = aTraitName;
                      var memberName = traitName.MemberName;
                      var value = parser.Result.Value;
                      if (value != null)
@@ -93,7 +92,7 @@ namespace Orange.Library.Parsers
 
          CompilerState.RegisterTrait(newTrait);
 
-         return new CreateTrait(newTrait, traits);
+         return new CreateTrait(newTrait, traits) { Index = position };
       }
 
       public override string VerboseName => "trait";

@@ -26,20 +26,8 @@
 			set;
 		}
 
-		public char CurrentCharacter
-		{
-			get
-			{
-				return Input[Position];
-			}
-		}
+		public char CurrentCharacter => Input[Position];
 
-		public string CurrentInput
-		{
-			get
-			{
-				return Input.Substring(Position);
-			}
-		}
+	   public string CurrentInput => Input.Substring(Position);
 	}
 }

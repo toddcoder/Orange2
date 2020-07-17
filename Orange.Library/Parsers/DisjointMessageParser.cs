@@ -4,15 +4,14 @@ using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers
 {
-   public class DisjoinMessageParser : Parser
+   public class DisjointMessageParser : Parser
    {
       static string joinWords(string word1, string word2) => word1 + word2.ToTitleCase();
 
-      public DisjoinMessageParser()
-         : base("^ |sp| /('skip' | 'take' | 'split' | 'zip' | 'not' | 'any' | 'all' | 'one' | 'none') " +
-              "' '+ /('while' | 'until' | 'do' | 'in' | 'of') /b")
-      {
-      }
+      public DisjointMessageParser()
+         : base("^ |sp| /('skip' | 'take' | 'split' | 'zip' | 'not' | 'any' | 'all' | 'one' | 'none' | 'is' | 'if' |" +
+            " 'map') ' '+ /('while' | 'until' | 'do' | 'in' | 'of' | 'not' | 'if') /b")
+      { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -37,6 +36,7 @@ namespace Orange.Library.Parsers
                   default:
                      return null;
                }
+
                break;
             case "zip":
                switch (word2)
@@ -47,6 +47,7 @@ namespace Orange.Library.Parsers
                   default:
                      return null;
                }
+
                break;
             case "not":
                switch (word2)
@@ -58,6 +59,7 @@ namespace Orange.Library.Parsers
                   default:
                      return null;
                }
+
                break;
             case "any":
             case "all":
@@ -69,6 +71,25 @@ namespace Orange.Library.Parsers
                   swap = true;
                   self = true;
                }
+               else
+                  return null;
+
+               break;
+            case "is":
+               if (word2 == "not")
+               {
+                  Color(position, length, KeyWords);
+                  return new IsNot();
+               }
+
+               return null;
+            case "if":
+               if (word2 == "not")
+                  message = joinWords(word1, word2);
+               break;
+            case "map":
+               if (word2 == "if")
+                  message = joinWords(word1, word2);
                else
                   return null;
                break;

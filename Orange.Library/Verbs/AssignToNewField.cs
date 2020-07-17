@@ -14,6 +14,7 @@ namespace Orange.Library.Verbs
       VisibilityType visibilityType;
       bool global;
       string result;
+      string typeName;
 
       public AssignToNewField(string fieldName, bool readOnly, Block expression, VisibilityType visibilityType,
          bool global = false)
@@ -24,6 +25,7 @@ namespace Orange.Library.Verbs
          this.visibilityType = visibilityType;
          this.global = global;
          result = "";
+         typeName = "";
       }
 
       public override Value Evaluate()
@@ -38,25 +40,26 @@ namespace Orange.Library.Verbs
          if (global)
             Regions[fieldName] = assignmentValue;
          else
-            current.SetLocal(fieldName, assignmentValue, visibilityType);
+            current.SetLocal(fieldName, assignmentValue, visibilityType, index: Index);
          result = assignmentValue.ToString();
+         typeName = assignmentValue.Type.ToString();
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => $"{(readOnly ? "val" : "var")} {fieldName} = {expression}";
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
+
+      public int Index { get; set; }
 
       public string FieldName => fieldName;
 
       public bool ReadOnly => readOnly;
+
+      public Block Expression => expression;
    }
 }

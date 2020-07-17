@@ -2,15 +2,55 @@
 using System.Linq;
 using Orange.Library.Managers;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
    public class Lambda : Value, IExecutable, IXMethod, IHasRegion, IInvokeable, IImmediatelyInvokeable, IMacroBlock,
-      IWhere, ISharedRegion
+      IWhere, ISharedRegion, INSGeneratorSource
    {
+      public class LambdaGenerator : NSGenerator
+      {
+         protected INSGenerator block;
+         protected IMaybe<ObjectRegion> objectRegion;
+
+         public LambdaGenerator(Lambda lambda)
+            : base(lambda)
+         {
+            region = lambda.region;
+            sharedRegion = lambda.sharedRegion;
+            block = lambda.block.GetGenerator();
+            objectRegion = lambda.ObjectRegion;
+         }
+
+         public override void Reset()
+         {
+            base.Reset();
+
+            block.Reset();
+            region?.RemoveAll();
+         }
+
+         public override Value Next()
+         {
+            using (var outerPopper = new ObjectRegionPopper(objectRegion, "object-region"))
+            {
+               outerPopper.Push();
+
+               using (var innerPopper = new SharedRegionPopper(region, sharedRegion, "lambda-generator"))
+               {
+                  innerPopper.Push();
+
+                  var next = block.Next();
+                  more = !next.IsNil;
+                  return next;
+               }
+            }
+         }
+      }
+
       const string LOCATION = "Lambda";
 
       public static Lambda FromBlock(Block block) => new Lambda(new Region(), block, new Parameters(), false);
@@ -42,24 +82,11 @@ namespace Orange.Library.Values
 
       public Block Block => block;
 
-      public string TailCallName
-      {
-         get;
-         set;
-      }
+      public string TailCallName { get; set; }
 
       protected IMaybe<Lambda> preamble(Arguments arguments, bool setArguments, bool register, Value instance)
       {
          block.AutoRegister = false;
-         /*         if (sharedRegion != null)
-                     Regions.Push(sharedRegion, "shared");*/
-         /*         if (register)
-                  {
-                     if (enclosing)
-                        State.RegisterBlock(block, region);
-                     else
-                        State.RegisterBlock(block);
-                  }*/
 
          if (setArguments)
          {
@@ -67,18 +94,8 @@ namespace Orange.Library.Values
             bool partial;
             evaluateArguments(arguments, out values, out partial, register);
             if (partial)
-            {
-               /*               if (sharedRegion != null)
-                                 Regions.Pop("shared");*/
-/*               if (register)
-                  State.UnregisterBlock();
-               State.UnregisterLambdaRegion();*/
                return createPartial(values).Some();
-            }
          }
-
-/*         block.AutoRegister = false;
-         registerBlock(register);*/
 
          Regions.SetParameter("this", this);
          Regions.Current.Instance = instance;
@@ -86,7 +103,7 @@ namespace Orange.Library.Values
 
          State.RegisterLambdaRegion(Regions.Current);
 
-         return new None<Lambda>();
+         return none<Lambda>();
       }
 
       protected void registerBlock(bool register)
@@ -104,12 +121,11 @@ namespace Orange.Library.Values
 
       protected Value postscript(Value result, bool register, bool setArguments)
       {
-         result.As<ISharedRegion>().If(sharedRegion => sharedRegion.SharedRegion = Regions.Current);
-         /*         if (sharedRegion != null)
-                     Regions.Pop("shared");*/
+         if (result is ISharedRegion sr)
+            sr.SharedRegion = Regions.Current;
          if (register && setArguments)
          {
-            if (sharedRegion != null)
+            if (sharedRegion != null && Regions.Current.Name == "shared")
                Regions.Pop("shared");
             State.UnregisterBlock();
          }
@@ -148,12 +164,16 @@ namespace Orange.Library.Values
                builder.End();
             }
          }
+
          builder.Inline(block);
          return builder.Lambda();
       }
 
       protected virtual Value evaluateBlock()
       {
+         if (block.Yielding)
+            return new LambdaGenerator(this);
+
          var result = block.Evaluate();
          result = State.UseReturnValue(result);
          return result;
@@ -168,6 +188,7 @@ namespace Orange.Library.Values
             partial = true;
             return;
          }
+
          partial = false;
          registerBlock(register);
          Parameters.SetArguments(values);
@@ -185,31 +206,18 @@ namespace Orange.Library.Values
 
       public bool Enclosing => enclosing;
 
-      public override int Compare(Value value)
-      {
-         return value.As<Lambda>().Map(l => parameters.Compare(l.parameters) + block.Compare(l.block), () => -2);
-      }
+      public override int Compare(Value value) => value is Lambda l ? parameters.Compare(l.parameters) + block.Compare(l.block) : -2;
 
       public override string Text
       {
-         get
-         {
-            return "";
-         }
-         set
-         {
-         }
+         get => "";
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return 0;
-         }
-         set
-         {
-         }
+         get => 0;
+         set { }
       }
 
       public override ValueType Type => ValueType.Lambda;
@@ -246,16 +254,15 @@ namespace Orange.Library.Values
 
       public Value Apply()
       {
-         Block yieldBlock;
-         if (Arguments.ApplyValue.As<Block>().Assign(out yieldBlock))
-            return new Comprehension(yieldBlock, parameters)
-            {
-               ArrayBlock = block
-            };
-         Comprehension comprehension;
-         if (Arguments.ApplyValue.As<Comprehension>().Assign(out comprehension))
-            return comprehension.PushDownComprehension(this);
-         return Evaluate(new Arguments(Arguments.ApplyValue));
+         switch (Arguments.ApplyValue)
+         {
+            case Block yieldBlock:
+               return new Comprehension(yieldBlock, parameters) { ArrayBlock = block };
+            case Comprehension comprehension:
+               return comprehension.PushDownComprehension(this);
+            case var applyValue:
+               return Evaluate(new Arguments(applyValue));
+         }
       }
 
       public Value GetBlock() => block;
@@ -264,10 +271,7 @@ namespace Orange.Library.Values
 
       public Region Region
       {
-         get
-         {
-            return region;
-         }
+         get => region;
          set
          {
             RejectNull(value, LOCATION, "Internal error: region is null");
@@ -290,29 +294,18 @@ namespace Orange.Library.Values
                var value = block.Evaluate();
                array.Add(value);
             }
+
             return array;
          }
       }
 
-      public bool Splatting
-      {
-         get;
-         set;
-      }
+      public bool Splatting { get; set; }
 
       public Value Params() => parameters;
 
-      public bool XMethod
-      {
-         get;
-         set;
-      }
+      public bool XMethod { get; set; }
 
-      public string Message
-      {
-         get;
-         set;
-      }
+      public string Message { get; set; }
 
       public override void AssignTo(Variable variable)
       {
@@ -324,54 +317,34 @@ namespace Orange.Library.Values
          base.AssignTo(variable);
       }
 
-      public bool ImmediatelyInvokeable
-      {
-         get;
-         set;
-      }
+      public bool ImmediatelyInvokeable { get; set; }
 
       public int ParameterCount => parameters.Length;
 
       public bool Matches(Signature signature) => parameters.Length == signature.ParameterCount;
 
-      public bool Initializer
-      {
-         get;
-         set;
-      }
+      public bool Initializer { get; set; }
 
-      public bool Expand
-      {
-         get;
-         set;
-      }
+      public IMaybe<ObjectRegion> ObjectRegion { get; set; } = none<ObjectRegion>();
+
+      public bool Expand { get; set; }
 
       public Block MacroBlock => block;
 
-      public virtual Block Where
-      {
-         get;
-         set;
-      }
+      public virtual Block Where { get; set; }
 
       public int YieldCount => block.YieldCount;
 
       public Region SharedRegion
       {
-         get
-         {
-            return sharedRegion;
-         }
-         set
-         {
-            sharedRegion = value?.Clone();
-         }
+         get => sharedRegion;
+         set => sharedRegion = value?.Clone();
       }
 
       public Value Tabulate()
       {
-         var length1 = (int)Arguments[0].Number;
-         var length2 = (int)Arguments[1].Number;
+         var length1 = Arguments[0].Int;
+         var length2 = Arguments[1].Int;
          return length2 > 0 ? tabulateDimensions(length1, length2) : tabulateDimension(length1);
       }
 
@@ -385,26 +358,35 @@ namespace Orange.Library.Values
             var innerArray = new Array();
             for (var j = 0; j < length2; j++)
             {
-               var arguments = new Arguments(new Value[]
-               {
-                  i,
-                  j
-               });
+               var arguments = new Arguments(new Value[] { i, j });
                innerArray.Add(Evaluate(arguments));
             }
+
             array.Add(innerArray);
          }
+
          return array;
       }
 
       public Value ShiftRight()
       {
-         var rightLambda = Arguments[0].As<Lambda>();
-         Assert(rightLambda.IsSome, LOCATION, "Right hand value must be a lambda");
-         var chain = new FunctionChain();
-         chain.Add(this);
-         chain.Add(rightLambda.Value);
-         return chain;
+         if (Arguments[0] is Lambda rightLambda)
+         {
+            var chain = new FunctionChain();
+            chain.Add(this);
+            chain.Add(rightLambda);
+            return chain;
+         }
+         Throw(LOCATION, "Right hand value must be a lambda");
+         return null;
       }
+
+      public INSGenerator GetGenerator() => new LambdaGenerator(this);
+
+      public Value Next(int index) => null;
+
+      public bool IsGeneratorAvailable => true;
+
+      public Array ToArray() => Runtime.ToArray(GetGenerator());
    }
 }

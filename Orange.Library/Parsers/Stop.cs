@@ -1,4 +1,4 @@
-﻿using Standard.Types.Strings;
+﻿using Core.Strings;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor;
 using static Orange.Library.Parsers.IDEColor.EntityType;
@@ -41,35 +41,41 @@ namespace Orange.Library.Parsers
 
       public static Stop Comma() => new Stop("^ |sp| ','");
 
-      public static Stop ComprehensionEnd() => new Stop("^ ' '* /(',' | 'if' /b | ':')", false);
+      public static Stop ComprehensionEnd() => new Stop("^ /s* /(',' | 'if' /b | ':')", false);
 
-      public static Stop WhileOrUntil()=>new Stop("^ /s*");
+      public static Stop WhileOrUntil() => new Stop("^ /s*");
+
+      public static Stop Nothing() => new Stop("^ $");
+
+      public static Stop IfThen() => new Stop("^ |sp| /'then' /b", color: KeyWords);
+
+      public static Stop IfElse() => new Stop("^ |sp| /'else' /b", color: KeyWords);
+
+      public static Stop IfEnd() => new Stop("^ |sp| /'end' /b", color: KeyWords);
 
       protected Stop(string pattern = "", bool consume = true, EntityType color = Structures)
       {
          if (pattern.IsEmpty())
+         {
             Pattern = REGEX_END_OF_LINE;
+         }
          else if (!pattern.StartsWith("^ ' '*"))
+         {
             Pattern = $"^ ' '* {pattern}";
+         }
          else
+         {
             Pattern = pattern;
+         }
+
          Color = color;
          Consume = consume;
       }
 
-      public string Pattern
-      {
-         get;
-      }
+      public string Pattern { get; }
 
-      public EntityType Color
-      {
-         get;
-      }
+      public EntityType Color { get; }
 
-      public bool Consume
-      {
-         get;
-      }
+      public bool Consume { get; }
    }
 }

@@ -16,6 +16,6 @@ namespace Orange.Library.Verbs
          return SendMessage(dividend, "divrem", divisor);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Divide;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Divide;
    }
 }

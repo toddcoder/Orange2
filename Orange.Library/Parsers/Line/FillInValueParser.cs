@@ -17,7 +17,7 @@ namespace Orange.Library.Parsers.Line
             yield return new FloatParser();
             yield return new IntegerParser();
             yield return new StringParser();
-            yield return new InterpolatedStringParser();
+            yield return new InterpolatedStringParser2();
             yield return new ArrayLiteralParser();
             yield return new DateParser();
             yield return new FunctionalIfParser();

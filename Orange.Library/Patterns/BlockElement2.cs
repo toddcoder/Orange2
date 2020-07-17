@@ -11,12 +11,9 @@ namespace Orange.Library.Patterns
 		Block block;
 		bool positionAlreadyUpdated;
 
-		public BlockElement2(Block block)
-		{
-			this.block = block;
-		}
+		public BlockElement2(Block block) => this.block = block;
 
-		public override bool PositionAlreadyUpdated => positionAlreadyUpdated;
+	   public override bool PositionAlreadyUpdated => positionAlreadyUpdated;
 
 	   public override bool Evaluate(string input) => evaluate(e => e.Evaluate(input), p => p.Scan(input));
 

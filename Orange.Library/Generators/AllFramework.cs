@@ -7,26 +7,17 @@ namespace Orange.Library.Generators
 		bool all;
 
 		public AllFramework(Generator generator, Block block, Arguments arguments)
-			: base(generator, block, arguments)
-		{
-			all = true;
-		}
+			: base(generator, block, arguments) => all = true;
 
-		public override Value Map(Value value)
+	   public override Value Map(Value value)
 		{
 			if (!block.Evaluate().IsTrue)
 				all = false;
 			return all;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return !all;
-		}
+		public override bool Exit(Value value) => !all;
 
-		public override Value ReturnValue()
-		{
-			return all;
-		}
+	   public override Value ReturnValue() => all;
 	}
 }

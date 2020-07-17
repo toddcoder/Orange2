@@ -9,15 +9,13 @@ namespace Orange.Library.Parsers
       SignatureParser signatureParser;
 
       public AbstractParser()
-         : base("^ /(|tabs|) /('abstract') /(/s+)")
-      {
-         signatureParser = new SignatureParser(false);
-      }
+         : base("^ /(|tabs|) /('abstract') /(/s+)") => signatureParser = new SignatureParser(false);
 
       public override Verb CreateVerb(string[] tokens)
       {
          if (!InClassDefinition)
             return null;
+
          Color(position, length, KeyWords);
          var index = position + length;
          if (signatureParser.Scan(source, index))
@@ -28,6 +26,7 @@ namespace Orange.Library.Parsers
             overridePosition = signatureParser.Result.Position;
             return new SpecialAssignment(signature.Name, anAbstract);
          }
+
          return null;
       }
 

@@ -14,14 +14,8 @@ namespace Orange.Library.Patterns
 
 		public override Element Alternate
 		{
-			get
-			{
-				return new AbortElement();
-			}
-			set
-			{
-				base.Alternate = value;
-			}
+			get => new AbortElement();
+		   set => base.Alternate = value;
 		}
 
 		public override string ToString() => ":";
@@ -30,14 +24,8 @@ namespace Orange.Library.Patterns
 
       public override IReplacement Replacement
       {
-         get
-         {
-            return replacement;
-         }
-         set
-         {
-            setOverridenReplacement(value);
-         }
+         get => replacement;
+         set => setOverridenReplacement(value);
       }
    }
 }

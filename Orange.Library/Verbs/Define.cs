@@ -24,18 +24,9 @@ namespace Orange.Library.Verbs
 			readOnly = false;
 		}
 
-		public override Value Evaluate()
-		{
-/*			if (readOnly)
-				Regions.CreateVariable(variableName, visibility: visibility);
-			else if (Regions.Current.ContainsMessage(variableName))
-				Regions.Current.FlagExistingVariable(variableName, visibility);
-			else
-				Regions.CreateVariable(variableName, visibility: visibility);*/
-			return new Variable(variableName);
-		}
+		public override Value Evaluate() => new Variable(variableName);
 
-		Value evaluate(Region region)
+	   Value evaluate(Region region)
 		{
 			if (readOnly)
 				region.CreateReadOnlyVariable(variableName, visibility: visibility);
@@ -46,7 +37,7 @@ namespace Orange.Library.Verbs
 			return new Variable(variableName);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.PreIncrement;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
 
 	   public string VariableName => variableName;
 

@@ -7,10 +7,7 @@ namespace Orange.Library
       protected Region temporary;
 
       public DoubleRegionPopper(Region region, string name)
-         : base(region, name)
-      {
-         temporary = new Region();
-      }
+         : base(region, name) => temporary = new Region();
 
       public override void Push()
       {

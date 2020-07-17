@@ -20,44 +20,20 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         /*			Region region;
-                  if (State == null)
-                     region = new Region();
-                  else
-                  {
-                     region = Regions.Parent();
-                     if (region == null)
-                        region = new Region();
-                     else
-                     {
-                        var grandParent = Regions.GrandParent();
-                        if (grandParent == null)
-                           region = new Region();
-                     }
-                  }*/
          var lambdaRegion = State.LambdaRegion;
          var region = new Region();
          lambdaRegion.CopyAllVariablesTo(region);
-         return new Lambda(region, block, parameters, true)
-         {
-            Splatting = splatting
-         };
+         return new Lambda(region, block, parameters, true) { Splatting = splatting };
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
       public Parameters Parameters => parameters;
 
       public Block Block
       {
-         get
-         {
-            return block;
-         }
-         set
-         {
-            block = value;
-         }
+         get => block;
+         set => block = value;
       }
 
       public bool Splatting => splatting;

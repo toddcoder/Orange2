@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Arguments;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
@@ -32,14 +31,17 @@ namespace Orange.Library.Verbs
          if (left.IsNil)
             return left;
          var right = comparisand.Evaluate();
-         var _case = left.As<Case>().Map(c => new Case(c, right, false, condition),
-            () => new Case(left, right, false, required, condition));
+         Case _case;
+         if (left is Case c)
+            _case = new Case(c, right, false, condition);
+         else
+            _case = new Case(left, right, false, required, condition);
          var arguments = GuaranteedExecutable(result);
          return SendMessage(_case, "then", arguments);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
-      public override string ToString() => $"{(required ? "required" : "case")} {comparisand} {{result}}";
+      public override string ToString() => $"{(required ? "required" : "case")} {comparisand}: {result}";
    }
 }

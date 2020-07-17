@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Orange.Library.Values;
-using Standard.Types.Either;
 using Standard.Types.Maybe;
 using static Orange.Library.Managers.ExpressionManager;
-using static Orange.Library.Managers.ExpressionManager.VerbPresidenceType;
+using static Orange.Library.Values.Ignore;
 using static Orange.Library.Values.Nil;
-using static Orange.Library.Values.NSIterator;
+using static Standard.Types.Maybe.MaybeFunctions;
+using Array = Orange.Library.Values.Array;
 
 namespace Orange.Library.Verbs
 {
@@ -17,19 +17,15 @@ namespace Orange.Library.Verbs
          enum IfStage
          {
             Condition,
-            ResultImmediate,
-            ResultGenerator,
-            ElseIfImmediate,
-            ElseIfGenerator,
-            ElseImmediate,
-            ElseGenerator
+            Result,
+            ElseIf,
+            Else
          }
 
          Block condition;
-         IEither<NSIterator, Block> result;
-         IEither<NSIterator, Values.If> next;
-         IEither<NSIterator, Block> elseBlock;
-         IMaybe<NSIterator> iterator;
+         Block.BlockGenerator resultGenerator;
+         IMaybe<IfGenerator> elseIf;
+         IMaybe<Block.BlockGenerator> elseBlockGenerator;
          IfStage ifStage;
 
          public IfGenerator(IfExecute ifExecute)
@@ -37,111 +33,75 @@ namespace Orange.Library.Verbs
          {
             var _if = ifExecute._if;
             condition = _if.Condition;
-            result = Standard.Types.Maybe.Maybe.When(_if.Result.Yielding, () => _if.Result.GetGenerator())
-               .ToLeft(g => new NSIterator(g), () => _if.Result);
-            if (_if.Next == null)
-               next = new Neither<NSIterator, Values.If>();
-            else
-               next = Standard.Types.Maybe.Maybe.When(_if.Next.IsGeneratorAvailable, () => new IfExecute(_if.Next, Statement))
-                  .Map(ne => ne.GetGenerator())
-                  .ToLeft(g => new NSIterator(g), () => _if.Next);
-            if (_if.ElseBlock == null)
-               elseBlock = new Neither<NSIterator, Block>();
-            else
-               elseBlock = Standard.Types.Maybe.Maybe.When(_if.ElseBlock.Yielding, () => _if.ElseBlock.GetGenerator())
-                  .ToLeft(g => new NSIterator(g), () => _if.ElseBlock);
-            iterator = new None<NSIterator>();
-            ifStage = IfStage.Condition;
+            resultGenerator = new Block.BlockGenerator(_if.Result);
+            elseIf = when(_if.Next != null, () => new IfGenerator(new IfExecute(_if.Next)));
+            elseBlockGenerator = when(_if.ElseBlock != null, () => new Block.BlockGenerator(_if.ElseBlock));
          }
 
          public override void Reset()
          {
+            base.Reset();
+            resultGenerator.Reset();
+            if (elseIf.If(out var g))
+               g.Reset();
+            if (elseBlockGenerator.If(out var bg))
+               bg.Reset();
             ifStage = IfStage.Condition;
-            if (result.IsLeft)
-               result.Left.Reset();
-            if (next.IsLeft)
-               next.Left.Reset();
-            if (elseBlock.IsLeft)
-               elseBlock.Left.Reset();
-            iterator = new None<NSIterator>();
          }
 
          public override Value Next()
          {
-            if (iterator.IsSome)
+            using (var popper = new RegionPopper(region, "if-generator"))
             {
-               var value = iterator.Value.Next();
-               if (!value.IsNil)
-                  return value;
-               iterator = new None<NSIterator>();
-            }
+               popper.Push();
 
-            switch (ifStage)
-            {
-               case IfStage.Condition:
-                  if (condition.IsTrue)
-                  {
-                     if (result.IsLeft)
+               switch (ifStage)
+               {
+                  case IfStage.Condition:
+                     if (condition.IsTrue)
                      {
-                        ifStage = IfStage.ResultGenerator;
-                        return result.Left.Next();
+                        ifStage = IfStage.Result;
+                        return resultGenerator.Next();
                      }
-                     ifStage = IfStage.ResultImmediate;
-                     var value = result.Right.Evaluate();
-                     iterator = GetIterator(value);
-                     return iterator.IsSome ? iterator.Value.Next() : value;
-                  }
-                  if (next.IsLeft)
-                  {
-                     ifStage = IfStage.ElseIfGenerator;
-                     return next.Left.Next();
-                  }
-                  if (next.IsRight)
-                  {
-                     ifStage = IfStage.ElseIfImmediate;
-                     return next.Right.Invoke();
-                  }
-                  if (elseBlock.IsLeft)
-                  {
-                     ifStage = IfStage.ElseGenerator;
-                     return elseBlock.Left.Next();
-                  }
-                  if (elseBlock.IsRight)
-                  {
-                     ifStage = IfStage.ElseImmediate;
-                     return elseBlock.Right.Evaluate();
-                  }
-                  return NilValue;
-               case IfStage.ResultImmediate:
-                  return NilValue;
-               case IfStage.ResultGenerator:
-                  return result.Left.Next();
-               case IfStage.ElseIfImmediate:
-                  return NilValue;
-               case IfStage.ElseIfGenerator:
-                  return next.Left.Next();
-               case IfStage.ElseImmediate:
-                  return NilValue;
-               case IfStage.ElseGenerator:
-                  return elseBlock.Left.Next();
-            }
 
-            return NilValue;
+                     if (elseIf.IsSome)
+                     {
+                        ifStage = IfStage.ElseIf;
+                        return elseIf.Value.Next();
+                     }
+
+                     if (elseBlockGenerator.IsSome)
+                     {
+                        ifStage = IfStage.Else;
+                        return elseBlockGenerator.Value.Next();
+                     }
+
+                     return NilValue;
+                  case IfStage.Result:
+                     return resultGenerator.Next();
+                  case IfStage.ElseIf:
+                     return elseIf.Value.Next();
+                  case IfStage.Else:
+                     return elseBlockGenerator.Value.Next();
+                  default:
+                     return IgnoreValue;
+               }
+            }
          }
       }
 
       Values.If _if;
-      VerbPresidenceType presidence;
+      VerbPrecedenceType precedence;
 
-      public IfExecute(Values.If _if, VerbPresidenceType presidence)
+      public IfExecute(Values.If _if, VerbPrecedenceType precedence = VerbPrecedenceType.Statement)
       {
          this._if = _if;
-         this.presidence = presidence;
+         this.precedence = precedence;
       }
 
       public override Value Evaluate() => _if.Invoke();
 
-      public override VerbPresidenceType Presidence => presidence;
+      public override VerbPrecedenceType Precedence => precedence;
 
       public override string ToString() => _if.ToString();
 
@@ -151,6 +111,7 @@ namespace Orange.Library.Verbs
          {
             yield return _if.Condition;
             yield return _if.Result;
+
             if (_if.ElseBlock != null)
                yield return _if.ElseBlock;
          }
@@ -174,12 +135,10 @@ namespace Orange.Library.Verbs
 
       public Array ToArray() => Runtime.ToArray(GetGenerator());
 
-      public string Result => _if.Location;
+      public string Result => ((IStatementResult)_if).Result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => ((IStatementResult)_if).TypeName;
+
+      public int Index { get; set; }
    }
 }

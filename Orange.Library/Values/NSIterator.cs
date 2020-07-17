@@ -2,25 +2,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Runtime;
-using static Standard.Types.Tuples.TupleFunctions;
 
 namespace Orange.Library.Values
 {
    public class NSIterator : NSGenerator, IEnumerable<Value>
    {
-      public static Tuple<Array, Array> CombineGenerators(Value target, Value source, bool includeTargetStrings,
-         bool includeSourceStrings)
+      public static (Array, Array) CombineGenerators(Value target, Value source, bool includeTargetStrings, bool includeSourceStrings)
       {
          var targetGenerator = includeTargetStrings ? target.PossibleGenerator() : target.PossibleIndexGenerator();
          var sourceGenerator = includeSourceStrings ? source.PossibleGenerator() : source.PossibleIndexGenerator();
 
-         var targetIterator = targetGenerator
-            .Map(g => new NSIterator(g), () => new NSIterator(new NSOneItemGenerator(target)));
+         var targetIterator = targetGenerator.FlatMap(g => new NSIterator(g), () => new NSIterator(new NSOneItemGenerator(target)));
          targetIterator.Reset();
-         var sourceIterator = sourceGenerator
-            .Map(g => new NSIterator(g), () => new NSIterator(new NSOneItemGenerator(source)));
+         var sourceIterator = sourceGenerator.FlatMap(g => new NSIterator(g), () => new NSIterator(new NSOneItemGenerator(source)));
          sourceIterator.Reset();
          var targetArray = new Array();
          var pusher = new Array.Pusher();
@@ -32,6 +27,7 @@ namespace Orange.Library.Values
             var sourceValue = sourceIterator.Next();
             if (sourceValue.IsNil)
                break;
+
             pusher.Add(sourceValue);
             targetValue = targetIterator.Next();
          }
@@ -46,7 +42,7 @@ namespace Orange.Library.Values
             }
          }
 
-         return tuple(targetArray, pusher.Array);
+         return (targetArray, pusher.Array);
       }
 
       public class NSIteratorEnumerator : IEnumerator<Value>
@@ -65,14 +61,9 @@ namespace Orange.Library.Values
          }
 
          public NSIteratorEnumerator(NSIterator iterator, Func<Value, int, bool> continuing)
-            : this(iterator)
-         {
-            this.continuing = continuing;
-         }
+            : this(iterator) => this.continuing = continuing;
 
-         public void Dispose()
-         {
-         }
+         public void Dispose() { }
 
          public bool MoveNext()
          {
@@ -91,31 +82,21 @@ namespace Orange.Library.Values
          object IEnumerator.Current => Current;
       }
 
-      public static IMaybe<NSIterator> GetIterator(Value value)
-      {
-         return value.As<INSGenerator>().Map(g => new NSIterator(g));
-      }
+      public static IMaybe<NSIterator> GetIterator(Value value) => value.IfCast<INSGenerator>().Map(g => new NSIterator(g));
 
       protected INSGenerator mainGenerator;
 
       public NSIterator(INSGenerator generator)
-         : base(null)
+         : base(null) => mainGenerator = generator;
+
+      public override void Reset()
       {
-         mainGenerator = generator;
+         mainGenerator.Reset();
+         more = true;
       }
-
-      public bool More
-      {
-         get;
-         set;
-      } = true;
-
-      public override void Reset() => mainGenerator.Reset();
 
       public override Value Next()
       {
-         More = true;
-
          var value = mainGenerator.Next();
 
          for (var i = 0; i < MAX_LOOP; i++)
@@ -125,10 +106,11 @@ namespace Orange.Library.Values
                value = mainGenerator.Next();
                continue;
             }
-               break;
+
+            break;
          }
 
-         More = !value.IsNil;
+         more = !value.IsNil;
          return value;
       }
 
@@ -137,6 +119,5 @@ namespace Orange.Library.Values
       IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
       public IEnumerator<Value> Enumerator(Func<Value, int, bool> continuing) => new NSIteratorEnumerator(this, continuing);
-
    }
 }

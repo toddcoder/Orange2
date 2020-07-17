@@ -38,24 +38,15 @@ namespace Orange.Library
 		{
 			List<string> row;
 
-			public Row()
-			{
-				row = new List<string>();
-			}
+			public Row() => row = new List<string>();
 
-			public void AddText(string text) => row.Add(text);
+		   public void AddText(string text) => row.Add(text);
 
 		   public string this[int index]
 			{
-				get
-				{
-					return row[index];
-				}
-				set
-				{
-					row[index] = value;
-				}
-			}
+				get => row[index];
+		      set => row[index] = value;
+		   }
 
 		   public bool IndexExists(int index) => index.Between(0).Until(row.Count);
 		}

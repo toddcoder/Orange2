@@ -1,7 +1,6 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 
@@ -10,9 +9,7 @@ namespace Orange.Library.Parsers
    public class TypeParser : Parser
    {
       public TypeParser()
-         : base($"^ /(|tabs| 'type' /s+) /({REGEX_VARIABLE}) /(/s* '(')?")
-      {
-      }
+         : base($"^ /(|tabs| 'type' /s+) /({REGEX_VARIABLE}) /(/s* '(')?") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -30,17 +27,17 @@ namespace Orange.Library.Parsers
          {
             var parametersParser = new ParametersParser();
             var newIndex = parametersParser.Parse(source, index);
-            if (!newIndex.Assign(out parameters, out index))
+            if (!newIndex.If(out parameters, out index))
                return null;
          }
+
          overridePosition = index;
 
          var builder = new CodeBuilder();
          if (parameters.Length == 0)
          {
             var mangledName = MangledName(name);
-            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], new Parameters(),
-               false);
+            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], new Parameters(), false);
             var verb = new CreateClass(mangledName, cls);
             builder.Verb(verb);
             builder.End();
@@ -51,8 +48,7 @@ namespace Orange.Library.Parsers
          }
          else
          {
-            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], new Parameters(),
-               false);
+            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], new Parameters(), false);
             var verb = new CreateClass(name, cls);
             builder.Verb(verb);
          }
@@ -60,6 +56,7 @@ namespace Orange.Library.Parsers
             HelperBlock = new Block();
          foreach (var verb in builder.Block.AsAdded)
             HelperBlock.Add(verb);
+
          return new NullOp();
       }
 

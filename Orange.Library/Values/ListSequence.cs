@@ -8,15 +8,9 @@ namespace Orange.Library.Values
       List list;
       List head;
 
-      public ListSequence(List list)
-      {
-         this.list = head = list;
-      }
+      public ListSequence(List list) => this.list = head = list;
 
-      public ListSequence()
-      {
-         list = head = new List();
-      }
+      public ListSequence() => list = head = new List();
 
       public override int Compare(Value value) => 0;
 

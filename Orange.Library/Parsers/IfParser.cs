@@ -1,11 +1,9 @@
-﻿using Orange.Library.Values;
-using Orange.Library.Verbs;
-using Standard.Types.Tuples;
-using static Orange.Library.Managers.ExpressionManager.VerbPresidenceType;
+﻿using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.StatementParser;
 using If = Orange.Library.Values.If;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -14,19 +12,13 @@ namespace Orange.Library.Parsers
       FreeParser parser;
 
       public IfParser()
-         : base("^ /(|tabs| 'if') /b")
-      {
-         parser = new FreeParser();
-      }
+         : base("^ /(|tabs| 'if') /b") => parser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, tokens[1].Length, KeyWords);
          var index = NextPosition;
-         Block conditionExpression;
-         Block resultBlock;
-         int newIndex;
-         if (GetExpressionThenBlock(source, index).Assign(out conditionExpression, out resultBlock, out newIndex))
+         if (GetExpressionThenBlock(source, index).If(out var conditionExpression, out var resultBlock, out var newIndex))
          {
             index = newIndex;
             var _if = new If(conditionExpression, resultBlock);
@@ -36,7 +28,7 @@ namespace Orange.Library.Parsers
             {
                parser.ColorAll(KeyWords);
                index = parser.Position;
-               if (GetExpressionThenBlock(source, index).Assign(out conditionExpression, out resultBlock, out newIndex))
+               if (GetExpressionThenBlock(source, index).If(out conditionExpression, out resultBlock, out newIndex))
                {
                   index = newIndex;
                   var elseIf = new If(conditionExpression, resultBlock);
@@ -49,20 +41,27 @@ namespace Orange.Library.Parsers
             {
                parser.ColorAll(KeyWords);
                index = parser.Position;
-               if (GetBlock(source, index, true).Assign(out resultBlock, out newIndex))
+               if (GetBlock(source, index, true).If(out resultBlock, out newIndex))
                {
                   _if.ElseBlock = resultBlock;
                   index = newIndex;
                }
                else
+               {
                   _if.ElseBlock = null;
+               }
             }
+
             var endParser = new EndParser();
             if (endParser.Scan(source, index))
+            {
                index = endParser.Position;
+            }
+
             overridePosition = index;
-            return new IfExecute(_if, Statement) { Index = position };
+            return new IfExecute(_if) { Index = position };
          }
+
          return null;
       }
 

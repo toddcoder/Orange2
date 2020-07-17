@@ -5,46 +5,16 @@ namespace Orange.Library.Verbs
 {
 	public class Repeat : TwoValueVerb
 	{
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Repeat;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Repeat;
 
-		public override Value Evaluate(Value x, Value y)
-		{
-			return MessageManager.MessagingState.SendMessage(x, Message, new Arguments(y));
-		}
+	   public override Value Evaluate(Value x, Value y) => MessageManager.MessagingState.SendMessage(x, Message, new Arguments(y));
 
-		public override string Location
-		{
-			get
-			{
-				return "Repeat";
-			}
-		}
+	   public override string Location => "Repeat";
 
-		public override string Message
-		{
-			get
-			{
-				return "repeat";
-			}
-		}
+	   public override string Message => "repeat";
 
-		public override string ToString()
-		{
-			return "><";
-		}
+	   public override string ToString() => "><";
 
-		public override bool UseArrayVersion
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool UseArrayVersion => false;
 	}
 }

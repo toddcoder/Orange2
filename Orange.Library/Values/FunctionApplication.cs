@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Orange.Library.Managers;
 using Standard.Types.Enumerables;
+using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
 {
@@ -8,15 +9,9 @@ namespace Orange.Library.Values
    {
       List<Lambda> functions;
 
-      public FunctionApplication(Lambda left, Lambda right)
-      {
-         functions = new List<Lambda> { left, right };
-      }
+      public FunctionApplication(Lambda left, Lambda right) => functions = new List<Lambda> { left, right };
 
-      public FunctionApplication(List<Lambda> functions)
-      {
-         this.functions = functions;
-      }
+      public FunctionApplication(List<Lambda> functions) => this.functions = functions;
 
       public void Add(Lambda lambda) => functions.Add(lambda);
 
@@ -40,7 +35,7 @@ namespace Orange.Library.Values
       public Value Invoke()
       {
          var newArguments = Arguments.Clone();
-         Value result = new Nil();
+         Value result = NilValue;
          for (var i = functions.Count - 1; i > -1; i--)
          {
             result = functions[i].Evaluate(newArguments);

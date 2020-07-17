@@ -7,12 +7,9 @@ namespace Orange.Library.Generators
 		Array array;
 
 		public UniqueFramework(Generator generator, Arguments arguments)
-			: base(generator, null, arguments)
-		{
-			array = new Array();
-		}
+			: base(generator, null, arguments) => array = new Array();
 
-		public override Value Map(Value value)
+	   public override Value Map(Value value)
 		{
 			if (array.ContainsValue(value))
 				return null;
@@ -20,14 +17,8 @@ namespace Orange.Library.Generators
 			return value;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return value.IsNil;
-		}
+		public override bool Exit(Value value) => value.IsNil;
 
-		public override Value ReturnValue()
-		{
-			return array;
-		}
+	   public override Value ReturnValue() => array;
 	}
 }

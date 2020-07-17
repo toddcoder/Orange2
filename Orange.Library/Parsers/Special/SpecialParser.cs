@@ -1,5 +1,4 @@
-﻿using System;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
 
 namespace Orange.Library.Parsers.Special
 {
@@ -7,11 +6,8 @@ namespace Orange.Library.Parsers.Special
    {
       protected FreeParser freeParser;
 
-      public SpecialParser()
-      {
-         freeParser = new FreeParser();
-      }
+      public SpecialParser() => freeParser = new FreeParser();
 
-      public abstract IMaybe<Tuple<T, int>> Parse(string source, int index);
+      public abstract IMaybe<(T, int)> Parse(string source, int index);
    }
 }

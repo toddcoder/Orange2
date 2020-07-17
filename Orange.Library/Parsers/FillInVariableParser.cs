@@ -7,22 +7,16 @@ namespace Orange.Library.Parsers
 {
    public class FillInVariableParser : Parser
    {
-      public static int Index
-      {
-         get;
-         set;
-      }
+      public static int Index { get; set; }
 
       public FillInVariableParser()
-         : base("^ /(/s*) /('_' | '$' /d+) /b")
-      {
-      }
+         : base("^ /(/s*) /('_' | '$' /d+) /b") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length, Variables);
          var name = tokens[2];
-         name = name == "_" ? MangledName((Index++).ToString()) : $"__{name}";
+         name = name == "_" ? MangledName(Index++.ToString()) : $"__{name}";
          var variable = new Variable(name);
          result.Value = variable;
          return new Push(variable);

@@ -1,20 +1,17 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class IndexedSetterMessageParser : Parser
    {
-      public IndexedSetterMessageParser()
-         : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '.') /({REGEX_VARIABLE}) /('$'{REGEX_VARIABLE} | '[+'?)")
-      {
-      }
+      public IndexedSetterMessageParser() : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '.') /({REGEX_VARIABLE}) /('$'{REGEX_VARIABLE} | '[+'?)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -30,32 +27,32 @@ namespace Orange.Library.Parsers
          if (type.StartsWith("$"))
          {
             Color(type.Length, Messaging);
-            var argumentExp = PushValue(type.Skip(1));
+            var argumentExp = PushValue(type.Drop(1));
             var assignParser = new AssignParser();
-            return assignParser.Parse(source, NextPosition).Map((assigment, index) =>
+            if (assignParser.Parse(source, NextPosition).If(out var assignment, out var index))
             {
                overridePosition = index;
-               return new IndexedSetterMessage(fieldName, messageName, argumentExp, assigment.Verb, assigment.Expression,
-                  false)
-               {
-                  Index = position
-               };
-            }, () => null);
+               return new IndexedSetterMessage(fieldName, messageName, argumentExp, assignment.Verb, assignment.Expression,
+                  false) { Index = position };
+            }
+
+            return null;
          }
 
          Color(type.Length, Structures);
          var insert = type.EndsWith("+");
 
-         return GetExpression(source, NextPosition, CloseBracket(), true).Map((argumentExp, index) =>
+         if (GetExpression(source, NextPosition, CloseBracket(), true).If(out var exp, out var i1))
          {
             var assignParser = new AssignParser();
-            return assignParser.Parse(source, index).Map((assigment, i) =>
+            if (assignParser.Parse(source, i1).If(out var assignment, out var i))
             {
                overridePosition = i;
-               return new IndexedSetterMessage(fieldName, messageName, argumentExp, assigment.Verb, assigment.Expression,
-                  insert);
-            }, () => null);
-         }, () => null);
+               return new IndexedSetterMessage(fieldName, messageName, exp, assignment.Verb, assignment.Expression, insert);
+            }
+         }
+
+         return null;
       }
 
       public override string VerboseName => "index setter message";

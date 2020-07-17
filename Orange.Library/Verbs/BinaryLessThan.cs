@@ -4,30 +4,12 @@ namespace Orange.Library.Verbs
 {
 	public class BinaryLessThan : ComparisonVerb
 	{
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.LessThan;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.LessThan;
 
-		public override bool Compare(int comparison)
-		{
-			return comparison < 0;
-		}
+	   public override bool Compare(int comparison) => comparison < 0;
 
-		public override string Location
-		{
-			get
-			{
-				return "Less than";
-			}
-		}
+	   public override string Location => "Less than";
 
-		public override string ToString()
-		{
-			return "<";
-		}
+	   public override string ToString() => "<";
 	}
 }

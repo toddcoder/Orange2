@@ -13,6 +13,6 @@ namespace Orange.Library.Verbs
 
 	   public override string ToString() => @"\=";
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 	}
 }

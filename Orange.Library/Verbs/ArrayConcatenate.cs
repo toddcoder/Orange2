@@ -23,25 +23,10 @@ namespace Orange.Library.Verbs
 			return y.IsArray ? Array.Concatenate((Array)x.SourceArray, (Array)y.SourceArray) :Array.ConcatenateValue((Array)x.SourceArray, y);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.CreateArray;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.CreateArray;
 
-		public override string ToString()
-		{
-			return "^";
-		}
+	   public override string ToString() => "^";
 
-		public override bool LeftToRight
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool LeftToRight => false;
 	}
 }

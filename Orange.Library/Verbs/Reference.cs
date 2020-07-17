@@ -17,7 +17,7 @@ namespace Orange.Library.Verbs
 
 	   public override Value Evaluate() => fieldName;
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
 	   public override string ToString() => $"&{fieldName}";
 	}

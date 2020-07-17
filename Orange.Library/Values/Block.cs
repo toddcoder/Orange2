@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Monads;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Verbs;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Strings;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Debugging.Debugger;
+using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
@@ -27,115 +29,133 @@ namespace Orange.Library.Values
          {
             this.block = block;
             index = 0;
-            currentGenerator = new None<INSGenerator>();
-            this.block.AutoRegister = true;
+            currentGenerator = none<INSGenerator>();
+            this.block.AutoRegister = false;
          }
 
          public override void Reset()
          {
             index = 0;
-            currentGenerator = new None<INSGenerator>();
+            currentGenerator = none<INSGenerator>();
             block.ResetReturnSignal = true;
+            block.region?.RemoveAll();
          }
 
          IMaybe<Value> evaluateGenerator(INSGenerator generator, int i)
          {
             currentGenerator = generator.Some();
-            currentGenerator.Value.Region = Region;
-            currentGenerator.Value.Reset();
-            var returnValue = currentGenerator.Value.Next();
+            generator.Region = Region;
+            generator.Reset();
+            var returnValue = generator.Next();
             if (returnValue.IsNil)
             {
-               currentGenerator = new None<INSGenerator>();
-               return new None<Value>();
+               currentGenerator = none<INSGenerator>();
+               return none<Value>();
             }
+
             index = i + 1;
-            return block.evaluateReturn(returnValue, true).Some();
+            return block.evaluateReturn(returnValue).Some();
          }
 
          public override Value Next()
          {
-            if (block.AutoRegister)
+            if (currentGenerator.If(out var nsGenerator))
             {
-               State.RegisterBlock(block, Region);
-               Regions.Push("temp-block");
-            }
-
-            if (currentGenerator.IsSome)
-            {
-               var returnValue = currentGenerator.Value.Next();
+               var returnValue = nsGenerator.Next();
                if (!returnValue.IsNil)
                {
-                  Regions.Pop("temp-block");
-                  State.UnregisterBlock();
-                  returnValue.As<INSGenerator>().If(g => g.Region = Region);
+                  if (returnValue is INSGenerator g)
+                  {
+                     g.Region = Region;
+                  }
+
                   return returnValue;
                }
-               currentGenerator = new None<INSGenerator>();
+
+               currentGenerator = none<INSGenerator>();
             }
 
             Value value;
 
-            IMaybe<INSGenerator> generator;
+            IMaybe<INSGenerator> anyGenerator;
 
             for (var i = index; i < block.builder.Verbs.Count; i++)
             {
                var verb = block.builder.Verbs[i];
                if (verb.Yielding)
                {
-                  generator = verb.PossibleGenerator();
-                  if (generator.IsSome)
+                  anyGenerator = verb.PossibleGenerator();
+                  if (anyGenerator.If(out var generator))
                   {
-                     var evaluated = evaluateGenerator(generator.Value, i);
-                     if (evaluated.IsSome)
-                        return evaluated.Value;
+                     var anyEvaluated = evaluateGenerator(generator, i);
+                     if (anyEvaluated.If(out var evaluated))
+                     {
+                        return evaluated;
+                     }
+
                      continue;
                   }
                }
 
                if (State.ExitSignal || State.SkipSignal)
+               {
                   break;
-               if (block.evaluateVerb(verb))
-                  continue;
+               }
 
-/*               if (State.Stack.IsEmpty)
-                  continue;*/
+               if (verb.Precedence == VerbPrecedenceType.Statement)
+               {
+                  State.Stack.Clear();
+               }
+
+               if (evaluateVerb(verb))
+               {
+                  continue;
+               }
 
                if (!State.ReturnSignal)
+               {
                   continue;
+               }
 
                if (block.ResetReturnSignal)
-                  State.ReturnSignal = false;
-               value = State.ReturnValue.Resolve();
-               generator = value.PossibleIndexGenerator();
-               if (generator.IsSome)
                {
-                  var evaluated = evaluateGenerator(generator.Value, i);
-                  if (evaluated.IsSome)
-                     return evaluated.Value;
+                  State.ReturnSignal = false;
                }
+
+               value = State.ReturnValue.Resolve();
+               anyGenerator = value.PossibleIndexGenerator();
+               if (anyGenerator.IsSome)
+               {
+                  var evaluated = evaluateGenerator(anyGenerator.Value, i);
+                  if (evaluated.IsSome)
+                  {
+                     return evaluated.Value;
+                  }
+               }
+
                index = i + 1;
-               return block.evaluateReturn(value, true);
+               return block.evaluateReturn(value);
             }
 
             if (State.Stack.IsEmpty)
             {
-               if (block.AutoRegister)
-               {
-                  Regions.Pop("temp-block");
-                  State.UnregisterBlock();
-               }
                return NilValue;
             }
+
             value = State.Stack.Pop(block.ResolveVariables, LOCATION).ArgumentValue();
-            generator = value.As<INSGenerator>();
-            if (generator.IsSome)
+            anyGenerator = value.PossibleIndexGenerator();
+            if (anyGenerator.IsSome)
             {
-               var evaluated = evaluateGenerator(generator.Value, index);
+               var evaluated = evaluateGenerator(anyGenerator.Value, index);
                if (evaluated.IsSome)
+               {
                   return evaluated.Value;
+               }
+
+               return NilValue;
             }
-            return block.evaluateReturn(value, true);
+
+            return block.evaluateReturn(value);
          }
 
          public override Value Clone() => new BlockGenerator((Block)block.Clone());
@@ -143,17 +163,47 @@ namespace Orange.Library.Values
          public override string ToString() => block.ToString();
       }
 
+      static Hash<int, string> results;
+
+      static Block()
+      {
+         results = new AutoHash<int, string>(k => "");
+      }
+
+      public static void RegisterResult(Verb verb)
+      {
+         if (Registering)
+         {
+            if (verb is IStatement statement)
+            {
+               var result = statement.Result;
+               var typeName = statement.TypeName;
+               results[statement.Index] = typeName.IsNotEmpty() ? $"{result} | {typeName}" : result;
+            }
+         }
+      }
+
+      public static void ClearResults() => results.Clear();
+
+      public static Hash<int, string> Results => results;
+
+      public static bool Registering { get; set; } = true;
+
       public static Block GuaranteeBlock(Value value)
       {
          if (value.IsExecutable)
          {
-            var block = value.As<Block>();
-            if (block.IsSome)
-               return block.Value;
-            var lambda = value.As<Lambda>();
-            if (lambda.IsSome)
-               return lambda.Value.Block;
+            if (value is Block block)
+            {
+               return block;
+            }
+
+            if (value is Lambda lambda)
+            {
+               return lambda.Block;
+            }
          }
+
          return CodeBuilder.PushValue(value);
       }
 
@@ -171,8 +221,6 @@ namespace Orange.Library.Values
       protected BlockBuilder builder;
       protected Region region;
       protected int start;
-
-      public event EventHandler<BlockEventArgs> Statement;
 
       public Block()
       {
@@ -193,40 +241,38 @@ namespace Orange.Library.Values
          : this()
       {
          foreach (var verb in verbs)
+         {
             Add(verb);
+         }
       }
 
-      public int Start { get { return start; } set { start = value; } }
+      public int Start
+      {
+         get => start;
+         set => start = value;
+      }
 
       public int YieldCount { get; set; }
 
-      public override int Compare(Value value) => Evaluate().Compare(value); //string.Compare(Text, value.Text, StringComparison.Ordinal);
+      public override int Compare(Value value) => Evaluate().Compare(value);
 
       public override string Text
       {
-         get
-         {
-            var result = Evaluate();
-            if (result == null)
-               return "";
-            return result.Text;
-         }
+         get { return Evaluate()?.Text ?? ""; }
          set { }
       }
 
-      public override double Number { get { return Text.ToDouble(); } set { } }
+      public override double Number
+      {
+         get { return Text.ToDouble(); }
+         set { }
+      }
 
       public override ValueType Type => ValueType.Block;
 
       public override bool IsTrue => Evaluate().IsTrue;
 
-      public override Value Clone()
-      {
-         return new Block(builder.AsAdded)
-         {
-            options = options
-         };
-      }
+      public override Value Clone() => new Block(builder.AsAdded) { options = options };
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -240,8 +286,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "apply", v => ((Block)v).Apply());
          manager.RegisterMessageCall("applyWhile");
          manager.RegisterMessage(this, "applyWhile", v => ((Block)v).Apply());
-         //manager.RegisterMessage(this, "if", v => ((Block)v).If());
-         //manager.RegisterMessage(this, "unless", v => ((Block)v).Unless());
          manager.RegisterMessage(this, "loop", v => ((Block)v).Loop());
          manager.RegisterMessage(this, "repeat", v => ((Block)v).Repeat());
          manager.RegisterMessage(this, "from", v => ((Block)v).From());
@@ -250,10 +294,6 @@ namespace Orange.Library.Values
       }
 
       public override Value AlternateValue(string message) => Evaluate();
-
-      //public Value Unless() => Arguments[0].IsTrue ? new Nil() : Evaluate();
-
-      //public Value If() => Arguments[0].IsTrue ? Evaluate() : new Nil();
 
       public Value Print()
       {
@@ -274,15 +314,20 @@ namespace Orange.Library.Values
                   State.ExitSignal = false;
                   break;
                }
+
                if (State.SkipSignal)
                {
                   State.SkipSignal = false;
                   continue;
                }
+
                if (State.ReturnSignal)
+               {
                   return null;
+               }
             }
          }
+
          return null;
       }
 
@@ -299,15 +344,20 @@ namespace Orange.Library.Values
                   State.ExitSignal = false;
                   break;
                }
+
                if (State.SkipSignal)
                {
                   State.SkipSignal = false;
                   continue;
                }
+
                if (State.ReturnSignal)
+               {
                   return null;
+               }
             }
          }
+
          return null;
       }
 
@@ -319,7 +369,9 @@ namespace Orange.Library.Values
       {
          builder.Add(item);
          if (item is Yield || item.Yielding)
+         {
             Yielding = true;
+         }
       }
 
       public void Clear() => builder.Clear();
@@ -357,7 +409,7 @@ namespace Orange.Library.Values
 
       public Verb this[int index]
       {
-         get { return builder.AsAdded[index]; }
+         get => builder.AsAdded[index];
          set
          {
             builder.Verbs[index] = value;
@@ -372,70 +424,125 @@ namespace Orange.Library.Values
       static bool evaluateForEnd(Verb verb)
       {
          Value value = "";
-         var end = verb.As<IEnd>();
-         if (end.IsSome)
+         if (verb is IEnd end)
          {
-            if (end.Value.EvaluateFirst)
+            if (end.EvaluateFirst)
+            {
                value = verb.Evaluate();
-            if (end.Value.IsEnd)
+            }
+
+            if (end.IsEnd)
             {
                if (State.DefaultParameterNames.PopAtEnd)
+               {
                   State.ClearDefaultParameterNames();
+               }
+
                State.Stack.Clear();
             }
             else
+            {
                State.Stack.Push(value);
+            }
+
             return true;
          }
+
+         if (verb.Precedence == VerbPrecedenceType.Statement)
+         {
+            State.Stack.Clear();
+         }
+
          return false;
       }
 
-      bool evaluateVerb(Verb verb)
+      static bool evaluateVerb(Verb verb)
       {
          var value = verb.Evaluate();
-         verb.As<IStatement>().If(s => Statement?.Invoke(this, new BlockEventArgs(s.Index, s.Result)));
+         RegisterResult(verb);
          if (State.ReturnSignal)
+         {
             return false;
+         }
+
          if (value == null)
+         {
             return true;
+         }
+
          State.Stack.Push(value);
          return false;
       }
 
       Value evaluateReturn(Value value, bool popExtra)
       {
-         var stringify = value.As<IStringify>();
-         if (stringify.IsSome)
-            value = stringify.Value.String;
+         if (value is IStringify stringify)
+         {
+            value = stringify.String;
+         }
+
          if (AutoRegister)
          {
             if (popExtra)
+            {
                Regions.Pop("temp-block");
+            }
+
             State.UnregisterBlock();
          }
          if (ResetReturnSignal)
+         {
             State.ReturnSignal = false;
+         }
+
+         return value ?? NilValue;
+      }
+
+      Value evaluateReturn(Value value)
+      {
+         if (value is IStringify stringify)
+         {
+            value = stringify.String;
+         }
+
+         if (ResetReturnSignal)
+         {
+            State.ReturnSignal = false;
+         }
+
          return value ?? NilValue;
       }
 
       public virtual Value Evaluate()
       {
          if (beginEvaluation())
+         {
             return null;
+         }
 
          Value value;
          for (var i = start; i < builder.Verbs.Count; i++)
          {
             var verb = builder.Verbs[i];
             if (State.ExitSignal || State.SkipSignal)
+            {
                break;
+            }
+
             if (evaluateForEnd(verb))
+            {
                continue;
+            }
+
             if (evaluateVerb(verb))
+            {
                continue;
+            }
 
             if (!State.ReturnSignal)
+            {
                continue;
+            }
 
             value = State.ReturnValue.Resolve();
             return evaluateReturn(value, false);
@@ -444,9 +551,13 @@ namespace Orange.Library.Values
          if (State.Stack.IsEmpty)
          {
             if (AutoRegister)
+            {
                State.UnregisterBlock();
+            }
+
             return NullValue;
          }
+
          value = State.Stack.Pop(ResolveVariables, LOCATION).ArgumentValue();
          return evaluateReturn(value, false);
       }
@@ -454,7 +565,9 @@ namespace Orange.Library.Values
       bool beginEvaluation()
       {
          if (IsDebugging)
+         {
             return true;
+         }
 
          switch (start)
          {
@@ -467,10 +580,96 @@ namespace Orange.Library.Values
                break;
             default:
                if (AutoRegister)
+               {
                   State.RegisterBlock(this, region, ResolveVariables);
+               }
+
                break;
          }
+
          return false;
+      }
+
+      public Value TryEvaluate()
+      {
+         if (beginEvaluation())
+         {
+            return null;
+         }
+
+         Value value;
+         for (var i = start; i < builder.Verbs.Count; i++)
+         {
+            var verb = builder.Verbs[i];
+            if (State.ExitSignal || State.SkipSignal)
+            {
+               break;
+            }
+
+            if (evaluateForEnd(verb))
+            {
+               continue;
+            }
+
+            var result = tryEvaluateVerb(verb);
+            if (result.IsRight)
+            {
+               return new Failure(result.Right.Message);
+            }
+
+            if (result.Left)
+            {
+               continue;
+            }
+
+            if (!State.ReturnSignal)
+            {
+               continue;
+            }
+
+            value = State.ReturnValue.Resolve();
+            return new Some(evaluateReturn(value, false));
+         }
+
+         if (State.Stack.IsEmpty)
+         {
+            if (AutoRegister)
+            {
+               State.UnregisterBlock();
+            }
+
+            return NullValue;
+         }
+
+         value = State.Stack.Pop(ResolveVariables, LOCATION).ArgumentValue();
+         return new Some(evaluateReturn(value, false));
+      }
+
+      static IResult<bool> tryEvaluateVerb(Verb verb)
+      {
+         Value value;
+         try
+         {
+            value = verb.Evaluate();
+         }
+         catch (Exception exception)
+         {
+            return failure<bool>(exception);
+         }
+
+         RegisterResult(verb);
+         if (State.ReturnSignal)
+         {
+            return false.Success();
+         }
+
+         if (value == null)
+         {
+            return true.Success();
+         }
+
+         State.Stack.Push(value);
+         return false.Success();
       }
 
       public Block Action => this;
@@ -490,7 +689,7 @@ namespace Orange.Library.Values
          return result;
       }
 
-      public override string ToString() => builder.AsAdded.Listify(" ");
+      public override string ToString() => $"[{builder.AsAdded.Stringify("; ")}]";
 
       public virtual bool CanExecute => true;
 
@@ -501,24 +700,19 @@ namespace Orange.Library.Values
       public Value Apply()
       {
          var argument = Arguments.ApplyValue;
-         var parameters = argument.As<Parameters>();
-         if (parameters.IsSome)
+         switch (argument)
          {
-            var current = Region.CopyCurrent();
-            var closure = new Lambda(current, this, parameters.Value, true);
-            return closure;
+            case Parameters parameters:
+               var current = Region.CopyCurrent();
+               var closure = new Lambda(current, this, parameters, true);
+               return closure;
+            case Block block:
+               return new BlockPattern(block, this);
+            case BlockPattern blockPattern:
+               blockPattern.Replacment = this;
+               return blockPattern;
          }
 
-         var input = argument.As<Block>();
-         if (input.IsSome)
-            return new BlockPattern(input.Value, this);
-
-         var blockPattern = argument.As<BlockPattern>();
-         if (blockPattern.IsSome)
-         {
-            blockPattern.Value.Replacment = this;
-            return blockPattern.Value;
-         }
          return this;
       }
 
@@ -532,14 +726,19 @@ namespace Orange.Library.Values
                State.ExitSignal = false;
                break;
             }
+
             if (State.SkipSignal)
             {
                State.SkipSignal = false;
                continue;
             }
+
             if (State.ReturnSignal)
+            {
                return null;
+            }
          }
+
          return null;
       }
 
@@ -556,6 +755,7 @@ namespace Orange.Library.Values
                var value = Evaluate();
                array.Add(value);
             }
+
             return array;
          }
       }
@@ -574,7 +774,7 @@ namespace Orange.Library.Values
 
       public List<Verb> Verbs => builder.Verbs;
 
-      public Value Internal() => Verbs.Listify(" ");
+      public Value Internal() => Verbs.Stringify(" ");
 
       public bool Stem { get; set; }
 
@@ -591,9 +791,13 @@ namespace Orange.Library.Values
          {
             var verb = list[i];
             if (verb is End)
+            {
                RemoveAt(i);
+            }
             else
+            {
                break;
+            }
          }
       }
 
@@ -601,7 +805,19 @@ namespace Orange.Library.Values
 
       public override Value ArgumentValue() => AssignmentValue();
 
-      public bool LastIsReturn => Count > 0 && AsAdded[Count - 1] is ReturnSignal;
+      public bool LastIsReturn
+      {
+         get
+         {
+            if (Count == 0)
+            {
+               return false;
+            }
+
+            var verb = AsAdded[Count - 1];
+            return verb is ReturnSignal || verb is Stop;
+         }
+      }
 
       public bool Yielding { get; set; }
 
@@ -609,12 +825,11 @@ namespace Orange.Library.Values
       {
          get
          {
-            if (AsAdded.Count == 1)
+            if (AsAdded.Count == 1 && AsAdded[0] is Push push)
             {
-               var push = AsAdded[0].As<Push>();
-               if (push.IsSome)
-                  return push.Value.Value;
+               return push.Value;
             }
+
             return Expression ? Evaluate() : this;
          }
       }
@@ -625,29 +840,30 @@ namespace Orange.Library.Values
       {
          var verb = builder.Verbs[index];
          if (State.ExitSignal || State.SkipSignal)
+         {
             return NilValue;
+         }
+
          if (evaluateVerb(verb))
+         {
             return NilValue;
+         }
 
          if (!State.ReturnSignal)
+         {
             return NilValue;
+         }
 
          var value = State.ReturnValue.Resolve();
-         return evaluateReturn(value, true);
+         return evaluateReturn(value);
       }
 
       public bool IsGeneratorAvailable => true;
 
       public Array ToArray() => GeneratorToArray(this);
 
-      public override IMaybe<INSGenerator> PossibleGenerator()
-      {
-         return Yielding ? GetGenerator().Some() : Evaluate().PossibleGenerator();
-      }
+      public override IMaybe<INSGenerator> PossibleGenerator() => Yielding ? GetGenerator().Some() : Evaluate().PossibleGenerator();
 
-      public override IMaybe<INSGenerator> PossibleIndexGenerator()
-      {
-         return Yielding ? GetGenerator().Some() : Evaluate().PossibleIndexGenerator();
-      }
+      public override IMaybe<INSGenerator> PossibleIndexGenerator() => Yielding ? GetGenerator().Some() : Evaluate().PossibleIndexGenerator();
    }
 }

@@ -20,17 +20,8 @@ namespace Orange.Library.Verbs
 			return unto;
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Equals;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Equals;
 
-		public override string ToString()
-		{
-			return "unto";
-		}
+	   public override string ToString() => "unto";
 	}
 }

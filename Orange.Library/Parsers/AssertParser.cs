@@ -1,7 +1,7 @@
 ﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 
@@ -10,13 +10,13 @@ namespace Orange.Library.Parsers
    public class AssertParser : Parser
    {
       StringParser stringParser;
-      InterpolatedStringParser interpolatedStringParser;
+      InterpolatedStringParser2 interpolatedStringParser;
 
       public AssertParser()
          : base("^ /(|tabs|) /(('assert' | 'reject') /s+)")
       {
          stringParser = new StringParser();
-         interpolatedStringParser = new InterpolatedStringParser();
+         interpolatedStringParser = new InterpolatedStringParser2();
       }
 
       public override Verb CreateVerb(string[] tokens)
@@ -25,7 +25,7 @@ namespace Orange.Library.Parsers
          Color(tokens[2].Length, KeyWords);
          var assert = tokens[2].Trim() == "assert";
 
-         return GetExpression(source, NextPosition, FuncThen()).Map((expression, index) =>
+         if (GetExpression(source, NextPosition, FuncThen()).If(out var expression, out var index))
          {
             String message;
             if (stringParser.Scan(source, index))
@@ -40,8 +40,11 @@ namespace Orange.Library.Parsers
             }
             else
                return null;
+
             return new Assert(assert, expression, message) { Index = position };
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "Assert";

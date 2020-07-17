@@ -16,11 +16,8 @@
 
 		public override Value Value
 		{
-			get
-			{
-				return obj.SendToSelf(getterName);
-			}
-			set
+			get => obj.SendToSelf(getterName);
+		   set
 			{
 				if (obj.ID == value.ID)
 					return;
@@ -29,15 +26,9 @@
 			}
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Lambda;
-			}
-		}
+		public override ValueType Type => ValueType.Lambda;
 
-		public override string ToString()
+	   public override string ToString()
 		{
 			try
 			{

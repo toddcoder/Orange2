@@ -1,12 +1,10 @@
-using System;
+using Core.Monads;
 using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
-using static Standard.Types.Maybe.Maybe;
-using static Standard.Types.Tuples.TupleFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -15,16 +13,18 @@ namespace Orange.Library.Parsers
       public const string REGEX_END_OF_LINE = "(^ /r /n) | (^ /r) | (^ /n) | (^ $)";
       public const string REGEX_DO_OR_END = "^ ' '* ('do' /b | " + REGEX_END_OF_LINE + ")";
 
-      public static IMaybe<Tuple<Block, int>> GetExpression(string source, int index, Stop stop, bool asStatement = false)
+      public static IMaybe<(Block block, int position)> GetExpression(string source, int index, Stop stop, bool asStatement = false)
       {
          var parser = new ExpressionParser(stop, asStatement);
-         return When(parser.Scan(source, index), () => tuple(parser.Block, parser.Position));
+         return maybe(parser.Scan(source, index), () => (parser.Block, parser.Position));
       }
 
-      public static IMaybe<Tuple<Block, Block, int>> GetExpressionThenBlock(string source, int index)
+      public static IMaybe<(Block expression, Block block, int position)> GetExpressionThenBlock(string source, int index)
       {
-         return GetExpression(source, index, Stop.ExpressionThenBlock())
-            .Map(t => GetOneOrMultipleBlock(source, t.Item2).Map(t2 => tuple(t.Item1, t2.Item1, t2.Item2)));
+         return
+            from expression in GetExpression(source, index, Stop.ExpressionThenBlock())
+            from oneOrMore in GetOneOrMultipleBlock(source, expression.position)
+            select (expression.block, oneOrMore.block, oneOrMore.position);
       }
 
       Stop stop;
@@ -36,6 +36,7 @@ namespace Orange.Library.Parsers
       FreeParser freeParser;
       AndOrParser andOrParser;
       IgnoreReturnsParser ignoreReturnsParser;
+      IfExpressionParser ifExpressionParser;
 
       public ExpressionParser(Stop stop, bool asStatement)
       {
@@ -54,9 +55,11 @@ namespace Orange.Library.Parsers
                freeParser.ColorAll(stop.Color);
                return freeParser.Position.Some();
             }
+
             return index.Some();
          }
-         return new None<int>();
+
+         return none<int>();
       }
 
       public override Verb Parse()
@@ -69,44 +72,59 @@ namespace Orange.Library.Parsers
          infixOperatorParser = new InfixOperatorParser();
          andOrParser = new AndOrParser(Stop.PassAlong(stop, Structures));
          ignoreReturnsParser = new IgnoreReturnsParser();
-
-         IMaybe<int> newIndex;
+         ifExpressionParser = new IfExpressionParser();
 
          if (index < source.Length)
          {
-            newIndex = isStopping(index);
-            if (newIndex.IsSome)
-               return returnBlock(block, newIndex.Value);
+            if (isStopping(index).If(out var newIndex))
+            {
+               return returnBlock(block, newIndex);
+            }
 
-            newIndex = getTerm(block, index);
-            if (newIndex.IsNone || newIndex.Value == index)
+            if (getTerm(block, index).If(out newIndex) && newIndex != index)
+            {
+               index = newIndex;
+            }
+            else
+            {
                return null;
-            index = newIndex.Value;
+            }
          }
 
          while (index < source.Length)
          {
-            newIndex = isStopping(index);
-            if (newIndex.IsSome)
-               return returnBlock(block, newIndex.Value);
+            if (isStopping(index).If(out var newIndex))
+            {
+               return returnBlock(block, newIndex);
+            }
+
             if (infixOperatorParser.Scan(source, index))
             {
                block.Add(infixOperatorParser.Verb);
                index = infixOperatorParser.Position;
             }
             else
+            {
                break;
-            newIndex = getTerm(block, index);
-            if (newIndex.IsNone || newIndex.Value == index)
+            }
+
+            if (getTerm(block, index).If(out var newIndex2) && newIndex2 != index)
+            {
+               index = newIndex2;
+            }
+            else
+            {
                return null;
-            index = newIndex.Value;
+            }
          }
 
          if (index < source.Length)
          {
-            newIndex = isStopping(index);
-            if (newIndex.IsSome)
-               return returnBlock(block, newIndex.Value);
+            if (isStopping(index).If(out var newIndex3))
+            {
+               return returnBlock(block, newIndex3);
+            }
+
             if (andOrParser.Scan(source, index))
             {
                block.Add(andOrParser.Verb);
@@ -132,6 +150,12 @@ namespace Orange.Library.Parsers
       {
          index = ignoreReturns(index);
 
+         if (ifExpressionParser.Scan(source, index))
+         {
+            block.Add(ifExpressionParser.Verb);
+            return ifExpressionParser.Position.Some();
+         }
+
          while (prefixOperatorParser.Scan(source, index))
          {
             block.Add(prefixOperatorParser.Verb);
@@ -146,7 +170,9 @@ namespace Orange.Library.Parsers
             index = valueParser.Position;
          }
          else
-            return new None<int>();
+         {
+            return none<int>();
+         }
 
          index = ignoreReturns(index);
 
@@ -156,20 +182,20 @@ namespace Orange.Library.Parsers
             index = postfixOperatorParser.Position;
             index = ignoreReturns(index);
          }
+
          return index.Some();
       }
 
       int ignoreReturns(int index)
       {
          if (ignoreReturnsParser.Scan(source, index))
+         {
             index = ignoreReturnsParser.Position;
+         }
+
          return index;
       }
 
-      public Block Block
-      {
-         get;
-         set;
-      }
+      public Block Block { get; set; }
    }
 }

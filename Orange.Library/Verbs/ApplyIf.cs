@@ -15,7 +15,7 @@ namespace Orange.Library.Verbs
 			var arguments = new Arguments();
 			if (subject.IsVariable)
 			{
-				var variable = ((Variable)subject);
+				var variable = (Variable)subject;
 				arguments.ApplyVariable = variable;
 				arguments.ApplyValue = variable.Value;
 			}
@@ -27,17 +27,8 @@ namespace Orange.Library.Verbs
 			return MessageManager.MessagingState.SendMessage(target, "applyIf", arguments);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "|?";
-		}
+	   public override string ToString() => "|?";
 	}
 }

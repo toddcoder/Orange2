@@ -12,7 +12,7 @@ namespace Orange.Library.Verbs
          return SendMessage(value, "range");
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.PreIncrement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
 
       public override string ToString() => "^";
    }

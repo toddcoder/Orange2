@@ -23,18 +23,12 @@ namespace Orange.Library.Generators
 			return value;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return value.IsNil;
-		}
+		public override bool Exit(Value value) => value.IsNil;
 
-		public override Value ReturnValue()
+	   public override Value ReturnValue() => new Array
 		{
-			return new Array
-			{
-				trueArray,
-				falseArray
-			};
-		}
+		   trueArray,
+		   falseArray
+		};
 	}
 }

@@ -5,11 +5,13 @@ using System.Linq;
 using Orange.Library.Managers;
 using Standard.Types.Collections;
 using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
+using static Orange.Library.ParameterAssistant;
+using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Values.Nil;
 using static Standard.Types.Arrays.ArrayFunctions;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -24,6 +26,7 @@ namespace Orange.Library.Values
             case 1:
                return new List(array[0]);
          }
+
          var stack = new Stack<Value>();
          foreach (var value in array.Values)
             stack.Push(value);
@@ -34,17 +37,16 @@ namespace Orange.Library.Values
             var list = Cons(left, right);
             stack.Push(list);
          }
+
          return (List)stack.Pop();
       }
 
-
       public static List FromValue(Value value)
       {
-         return value.PossibleIndexGenerator()
-            .Map(generator => FromArray((Array)generator.Array()), () => new List(value));
+         return value.PossibleIndexGenerator().FlatMap(generator => FromArray((Array)generator.Array()), () => new List(value));
       }
 
-      public static List Cons(Value x, Value y) => y.As<List>().Map(list => new List(x, list), () => new List(x, y));
+      public static List Cons(Value x, Value y) => y is List list ? new List(x, list) : new List(x, y);
 
       public static List Empty => new List();
 
@@ -73,38 +75,30 @@ namespace Orange.Library.Values
          isEmpty = false;
       }
 
-      public List()
-      {
-         isEmpty = true;
-      }
+      public List() => isEmpty = true;
 
       public List Add(Value value)
       {
          if (isEmpty)
             return new List(value);
+
          var result = FoldR(Cons, new List(value), this);
-         return result.As<List>().Map(l => l, () => new List(result));
+         return result is List l ? l : new List(result);
       }
 
       public Value Head => isEmpty ? new List() : head;
 
       public List Tail
       {
-         get
-         {
-            return isEmpty ? Empty : tail;
-         }
-         set
-         {
-            tail = value;
-         }
+         get => isEmpty ? Empty : tail;
+         set => tail = value;
       }
 
       public Value GetHead() => isEmpty ? (Value)new None() : new Some(head);
 
       public Value GetTail() => tail;
 
-      public override int Compare(Value value) => value.As<List>().Map(l => compareLists(this, l), () => -1);
+      public override int Compare(Value value) => value is List l ? compareLists(this, l) : -1;
 
       static int compareLists(List left, List right)
       {
@@ -114,28 +108,21 @@ namespace Orange.Library.Values
             return 1;
          if (right.IsEmpty)
             return -1;
+
          var result = left.Head.Compare(right.Head);
          if (result == 0)
             return compareLists(left.Tail, right.Tail);
+
          return result;
       }
 
       public override string Text
       {
-         get
-         {
-            return $"{getText(this, true)}";
-         }
-         set
-         {
-         }
+         get => $"{getText(this, true)}";
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override bool IsEmpty => isEmpty;
 
@@ -147,6 +134,7 @@ namespace Orange.Library.Values
 
       protected override void registerMessages(MessageManager manager)
       {
+         manager.RegisterProperty(this, "item", v => ((List)v).GetItem());
          manager.RegisterMessage(this, "head", v => ((List)v).GetHead());
          manager.RegisterMessage(this, "tail", v => ((List)v).GetTail());
          manager.RegisterMessage(this, "len", v => ((List)v).Length());
@@ -178,8 +166,9 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "min", v => ((List)v).Min());
          manager.RegisterMessage(this, "in", v => ((List)v).In());
          manager.RegisterMessage(this, "notIn", v => ((List)v).NotIn());
-         manager.RegisterMessage(this, "is_empty", v => ((List)v).IsEmpty);
+         manager.RegisterMessage(this, "isEmpty", v => ((List)v).IsEmpty);
          manager.RegisterMessage(this, "rev", v => ((List)v).Reverse());
+         manager.RegisterMessage(this, "array", v => ((List)v).Array());
       }
 
       public IEnumerator<Value> GetEnumerator()
@@ -192,10 +181,8 @@ namespace Orange.Library.Values
 
       public override string ToString() => $"[{getText(this, true)}]";
 
-      protected static string getText(List list, bool first)
-      {
-         return list.isEmpty ? "" : $"{(first ? "" : ", ")}{list.head}{getText(list.Tail, false)}";
-      }
+      protected static string getText(List list, bool first) =>
+         list.isEmpty ? "" : $"{(first ? "" : ", ")}{list.head}{getText(list.Tail, false)}";
 
       public bool Match(List comparisand)
       {
@@ -207,8 +194,10 @@ namespace Orange.Library.Values
          {
             foreach (var item in bindings)
                Regions.SetParameter(item.Key, item.Value);
+
             return true;
          }
+
          return false;
       }
 
@@ -220,13 +209,13 @@ namespace Orange.Library.Values
          var lHead = left.Head;
          var rHead = right.Head;
 
-         var placeholder = rHead.As<Placeholder>();
-         if (placeholder.IsSome || rHead is Any || Case.Match(lHead, rHead, false, null))
+         if (rHead is Placeholder || rHead is Any || Case.Match(lHead, rHead, false, null))
          {
-            if (placeholder.IsSome)
-               bindings[placeholder.Value.Text] = right.Tail.IsEmpty ? left : lHead;
+            if (rHead is Placeholder placeholder)
+               bindings[placeholder.Text] = right.Tail.IsEmpty ? left : lHead;
             return Match(left.Tail, right.Tail, bindings);
          }
+
          return false;
       }
 
@@ -234,6 +223,7 @@ namespace Orange.Library.Values
       {
          if (list.IsEmpty)
             return accum;
+
          return func(list.Head, FoldR(func, accum, list.Tail));
       }
 
@@ -241,6 +231,7 @@ namespace Orange.Library.Values
       {
          if (list.IsEmpty || predicate(list.Head, list.Tail))
             return accum;
+
          return func(list.Head, FoldR(func, accum, list.Tail, predicate));
       }
 
@@ -248,6 +239,7 @@ namespace Orange.Library.Values
       {
          if (list.IsEmpty)
             return accum;
+
          return func(FoldL(func, accum, list.Tail), list.Head);
       }
 
@@ -265,10 +257,11 @@ namespace Orange.Library.Values
       {
          if (list1.IsEmpty)
             return list2;
+
          return new List(list1.head, Append(list1.Tail, list2.Tail));
       }
 
-      public Value Length() => FoldR((v, a) => a.Number + 1, 0, this);
+      public Value Length() => FoldR((v, a) => a.Int + 1, 0, this);
 
       public Value Map()
       {
@@ -354,7 +347,7 @@ namespace Orange.Library.Values
 
       public static Value Concat(List left, List right) => FoldR(Cons, right, left);
 
-      public Value Concat() => Arguments[0].As<List>().Map(other => Concat(this, other), () => this);
+      public Value Concat() => Arguments[0] is List other ? Concat(this, other) : this;
 
       public Value Find()
       {
@@ -376,37 +369,38 @@ namespace Orange.Library.Values
       {
          if (list.IsEmpty)
             return new None();
+
          var head = list.Head;
          assistant.SetIteratorParameter(head);
          if (block.Evaluate().IsTrue)
             return new Some(head);
+
          return find(list.Tail, assistant, block);
       }
 
       public Value Zip()
       {
-         var right = Arguments[0].As<List>();
-         if (right.IsNone)
-            return this;
+         if (Arguments[0] is List right)
+            using (var assistant = new ParameterAssistant(Arguments))
+            {
+               var block = assistant.Block();
+               Func<Value, Value, Value> func;
+               if (block == null)
+                  func = (x, y) => new Array(array(x, y));
+               else
+                  func = (x, y) =>
+                  {
+                     assistant.SetParameterValues(x, y);
+                     return block.Evaluate();
+                  };
+               Regions.Push("zip-list");
+               assistant.TwoValueParameters();
+               var result = zip(this, right, func);
+               Regions.Pop("zip-list");
+               return result;
+            }
 
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            var block = assistant.Block();
-            Func<Value, Value, Value> func;
-            if (block == null)
-               func = (x, y) => new Array(array(x, y));
-            else
-               func = (x, y) =>
-               {
-                  assistant.SetParameterValues(x, y);
-                  return block.Evaluate();
-               };
-            Regions.Push("zip-list");
-            assistant.TwoValueParameters();
-            var result = zip(this, right.Value, func);
-            Regions.Pop("zip-list");
-            return result;
-         }
+         return this;
       }
 
       static List zip(List left, List right, Func<Value, Value, Value> func)
@@ -415,6 +409,7 @@ namespace Orange.Library.Values
             return left;
          if (right.IsEmpty)
             return right;
+
          return Cons(func(left.Head, right.Head), zip(left.Tail, right.Tail, func));
       }
 
@@ -436,7 +431,7 @@ namespace Orange.Library.Values
 
       public Value Take()
       {
-         var count = (int)Arguments[0].Number;
+         var count = Arguments[0].Int;
          return take(count);
       }
 
@@ -451,7 +446,6 @@ namespace Orange.Library.Values
          a.SetIteratorParameter(x);
          return b.Evaluate().IsTrue;
       }), "take-until-list");
-
 
       public Value SkipWhile() => process((a, b) => skip((x, xs) =>
       {
@@ -469,7 +463,7 @@ namespace Orange.Library.Values
 
       public Value Skip()
       {
-         var count = (int)Arguments[0].Number;
+         var count = Arguments[0].Int;
          return skip(count);
       }
 
@@ -481,8 +475,50 @@ namespace Orange.Library.Values
 
       public Value Split()
       {
-         var count = (int)Arguments[0].Number;
-         return new Array { take(count), skip(count) };
+         using (var assistant = new ParameterAssistant(Arguments))
+         {
+            var block = assistant.Block();
+            if (block == null)
+            {
+               var count = Arguments[0].Int;
+               return new Array { take(count), skip(count) };
+            }
+
+            assistant.IteratorParameter();
+            using (var popper = new RegionPopper(new Region(), "list-split"))
+            {
+               popper.Push();
+               var values = Values();
+               var leftList = Empty;
+               var rightList = Empty;
+               foreach (var value in values)
+               {
+                  assistant.SetIteratorParameter(value);
+                  var result = block.Evaluate();
+                  var signal = Signal();
+                  if (signal == Breaking)
+                     break;
+
+                  switch (signal)
+                  {
+                     case Continuing:
+                        continue;
+                     case ReturningNull:
+                        return null;
+                  }
+
+                  if (result.IsTrue)
+                     leftList = leftList.Add(value);
+                  else
+                     rightList = rightList.Add(value);
+               }
+
+               var list = Empty;
+               list = list.Add(leftList);
+               list = list.Add(rightList);
+               return list;
+            }
+         }
       }
 
       public Value Last() => skip((x, xs) => xs.IsEmpty);
@@ -538,6 +574,7 @@ namespace Orange.Library.Values
                assistant.SetIteratorParameter(value);
                block.Evaluate();
             }
+
             Regions.Pop("list-for");
             return this;
          }
@@ -551,6 +588,7 @@ namespace Orange.Library.Values
       {
          if (list.isEmpty)
             return list;
+
          var head = list.head;
          var less = Sort((List)Filter(v => v.Compare(head) < 0, list.Tail));
          var greater = Sort((List)Filter(v => v.Compare(head) >= 0, list.Tail));
@@ -570,6 +608,7 @@ namespace Orange.Library.Values
       {
          if (a.IsNil)
             return v;
+
          return v.Compare(a) > 0 ? v : a;
       }, NilValue, this);
 
@@ -577,6 +616,7 @@ namespace Orange.Library.Values
       {
          if (a.IsNil)
             return v;
+
          return v.Compare(a) < 0 ? v : a;
       }, NilValue, this);
 
@@ -597,9 +637,11 @@ namespace Orange.Library.Values
             {
                if (i == index)
                   return value.Some();
+
                i++;
             }
-            return new None<Value>();
+
+            return none<Value>();
          }
       }
 
@@ -607,7 +649,16 @@ namespace Orange.Library.Values
       {
          if (isEmpty)
             return this;
+
          return tail.Reverse().Add(head);
+      }
+
+      public Value Array() => new Array(Values());
+
+      public Value GetItem()
+      {
+         var index = Arguments[0].Int;
+         return this[index].FlatMap(v => v, () => Empty);
       }
    }
 }

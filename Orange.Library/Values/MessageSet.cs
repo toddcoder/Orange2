@@ -10,10 +10,7 @@ namespace Orange.Library.Values
    {
       Set<string> messages;
 
-      public MessageSet()
-      {
-         messages = new Set<string>();
-      }
+      public MessageSet() => messages = new Set<string>();
 
       public MessageSet(IEnumerable<string> messages)
          : this()

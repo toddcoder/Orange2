@@ -1,78 +1,32 @@
-﻿using System.Collections.Generic;
-using Orange.Library.Values;
-using Orange.Library.Verbs;
-using Standard.Types.RegularExpressions;
+﻿using Orange.Library.Verbs;
+using Standard.Types.Maybe;
+using static Orange.Library.Parsers.ComparisandParser;
+using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Orange.Library.Runtime;
+using static Orange.Library.Parsers.Stop;
 
 namespace Orange.Library.Parsers
 {
-	public class LetParser : Parser
-	{
-		const string REGEX_VAR = "^ /(/s*) /(" + REGEX_VARIABLE + ")";
-		const string REGEX_COMMA_VAR = "^ /(/s* ',') /(/s*) /(" + REGEX_VARIABLE + ")";
-		const string REGEX_VAL = "^ /s* 'val' /s+";
+   public class LetParser : Parser
+   {
+      public LetParser()
+         : base("^ /s* 'let' /b") { }
 
-		Matcher matcher;
+      public override Verb CreateVerb(string[] tokens)
+      {
+         Color(position, length, KeyWords);
 
-		public LetParser()
-			: base("^ /s* 'let' /b")
-		{
-			matcher = new Matcher();
-		}
+         var tuple = GetComparisand(source, NextPosition, PassAlong("^ |sp| '='"));
+         if (tuple.If(out var comparisand, out var condition, out var index) &&
+            GetExpression(source, index, EndOfLineConsuming()).If(out var expression, out var i))
+         {
+            overridePosition = i;
+            return new Let(comparisand, condition, expression) { Index = position };
+         }
 
-		public override Verb CreateVerb(string[] tokens)
-		{
-			Color(position, length, KeyWords);
-			var index = position + length;
-			var readOnly = false;
-			var variablePattern = REGEX_VAR;
-			var parameterList = new List<Parameter>();
-			while (true)
-			{
-				var input = source.Substring(index);
-				if (matcher.IsMatch(input, REGEX_VAL))
-				{
-					readOnly = true;
-					var tokenLength = matcher[0].Length;
-					Color(index, tokenLength, KeyWords);
-					index += tokenLength;
-					input = source.Substring(index);
-				}
-				if (matcher.IsMatch(input, variablePattern))
-				{
-					string variable;
-					switch (matcher.GroupCount(0))
-					{
-						case 3:
-							variable = matcher[0, 2];
-							Color(index, matcher[0, 1].Length, Whitespaces);
-							Color(variable.Length, IDEColor.EntityType.Variables);
-							break;
-						case 4:
-							variable = matcher[0, 3];
-							Color(index, matcher[0, 1].Length, IDEColor.EntityType.Operators);
-							Color(matcher[0, 2].Length, Whitespaces);
-							Color(variable.Length, IDEColor.EntityType.Variables);
-							break;
-						default:
-							variable = "";
-							break;
-					}
-					var parameter = new Parameter(variable, readOnly: readOnly);
-					parameterList.Add(parameter);
-					readOnly = false;
-					variablePattern = REGEX_COMMA_VAR;
-					index += matcher[0].Length;
-					continue;
-				}
-				var parameters = new Parameters(parameterList);
-				result.Value = parameters;
-				overridePosition = index;
-				return new Push(parameters);
-			}
-		}
+         return null;
+      }
 
-		public override string VerboseName => "let";
-	}
+      public override string VerboseName => "let";
+   }
 }

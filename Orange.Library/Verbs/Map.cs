@@ -19,7 +19,7 @@ namespace Orange.Library.Verbs
 		   return MessagingState.SendMessage(target, "map", arguments);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
 	   public override string ToString() => "map";
 	}

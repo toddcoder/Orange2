@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Enumerables;
+using Core.Strings;
 using Orange.Library.Generators;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
-using Standard.Types.Objects;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Generator.IterationControlType;
@@ -33,29 +32,15 @@ namespace Orange.Library.Values
 
       public abstract class Item
       {
-         public Block Block
-         {
-            protected get;
-            set;
-         }
+         public Block Block { protected get; set; }
 
          public abstract Value Evaluate();
 
-         public abstract IterationControlType Control
-         {
-            get;
-         }
+         public abstract IterationControlType Control { get; }
 
-         public abstract ValueUsageType ValueUsage
-         {
-            get;
-         }
+         public abstract ValueUsageType ValueUsage { get; }
 
-         public int Count
-         {
-            get;
-            set;
-         }
+         public int Count { get; set; }
 
          public abstract Item Clone();
       }
@@ -68,10 +53,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => Conditional;
 
-         public override Item Clone() => new IfItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new IfItem { Block = Block };
 
          public override string ToString() => $"if ({Block})";
       }
@@ -84,10 +66,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => Conditional;
 
-         public override Item Clone() => new UnlessItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new UnlessItem { Block = Block };
 
          public override string ToString() => $"unless ({Block})";
       }
@@ -100,10 +79,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => Used;
 
-         public override Item Clone() => new MapItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new MapItem { Block = Block };
 
          public override string ToString() => $"map ({Block})";
       }
@@ -112,10 +88,7 @@ namespace Orange.Library.Values
       {
          int taken;
 
-         public TakeItem()
-         {
-            taken = 0;
-         }
+         public TakeItem() => taken = 0;
 
          public override Value Evaluate() => ++taken <= Count;
 
@@ -123,11 +96,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => taken <= Count ? Conditional : Controlled;
 
-         public override Item Clone() => new TakeItem
-         {
-            Block = Block,
-            Count = Count
-         };
+         public override Item Clone() => new TakeItem { Block = Block, Count = Count };
 
          public override string ToString() => $"take {Count}";
       }
@@ -136,15 +105,15 @@ namespace Orange.Library.Values
       {
          bool take;
 
-         public TakeWhileItem()
-         {
-            take = true;
-         }
+         public TakeWhileItem() => take = true;
 
          public override Value Evaluate()
          {
             if (!Block.Evaluate().IsTrue)
+            {
                take = false;
+            }
+
             return take;
          }
 
@@ -152,10 +121,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => take ? Conditional : Controlled;
 
-         public override Item Clone() => new TakeWhileItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new TakeWhileItem { Block = Block };
 
          public override string ToString() => $"take while ({Block})";
       }
@@ -164,15 +130,15 @@ namespace Orange.Library.Values
       {
          bool take;
 
-         public TakeUntilItem()
-         {
-            take = true;
-         }
+         public TakeUntilItem() => take = true;
 
          public override Value Evaluate()
          {
             if (Block.Evaluate().IsTrue)
+            {
                take = false;
+            }
+
             return take;
          }
 
@@ -180,10 +146,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => take ? Conditional : Controlled;
 
-         public override Item Clone() => new TakeUntilItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new TakeUntilItem { Block = Block };
 
          public override string ToString() => $"take until ({Block})";
       }
@@ -192,10 +155,7 @@ namespace Orange.Library.Values
       {
          int skipped;
 
-         public SkipItem()
-         {
-            skipped = 0;
-         }
+         public SkipItem() => skipped = 0;
 
          public override Value Evaluate()
          {
@@ -207,14 +167,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => Controlled;
 
-         public override Item Clone()
-         {
-            return new SkipItem
-            {
-               Block = Block,
-               Count = Count
-            };
-         }
+         public override Item Clone() => new SkipItem { Block = Block, Count = Count };
 
          public override string ToString() => $"skip {Count}";
       }
@@ -223,15 +176,15 @@ namespace Orange.Library.Values
       {
          bool skip;
 
-         public SkipWhileItem()
-         {
-            skip = true;
-         }
+         public SkipWhileItem() => skip = true;
 
          public override Value Evaluate()
          {
             if (!Block.Evaluate().IsTrue)
+            {
                skip = false;
+            }
+
             return skip;
          }
 
@@ -239,10 +192,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => Controlled;
 
-         public override Item Clone() => new SkipItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new SkipItem { Block = Block };
 
          public override string ToString() => $"skip while ({Block})";
       }
@@ -251,15 +201,15 @@ namespace Orange.Library.Values
       {
          bool skip;
 
-         public SkipUntilItem()
-         {
-            skip = true;
-         }
+         public SkipUntilItem() => skip = true;
 
          public override Value Evaluate()
          {
             if (Block.Evaluate().IsTrue)
+            {
                skip = false;
+            }
+
             return skip;
          }
 
@@ -267,10 +217,7 @@ namespace Orange.Library.Values
 
          public override ValueUsageType ValueUsage => Controlled;
 
-         public override Item Clone() => new SkipWhileItem
-         {
-            Block = Block
-         };
+         public override Item Clone() => new SkipWhileItem { Block = Block };
 
          public override string ToString() => $"skip until ({Block})";
       }
@@ -281,7 +228,9 @@ namespace Orange.Library.Values
          Regions.SetParameter("$0", value);
          Regions.SetParameter(MangledName("0"), value);
          if (argumentName.IsNotEmpty())
+         {
             Regions.SetParameter(argumentName, value);
+         }
       }
 
       string parameterName;
@@ -297,7 +246,11 @@ namespace Orange.Library.Values
       {
          this.parameterName = parameterName;
          this.source = source;
-         source.As<Block>().If(block => block.Expression = false);
+         if (source is Block block)
+         {
+            block.Expression = false;
+         }
+
          items = new List<Item>();
          currentIndex = -1;
          currentValue = new Nil();
@@ -306,15 +259,10 @@ namespace Orange.Library.Values
       }
 
       public Generator(string parameterName, Value source, List<Item> items)
-         : this(parameterName, source)
-      {
-         this.items.AddRange(items);
-      }
+         : this(parameterName, source) => this.items.AddRange(items);
 
       public Generator(Value source)
-         : this("$0", source)
-      {
-      }
+         : this("$0", source) { }
 
       public string ParameterName => parameterName;
 
@@ -322,27 +270,17 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return "";
-         }
-         set
-         {
-         }
+         get => "";
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Generator;
 
       public override bool IsTrue => false;
 
-      public override Value Clone() => new Generator(parameterName, (Block)source.Clone(), items
-         .Select(i => i.Clone()).ToList());
+      public override Value Clone() => new Generator(parameterName, (Block)source.Clone(), items.Select(i => i.Clone()).ToList());
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -376,7 +314,10 @@ namespace Orange.Library.Values
       public Value Next()
       {
          if (currentGenerator == null)
+         {
             currentGenerator = GetGenerator();
+         }
+
          var looping = true;
          var region = new Region();
          using (var popper = new RegionPopper(region, "generator-next"))
@@ -385,10 +326,12 @@ namespace Orange.Library.Values
             sharedRegion?.CopyAllVariablesTo(region);
             for (var i = currentIndex + 1; i < MAX_ARRAY && looping; i++)
             {
-               IterationControlType control;
-               var value = getNext(i, out control);
+               var value = getNext(i, out var control);
                if (value.IsNil)
+               {
                   return value;
+               }
+
                switch (control)
                {
                   case Continuing:
@@ -404,6 +347,7 @@ namespace Orange.Library.Values
                      break;
                }
             }
+
             currentIndex = -1;
             currentValue = new Nil();
             return currentValue;
@@ -417,20 +361,23 @@ namespace Orange.Library.Values
          {
             value = subGenerator.Next();
             if (value.IsNil)
+            {
                subGenerator = null;
+            }
             else
             {
                control = Continuing;
                return value;
             }
          }
+
          value = GetNext(currentGenerator, i, out control);
-         var aSubGenerator = value.As<Generator>();
-         if (aSubGenerator.IsSome)
+         if (value is Generator aSubGenerator)
          {
-            subGenerator = aSubGenerator.Value;
+            subGenerator = aSubGenerator;
             value = subGenerator.Next();
          }
+
          return value;
       }
 
@@ -445,11 +392,7 @@ namespace Orange.Library.Values
       Generator addItem<TItem>(int count = 0, Arguments arguments = null)
          where TItem : Item, new()
       {
-         var item = new TItem
-         {
-            Block = arguments == null ? Arguments.Executable : arguments.Executable,
-            Count = count
-         };
+         var item = new TItem { Block = arguments == null ? Arguments.Executable : arguments.Executable, Count = count };
          var newGenerator = (Generator)Clone();
          newGenerator.items.Add(item);
          return newGenerator;
@@ -480,13 +423,17 @@ namespace Orange.Library.Values
          using (var popper = new RegionPopper(region, "get-generator"))
          {
             popper.Push();
-            var value = source.As<IExecutable>().Map(e => e.Evaluate(), () => source);
-            var generator = value.As<IGenerator>();
-            if (generator.IsSome)
-               return generator.Value;
-            var getGenerator = value.As<IGetGenerator>();
-            if (getGenerator.IsSome)
-               return getGenerator.Value.GetGenerator();
+            var value = source is IExecutable e ? e.Evaluate() : source;
+            if (value is IGenerator generator)
+            {
+               return generator;
+            }
+
+            if (value is IGetGenerator getGenerator)
+            {
+               return getGenerator.GetGenerator();
+            }
+
             return new DefaultGenerator(value);
          }
       }
@@ -511,12 +458,15 @@ namespace Orange.Library.Values
             {
                case Conditional:
                   if (result.IsTrue)
+                  {
                      control = Continuing;
+                  }
                   else
                   {
                      control = Skipping;
                      looping = false;
                   }
+
                   break;
                case Used:
                   value = result;
@@ -532,9 +482,11 @@ namespace Orange.Library.Values
                         looping = false;
                         break;
                   }
+
                   break;
             }
          }
+
          return value;
       }
 
@@ -639,61 +591,75 @@ namespace Orange.Library.Values
          var builder = new System.Text.StringBuilder();
          builder.Append($"({parameterName} <- {source})");
          if (items.Count > 0)
-            builder.Append($" {items.Listify(" ")}");
+         {
+            builder.Append($" {items.Stringify(" ")}");
+         }
+
          return builder.ToString();
       }
 
-      public bool Match(Array comparisand, bool required)
+      public bool Match(Array comparisand, bool required, bool assigning)
       {
          var length = comparisand.Length;
          if (comparisand.Values.All(v => v.Type == ValueType.Placeholder) && length > 0)
-            return bindTo(comparisand);
+         {
+            return bindTo(comparisand, assigning);
+         }
+
          foreach (var item in comparisand)
          {
             var next = Next();
             if (next.IsNil)
+            {
                return false;
+            }
+
             switch (item.Value.Type)
             {
                case ValueType.Placeholder:
-                  Regions.SetParameter(item.Value.Text, next);
+                  Regions.SetBinding(item.Value.Text, next, assigning);
                   break;
                case ValueType.Any:
                   continue;
             }
+
             if (!Case.Match(next, item.Value, required, null))
+            {
                return false;
+            }
          }
+
          return true;
       }
 
-      bool bindTo(Array placeholderArray)
+      bool bindTo(Array placeholderArray, bool assigning)
       {
          var length = placeholderArray.Length;
          if (length == 0)
+         {
             return false;
+         }
+
          var last = length - 1;
          for (var i = 0; i < last; i++)
          {
             var next = Next();
             if (next.IsNil)
+            {
                return false;
-            Regions.SetParameter(placeholderArray[i].Text, next);
+            }
+
+            Regions.SetBinding(placeholderArray[i].Text, next, assigning);
          }
-         Regions.SetParameter(placeholderArray[last].Text, this);
+
+         Regions.SetBinding(placeholderArray[last].Text, this, assigning);
          return true;
       }
 
       public Region SharedRegion
       {
-         get
-         {
-            return sharedRegion;
-         }
-         set
-         {
-            sharedRegion = value;
-         }
+         get => sharedRegion;
+         set => sharedRegion = value;
       }
    }
 }

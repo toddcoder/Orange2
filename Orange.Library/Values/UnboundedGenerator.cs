@@ -16,12 +16,9 @@ namespace Orange.Library.Values
 			currentValue = null;
 		}
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+		public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -43,28 +40,13 @@ namespace Orange.Library.Values
 			}
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Generator;
-			}
-		}
+		public override ValueType Type => ValueType.Generator;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return new UnboundedGenerator(seed.Clone(), (Block)nextValue.Clone());
-		}
+	   public override Value Clone() => new UnboundedGenerator(seed.Clone(), (Block)nextValue.Clone());
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 

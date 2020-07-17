@@ -9,20 +9,11 @@ namespace Orange.Library.Verbs
 
 		string messageName;
 
-		public AppendToMessage(string messageName)
-		{
-			this.messageName = messageName;
-		}
+		public AppendToMessage(string messageName) => this.messageName = messageName;
 
-		public string MessageName
-		{
-			get
-			{
-				return messageName;
-			}
-		}
+	   public string MessageName => messageName;
 
-		public override Value Evaluate()
+	   public override Value Evaluate()
 		{
 			var stack = Runtime.State.Stack;
 			var value = stack.Pop(true, LOCATION);
@@ -44,17 +35,8 @@ namespace Orange.Library.Verbs
 			return messageArguments;
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.ChangeSign;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.ChangeSign;
 
-		public override string ToString()
-		{
-			return messageName + ":";
-		}
+	   public override string ToString() => messageName + ":";
 	}
 }

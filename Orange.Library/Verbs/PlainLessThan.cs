@@ -14,30 +14,12 @@ namespace Orange.Library.Verbs
 			this.y = y;
 		}
 
-		public override Value Evaluate()
-		{
-			return DoComparison(x, y);
-		}
+		public override Value Evaluate() => DoComparison(x, y);
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.LessThan;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.LessThan;
 
-		public override bool Compare(int comparison)
-		{
-			return comparison < 0;
-		}
+	   public override bool Compare(int comparison) => comparison < 0;
 
-		public override string Location
-		{
-			get
-			{
-				return "plain less than";
-			}
-		}
+	   public override string Location => "plain less than";
 	}
 }

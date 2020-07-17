@@ -19,6 +19,6 @@ namespace Orange.Library.Verbs
 
 	   public override string ToString() => "/";
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Divide;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Divide;
 	}
 }

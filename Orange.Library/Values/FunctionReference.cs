@@ -55,14 +55,8 @@ namespace Orange.Library.Values
 
 	   public Block Where
 		{
-			get
-			{
-				return lambda.Where;
-			}
-			set
-			{
-				lambda.Where = value;
-			}
-		}
+			get => lambda.Where;
+	      set => lambda.Where = value;
+	   }
 	}
 }

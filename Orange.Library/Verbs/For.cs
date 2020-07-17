@@ -31,7 +31,7 @@ namespace Orange.Library.Verbs
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "for";
    }

@@ -12,7 +12,7 @@ namespace Orange.Library.Verbs
 		{
 		   var generator = x.PossibleIndexGenerator();
 		   var arguments = new Arguments(y);
-		   return generator.Map(g =>
+		   return generator.FlatMap(g =>
 		   {
 		      var list = new GeneratorList();
 		      list.Add(g);
@@ -24,7 +24,7 @@ namespace Orange.Library.Verbs
 
 	   public override string Message => "concat";
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Concatenate;
+	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Concatenate;
 
 	   public override string ToString() => "~";
 

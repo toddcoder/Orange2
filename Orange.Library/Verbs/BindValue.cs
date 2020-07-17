@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
@@ -18,18 +17,17 @@ namespace Orange.Library.Verbs
 		public override Value Evaluate()
 		{
 			Value resolvedValue;
-		   var block = value.As<Block>();
-			if (block.IsSome)
+			if (value is Block block)
 			{
-				block.Value.AutoRegister = false;
-				resolvedValue = block.Value.Evaluate().AssignmentValue();
+				block.AutoRegister = false;
+				resolvedValue = block.Evaluate().AssignmentValue();
 			}
 			else
 				resolvedValue = value.AssignmentValue();
 		   return new BoundValue(variableName, resolvedValue);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
 	   public override string ToString() => $"({variableName} := {value}";
 	}

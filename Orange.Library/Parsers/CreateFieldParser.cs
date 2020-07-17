@@ -1,8 +1,8 @@
 ﻿using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
-using Standard.Types.Tuples;
 
 namespace Orange.Library.Parsers
 {
@@ -12,10 +12,7 @@ namespace Orange.Library.Parsers
 
       public CreateFieldParser()
          : base("^ /(|tabs|) /(('public' | 'private' | 'protected' | 'temp') /s+)? /('var' | 'val') /(/s+)" +
-              $" /({REGEX_VARIABLE})")
-      {
-         parser = new FreeParser();
-      }
+              $" /({REGEX_VARIABLE})") => parser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -32,15 +29,13 @@ namespace Orange.Library.Parsers
          if (parser.Scan(source, NextPosition, "^ /s* ','"))
          {
             var fieldListParser = new FieldListParser();
-            string[] fieldNames;
-            int index;
-            if (fieldListParser.Parse(source, parser.Position).Assign(out fieldNames, out index))
+            if (fieldListParser.Parse(source, parser.Position).If(out var fieldNames, out var index))
             {
                overridePosition = index;
                var fields = new string[fieldNames.Length + 1];
                System.Array.Copy(fieldNames, 0, fields, 1, fieldNames.Length);
                fields[0] = fieldName;
-               return new CreateFields(readOnly, fields, visibility);
+               return new CreateFields(readOnly, fields, visibility) { Index = position };
             }
             return null;
          }

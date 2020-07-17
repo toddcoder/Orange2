@@ -5,22 +5,10 @@ namespace Orange.Library.Verbs
 {
 	public class EmptyArray : Verb
 	{
-		public override Value Evaluate()
-		{
-			return new Array();
-		}
+		public override Value Evaluate() => new Array();
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Push;
-			}
-		}
+	   public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Push;
 
-		public override string ToString()
-		{
-			return "<>";
-		}
+	   public override string ToString() => "<>";
 	}
 }

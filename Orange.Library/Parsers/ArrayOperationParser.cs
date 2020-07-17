@@ -16,16 +16,16 @@ namespace Orange.Library.Parsers
       {
          Color(position, length, EntityType.Operators);
          string message = null;
-         var presidence = VerbPresidenceType.Push;
+         var presidence = VerbPrecedenceType.Push;
          switch (tokens[2])
          {
             case "&":
                message = "intersect";
-               presidence = VerbPresidenceType.BitAnd;
+               presidence = VerbPrecedenceType.BitAnd;
                break;
             case "-":
                message = "diff";
-               presidence = VerbPresidenceType.Subtract;
+               presidence = VerbPrecedenceType.Subtract;
                break;
          }
          RejectNull(message, VerboseName, $"Didnt' understand @{tokens[2]}");

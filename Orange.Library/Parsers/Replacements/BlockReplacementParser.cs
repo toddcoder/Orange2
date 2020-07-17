@@ -1,7 +1,6 @@
 ﻿using Orange.Library.Replacements;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Objects;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers.Replacements
@@ -11,10 +10,7 @@ namespace Orange.Library.Parsers.Replacements
       LambdaParser blockParser;
 
       public BlockReplacementParser()
-         : base("^ /(/s*) '('")
-      {
-         blockParser = new LambdaParser();
-      }
+         : base("^ /(/s*) '('") => blockParser = new LambdaParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -26,11 +22,10 @@ namespace Orange.Library.Parsers.Replacements
          var returnValue = true;
          if (blockParser.Scan(source, index))
          {
-            var lambda = blockParser.Value.As<Lambda>();
-            if (lambda.IsSome)
+            if (blockParser.Value is Lambda lambda)
             {
-               block = lambda.Value.Block;
-               parameters = lambda.Value.Parameters;
+               block = lambda.Block;
+               parameters = lambda.Parameters;
             }
             else
             {
@@ -41,6 +36,7 @@ namespace Orange.Library.Parsers.Replacements
          }
          else
             return null;
+
          if (index < source.Length && source.Substring(index, 1) == ".")
          {
             index++;
@@ -53,10 +49,6 @@ namespace Orange.Library.Parsers.Replacements
 
       public override string VerboseName => "block replacement";
 
-      public IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public IReplacement Replacement { get; set; }
    }
 }

@@ -16,7 +16,7 @@ namespace Orange.Library.Verbs
          return SendMessage(searchObject, "in", searcher);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Equals;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Equals;
 
       public override string ToString() => "in";
    }

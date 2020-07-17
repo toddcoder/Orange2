@@ -7,10 +7,7 @@ namespace Orange.Library.Parsers
    {
       bool asStatement;
 
-      public PostfixOperatorParser(bool asStatement)
-      {
-         this.asStatement = asStatement;
-      }
+      public PostfixOperatorParser(bool asStatement) => this.asStatement = asStatement;
 
       public override IEnumerable<Parser> Parsers
       {
@@ -27,6 +24,7 @@ namespace Orange.Library.Parsers
             yield return new SomeOperatorParser();
             yield return new SingleValueArrayParser();
             yield return new ValueMessageParser();
+            yield return new ApplyInvokeParser();
          }
       }
    }

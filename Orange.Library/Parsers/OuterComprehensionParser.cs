@@ -2,9 +2,9 @@
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -13,18 +13,15 @@ namespace Orange.Library.Parsers
       InnerComprehensionParser innerComprehensionParser;
 
       public OuterComprehensionParser()
-         : base("^ /(|sp| '(' |sp|) /'for' /b")
-      {
-         innerComprehensionParser = new InnerComprehensionParser();
-      }
+         : base("^ /(|sp| '(') /'for' /b") => innerComprehensionParser = new InnerComprehensionParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, tokens[1].Length, Structures);
          Color(tokens[2].Length, KeyWords);
          var index = NextPosition;
-         IMaybe<NSInnerComprehension> head = new None<NSInnerComprehension>();
-         IMaybe<NSInnerComprehension> current = new None<NSInnerComprehension>();
+         var head = none<NSInnerComprehension>();
+         var current = none<NSInnerComprehension>();
 
          while (index < source.Length)
          {
@@ -40,18 +37,22 @@ namespace Orange.Library.Parsers
             }
             else
                return null;
+
             if (!innerComprehensionParser.Last)
                continue;
+
             if (head.IsNone)
                return null;
-            return GetExpression(source, index, CloseParenthesis()).Map((block, i) =>
+
+            if (GetExpression(source, index, CloseParenthesis()).If(out var block, out var i))
             {
                overridePosition = i;
                var value = new NSOuterComprehension(head.Value, block);
                result.Value = value;
                return value.PushedVerb;
-            }, () => null);
+            }
          }
+
          return null;
       }
 

@@ -1,35 +1,37 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class Is : Verb
-	{
-		const string LOCATION = "Is";
+   public class Is : Verb
+   {
+      public override Value Evaluate()
+      {
+         var stack = State.Stack;
+         var y = stack.Pop(true, Location);
+         var x = stack.Pop(true, Location);
+         if (x.ID == y.ID)
+            return true;
 
-		public override Value Evaluate()
-		{
-			var stack = State.Stack;
-			var y = stack.Pop(true, LOCATION);
-			var x = stack.Pop(true, LOCATION);
-			Class builder;
-			Object obj;
-			if (y.As<Class>().Assign(out builder))
-			{
-				Assert(x.As<Object>().Assign(out obj), LOCATION, $"{x} isn't an object");
-				return obj.Class.IsChildOf(builder);
-			}
-			Trait trait;
-			Assert(y.As<Trait>().Assign(out trait), LOCATION, $"{y} isn't a class or a trait");
-			Assert(!x.As<Object>().Assign(out obj), LOCATION, $"{x} isn't an object");
-			return obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait);
-		}
+         if (x is Object obj)
+         {
+            if (y is Class cls)
+               return obj.Class.IsChildOf(cls);
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+            if (y is Trait trait)
+               return obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait);
 
-	   public override string ToString() => "is";
-	}
+            Throw(Location, $"{x} isn't an object");
+         }
+
+         return false;
+      }
+
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
+
+      public override string ToString() => "is";
+
+      public virtual string Location => "Is";
+   }
 }

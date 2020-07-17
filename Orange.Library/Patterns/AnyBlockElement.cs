@@ -9,12 +9,9 @@ namespace Orange.Library.Patterns
 		Block block;
 
 		public AnyBlockElement(Block block, int count)
-			: base("", count)
-		{
-			this.block = block;
-		}
+			: base("", count) => this.block = block;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			var printBlock = new PrintBlock(block);
 			text = Expand(printBlock.String.Text);

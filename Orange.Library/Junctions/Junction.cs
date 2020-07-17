@@ -1,5 +1,5 @@
+using Core.Monads;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Junctions
@@ -33,20 +33,24 @@ namespace Orange.Library.Junctions
 
          var block = arguments.Executable;
          if (block != null && block.Count > 0)
+         {
             return EvaluateAsLambda(iterator, arguments.Parameters, block);
+         }
 
          for (var i = 0; i < MAX_LOOP; i++)
          {
             var current = iterator.Next();
             if (current.IsNil)
-               return IfNil();
-            if (Compare(current, value))
             {
-               var success = Success();
-               if (success.IsSome)
-                  return success.Value;
+               return IfNil();
+            }
+
+            if (Compare(current, value) && Success().If(out var success))
+            {
+               return success;
             }
          }
+
          return Final();
       }
 
@@ -60,15 +64,17 @@ namespace Orange.Library.Junctions
             {
                var current = iterator.Next();
                if (current.IsNil)
-                  return IfNil();
-               parameters.SetValues(current, i);
-               if (BlockCompare(block))
                {
-                  var success = Success();
-                  if (success.IsSome)
-                     return success.Value;
+                  return IfNil();
+               }
+
+               parameters.SetValues(current, i);
+               if (BlockCompare(block) && Success().If(out var success))
+               {
+                  return success;
                }
             }
+
             return Final();
          }
       }

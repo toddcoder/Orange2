@@ -8,12 +8,9 @@ namespace Orange.Library.Parsers
 		bool use;
 
 		public EndOfParametersParser(bool use)
-			: base("^ /s* ['|>)']")
-		{
-			this.use = use;
-		}
+			: base("^ /s* ['|>)']") => this.use = use;
 
-		public override Verb CreateVerb(string[] tokens)
+	   public override Verb CreateVerb(string[] tokens)
 		{
 			if (use)
 			{

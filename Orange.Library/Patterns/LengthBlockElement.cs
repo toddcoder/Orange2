@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block countBlock;
 
 		public LengthBlockElement(Block countBlock)
-			: base(0)
-		{
-			this.countBlock = countBlock;
-		}
+			: base(0) => this.countBlock = countBlock;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			count = getCount();
 			return base.Evaluate(input);

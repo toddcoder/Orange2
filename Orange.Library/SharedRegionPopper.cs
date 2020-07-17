@@ -7,16 +7,10 @@ namespace Orange.Library
       protected Region sharedRegion;
 
       public SharedRegionPopper(Region region, Region sharedRegion, string name)
-         : base(region, name)
-      {
-         this.sharedRegion = sharedRegion;
-      }
+         : base(region, name) => this.sharedRegion = sharedRegion;
 
       public SharedRegionPopper(Region region, ISharedRegion sharedRegionHost, string name)
-         : base(region, name)
-      {
-         sharedRegion = sharedRegionHost.SharedRegion;
-      }
+         : base(region, name) => sharedRegion = sharedRegionHost.SharedRegion;
 
       public override void Push()
       {

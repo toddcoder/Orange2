@@ -25,11 +25,8 @@ namespace Orange.Library.Verbs
 			return variable;
 		}
 
-	   Value evaluateByType(Variable variable, Value value)
-	   {
-	      return (variable.Value.IsArray || value.IsArray) && UseArrayVersion ? evaluateArray(variable, value) :
-	         evaluate(variable, value);
-	   }
+	   Value evaluateByType(Variable variable, Value value) => (variable.Value.IsArray || value.IsArray) && UseArrayVersion ? evaluateArray(variable, value) :
+	      evaluate(variable, value);
 
 	   public virtual Value Exception(Variable variable, Value value) => null;
 

@@ -1,72 +1,55 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Arrays;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Arrays;
-using Standard.Types.Objects;
+using static Core.Arrays.ArrayFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Block;
 using static Orange.Library.Values.Null;
-using static Standard.Types.Arrays.ArrayFunctions;
 
 namespace Orange.Library
 {
    public class Arguments
    {
-      /*	   Block convertAssignment(Block block)
-            {
-               var converted = new CodeBuilder();
-               foreach (var verb in block.AsAdded)
-               {
-                  var assignment = verb.As<AssignToField>();
-                  if (assignment.IsSome)
-                  {
-                     var fieldName = assignment.Value.FieldName;
-                     var expression = assignment.Value.Expression;
-                     converted.Variable(fieldName);
-                     converted.Verb(new Bind());
-                     converted.Parenthesize(expression);
-                  }
-                  else
-                     converted.Verb(verb);
-               }
-               return converted.Block;
-            }*/
-
       public static Arguments FromValue(Value value, bool returnNullIfNotExecutable = true)
       {
          value = value.Self;
-         var tuple = value.As<OTuple>();
-         if (tuple.IsSome)
+         switch (value)
          {
-            Assert(tuple.Value.Length > 1, LOCATION, "Tuple must have at least two values");
-            var innerValue = tuple.Value[0];
-            var innerLambda = tuple.Value[1].As<Lambda>();
-            Assert(innerLambda.IsSome, LOCATION, "Second value must be a lambda");
-            return new Arguments(innerValue, innerLambda.Value.Block, innerLambda.Value.Parameters);
-         }
-         var chain = value.As<MessagePath>();
-         if (chain.IsSome)
-         {
-            var builder = new CodeBuilder();
-            builder.Variable(State.DefaultParameterNames.ValueVariable);
-            builder.Apply();
-            builder.Value(chain.Value);
-            var block = builder.Block;
-            return new Arguments(new NullBlock(), block);
-         }
-         var lambda = value.As<Lambda>();
-         if (lambda.IsSome)
-            return new Arguments(new NullBlock(), lambda.Value.Block, lambda.Value.Parameters)
+            case OTuple tuple:
             {
-               Splatting = lambda.Value.Splatting
-            };
-         var aBlock = value.As<Block>();
-         if (aBlock.IsSome)
-            return new Arguments(new NullBlock(), aBlock.Value, new NullParameters());
+               Assert(tuple.Length > 1, LOCATION, "Tuple must have at least two values");
+               var innerValue = tuple[0];
+               if (tuple[1] is Lambda innerLambda)
+               {
+                  return new Arguments(innerValue, innerLambda.Block, innerLambda.Parameters);
+               }
+
+               Throw(LOCATION, "Second value must be a lambda");
+               break;
+            }
+            case MessagePath chain:
+            {
+               var builder = new CodeBuilder();
+               builder.Variable(State.DefaultParameterNames.ValueVariable);
+               builder.Apply();
+               builder.Value(chain);
+               var block = builder.Block;
+               return new Arguments(new NullBlock(), block);
+            }
+            case Lambda lambda:
+               return new Arguments(new NullBlock(), lambda.Block, lambda.Parameters) { Splatting = lambda.Splatting };
+            case Block aBlock:
+               return new Arguments(new NullBlock(), aBlock, new NullParameters());
+         }
+
          if (returnNullIfNotExecutable)
+         {
             return null;
+         }
+
          var argumentsBlock = PushValue(value);
          return new Arguments(argumentsBlock);
       }
@@ -74,12 +57,12 @@ namespace Orange.Library
       public static Arguments FromExecutable(IExecutable executable, Value value = null)
       {
          var lambda = executable.AsLambda;
-         var arguments = new Arguments(new NullBlock(), lambda.Block, lambda.Parameters)
-         {
-            Splatting = lambda.Splatting
-         };
+         var arguments = new Arguments(new NullBlock(), lambda.Block, lambda.Parameters) { Splatting = lambda.Splatting };
          if (value != null)
+         {
             arguments.AddArgument(value);
+         }
+
          return arguments;
       }
 
@@ -87,18 +70,16 @@ namespace Orange.Library
       {
          var arguments = FromValue(value, returnNull);
          if (arguments != null)
+         {
             return arguments;
+         }
+
          var argumentsBlock = PushValue(value);
          return new Arguments(new NullBlock(), argumentsBlock);
       }
 
-      public static Arguments PipelineSource(Value value)
-      {
-         var pattern = value.As<Pattern>();
-         if (pattern.IsSome)
-            value = IfPattern(pattern.Value);
-         return GuaranteedExecutable(value);
-      }
+      public static Arguments PipelineSource(Value value) =>
+         GuaranteedExecutable(value is Pattern pattern ? IfPattern(pattern) : value);
 
       static bool messageArguments(Block block) => block.AsAdded.OfType<AppendToMessage>().Any();
 
@@ -119,9 +100,7 @@ namespace Orange.Library
       }
 
       public Arguments(Value argument, Block block = null, Parameters parameters = null)
-         : this(blockFromValue(argument), block, parameters)
-      {
-      }
+         : this(blockFromValue(argument), block, parameters) { }
 
       public Arguments(ParameterBlock parameterBlock)
       {
@@ -143,7 +122,7 @@ namespace Orange.Library
          MessageArguments = false;
       }
 
-      static Block blockFromValue(Value value) => value.As<Block>().Map(block => block, () => PushValue(value));
+      static Block blockFromValue(Value value) => value is Block block ? block : PushValue(value);
 
       public Arguments(Value value)
       {
@@ -166,14 +145,15 @@ namespace Orange.Library
       }
 
       public Arguments(INSGenerator generator, Block block = null, Parameters parameters = null)
-         : this(ToArray(generator).Values, block, parameters)
-      {
-      }
+         : this(ToArray(generator).Values, block, parameters) { }
 
       public void AddArgument(Value value)
       {
          if (arguments.Count > 0)
+         {
             arguments.Add(new AppendToArray());
+         }
+
          arguments.Add(new Push(value));
       }
 
@@ -181,43 +161,31 @@ namespace Orange.Library
       {
          var converted = argument;
          if (arguments.Count > 0)
+         {
             arguments.Add(new AppendToArray());
+         }
+
          foreach (var verb in converted.AsAdded)
+         {
             arguments.Add(verb);
+         }
       }
 
-      public Value ApplyValue
-      {
-         get;
-         set;
-      }
+      public Value ApplyValue { get; set; }
 
-      public Variable ApplyVariable
-      {
-         get;
-         set;
-      }
+      public Variable ApplyVariable { get; set; }
 
       public Block Block
       {
-         get
-         {
-            return block;
-         }
-         set
-         {
-            block = value;
-         }
+         get => block;
+         set => block = value;
       }
 
       public Block ArgumentsBlock => arguments;
 
       public Parameters Parameters
       {
-         get
-         {
-            return parameters;
-         }
+         get => parameters;
          set
          {
             parameters = value;
@@ -240,8 +208,10 @@ namespace Orange.Library
                skip = false;
                continue;
             }
+
             newArguments.Add(verb);
          }
+
          arguments = newArguments;
          values = null;
          return result;
@@ -251,17 +221,16 @@ namespace Orange.Library
       {
          var values = Values;
          RejectNull(values, LOCATION, "Arguments not resolved");
-         var newArguments = new Block
-         {
-            new Push(value),
-            new AppendToArray()
-         };
+         var newArguments = new Block { new Push(value), new AppendToArray() };
          foreach (var verb in arguments.AsAdded)
+         {
             newArguments.Add(verb);
+         }
+
          arguments = newArguments;
       }
 
-      public Value this[int index] => Blocks.Of(index).Map(b => b.Evaluate(), () => NullValue);
+      public Value this[int index] => Blocks.Of(index).Map(b => b.Evaluate()).DefaultTo(() => NullValue);
 
       public Lambda Lambda
       {
@@ -269,9 +238,17 @@ namespace Orange.Library
          {
             var blocks = Blocks;
             if (blocks.Length == 0)
+            {
                return null;
+            }
+
             var last = blocks[blocks.Length - 1];
-            return last.As<Lambda>().Map(l => l, () => null);
+            if (last.Evaluate() is Lambda l)
+            {
+               return l;
+            }
+
+            return null;
          }
       }
 
@@ -281,30 +258,17 @@ namespace Orange.Library
          return value.IsEmpty ? defaultValue : value;
       }
 
-      public string VariableName(int index, string defaultName = "")
-      {
-         return parameters.VariableName(index, defaultName);
-      }
+      public string VariableName(int index, string defaultName = "") => parameters.VariableName(index, defaultName);
 
       public Block Executable
       {
-         get
-         {
-            return Block.IsEmpty ? new NullBlock() : Block;
-         }
-         set
-         {
-            Block = value;
-         }
+         get => Block.IsEmpty ? new NullBlock() : Block;
+         set => Block = value;
       }
 
       public override string ToString() => arguments?.ToString() ?? "";
 
-      public bool FromSelf
-      {
-         get;
-         set;
-      }
+      public bool FromSelf { get; set; }
 
       public Arguments Clone()
       {
@@ -326,9 +290,15 @@ namespace Orange.Library
       {
          var value = arguments.Evaluate();
          if (value == null)
+         {
             return null;
+         }
+
          if (value.IsArray)
+         {
             return (Array)value.SourceArray;
+         }
+
          var blocks = Blocks;
          switch (blocks.Length)
          {
@@ -337,9 +307,13 @@ namespace Orange.Library
             case 1:
                value = blocks[0].Evaluate();
                if (value.IsArray)
+               {
                   return (Array)value.SourceArray;
+               }
+
                break;
          }
+
          var array = new Array
          {
             value
@@ -349,13 +323,21 @@ namespace Orange.Library
             var item = blocks[i];
             array.Add(item.Evaluate());
          }
+
          return array;
       }
 
       public Array AsArray(int length)
       {
+         // ReSharper disable once LoopCanBePartlyConvertedToQuery
          foreach (var verb in arguments)
-            verb.As<IWrapping>().If(wrapping => wrapping.SetLength(length));
+         {
+            if (verb is IWrapping wrapping)
+            {
+               wrapping.SetLength(length);
+            }
+         }
+
          return AsArray();
       }
 
@@ -367,32 +349,33 @@ namespace Orange.Library
 
       public bool IsEmpty => arguments.Count == 0;
 
-      public bool Splatting
-      {
-         get;
-         set;
-      }
+      public bool Splatting { get; set; }
 
       public static Block[] BlockArray(Block block)
       {
          if (block == null || block.Count == 0)
+         {
             return new Block[0];
+         }
 
          var list = new List<Block>();
          var accum = new Block();
          foreach (var verb in block.AsAdded)
-            if (verb is AppendToArray)
+         {
+            switch (verb)
             {
-               list.Add(accum);
-               accum = new Block();
+               case AppendToArray _:
+                  list.Add(accum);
+                  accum = new Block();
+                  break;
+               case AppendToMessage _:
+                  return new[] { block };
+               default:
+                  accum.Add(verb);
+                  break;
             }
-            else if (verb is AppendToMessage)
-               return new[]
-               {
-                     block
-                  };
-            else
-               accum.Add(verb);
+         }
+
          list.Add(accum);
          return list.ToArray();
       }
@@ -405,26 +388,26 @@ namespace Orange.Library
       {
          var list = new List<Value>();
          foreach (var flattened in values.Select(value => flattenValue(value, length)))
+         {
             list.AddRange(flattened);
+         }
+
          return list.ToArray();
       }
 
       static Value[] flattenValue(Value value, int length)
       {
-         var generator = value.PossibleIndexGenerator();
-         if (generator.IsSome)
-         {
-            var iterator = new NSIteratorByLength(generator.Value, length);
-            return iterator.ToArray();
-         }
-         return array(value);
+         return value.PossibleIndexGenerator().FlatMap(g => new NSIteratorByLength(g, length).ToArray(), () => array(value));
       }
 
       public Value[] GetValues(int length)
       {
          var blocks = Blocks;
          if (blocks.Length == 1)
+         {
             return flattenValue(blocks[0].Evaluate(), length);
+         }
+
          return flattenValues(Values, length);
       }
 
@@ -433,28 +416,33 @@ namespace Orange.Library
          var builder = new CodeBuilder();
          builder.BeginArray();
          foreach (var value in values)
+         {
             builder.AddArrayElement(value);
+         }
+
          builder.EndArray();
          arguments = builder.Block;
       }
 
-      public Value DefaultValue
-      {
-         get;
-         set;
-      }
+      public Value DefaultValue { get; set; }
 
       public override int GetHashCode() => ToString().GetHashCode();
 
-      public override bool Equals(object obj)
-      {
-         return obj.As<Arguments>().Map(other => GetHashCode() == other.GetHashCode(), () => false);
-      }
+      public override bool Equals(object obj) => obj is Arguments other && GetHashCode() == other.GetHashCode();
 
-      public bool MessageArguments
+      public bool MessageArguments { get; set; }
+
+      public Arguments AddLambdaAsArgument()
       {
-         get;
-         set;
+         if ((Executable?.Count ?? 0) == 0)
+         {
+            return this;
+         }
+
+         var lambda = new Lambda(new Region(), Executable, Parameters, false);
+         var clone = Clone();
+         clone.AddArgument(lambda);
+         return clone;
       }
    }
 }

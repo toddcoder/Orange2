@@ -6,17 +6,11 @@ namespace Orange.Library.Values
 	{
 	   public static Nil NilValue => new Nil();
 
-		public Nil()
-		{
-			PerformElse = null;
-		}
+		public Nil() => PerformElse = null;
 
-		public Nil(bool ifTrue)
-		{
-			PerformElse = ifTrue;
-		}
+	   public Nil(bool ifTrue) => PerformElse = ifTrue;
 
-		public override int Compare(Value value) => value.Type == ValueType.Nil ? 0 : 1;
+	   public override int Compare(Value value) => value.Type == ValueType.Nil ? 0 : 1;
 
 	   public override string Text
 		{

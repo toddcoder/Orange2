@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Orange.Library.Managers;
 using Standard.Types.Strings;
 using static System.StringComparison;
@@ -39,17 +40,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Range;
 
@@ -60,6 +53,10 @@ namespace Orange.Library.Values
       protected override void registerMessages(MessageManager manager)
       {
          manager.RegisterMessage(this, "array", v => ((NSStringRange)v).ToArray());
+         manager.RegisterMessage(this, "in", v => ((NSStringRange)v).In());
+         manager.RegisterMessage(this, "notIn", v => ((NSStringRange)v).NotIn());
+         manager.RegisterProperty(this, "min", v => ((NSStringRange)v).Min());
+         manager.RegisterProperty(this, "max", v => ((NSStringRange)v).Max());
       }
 
       public INSGenerator GetGenerator() => new NSGenerator(this);
@@ -83,14 +80,36 @@ namespace Orange.Library.Values
 
       public Array ToArray() => GeneratorToArray(this);
 
-      public override string ToString() => ToArray().ToString();
+      public override string ToString() => $"'{start}'{(inclusive ? ".." : "...")}'{stop}'";
 
-      public override Value AlternateValue(string message) => ToArray();
-
-      public override Value AssignmentValue() => ToArray();
+      public override Value AlternateValue(string message)
+      {
+         switch (message)
+         {
+            case "__$get_item":
+            case "__$set_item":
+            case "len":
+               return ToArray();
+            default:
+               return (Value)GetGenerator();
+         }
+      }
 
       public override bool IsArray => true;
 
       public override Value SourceArray => ToArray();
+
+      public Value In()
+      {
+         var needle = Arguments[0];
+         var iterator = new NSIterator(GetGenerator());
+         return iterator.Any(value => needle.Compare(value) == 0);
+      }
+
+      public Value NotIn() => !In().IsTrue;
+
+      public Value Min() => start.CompareTo(stop) < 0 ? start : stop;
+
+      public Value Max() => stop.CompareTo(start) > 0 ? stop : start;
    }
 }

@@ -1,21 +1,14 @@
-﻿using Orange.Library.Managers;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
+using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
 {
-	public class NullOp : Verb
-	{
-		public override Value Evaluate()
-		{
-			return null;
-		}
+   public class NullOp : Verb
+   {
+      public override Value Evaluate() => null;
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.NotApplicable;
-			}
-		}
-	}
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.NotApplicable;
+
+      public override string ToString() => "...";
+   }
 }

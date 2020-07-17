@@ -31,37 +31,19 @@ namespace Orange.Library.Values
 			count = 0;
 		}
 
-		public CFor CFor(ParameterBlock incrementBlock)
-		{
-			return new CFor(seed, next, incrementBlock);
-		}
+		public CFor CFor(ParameterBlock incrementBlock) => new CFor(seed, next, incrementBlock);
 
-		public virtual int Limit
+	   public virtual int Limit
 		{
-			get
-			{
-				return limit;
-			}
-			set
-			{
-				limit = value < 0 ? Runtime.MAX_ARRAY : value;
-			}
-		}
+			get => limit;
+	      set => limit = value < 0 ? Runtime.MAX_ARRAY : value;
+	   }
 
-		public Array Array
-		{
-			get
-			{
-				return (Array)AlternateValue("");
-			}
-		}
+		public Array Array => (Array)AlternateValue("");
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+	   public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;
@@ -73,32 +55,17 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.ArrayStream;
-			}
-		}
+		public override ValueType Type => ValueType.ArrayStream;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return new ArrayStream(seed.Clone(), next.Clone())
-			{
-				ifBlock = ifBlock.Clone(),
-				limit = limit
-			};
-		}
+	   public override Value Clone() => new ArrayStream(seed.Clone(), next.Clone())
+	   {
+	      ifBlock = ifBlock.Clone(),
+	      limit = limit
+	   };
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "map", v => ((ArrayStream)v).Map());
 			manager.RegisterMessage(this, "if", v => ((ArrayStream)v).IfMessage());
@@ -158,12 +125,9 @@ namespace Orange.Library.Values
 			}
 		}
 
-		public ISequenceSource Copy()
-		{
-			return (ISequenceSource)Clone();
-		}
+		public ISequenceSource Copy() => (ISequenceSource)Clone();
 
-		protected static Value evaluate(ParameterBlock parameterBlock, Value current)
+	   protected static Value evaluate(ParameterBlock parameterBlock, Value current)
 		{
 			if (parameterBlock == null)
 				return true;
@@ -185,23 +149,11 @@ namespace Orange.Library.Values
 			return this;
 		}
 
-		public override bool IsArray
-		{
-			get
-			{
-				return false;
-			}
-		}
+		public override bool IsArray => false;
 
-		public override Value SourceArray
-		{
-			get
-			{
-				return AlternateValue("");
-			}
-		}
+	   public override Value SourceArray => AlternateValue("");
 
-		public virtual Value Map()
+	   public virtual Value Map()
 		{
 			var sequence = new Sequence(this)
 			{
@@ -237,9 +189,6 @@ namespace Orange.Library.Values
 			return sequence.Take();
 		}
 
-		public override string ToString()
-		{
-			return seed + " to " + next + " by " + limit;
-		}
+		public override string ToString() => seed + " to " + next + " by " + limit;
 	}
 }

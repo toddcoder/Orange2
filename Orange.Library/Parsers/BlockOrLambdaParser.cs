@@ -9,8 +9,8 @@ namespace Orange.Library.Parsers
       {
          get
          {
-            //yield return new LineBlockParser(true);
             yield return new LambdaBlockParser();
+            yield return new DoLambdaParser();
             yield return new LambdaParser();
             yield return new ShortLambdaParser("(");
          }

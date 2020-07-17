@@ -5,29 +5,14 @@
 		Module module;
 
 		public ModuleVariable(string name, Module module)
-			: base(name)
+			: base(name) => this.module = module;
+
+	   public override Value Value
 		{
-			this.module = module;
+			get => module[Name];
+		   set => module[Name] = value;
 		}
 
-		public override Value Value
-		{
-			get
-			{
-				return module[Name];
-			}
-			set
-			{
-				module[Name] = value;
-			}
-		}
-
-		public override string ContainerType
-		{
-			get
-			{
-				return ValueType.ModuleVariable.ToString();
-			}
-		}
+		public override string ContainerType => ValueType.ModuleVariable.ToString();
 	}
 }

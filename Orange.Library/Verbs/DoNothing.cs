@@ -7,7 +7,7 @@ namespace Orange.Library.Verbs
    {
       public override Value Evaluate() => null;
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => "pass";
    }

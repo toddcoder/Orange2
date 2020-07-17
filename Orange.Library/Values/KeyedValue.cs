@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Managers;
-using Standard.Types.Objects;
 using static System.StringComparison;
 
 namespace Orange.Library.Values
@@ -21,34 +20,27 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value)
       {
-         return value.As<KeyedValue>().Map(other =>
+         if(value is KeyedValue other)
          {
             if (key != other.key)
                return string.Compare(key, other.key, Ordinal);
+
             return this.value.Compare(other.value);
-         }, () => -1);
+         }
+
+         return -1;
       }
 
       public override string Text
       {
-         get
-         {
-            return value.Text;
-         }
-         set
-         {
-         }
+         get => value.Text;
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return value.Number;
-         }
-         set
-         {
-         }
+         get => value.Number;
+         set { }
       }
 
       public override ValueType Type => ValueType.KeyedValue;
@@ -67,6 +59,6 @@ namespace Orange.Library.Values
 
       public override Value AlternateValue(string message) => value;
 
-      public override Value AssignmentValue() => new Array {[key] = value };
+      public override Value AssignmentValue() => new Array { [key] = value };
    }
 }

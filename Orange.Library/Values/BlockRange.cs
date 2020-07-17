@@ -13,22 +13,16 @@ namespace Orange.Library.Values
 			this.stopBlock = stopBlock;
 		}
 
-		static bool getSet()
-		{
-			return RegionManager.Regions[Runtime.VAL_BLOCK_RANGE_SET + Runtime.State.Block.ID].IsTrue;
-		}
+		static bool getSet() => RegionManager.Regions[Runtime.VAL_BLOCK_RANGE_SET + Runtime.State.Block.ID].IsTrue;
 
-		static void setSet(bool value)
+	   static void setSet(bool value)
 		{
 			RegionManager.Regions[Runtime.VAL_BLOCK_RANGE_SET + Runtime.State.Block.ID] = value;
 		}
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+		public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;
@@ -40,15 +34,9 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.Range;
-			}
-		}
+		public override ValueType Type => ValueType.Range;
 
-		public override bool IsTrue
+	   public override bool IsTrue
 		{
 			get
 			{
@@ -73,12 +61,9 @@ namespace Orange.Library.Values
 			}
 		}
 
-		public override Value Clone()
-		{
-			return new BlockRange((Block)startBlock.Clone(), (Block)stopBlock.Clone());
-		}
+		public override Value Clone() => new BlockRange((Block)startBlock.Clone(), (Block)stopBlock.Clone());
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 		}
 
@@ -98,23 +83,11 @@ namespace Orange.Library.Values
 			stopBlock = (Block)stop;
 		}
 
-		public Value Start
-		{
-			get
-			{
-				return startBlock;
-			}
-		}
+		public Value Start => startBlock;
 
-		public Value Stop
-		{
-			get
-			{
-				return stopBlock;
-			}
-		}
+	   public Value Stop => stopBlock;
 
-		public override Value AlternateValue(string message)
+	   public override Value AlternateValue(string message)
 		{
 			var result = new Array();
 			while (!startBlock.Evaluate().IsTrue)
@@ -124,9 +97,6 @@ namespace Orange.Library.Values
 			return result;
 		}
 
-		public override string ToString()
-		{
-			return "{" + startBlock + ".." + stopBlock + "}";
-		}
+		public override string ToString() => "{" + startBlock + ".." + stopBlock + "}";
 	}
 }

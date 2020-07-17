@@ -2,7 +2,6 @@
 using System.Linq;
 using Orange.Library.Managers;
 using Standard.Types.Enumerables;
-using Standard.Types.Objects;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
@@ -13,30 +12,16 @@ namespace Orange.Library.Values
 
       List<Lambda> functions;
 
-      public FunctionChain()
-      {
-         functions=new List<Lambda>();
-      }
+      public FunctionChain() => functions = new List<Lambda>();
 
       public FunctionChain(IEnumerable<Lambda> lambdas)
-         : this()
-      {
-         functions.AddRange(lambdas);
-      }
+         : this() => functions.AddRange(lambdas);
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.FunctionChain;
 
@@ -54,9 +39,10 @@ namespace Orange.Library.Values
 
       public Value ShiftRight()
       {
-         var lambda = Arguments[0].As<Lambda>();
-         Assert(lambda.IsSome, LOCATION, "Right hand value must be a lambda");
-         functions.Add(lambda.Value);
+         if (Arguments[0] is Lambda lambda)
+            functions.Add(lambda);
+         else
+            Throw(LOCATION, "Right hand value must be a lambda");
          return this;
       }
 
@@ -65,9 +51,10 @@ namespace Orange.Library.Values
          var result = functions[0].Invoke(Arguments);
          for (var i = 1; i < functions.Count; i++)
          {
-            var arguments=new Arguments(result);
+            var arguments = new Arguments(result);
             result = functions[i].Invoke(arguments);
          }
+
          return result;
       }
 

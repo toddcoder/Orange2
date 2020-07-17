@@ -1,61 +1,41 @@
-﻿using Orange.Library.Managers;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
+using static Orange.Library.Managers.ExpressionManager;
+using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class Multiply : TwoValueVerb
-	{
-		public override Value Evaluate(Value x, Value y)
-		{
-			return x.Number * y.Number;
-		}
+   public class Multiply : TwoValueVerb
+   {
+      public override Value Evaluate(Value x, Value y) => x.Number * y.Number;
 
-		public override Value Exception(Value x, Value y)
-		{
-			switch (x.Type)
-			{
-				case Value.ValueType.String:
-					if (y.IsNumeric())
-						return Runtime.SendMessage(x, "repeat", y);
-					break;
-			}
-			switch (y.Type)
-			{
-				case Value.ValueType.String:
-					if (x.IsNumeric())
-						return Runtime.SendMessage(y, "repeat", x);
-					break;
-			}
-			return null;
-		}
+      public override Value Exception(Value x, Value y)
+      {
+         switch (x.Type)
+         {
+            case Value.ValueType.String:
+               if (y.IsNumeric())
+                  return SendMessage(x, "repeat", y);
 
-		public override string Location
-		{
-			get
-			{
-				return "Multiply";
-			}
-		}
+               break;
+         }
+         switch (y.Type)
+         {
+            case Value.ValueType.String:
+               if (x.IsNumeric())
+                  return SendMessage(y, "repeat", x);
 
-		public override string Message
-		{
-			get
-			{
-				return "mult";
-			}
-		}
+               break;
+         }
 
-		public override string ToString()
-		{
-			return "*";
-		}
+         return null;
+      }
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Multiply;
-			}
-		}
-	}
+      public override string Location => "Multiply";
+
+      public override string Message => "mult";
+
+      public override string ToString() => "*";
+
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Multiply;
+   }
 }

@@ -13,19 +13,13 @@
 			return false;
 		}
 
-		public override Element Clone()
+		public override Element Clone() => new StringBeginElement
 		{
-			return new StringBeginElement
-			{
-				Next = cloneNext(),
-				Alternate = cloneAlternate(),
-				Replacement = cloneReplacement()
-			};
-		}
+		   Next = cloneNext(),
+		   Alternate = cloneAlternate(),
+		   Replacement = cloneReplacement()
+		};
 
-		public override string ToString()
-		{
-			return (Not ? "!" : "") + "<";
-		}
+	   public override string ToString() => (Not ? "!" : "") + "<";
 	}
 }

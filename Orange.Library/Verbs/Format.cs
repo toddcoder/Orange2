@@ -43,7 +43,7 @@ namespace Orange.Library.Verbs
 			return string.Format(formatString, ConvertToObject(value.Text, input.EndsWith("x}")));
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Format;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Format;
 
 	   public override string ToString() => "\\";
 	}

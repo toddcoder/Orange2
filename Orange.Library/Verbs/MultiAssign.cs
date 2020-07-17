@@ -3,7 +3,6 @@ using System.Linq;
 using Orange.Library.Values;
 using Standard.Types.Collections;
 using Standard.Types.Enumerables;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 using Array = Orange.Library.Values.Array;
@@ -31,6 +30,7 @@ namespace Orange.Library.Verbs
             var value = iterator.Next();
             if (value.IsNil)
                break;
+
             assignments[parameter.Name] = value;
             assignedParameters[parameter.Name] = parameter;
             array[parameter.Name] = value;
@@ -44,8 +44,10 @@ namespace Orange.Library.Verbs
                var value = iterator.Next();
                if (value.IsNil)
                   break;
+
                innerArray.Add(value);
             }
+
             if (innerArray.Length > 0)
             {
                var value = map(innerArray);
@@ -55,19 +57,17 @@ namespace Orange.Library.Verbs
             }
          }
 
-         var ifAssigned = assignedParameters.If();
+         // ReSharper disable once LoopCanBePartlyConvertedToQuery
          foreach (var item in assignments)
-            ifAssigned[item.Key].If(parameter => parameter.Assign(item.Value, readOnly, setting, _override));
+            if (assignedParameters.If(item.Key, out var parameter))
+               parameter.Assign(item.Value, readOnly, setting, _override);
 
          return array;
       }
 
-      public static Array Splat(Value value, Parameters parameters, bool readOnly, bool setting,
-         bool _override)
+      public static Array Splat(Value value, Parameters parameters, bool readOnly, bool setting, bool _override)
       {
-         var transformation = func<Value, Value>(v => v
-            .As<Array>()
-            .Map(array => array.Length == 1 ? array[0] : array, () => v));
+         var transformation = func<Value, Value>(v => v is Array array ? (array.Length == 1 ? array[0] : array) : v);
          switch (value.Type)
          {
             case Value.ValueType.String:
@@ -78,6 +78,7 @@ namespace Orange.Library.Verbs
                value = ((OTuple)value).ToArray();
                break;
          }
+
          var generator = value.PossibleGenerator();
          Assert(generator.IsSome, "MultiAssign", "Value must be generator or generator source");
          return FromFields(generator.Value, parameters, readOnly, setting, _override, transformation);
@@ -88,6 +89,7 @@ namespace Orange.Library.Verbs
       bool readOnly;
       bool setting;
       string result;
+      string typeName;
 
       public MultiAssign(Parameters parameters, Block block, bool readOnly, bool setting)
       {
@@ -96,18 +98,23 @@ namespace Orange.Library.Verbs
          this.readOnly = readOnly;
          this.setting = setting;
          result = "";
+         typeName = "";
       }
 
       public override Value Evaluate()
       {
          var value = block.Evaluate();
-         result = Splat(value, parameters, readOnly, setting, true).ToString();
+         var splat = Splat(value, parameters, readOnly, setting, true);
+         result = splat.ToString();
+         typeName = splat.Type.ToString();
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public string Result => result;
+
+      public string TypeName => typeName;
 
       public int Index { get; set; }
 

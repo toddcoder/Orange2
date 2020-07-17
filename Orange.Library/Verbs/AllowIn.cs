@@ -41,7 +41,7 @@ namespace Orange.Library.Verbs
          return result;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
       public override string ToString() => $"allow ({definition}) in ({evaluation})";
    }

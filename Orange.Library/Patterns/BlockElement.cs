@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block block;
 
 		public BlockElement(Block block)
-			: base("")
-		{
-			this.block = block;
-		}
+			: base("") => this.block = block;
 
-		public override bool EvaluateFirst(string input)
+	   public override bool EvaluateFirst(string input)
 		{
 			text = block.Evaluate().Text;
 			return base.EvaluateFirst(input);
@@ -24,14 +21,8 @@ namespace Orange.Library.Patterns
 			return base.Evaluate(input);
 		}
 
-		public override Element Clone()
-		{
-			return clone(new BlockElement((Block)block.Clone()));
-		}
+		public override Element Clone() => clone(new BlockElement((Block)block.Clone()));
 
-		public override string ToString()
-		{
-			return "{" + block + "}";
-		}
+	   public override string ToString() => "{" + block + "}";
 	}
 }

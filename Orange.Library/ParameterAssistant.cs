@@ -45,15 +45,13 @@ namespace Orange.Library
       }
 
       public ParameterAssistant(ParameterBlock parameterBlock, bool useUpperLevel = false)
-         : this(new Arguments(parameterBlock), useUpperLevel)
-      {
-         splatting = parameterBlock.Splatting;
-      }
+         : this(new Arguments(parameterBlock), useUpperLevel) => splatting = parameterBlock.Splatting;
 
       public Block Block(bool returnBlock = true)
       {
          if (arguments.Executable == null || !arguments.Executable.CanExecute)
             return null;
+
          var block = returnBlock ? new ReturnBlock(arguments.Executable) : arguments.Executable;
          return block.CanExecute ? block : null;
       }
@@ -68,6 +66,7 @@ namespace Orange.Library
       {
          if (splatting)
             return;
+
          names.ValueVariable = arguments.VariableName(0, names.ValueVariable);
          names.KeyVariable = arguments.VariableName(1, names.KeyVariable);
          names.IndexVariable = arguments.VariableName(2, names.IndexVariable);
@@ -131,6 +130,7 @@ namespace Orange.Library
          names.ValueVariable = arguments.VariableName(0, names.ValueVariable);
          names.PositionVariable = arguments.VariableName(1, names.PositionVariable);
          names.LengthVariable = arguments.VariableName(2, names.LengthVariable);
+         names.GroupVariable = arguments.VariableName(3, names.GroupVariable);
       }
 
       public void ReaderParameter()
@@ -147,6 +147,7 @@ namespace Orange.Library
       {
          if (names.UnpackedVariables.Count == 0 && unpackedVariables.Count == 0)
             return;
+
          var array = value.IsArray ? (Array)value.SourceArray : new Array(State.FieldPattern.Split(value.Text));
          if (names.UnpackedVariables.Count > 0)
             Assign.FromFieldsLocal(array, names.UnpackedVariables.ToArray());
@@ -240,19 +241,21 @@ namespace Orange.Library
          Regions.SetLocal(names.IndexVariable, index);
       }
 
-      public void SetReplacement(string value, int position, int length)
+      public void SetReplacement(string value, int position, int length, int groupIndex)
       {
          Regions.SetLocal(names.ValueVariable, value);
          Regions.SetLocal(names.PositionVariable, position);
          Regions.SetLocal(names.LengthVariable, length);
+         Regions.SetLocal(names.GroupVariable, groupIndex);
       }
 
       public void SetReplacement()
       {
          var value = arguments[0].Text;
-         var position = (int)arguments[1].Number;
-         var length = (int)arguments[2].Number;
-         SetReplacement(value, position, length);
+         var position = arguments[1].Int;
+         var length = arguments[2].Int;
+         var groupIndex = arguments[3].Int;
+         SetReplacement(value, position, length, groupIndex);
       }
 
       public static SignalType Signal()
@@ -263,17 +266,20 @@ namespace Orange.Library
             State.LateBlock = null;
             return Breaking;
          }
+
          if (State.SkipSignal)
          {
             State.SkipSignal = false;
             State.LateBlock = null;
             return Continuing;
          }
+
          if (State.ReturnSignal)
          {
             State.LateBlock = null;
             return ReturningNull;
          }
+
          return SignalType.None;
       }
 
@@ -282,6 +288,7 @@ namespace Orange.Library
          var lateBlock = State.LateBlock;
          if (lateBlock == null || !lateBlock.CanExecute)
             return;
+
          lateBlock.Evaluate();
          State.LateBlock = null;
       }

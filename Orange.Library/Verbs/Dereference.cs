@@ -14,7 +14,7 @@ namespace Orange.Library.Verbs
 			return new Variable(value.Text);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Increment;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
 
 	   public override string ToString() => "&";
 

@@ -2,9 +2,9 @@
 using System.Text;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
+using Standard.Types.Maybe;
 
 namespace Orange.Library.Parsers
 {
@@ -14,10 +14,8 @@ namespace Orange.Library.Parsers
 
       public SignatureParser(bool tabs)
          : base($"^ /(|{(tabs ? "tabs" : "sp")}|) /(('req' | 'optional') /s+) /(('func' | 'get' | 'set' |" +
-              $" 'before' | 'after' | 'require' | 'ensure' | 'invariant') /s+) /({REGEX_VARIABLE}) /(['(:'])")
-      {
+            $" 'before' | 'after' | 'require' | 'ensure' | 'invariant') /s+) /({REGEX_VARIABLE}) /(['(:'])") =>
          freeParser = new FreeParser();
-      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -25,6 +23,7 @@ namespace Orange.Library.Parsers
          var optional = tokens[2].Trim() == "optional";
          if (!InClassDefinition && optional)
             return null;
+
          Color(position, tokens[1].Length, Whitespaces);
          Color(optionalLength, KeyWords);
          var type = tokens[3].Trim();
@@ -40,7 +39,7 @@ namespace Orange.Library.Parsers
          if (isStandard)
          {
             var parameterListParser = new ParameterListParser2();
-            return parameterListParser.Parse(source, index).Map((list, newIndex) =>
+            if (parameterListParser.Parse(source, index).If(out var list, out var newIndex))
             {
                var parameterCount = list.Count;
                var endParser = new EndParser();
@@ -50,8 +49,11 @@ namespace Orange.Library.Parsers
                overridePosition = index;
                result.Value = new Signature(name, parameterCount, optional);
                return new NullOp();
-            }, () => null);
+            }
+
+            return null;
          }
+
          var builder = new StringBuilder();
          var messageParameterParser = new MessageParameterParser();
          var variableParser = new VariableParser();
@@ -67,6 +69,7 @@ namespace Orange.Library.Parsers
          }
          else
             return null;
+
          while (messageParameterParser.Scan(source, index))
          {
             var parameter = new Parameter(messageParameterParser.ParameterName);
@@ -75,6 +78,7 @@ namespace Orange.Library.Parsers
             builder.Append("_");
             index = messageParameterParser.Result.Position;
          }
+
          if (freeParser.Scan(source, index, REGEX_END1))
          {
             freeParser.ColorAll(Structures);
@@ -83,6 +87,7 @@ namespace Orange.Library.Parsers
             result.Value = new Signature(name, parameterList.Count, optional);
             return new NullOp();
          }
+
          return null;
       }
 

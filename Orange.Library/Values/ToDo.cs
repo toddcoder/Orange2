@@ -5,12 +5,9 @@ namespace Orange.Library.Values
 {
 	public class ToDo : Value
 	{
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+		public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get
 			{
@@ -27,35 +24,17 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.ToDo;
-			}
-		}
+		public override ValueType Type => ValueType.ToDo;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return new ToDo();
-		}
+	   public override Value Clone() => new ToDo();
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "invoke", v => ((ToDo)v).Invoke());
 		}
 
-		public Value Invoke()
-		{
-			throw "Can't invoke a todo".Throws();
-		}
+		public Value Invoke() => throw "Can't invoke a todo".Throws();
 	}
 }

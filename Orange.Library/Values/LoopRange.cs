@@ -33,17 +33,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Range;
 
@@ -52,7 +44,7 @@ namespace Orange.Library.Values
       public override Value Clone()
       {
          return new LoopRange(variable, (Block)init.Clone(), positive, (Block)condition.Clone(), (Block)increment.Clone(),
-            yielding.Map(y=> (Block)y.Clone()), region.Clone());
+            yielding.Map(y => (Block)y.Clone()), region.Clone());
       }
 
       protected override void registerMessages(MessageManager manager)
@@ -71,10 +63,11 @@ namespace Orange.Library.Values
                region.SetParameter(variable, init.Evaluate());
             if (conditionFunc())
             {
-               var result = yielding.Map(y => y.Evaluate(), () => region[variable]);
+               var result = yielding.FlatMap(y => y.Evaluate(), () => region[variable]);
                region[variable] = increment.Evaluate();
                return result;
             }
+
             return NilValue;
          }
       }
@@ -85,26 +78,16 @@ namespace Orange.Library.Values
 
       public Region Region
       {
-         get
-         {
-            return region;
-         }
-         set
-         {
-            region = value.Clone();
-         }
+         get => region;
+         set => region = value.Clone();
       }
 
-      public Region SharedRegion
-      {
-         get;
-         set;
-      }
+      public Region SharedRegion { get; set; }
 
       public override string ToString()
       {
          var direction = positive ? "while" : "until";
-         var yieldingAs = yielding.Map(y => y.ToString(), () => variable);
+         var yieldingAs = yielding.FlatMap(y => y.ToString(), () => variable);
          return $"(loop {variable} = {init} {direction} then {increment} yield {yieldingAs})";
       }
 

@@ -8,7 +8,7 @@ namespace Orange.Library.Parsers
    public class IntegerParser : Parser
    {
       public IntegerParser()
-         : base("^ |sp| ['+-']? /([/d '_']+) /(['ibr'])?")
+         : base("^ |sp| ['+-']? /([/d '_']+) /(['iLr'])?")
       {
       }
 
@@ -20,8 +20,8 @@ namespace Orange.Library.Parsers
          var numberString = tokens[0].Replace("_", "").Trim();
          switch (tokens[2])
          {
-            case "b":
-               result.Value = new Big(numberString.Replace("b", ""));
+            case "L":
+               result.Value = new Big(numberString.Replace("L", ""));
                return new Push(result.Value);
             case "r":
                result.Value = new Rational(numberString.Replace("r", "").ToInt(), 1);

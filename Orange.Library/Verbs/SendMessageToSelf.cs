@@ -33,7 +33,7 @@ namespace Orange.Library.Verbs
 			return MessagingState.Send(self, message, arguments);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.SendMessage;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.SendMessage;
 
 	   public override string ToString()
 		{

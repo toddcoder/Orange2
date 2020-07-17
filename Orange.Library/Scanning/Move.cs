@@ -1,6 +1,6 @@
 ﻿using Orange.Library.Values;
 using Standard.Types.Maybe;
-using static Standard.Types.Maybe.Maybe;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Scanning
 {
@@ -8,16 +8,13 @@ namespace Orange.Library.Scanning
    {
       Block expression;
 
-      public Move(Block expression)
-      {
-         this.expression = expression;
-      }
+      public Move(Block expression) => this.expression = expression;
 
       public override IMaybe<Position> Scan(string source, Position position)
       {
          var length = (int)expression.Evaluate().Number;
          var newLength = position.Length + length;
-         return When(newLength < source.Length, () => new Position(position.Index, newLength));
+         return when(newLength < source.Length, () => new Position(position.Index, newLength));
       }
    }
 }

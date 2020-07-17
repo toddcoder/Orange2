@@ -1,129 +1,157 @@
 ﻿using System.Linq;
+using Core.Enumerables;
+using Core.Objects;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
 using static Orange.Library.Runtime;
+using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
 {
-	public class ObjectRange : Value, IRange
-	{
-		const string LOCATION = "Object Range";
-		const string ERROR_MESSAGE = "Start doesn't support cmp and/or succ messages";
+   public class ObjectRange : Value, IRange, INSGeneratorSource
+   {
+      public class ObjectRangeGenerator : NSGenerator
+      {
+         Object start;
+         Object stop;
+         Object current;
 
-		static bool supportsMessages(Object obj)
-		{
-			return obj.RespondsNoDefault("cmp") && obj.RespondsNoDefault("succ");
-		}
+         public ObjectRangeGenerator(ObjectRange range)
+            : base(range)
+         {
+            start = range.start;
+            stop = range.stop;
+         }
 
-		Object start;
-		Object stop;
+         public override void Reset()
+         {
+            current = start;
+         }
 
-		public ObjectRange(Object start, Object stop)
-		{
-			this.start = start;
-			this.stop = stop;
-		}
+         public override Value Next()
+         {
+            if (current.SendToSelf("cmp", stop).Int <= 0)
+            {
+               var deferred = current;
+               current = (Object)current.SendToSelf("succ");
+               return deferred;
+            }
 
-		public override int Compare(Value value) => 0;
+            return NilValue;
+         }
+      }
 
-	   public override string Text
-		{
-			get
-			{
-				var array = (Array)AlternateValue("");
-				return array.Values.Select(v => SendMessage(v, "str")).Listify(State.FieldSeparator.Text);
-			}
-			set
-			{
-			}
-		}
+      const string LOCATION = "Object Range";
+      const string ERROR_MESSAGE = "Start doesn't support cmp and/or succ messages";
 
-		public override double Number
-		{
-			get;
-			set;
-		}
+      static bool supportsMessages(Object obj) => obj.RespondsNoDefault("cmp") && obj.RespondsNoDefault("succ");
 
-		public override ValueType Type => ValueType.Range;
+      Object start;
+      Object stop;
 
-	   public override bool IsTrue => false;
+      public ObjectRange(Object start, Object stop)
+      {
+         this.start = start;
+         this.stop = stop;
+      }
 
-	   public override Value Clone() => new ObjectRange((Object)start.Clone(), (Object)stop.Clone());
+      public override int Compare(Value value) => 0;
 
-	   protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "in", v => ((ObjectRange)v).In());
-		}
+      public override string Text
+      {
+         get
+         {
+            var array = (Array)AlternateValue("");
+            return array.Values.Select(v => SendMessage(v, "str")).Stringify(State.FieldSeparator.Text);
+         }
+         set { }
+      }
 
-		public Value In()
-		{
-			var value = Arguments[0];
-			Object obj;
-			if (value.As<Object>().Assign(out obj))
-			{
-				Assert(supportsMessages(start), LOCATION, ERROR_MESSAGE);
-				Assert(supportsMessages(stop), LOCATION, ERROR_MESSAGE);
-				Assert(supportsMessages(obj), LOCATION, ERROR_MESSAGE);
-				for (var current = start; compare(current, stop); current = next(current))
-					if (compare(current, obj))
-						return true;
-			}
-			return false;
-		}
+      public override double Number { get; set; }
 
-		public Value Increment
-		{
-			get;
-			set;
-		}
+      public override ValueType Type => ValueType.Range;
 
-		public void SetStart(Value oStart)
-		{
-			Object newStart;
-			if (oStart.As<Object>().Assign(out newStart))
-				start = newStart;
-		}
+      public override bool IsTrue => false;
 
-		public void SetStop(Value oStop)
-		{
-			Object newStop;
-			if (oStop.As<Object>().Assign(out newStop))
-				stop = newStop;
-		}
+      public override Value Clone() => new ObjectRange((Object)start.Clone(), (Object)stop.Clone());
 
-		public Value Start => start;
+      protected override void registerMessages(MessageManager manager)
+      {
+         manager.RegisterMessage(this, "in", v => ((ObjectRange)v).In());
+      }
 
-	   public Value Stop => stop;
+      public Value In()
+      {
+         if (Arguments[0] is Object obj)
+         {
+            Assert(supportsMessages(start), LOCATION, ERROR_MESSAGE);
+            Assert(supportsMessages(stop), LOCATION, ERROR_MESSAGE);
+            Assert(supportsMessages(obj), LOCATION, ERROR_MESSAGE);
+            for (var current = start; compare(current, stop); current = next(current))
+            {
+               if (compare(current, obj))
+               {
+                  return true;
+               }
+            }
+         }
 
-	   public override Value AlternateValue(string message)
-		{
-			Assert(supportsMessages(start), LOCATION, ERROR_MESSAGE);
-			Assert(supportsMessages(stop), LOCATION, ERROR_MESSAGE);
-			var array = new Array();
-			for (var current = start; compare(current, stop); current = next(current))
-				array.Add(current);
-			array.Add(stop);
-			return array;
-		}
+         return false;
+      }
 
-		static Object next(Object current)
-		{
-			var value = current.SendToSelf("succ");
-			Object obj;
-			Assert(value.As<Object>().Assign(out obj), LOCATION, "succ message didn't return an object");
-			return obj;
-		}
+      public Value Increment { get; set; }
 
-		static bool compare(Object left, Object right) => left.SendToSelf("cmp", right, () => -1) == 0;
+      public void SetStart(Value oStart)
+      {
+         if (oStart is Object newStart)
+         {
+            start = newStart;
+         }
+      }
 
-	   public override string ToString() => $"{start} to {stop}";
+      public void SetStop(Value oStop)
+      {
+         if (oStop is Object newStop)
+         {
+            stop = newStop;
+         }
+      }
 
-	   public override bool IsArray => true;
+      public Value Start => start;
 
-	   public override Value SourceArray => AlternateValue("array");
+      public Value Stop => stop;
 
-	   public override Value ArgumentValue() => AlternateValue("arg");
-	}
+      public override Value AlternateValue(string message)
+      {
+         Assert(supportsMessages(start), LOCATION, ERROR_MESSAGE);
+         Assert(supportsMessages(stop), LOCATION, ERROR_MESSAGE);
+         var array = new Array();
+         for (var current = start; compare(current, stop); current = next(current))
+         {
+            array.Add(current);
+         }
+
+         array.Add(stop);
+         return array;
+      }
+
+      static Object next(Object current) => current.SendToSelf("succ").RequiredCast<Object>(() => "succ message didn't return an object");
+
+      static bool compare(Object left, Object right) => left.SendToSelf("cmp", right, () => -1) == 0;
+
+      public override string ToString() => $"{start} to {stop}";
+
+      public override bool IsArray => true;
+
+      public override Value SourceArray => AlternateValue("array");
+
+      public override Value ArgumentValue() => AlternateValue("arg");
+
+      public INSGenerator GetGenerator() => new ObjectRangeGenerator(this);
+
+      public Value Next(int index) => null;
+
+      public bool IsGeneratorAvailable => true;
+
+      public Array ToArray() => GeneratorToArray(this);
+   }
 }

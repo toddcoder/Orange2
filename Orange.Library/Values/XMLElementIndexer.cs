@@ -14,27 +14,12 @@
 
 		public override Value Value
 		{
-			get
-			{
-				return element[nodeName];
-			}
-			set
-			{
-				element[nodeName] = value;
-			}
+			get => element[nodeName];
+		   set => element[nodeName] = value;
 		}
 
-		public override string ContainerType
-		{
-			get
-			{
-				return ValueType.XMLElement.ToString();
-			}
-		}
+		public override string ContainerType => ValueType.XMLElement.ToString();
 
-		public override Value MessageTarget(string message)
-		{
-			return this;
-		}
+	   public override Value MessageTarget(string message) => this;
 	}
 }

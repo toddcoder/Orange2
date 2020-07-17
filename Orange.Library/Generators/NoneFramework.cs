@@ -7,26 +7,17 @@ namespace Orange.Library.Generators
 		bool none;
 
 		public NoneFramework(Generator generator, Block block, Arguments arguments)
-			: base(generator, block, arguments)
-		{
-			none = true;
-		}
+			: base(generator, block, arguments) => none = true;
 
-		public override Value Map(Value value)
+	   public override Value Map(Value value)
 		{
 			if (block.Evaluate().IsTrue)
 				none = false;
 			return none;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return !none;
-		}
+		public override bool Exit(Value value) => !none;
 
-		public override Value ReturnValue()
-		{
-			return none;
-		}
+	   public override Value ReturnValue() => none;
 	}
 }

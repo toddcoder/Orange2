@@ -33,7 +33,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "map", v => ((None)v).Map());
          manager.RegisterMessage(this, "fmap", v => ((None)v).FlatMap());
          manager.RegisterMessage(this, "value", v => Value());
-         manager.RegisterMessage(this, "else", v => ((None)v).Else());
+         manager.RegisterMessage(this, "defaultTo", v => ((None)v).DefaultTo());
       }
 
       public Value Map() => this;
@@ -46,7 +46,7 @@ namespace Orange.Library.Values
          return null;
       }
 
-      public Value Else()
+      public Value DefaultTo()
       {
          var value = Arguments[0];
          if (!value.IsEmpty)

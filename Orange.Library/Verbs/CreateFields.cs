@@ -6,7 +6,7 @@ using static Orange.Library.Verbs.CreateField;
 
 namespace Orange.Library.Verbs
 {
-   public class CreateFields : Verb
+   public class CreateFields : Verb, IStatement
    {
       bool readOnly;
       string[] fieldNames;
@@ -28,8 +28,14 @@ namespace Orange.Library.Verbs
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => $"{type} {fieldNames.Listify()}";
+
+      public string Result => fieldNames.Listify();
+
+      public string TypeName => "";
+
+      public int Index { get; set; }
    }
 }

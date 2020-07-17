@@ -1,58 +1,54 @@
-﻿using Orange.Library.Values;
+﻿using Core.Collections;
+using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
 
 namespace Orange.Library
 {
-	public class Compiler
-	{
-		public static Compiler CompilerState
-		{
-			get;
-			set;
-		} = new Compiler();
+   public class Compiler
+   {
+      public static Compiler CompilerState { get; set; } = new Compiler();
 
-		long objectID;
-		Hash<string, UserDefinedOperator> operators;
-	   Hash<string, Trait> traits;
-	   Hash<string, Class> classes;
-	   string lastClassName;
+      long objectID;
+      Hash<string, UserDefinedOperator> operators;
+      Hash<string, Trait> traits;
+      Hash<string, Class> classes;
+      string lastClassName;
 
-		public Compiler()
-		{
+      public Compiler()
+      {
          Reset();
-		}
+      }
 
-	   public void Reset()
-	   {
+      public void Reset()
+      {
          objectID = 0;
          operators = new Hash<string, UserDefinedOperator>();
          traits = new Hash<string, Trait>();
          classes = new Hash<string, Class>();
-	      lastClassName = "";
-	   }
+         lastClassName = "";
+      }
 
-		public long ObjectID() => objectID++;
+      public long ObjectID() => objectID++;
 
-	   public UserDefinedOperator Operator(string name) => operators[name];
+      public UserDefinedOperator Operator(string name) => operators[name];
 
-	   public void RegisterOperator(string name, UserDefinedOperator _operator) => operators[name] = _operator;
+      public void RegisterOperator(string name, UserDefinedOperator @operator) => operators[name] = @operator;
 
-	   public bool IsRegisteredOperator(string name) => operators.ContainsKey(name);
+      public bool IsRegisteredOperator(string name) => operators.ContainsKey(name);
 
-	   public void RegisterTrait(Trait trait) => traits[trait.Name] = trait;
+      public void RegisterTrait(Trait trait) => traits[trait.Name] = trait;
 
-	   public IMaybe<Trait> Trait(string name) => traits.If()[name];
+      public IMaybe<Trait> Trait(string name) => traits.Map(name);
 
-	   public void RegisterClass(string className, Class cls)
-	   {
-	      classes[className] = cls;
-	      lastClassName = className;
-	   }
+      public void RegisterClass(string className, Class cls)
+      {
+         classes[className] = cls;
+         lastClassName = className;
+      }
 
-	   public IMaybe<Class> Class(string name) => classes.If()[name];
+      public IMaybe<Class> Class(string name) => classes.Map(name);
 
-	   public string LastClassName => lastClassName;
-	}
+      public string LastClassName => lastClassName;
+   }
 }

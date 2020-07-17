@@ -1,31 +1,31 @@
 ﻿using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
 
 namespace Orange.Library.Parsers
 {
-	public class InvokeParser : Parser
-	{
-		public InvokeParser()
-			: base("^ /(':'? '(')")
-		{
-		}
+   public class InvokeParser : Parser
+   {
+      public InvokeParser()
+         : base("^ /(':'? '(')") { }
 
-		public override Verb CreateVerb(string[] tokens)
-		{
-			Color(length, Structures);
+      public override Verb CreateVerb(string[] tokens)
+      {
+         Color(length, Structures);
 
-		   return GetExpression(source, NextPosition, CloseParenthesis()).Map((block, index) =>
-		   {
-		      var arguments = new Arguments(block);
-		      overridePosition = index;
+         if (GetExpression(source, NextPosition, CloseParenthesis()).If(out var block, out var index))
+         {
+            var arguments = new Arguments(block);
+            overridePosition = index;
 
-		      return new Invoke(arguments);
-		   }, () => null);
-		}
+            return tokens[1].StartsWith(":") ? (Verb)new ApplyInvoke(arguments) : new Invoke(arguments);
+         }
 
-		public override string VerboseName => "invoke";
-	}
+         return null;
+      }
+
+      public override string VerboseName => "invoke";
+   }
 }

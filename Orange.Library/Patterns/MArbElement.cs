@@ -5,12 +5,9 @@ namespace Orange.Library.Patterns
 {
 	public class MArbElement : Element
 	{
-		public MArbElement(int length = -1)
-		{
-			this.length = length;
-		}
+		public MArbElement(int length = -1) => this.length = length;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			index = State.Position;
 			return length == 0 || index + length < input.Length;
@@ -37,24 +34,15 @@ namespace Orange.Library.Patterns
 					Alternate = alternate
 				};
 			}
-			set
-			{
-				base.Alternate = value;
-			}
-		}
+			set => base.Alternate = value;
+	   }
 
 		public override Element Clone() => clone(new MArbElement());
 
       public override IReplacement Replacement
       {
-         get
-         {
-            return replacement;
-         }
-         set
-         {
-            setOverridenReplacement(value);
-         }
+         get => replacement;
+         set => setOverridenReplacement(value);
       }
    }
 }

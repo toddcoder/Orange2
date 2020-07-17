@@ -1,101 +1,91 @@
 ﻿using Orange.Library.Managers;
-using Standard.Types.Objects;
+using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
-	public class InvokeableReference : Value
-	{
-		const string LOCATION = "Invokeable reference";
+   public class InvokeableReference : Value
+   {
+      const string LOCATION = "Invokeable reference";
 
-		string variableName;
+      string variableName;
 
-		public InvokeableReference(string variableName)
-		{
-			this.variableName = variableName;
-		}
+      public InvokeableReference(string variableName) => this.variableName = variableName;
 
-		public override int Compare(Value value) => value.As<Signature>().Map(s => MatchesSignature(s) ? 0 : 1, () => -1);
+      public override int Compare(Value value) => value is Signature s ? (MatchesSignature(s) ? 0 : 1) : -1;
 
-	   public bool MatchesSignature(Signature signature)
-		{
-			var invokeable = State.GetInvokeable(variableName);
-			if (invokeable == null)
-				return false;
-			return variableName.EndsWith(signature.Name) && invokeable.Matches(signature);
-		}
+      public bool MatchesSignature(Signature signature)
+      {
+         var invokeable = State.GetInvokeable(variableName);
+         if (invokeable == null)
+            return false;
 
-		public override string Text
-		{
-			get
-			{
-				var invokeable = State.GetInvokeable(variableName);
-				if (invokeable == null)
-					return "";
-				return invokeable.ImmediatelyInvokeable ? invokeable.Invoke(new Arguments()).Text : "";
-			}
-			set
-			{
-			}
-		}
+         return variableName.EndsWith(signature.Name) && invokeable.Matches(signature);
+      }
 
-		public override double Number
-		{
-			get
-			{
-				var invokeable = State.GetInvokeable(variableName);
-				if (invokeable == null)
-					return 0;
-				return invokeable.ImmediatelyInvokeable ? invokeable.Invoke(new Arguments()).Number : 0;
-			}
-			set
-			{
-			}
-		}
+      public override string Text
+      {
+         get
+         {
+            var invokeable = State.GetInvokeable(variableName);
+            if (invokeable == null)
+               return "";
 
-		public override ValueType Type => ValueType.InvokeableReference;
+            return invokeable.ImmediatelyInvokeable ? invokeable.Invoke(new Arguments()).Text : "";
+         }
+         set { }
+      }
 
-	   public override bool IsTrue => false;
+      public override double Number
+      {
+         get
+         {
+            var invokeable = State.GetInvokeable(variableName);
+            if (invokeable == null)
+               return 0;
 
-	   public override Value Clone() => new InvokeableReference(variableName);
+            return invokeable.ImmediatelyInvokeable ? invokeable.Invoke(new Arguments()).Number : 0;
+         }
+         set { }
+      }
 
-	   protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "invoke", v => ((InvokeableReference)v).Invoke());
-		}
+      public override ValueType Type => ValueType.InvokableReference;
 
-		public Value Invoke(Arguments arguments)
-		{
-			var invokeable = State.GetInvokeable(variableName);
-			RejectNull(invokeable, LOCATION, $"Invokeable for {variableName} not found");
-			var value = invokeable.Invoke(arguments);
-			return value;
-		}
+      public override bool IsTrue => false;
 
-		public Value Invoke() => Invoke(Arguments);
+      public override Value Clone() => new InvokeableReference(variableName);
 
-	   public string VariableName => variableName;
+      protected override void registerMessages(MessageManager manager)
+      {
+         manager.RegisterMessage(this, "invoke", v => ((InvokeableReference)v).Invoke());
+      }
 
-	   public Region Region
-		{
-			get;
-			set;
-		}
+      public Value Invoke(Arguments arguments)
+      {
+         var invokeable = State.GetInvokeable(variableName);
+         RejectNull(invokeable, LOCATION, $"Invokeable for {variableName} not found");
+         invokeable.ObjectRegion = ObjectRegion;
+         var value = invokeable.Invoke(arguments);
+         return value;
+      }
 
-		public IInvokeable Invokeable
-		{
-			get
-			{
-				return State.GetInvokeable(variableName);
-			}
-			set
-			{
-				State.SetInvokeable(variableName, value);
-			}
-		}
+      public Value Invoke() => Invoke(Arguments);
 
-		public override Value AssignmentValue() => (Value)Invokeable;
+      public string VariableName => variableName;
 
-	   public override Value AlternateValue(string message) => (Value)Invokeable;
-	}
+      public Region Region { get; set; }
+
+      public IInvokeable Invokeable
+      {
+         get => State.GetInvokeable(variableName);
+         set => State.SetInvokeable(variableName, value);
+      }
+
+      public override Value AssignmentValue() => (Value)Invokeable;
+
+      public override Value AlternateValue(string message) => (Value)Invokeable;
+
+      public IMaybe<ObjectRegion> ObjectRegion { get; set; } = none<ObjectRegion>();
+   }
 }

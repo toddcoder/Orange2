@@ -84,14 +84,8 @@ namespace Orange.Library.Values
 
 		public int Limit
 		{
-			get
-			{
-				return limit;
-			}
-			set
-			{
-				limit = value < 0 ? Runtime.MAX_ARRAY : value;
-			}
+			get => limit;
+		   set => limit = value < 0 ? Runtime.MAX_ARRAY : value;
 		}
 
 		public Array Array => Array.ArrayFromSequence(this);

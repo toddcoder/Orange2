@@ -35,14 +35,8 @@ namespace Orange.Library.Generators
 			return value;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return value.IsNil;
-		}
+		public override bool Exit(Value value) => value.IsNil;
 
-		public override Value ReturnValue()
-		{
-			return min;
-		}
+	   public override Value ReturnValue() => min;
 	}
 }

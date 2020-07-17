@@ -5,7 +5,7 @@ namespace Orange.Library.Verbs
 {
 	public class ShiftRightAssign : OperatorAssign
 	{
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
 	   public override Value Execute(Variable variable, Value value) => (int)variable.Number >> (int)value.Number;
 

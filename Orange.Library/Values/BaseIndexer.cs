@@ -8,12 +8,9 @@ namespace Orange.Library.Values
 		protected Array array;
 
 		protected BaseIndexer(Array array)
-			: base(VAR_ANONYMOUS + CompilerState.ObjectID())
-		{
-			this.array = array;
-		}
+			: base(VAR_ANONYMOUS + CompilerState.ObjectID()) => this.array = array;
 
-		protected abstract T[] getIndicators();
+	   protected abstract T[] getIndicators();
 
 		protected abstract Value getSlice(T[] indicators);
 
@@ -21,22 +18,13 @@ namespace Orange.Library.Values
 
 		public override Value Value
 		{
-			get
-			{
-				return getSlice(getIndicators());
-			}
-			set
-			{
-				setSlice(getIndicators(), value);
-			}
+			get => getSlice(getIndicators());
+		   set => setSlice(getIndicators(), value);
 		}
 
-		public override Value AlternateValue(string message)
-		{
-			return Value;
-		}
+		public override Value AlternateValue(string message) => Value;
 
-		protected abstract void setLength();
+	   protected abstract void setLength();
 
 		public abstract Value SelfMap();
 

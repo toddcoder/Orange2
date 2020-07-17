@@ -1,10 +1,9 @@
 ﻿using System.Linq;
+using Core.Collections;
+using Core.Monads;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
-using Standard.Types.Objects;
 using static Orange.Library.Compiler;
 using static Orange.Library.Values.Object.VisibilityType;
 using Signature = Orange.Library.Values.Signature;
@@ -16,7 +15,7 @@ namespace Orange.Library.Parsers
       string className;
       bool isAbstract;
       string[] traitNames;
-      IMaybe<Class> superClass;
+      IMaybe<Class> anySuperClass;
       Hash<string, Signature> signatures;
       Hash<string, Signature> superSignatures;
       Hash<string, Signature> abstractSignatures;
@@ -30,14 +29,14 @@ namespace Orange.Library.Parsers
          this.isAbstract = isAbstract;
          this.traitNames = traitNames;
 
-         superClass = CompilerState.Class(superClassName);
-         if (superClass.IsSome || traitNames.Length > 0)
+         anySuperClass = CompilerState.Class(superClassName);
+         if (anySuperClass.HasValue || traitNames.Length > 0)
          {
             signatures = getSignatures(objectBlock, parameters);
-            if (superClass.IsSome)
+            if (anySuperClass.If(out var superClass))
             {
-               var superObjectBlock = superClass.Value.ObjectBlock;
-               superSignatures = getSignatures(superObjectBlock, superClass.Value.Parameters);
+               var superObjectBlock = superClass.ObjectBlock;
+               superSignatures = getSignatures(superObjectBlock, superClass.Parameters);
                abstractSignatures = superObjectBlock.AsAdded
                   .OfType<SpecialAssignment>()
                   .Where(a => a.IsAbstract)
@@ -64,20 +63,23 @@ namespace Orange.Library.Parsers
 
          foreach (var verb in block.AsAdded)
          {
-            var createFunction = verb.As<CreateFunction>();
-            if (createFunction.IsSome)
+            switch (verb)
             {
-               var signature = createFunction.Value.Signature;
-               signatures[createFunction.Value.FunctionName] = signature;
-            }
-            verb.As<SpecialAssignment>().Map(sa => sa.Signature).If(signature => signatures[signature.Name] = signature);
-            var assignToNewField = verb.As<AssignToNewField>();
-            if (assignToNewField.IsSome)
-            {
-               var fieldName = assignToNewField.Value.FieldName;
-               signatures[fieldName] = new Signature(fieldName, 0, false);
-               if (!assignToNewField.Value.ReadOnly)
-                  signatures[SetterName(fieldName)] = new Signature(fieldName, 1, false);
+               case CreateFunction createFunction:
+                  signatures[createFunction.FunctionName] = createFunction.Signature;
+                  break;
+               case SpecialAssignment sa when sa.Signature.If(out var signature):
+                  signatures[signature.Name] = signature;
+                  break;
+               case AssignToNewField assign:
+                  var fieldName = assign.FieldName;
+                  signatures[fieldName] = new Signature(fieldName, 0, false);
+                  if (assign.ReadOnly)
+                  {
+                     signatures[SetterName(fieldName)] = new Signature(fieldName, 1, false);
+                  }
+
+                  break;
             }
          }
 
@@ -86,10 +88,15 @@ namespace Orange.Library.Parsers
             var name = parameter.Name;
             var visibility = parameter.Visibility;
             if (visibility == Temporary)
+            {
                continue;
+            }
+
             signatures[name] = new Signature(name, 0, false);
             if (!parameter.ReadOnly)
+            {
                signatures[SetterName(name)] = new Signature(name, 1, false);
+            }
          }
 
          return signatures;
@@ -97,8 +104,10 @@ namespace Orange.Library.Parsers
 
       public IResult<string> Passes()
       {
-         if (superClass.IsNone && traitNames.Length == 0)
+         if (anySuperClass.IsNone && traitNames.Length == 0)
+         {
             return className.Success();
+         }
 
          return
             from checkedTraits in checkTraits()
@@ -112,26 +121,26 @@ namespace Orange.Library.Parsers
          traits = new Hash<string, Trait>();
          foreach (var traitName in traitNames)
          {
-            var trait = CompilerState.Trait(traitName);
-            if (trait.IsNone)
+            var anyTrait = CompilerState.Trait(traitName);
+            if (anyTrait.If(out var trait))
+            {
+               traits[traitName] = trait;
+            }
+            else
+            {
                return $"{traitName} is not a trait".Failure<string>();
-            traits[traitName] = trait.Value;
+            }
          }
 
-         var ifSignatures = signatures.If();
-
-         foreach (var item in traits)
+         foreach (var (traitName, trait) in traits)
          {
-            var traitName = item.Key;
-            var trait = item.Value;
-            foreach (var signature in trait.Members
-               .Select(member => member.Value.As<Signature>())
-               .Where(signature => !signature.IsNone)
-               .Select(signature => new { signature, classSignature = ifSignatures[signature.Value.Name] })
-               .Where(t => t.classSignature.IsNone)
-               .Select(t => t.signature))
-               return $"Trait {traitName}.{signature.Value.UnmangledSignature} not defined in class {className}"
-                  .Failure<string>();
+            foreach (var (_, possibleSignature) in trait.Members)
+            {
+               if (possibleSignature is Signature signature && !signatures.ContainsKey(signature.Name))
+               {
+                  return $"Trait {traitName}.{signature.UnmangledSignature} not defined in class {className}".Failure<string>();
+               }
+            }
          }
 
          return className.Success();
@@ -140,27 +149,34 @@ namespace Orange.Library.Parsers
       IResult<string> checkAbstracts()
       {
          if (isAbstract)
+         {
             return className.Success();
+         }
 
-         var ifSignatures = signatures.If();
          foreach (var absSignature in abstractSignatures
             .Select(item => new { item, absSignature = item.Value })
-            .Select(t => new { t, signature = ifSignatures[t.item.Key] })
+            .Select(t => new { t, signature = signatures.Map(t.item.Key) })
             .Where(t => !t.signature.IsSome || t.signature
-               .Map(s => s.As<SpecialAssignment>()
-                  .Map(sa => sa.IsAbstract, () => false), () => false))
+               .FlatMap(s => s.IfCast<SpecialAssignment>()
+                  .FlatMap(sa => sa.IsAbstract, () => false), () => false))
             .Select(t => t.t.absSignature))
+         {
             return $"{absSignature.UnmangledSignature} hasn't been implemented".Failure<string>();
+         }
+
          return className.Success();
       }
 
       IResult<string> checkOverrides()
       {
          foreach (var item in signatures.Where(item => !isOverridden(item.Key)))
+         {
             return $"{item.Key} needs to be overridden".Failure<string>();
+         }
+
          return className.Success();
       }
 
-      bool isOverridden(string name) => !superSignatures.ContainsKey(name) || overrides.If()[name].Map(b => b, () => false);
+      bool isOverridden(string name) => !superSignatures.ContainsKey(name) || overrides.DefaultTo(name, false);
    }
 }

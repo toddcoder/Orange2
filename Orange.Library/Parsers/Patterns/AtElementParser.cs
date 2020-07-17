@@ -1,7 +1,6 @@
-﻿using Orange.Library.Patterns;
+﻿using Core.Strings;
+using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Strings;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
@@ -10,10 +9,7 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class AtElementParser : Parser, IElementParser
    {
-      public AtElementParser()
-         : base("^ /(/s* '@') /('(' | /d+)")
-      {
-      }
+      public AtElementParser() : base("^ /(/s* '@') /('(' | /d+)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -22,12 +18,14 @@ namespace Orange.Library.Parsers.Patterns
          if (atSource == "(")
          {
             Color(atSource.Length, Structures);
-            return GetExpression(source, NextPosition, CloseParenthesis()).Map((at, index) =>
+            if (GetExpression(source, NextPosition, CloseParenthesis()).If(out var at, out var index))
             {
                Element = new AtBlockElement(at);
                overridePosition = index;
                return new NullOp();
-            }, () => null);
+            }
+
+            return null;
          }
 
          Color(atSource.Length, Numbers);
@@ -38,10 +36,6 @@ namespace Orange.Library.Parsers.Patterns
 
       public override string VerboseName => "at element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

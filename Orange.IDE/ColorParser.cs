@@ -41,32 +41,30 @@ namespace Orange.IDE
 			var length = textBox.SelectionLength;
 			var normalFont = textBox.Font;
 			using (var boldFont = new Font(textBox.Font, FontStyle.Bold))
+			using (var italicFont = new Font(textBox.Font, FontStyle.Italic))
 			{
-				using (var italicFont = new Font(textBox.Font, FontStyle.Italic))
-				{
-					StopTextBoxUpdate(textBox);
+			   StopTextBoxUpdate(textBox);
 
-					foreach (var color in colors.Select(item => item.Value))
-					{
-						textBox.Select(color.Position, color.Length);
-						textBox.SelectionColor = getForeColor(color);
-						textBox.SelectionBackColor = getBackColor(color);
-						Font selectionFont;
-						if (isItalic(color.Type))
-							selectionFont = italicFont;
-						else if (isBold(color.Type))
-							selectionFont = boldFont;
-						else
-							selectionFont = normalFont;
-						textBox.SelectionFont = selectionFont;
-					}
+			   foreach (var color in colors.Select(item => item.Value))
+			   {
+			      textBox.Select(color.Position, color.Length);
+			      textBox.SelectionColor = getForeColor(color);
+			      textBox.SelectionBackColor = getBackColor(color);
+			      Font selectionFont;
+			      if (isItalic(color.Type))
+			         selectionFont = italicFont;
+			      else if (isBold(color.Type))
+			         selectionFont = boldFont;
+			      else
+			         selectionFont = normalFont;
+			      textBox.SelectionFont = selectionFont;
+			   }
 
-					textBox.SelectionStart = position;
-					textBox.SelectionLength = length;
+			   textBox.SelectionStart = position;
+			   textBox.SelectionLength = length;
 
-					ResumeTextBoxUpdate(textBox);
-					textBox.Refresh();
-				}
+			   ResumeTextBoxUpdate(textBox);
+			   textBox.Refresh();
 			}
 		}
 

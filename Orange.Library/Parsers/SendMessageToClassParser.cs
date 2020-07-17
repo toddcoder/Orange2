@@ -10,9 +10,6 @@ namespace Orange.Library.Parsers
       {
       }
 
-      protected override Verb getVerb(string type, string message, Arguments arguments, int index)
-      {
-         return new SendMessageToClass(message, arguments);
-      }
+      protected override Verb getVerb(string type, string message, Arguments arguments, int index) => new SendMessageToClass(message, arguments);
    }
 }

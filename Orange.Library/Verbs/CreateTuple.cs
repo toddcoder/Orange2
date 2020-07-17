@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -13,11 +12,11 @@ namespace Orange.Library.Verbs
       {
          var stack = State.Stack;
          var right = stack.Pop(true, LOCATION);
-         var left= stack.Pop(true, LOCATION);
-         return left.As<OTuple>().Map(tuple => new OTuple(tuple, right), () => new OTuple(left, right));
+         var left = stack.Pop(true, LOCATION);
+         return left is OTuple tuple ? new OTuple(tuple, right) : new OTuple(left, right);
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.CreateTuple;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.CreateTuple;
 
       public override string ToString() => ";";
    }

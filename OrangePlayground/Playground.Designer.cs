@@ -38,20 +38,17 @@
          this.tabText = new System.Windows.Forms.TabPage();
          this.textText = new System.Windows.Forms.RichTextBox();
          this.labelResult = new System.Windows.Forms.Label();
-         this.split = new System.Windows.Forms.SplitContainer();
-         this.textEditor = new System.Windows.Forms.RichTextBox();
-         this.textResults = new System.Windows.Forms.RichTextBox();
+         this.panel1 = new System.Windows.Forms.Panel();
+         this.textEditor = new OrangePlayground.DrawableRichTextBox();
          this.statusStrip = new System.Windows.Forms.StatusStrip();
          this.labalElapsed = new System.Windows.Forms.ToolStripStatusLabel();
+         this.dialogSave = new System.Windows.Forms.SaveFileDialog();
          this.table.SuspendLayout();
          this.tabs.SuspendLayout();
          this.tabConsole.SuspendLayout();
          this.tabErrors.SuspendLayout();
          this.tabText.SuspendLayout();
-         ((System.ComponentModel.ISupportInitialize)(this.split)).BeginInit();
-         this.split.Panel1.SuspendLayout();
-         this.split.Panel2.SuspendLayout();
-         this.split.SuspendLayout();
+         this.panel1.SuspendLayout();
          this.statusStrip.SuspendLayout();
          this.SuspendLayout();
          // 
@@ -61,7 +58,7 @@
          this.table.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
          this.table.Controls.Add(this.tabs, 0, 2);
          this.table.Controls.Add(this.labelResult, 0, 1);
-         this.table.Controls.Add(this.split, 0, 0);
+         this.table.Controls.Add(this.panel1, 0, 0);
          this.table.Dock = System.Windows.Forms.DockStyle.Fill;
          this.table.Location = new System.Drawing.Point(0, 0);
          this.table.Name = "table";
@@ -140,7 +137,7 @@
          // textText
          // 
          this.textText.Dock = System.Windows.Forms.DockStyle.Fill;
-         this.textText.Font = new System.Drawing.Font("Source Code Pro", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+         this.textText.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
          this.textText.Location = new System.Drawing.Point(0, 0);
          this.textText.Name = "textText";
          this.textText.Size = new System.Drawing.Size(791, 270);
@@ -152,7 +149,7 @@
          this.labelResult.AutoSize = true;
          this.labelResult.BackColor = System.Drawing.SystemColors.Highlight;
          this.labelResult.Dock = System.Windows.Forms.DockStyle.Fill;
-         this.labelResult.Font = new System.Drawing.Font("Code New Roman", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+         this.labelResult.Font = new System.Drawing.Font("Consolas", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
          this.labelResult.ForeColor = System.Drawing.SystemColors.HighlightText;
          this.labelResult.Location = new System.Drawing.Point(3, 302);
          this.labelResult.Name = "labelResult";
@@ -161,52 +158,28 @@
          this.labelResult.Text = "...";
          this.labelResult.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
          // 
-         // split
+         // panel1
          // 
-         this.split.Dock = System.Windows.Forms.DockStyle.Fill;
-         this.split.Location = new System.Drawing.Point(3, 3);
-         this.split.Name = "split";
-         // 
-         // split.Panel1
-         // 
-         this.split.Panel1.Controls.Add(this.textEditor);
-         // 
-         // split.Panel2
-         // 
-         this.split.Panel2.Controls.Add(this.textResults);
-         this.split.Size = new System.Drawing.Size(799, 296);
-         this.split.SplitterDistance = 500;
-         this.split.TabIndex = 5;
+         this.panel1.Controls.Add(this.textEditor);
+         this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+         this.panel1.Location = new System.Drawing.Point(3, 3);
+         this.panel1.Name = "panel1";
+         this.panel1.Size = new System.Drawing.Size(799, 296);
+         this.panel1.TabIndex = 5;
          // 
          // textEditor
          // 
          this.textEditor.Dock = System.Windows.Forms.DockStyle.Fill;
          this.textEditor.Location = new System.Drawing.Point(0, 0);
          this.textEditor.Name = "textEditor";
-         this.textEditor.Size = new System.Drawing.Size(500, 296);
-         this.textEditor.TabIndex = 6;
+         this.textEditor.Size = new System.Drawing.Size(799, 296);
+         this.textEditor.TabIndex = 1;
          this.textEditor.Text = "";
+         this.textEditor.SelectionChanged += new System.EventHandler(this.textResults_SelectionChanged);
          this.textEditor.VScroll += new System.EventHandler(this.textEditor_VScroll);
          this.textEditor.TextChanged += new System.EventHandler(this.textEditor_TextChanged);
          this.textEditor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textEditor_KeyPress);
          this.textEditor.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textEditor_KeyUp);
-         // 
-         // textResults
-         // 
-         this.textResults.BackColor = System.Drawing.SystemColors.Info;
-         this.textResults.BorderStyle = System.Windows.Forms.BorderStyle.None;
-         this.textResults.DetectUrls = false;
-         this.textResults.Dock = System.Windows.Forms.DockStyle.Fill;
-         this.textResults.Font = new System.Drawing.Font("Source Code Pro", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-         this.textResults.ForeColor = System.Drawing.SystemColors.InfoText;
-         this.textResults.Location = new System.Drawing.Point(0, 0);
-         this.textResults.Name = "textResults";
-         this.textResults.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
-         this.textResults.Size = new System.Drawing.Size(295, 296);
-         this.textResults.TabIndex = 8;
-         this.textResults.Text = "";
-         this.textResults.WordWrap = false;
-         this.textResults.SelectionChanged += new System.EventHandler(this.textResults_SelectionChanged);
          // 
          // statusStrip
          // 
@@ -222,6 +195,12 @@
          this.labalElapsed.Name = "labalElapsed";
          this.labalElapsed.Size = new System.Drawing.Size(118, 17);
          this.labalElapsed.Text = "toolStripStatusLabel1";
+         // 
+         // dialogSave
+         // 
+         this.dialogSave.DefaultExt = "*.txt";
+         this.dialogSave.Filter = "Text files|*.txt|All files|*.*";
+         this.dialogSave.Title = "Save Text";
          // 
          // Playground
          // 
@@ -242,10 +221,7 @@
          this.tabConsole.ResumeLayout(false);
          this.tabErrors.ResumeLayout(false);
          this.tabText.ResumeLayout(false);
-         this.split.Panel1.ResumeLayout(false);
-         this.split.Panel2.ResumeLayout(false);
-         ((System.ComponentModel.ISupportInitialize)(this.split)).EndInit();
-         this.split.ResumeLayout(false);
+         this.panel1.ResumeLayout(false);
          this.statusStrip.ResumeLayout(false);
          this.statusStrip.PerformLayout();
          this.ResumeLayout(false);
@@ -264,11 +240,11 @@
       private System.Windows.Forms.Label labelResult;
       private System.Windows.Forms.TabPage tabText;
       private System.Windows.Forms.RichTextBox textText;
-      private System.Windows.Forms.SplitContainer split;
-      private System.Windows.Forms.RichTextBox textEditor;
-      private System.Windows.Forms.RichTextBox textResults;
       private System.Windows.Forms.StatusStrip statusStrip;
       private System.Windows.Forms.ToolStripStatusLabel labalElapsed;
+      private System.Windows.Forms.SaveFileDialog dialogSave;
+      private System.Windows.Forms.Panel panel1;
+      private DrawableRichTextBox textEditor;
    }
 }
 

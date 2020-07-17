@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Orange.Library</RootNamespace>
     <AssemblyName>Orange.Library</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -34,25 +34,25 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Standard.Computer">
-      <HintPath>C:\Enterprise\Standard\Standard.Computer.dll</HintPath>
+    <Reference Include="Core, Version=1.1.1.3, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.dll</HintPath>
     </Reference>
-    <Reference Include="Standard.Configurations, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Enterprise\Standard\Standard.Configurations.dll</HintPath>
+    <Reference Include="Core.Data, Version=1.1.1.3, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Standard.Internet">
-      <HintPath>C:\Enterprise\Standard\Standard.Internet.dll</HintPath>
+    <Reference Include="Core.Internet, Version=1.1.1.3, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.Internet.dll</HintPath>
     </Reference>
-    <Reference Include="Standard.ObjectGraphs">
-      <HintPath>C:\Enterprise\Standard\Standard.ObjectGraphs.dll</HintPath>
-    </Reference>
-    <Reference Include="Standard.Types">
-      <HintPath>C:\Enterprise\Standard\Standard.Types.dll</HintPath>
+    <Reference Include="Core.ObjectGraphs, Version=1.1.1.3, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.ObjectGraphs.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net461\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -66,7 +66,6 @@
     <Compile Include="BlockBuilder.cs" />
     <Compile Include="BlockMatcher.cs" />
     <Compile Include="BlockState.cs" />
-    <Compile Include="BoundValuesHelper.cs" />
     <Compile Include="Buffer.cs" />
     <Compile Include="ClassBuilder.cs" />
     <Compile Include="CodeBuilder.cs" />
@@ -146,7 +145,18 @@
     <Compile Include="NewOrangeCompiler.cs" />
     <Compile Include="ObjectBuildingRegion.cs" />
     <Compile Include="ObjectRegion.cs" />
+    <Compile Include="ObjectRegionPopper.cs" />
+    <Compile Include="Parsers\ConstructorData.cs" />
+    <Compile Include="Parsers\ConstructorParser.cs" />
+    <Compile Include="Parsers\CurriedFunctionParser.cs" />
+    <Compile Include="Parsers\DataParser.cs" />
+    <Compile Include="Parsers\EndOfLineType.cs" />
+    <Compile Include="Parsers\IfExpressionParser.cs" />
+    <Compile Include="Parsers\ImportParser.cs" />
+    <Compile Include="Parsers\IndentParser.cs" />
+    <Compile Include="Parsers\MiddleParser.cs" />
     <Compile Include="Parsers\AltLoopRangeParser.cs" />
+    <Compile Include="Parsers\ApplyInvokeParser.cs" />
     <Compile Include="Parsers\ArrayComprehensionParser.cs" />
     <Compile Include="Parsers\ArraySubComprehensionParser.cs" />
     <Compile Include="Parsers\AssertParser.cs" />
@@ -155,7 +165,12 @@
     <Compile Include="Parsers\BlockOrLambdaParser.cs" />
     <Compile Include="Parsers\ChangeSignParser.cs" />
     <Compile Include="Parsers\ClassSetterParser.cs" />
+    <Compile Include="Parsers\CofunctionBuilder.cs" />
+    <Compile Include="Parsers\DeferParser.cs" />
     <Compile Include="Parsers\DereferenceParser.cs" />
+    <Compile Include="Parsers\IterateParser.cs" />
+    <Compile Include="Parsers\ElseParser.cs" />
+    <Compile Include="Parsers\FirstParser.cs" />
     <Compile Include="Parsers\HideParser.cs" />
     <Compile Include="Parsers\IndexedGetterMessageParser.cs" />
     <Compile Include="Parsers\IndexedGetterParser.cs" />
@@ -165,12 +180,16 @@
     <Compile Include="Parsers\InheritParser.cs" />
     <Compile Include="Parsers\InnerComprehensionParser.cs" />
     <Compile Include="Parsers\InterpolatedStringParser2.cs" />
+    <Compile Include="Parsers\LastParser.cs" />
     <Compile Include="Parsers\LazyOperatorParser.cs" />
-    <Compile Include="Parsers\Line\SkippedLineParser.cs" />
+    <Compile Include="Parsers\Line\DoLambdaParser.cs" />
+    <Compile Include="Parsers\Line\BlankLineParser.cs" />
     <Compile Include="Parsers\Line\SubstitutionParser.cs" />
     <Compile Include="Parsers\LoopRangeParser.cs" />
     <Compile Include="Parsers\MessagePathParser.cs" />
+    <Compile Include="Parsers\ModuleParser.cs" />
     <Compile Include="Parsers\MultilineFunctionInvokeParser.cs" />
+    <Compile Include="Parsers\NextParser.cs" />
     <Compile Include="Parsers\NotParser.cs" />
     <Compile Include="Parsers\OuterComprehensionParser.cs" />
     <Compile Include="Parsers\GuardParser.cs" />
@@ -181,7 +200,7 @@
     <Compile Include="Parsers\CreateFieldParser.cs" />
     <Compile Include="Parsers\DeferredParser.cs" />
     <Compile Include="Parsers\DefineExpressionParser.cs" />
-    <Compile Include="Parsers\DisjoinMessageParser.cs" />
+    <Compile Include="Parsers\DisjointMessageParser.cs" />
     <Compile Include="Parsers\CommaVariableParser.cs" />
     <Compile Include="Parsers\ComparisandParser.cs" />
     <Compile Include="Parsers\DoNothingParser.cs" />
@@ -195,7 +214,6 @@
     <Compile Include="Parsers\FreeParser.cs" />
     <Compile Include="Parsers\FunctionalIfParser.cs" />
     <Compile Include="Parsers\GeneratorParser.cs" />
-    <Compile Include="Parsers\GrammarParser.cs" />
     <Compile Include="Parsers\MaybeParser.cs" />
     <Compile Include="Parsers\IncrementsParser.cs" />
     <Compile Include="Parsers\LineBlockParser.cs" />
@@ -211,7 +229,6 @@
     <Compile Include="Parsers\Line\ValueMessageParser.cs" />
     <Compile Include="Parsers\Line\ValueParser.cs" />
     <Compile Include="Parsers\ListParser.cs" />
-    <Compile Include="Parsers\MatchExpressionParser.cs" />
     <Compile Include="Parsers\MatchParser.cs" />
     <Compile Include="Parsers\FunctionInvokeParser.cs" />
     <Compile Include="Parsers\MultiAssignParser.cs" />
@@ -227,16 +244,18 @@
     <Compile Include="Parsers\Patterns\ConstantElementParser.cs" />
     <Compile Include="Parsers\PostfixOperatorParser.cs" />
     <Compile Include="Parsers\PostIncrementDecrementParser.cs" />
+    <Compile Include="Parsers\PrintlnParser.cs" />
+    <Compile Include="Parsers\PrintParser.cs" />
     <Compile Include="Parsers\PublishParser.cs" />
     <Compile Include="Parsers\RangeOperatorParser.cs" />
     <Compile Include="Parsers\RecordParser.cs" />
     <Compile Include="Parsers\RegexParser.cs" />
     <Compile Include="Parsers\RepeatParser.cs" />
+    <Compile Include="Parsers\ResetParser.cs" />
     <Compile Include="Parsers\ReturnSignalParser.cs" />
     <Compile Include="Parsers\Scanning\IScanItem.cs" />
     <Compile Include="Parsers\Scanning\MoveParser.cs" />
     <Compile Include="Parsers\Scanning\ScanItemParser.cs" />
-    <Compile Include="Parsers\Scanning\ScanParser.cs" />
     <Compile Include="Parsers\SendMessageToClassParser.cs" />
     <Compile Include="Parsers\SetterParser.cs" />
     <Compile Include="Parsers\ShortLambdaParser.cs" />
@@ -260,6 +279,8 @@
     <Compile Include="Parsers\FieldListParser.cs" />
     <Compile Include="Parsers\Stop.cs" />
     <Compile Include="Parsers\OpenEndRangeParser.cs" />
+    <Compile Include="Parsers\StopParser.cs" />
+    <Compile Include="Parsers\TryParser.cs" />
     <Compile Include="Parsers\UseParser.cs" />
     <Compile Include="Parsers\WhenUnlessParser.cs" />
     <Compile Include="Parsers\WhereParser.cs" />
@@ -342,7 +363,6 @@
     <Compile Include="Parsers\FormatLiteralParser.cs" />
     <Compile Include="Parsers\HexParser.cs" />
     <Compile Include="Parsers\IntegerParser.cs" />
-    <Compile Include="Parsers\InterpolatedStringParser.cs" />
     <Compile Include="Parsers\MessageVerbParser.cs" />
     <Compile Include="Parsers\MultilineCommentParser.cs" />
     <Compile Include="Parsers\NullOpParser.cs" />
@@ -401,13 +421,17 @@
     <Compile Include="Values\AutoInvoker.cs" />
     <Compile Include="Values\BlockEventArgs.cs" />
     <Compile Include="Values\ChooseIndexer.cs" />
+    <Compile Include="Values\Constructor.cs" />
+    <Compile Include="Values\ConstructorProxy.cs" />
     <Compile Include="Values\Consts.cs" />
+    <Compile Include="Values\Data.cs" />
     <Compile Include="Values\Failure.cs" />
     <Compile Include="Values\ForValue.cs" />
     <Compile Include="Values\FunctionApplication.cs" />
     <Compile Include="Values\FunctionChain.cs" />
     <Compile Include="Values\Generate.cs" />
     <Compile Include="Values\GeneratorList.cs" />
+    <Compile Include="Values\IMatch.cs" />
     <Compile Include="Values\InternalGetter.cs" />
     <Compile Include="Values\KeyValue.cs" />
     <Compile Include="Values\List.cs" />
@@ -416,10 +440,12 @@
     <Compile Include="Values\LoopRange.cs" />
     <Compile Include="Values\MessageSet.cs" />
     <Compile Include="Values\NativeFunction.cs" />
+    <Compile Include="Values\NewModule.cs" />
     <Compile Include="Values\None.cs" />
     <Compile Include="Values\NSDateRange.cs" />
     <Compile Include="Values\NSGenerator.cs" />
     <Compile Include="Values\NSGeneratorMod.cs" />
+    <Compile Include="Values\NSGeneratorSource.cs" />
     <Compile Include="Values\NSInnerComprehension.cs" />
     <Compile Include="Values\NSIntRangeByLength.cs" />
     <Compile Include="Values\NSIterator.cs" />
@@ -432,6 +458,7 @@
     <Compile Include="Values\NSStackGenerator.cs" />
     <Compile Include="Values\NSStringRange.cs" />
     <Compile Include="Values\OTuple.cs" />
+    <Compile Include="Values\FlatGenerator.cs" />
     <Compile Include="Values\Record.cs" />
     <Compile Include="Values\Regex.cs" />
     <Compile Include="Values\RegexResult.cs" />
@@ -454,7 +481,6 @@
     <Compile Include="Values\LazyBlock.cs" />
     <Compile Include="Values\Macro.cs" />
     <Compile Include="Values\MemoLambda.cs" />
-    <Compile Include="Values\MessageData.cs" />
     <Compile Include="Values\Object.cs" />
     <Compile Include="Values\ObjectPropertyVariable.cs" />
     <Compile Include="Values\ObjectIndexer.cs" />
@@ -499,7 +525,6 @@
     <Compile Include="Values\Null.cs" />
     <Compile Include="Values\Class.cs" />
     <Compile Include="Values\Pair.cs" />
-    <Compile Include="Values\Pattern2.cs" />
     <Compile Include="Values\Pending.cs" />
     <Compile Include="Values\Placeholder.cs" />
     <Compile Include="Values\PseudoRecursion.cs" />
@@ -519,7 +544,6 @@
     <Compile Include="Values\Cube.cs" />
     <Compile Include="Values\DateRange.cs" />
     <Compile Include="Values\DotNet.cs" />
-    <Compile Include="Values\DoubleIterator.cs" />
     <Compile Include="Values\Enumeration.cs" />
     <Compile Include="Values\EnumerationItem.cs" />
     <Compile Include="Values\Error.cs" />
@@ -528,16 +552,13 @@
     <Compile Include="Values\Global.cs" />
     <Compile Include="Values\IFreeze.cs" />
     <Compile Include="Values\IIterator.cs" />
-    <Compile Include="Values\IndexerRange.cs" />
     <Compile Include="Values\IndexIndexer.cs" />
     <Compile Include="Values\IndirectXML.cs" />
     <Compile Include="Values\ArrayStream.cs" />
     <Compile Include="Values\Interval.cs" />
-    <Compile Include="Values\IntRange.cs" />
     <Compile Include="Values\Invoker.cs" />
     <Compile Include="Values\IRange.cs" />
     <Compile Include="Values\IntLazyArray.cs" />
-    <Compile Include="Values\IntIterator.cs" />
     <Compile Include="Values\FileLines.cs" />
     <Compile Include="Values\KeyIndexer.cs" />
     <Compile Include="Values\Lines.cs" />
@@ -576,9 +597,7 @@
     <Compile Include="Values\ReplacementLiteral.cs" />
     <Compile Include="Values\StopIncrement.cs" />
     <Compile Include="Values\StringIndexer.cs" />
-    <Compile Include="Values\StringIterator.cs" />
     <Compile Include="Values\StringLazyArray.cs" />
-    <Compile Include="Values\StringRange.cs" />
     <Compile Include="Values\Symbol.cs" />
     <Compile Include="Values\Table.cs" />
     <Compile Include="Values\Ternary.cs" />
@@ -592,7 +611,6 @@
     <Compile Include="Values\XML.cs" />
     <Compile Include="Values\XMLElement.cs" />
     <Compile Include="Values\XMLElementIndexer.cs" />
-    <Compile Include="Values\GeneratingLambda.cs" />
     <Compile Include="VariableNames.cs" />
     <Compile Include="VerbStack.cs" />
     <Compile Include="Orange.cs" />
@@ -733,8 +751,10 @@
     <Compile Include="Verbs\AddToConcatenation.cs" />
     <Compile Include="Verbs\All.cs" />
     <Compile Include="Verbs\Any.cs" />
+    <Compile Include="Verbs\ApplyInvoke.cs" />
     <Compile Include="Verbs\ClassSetter.cs" />
     <Compile Include="Verbs\CreateGenerator.cs" />
+    <Compile Include="Verbs\CreateNewModule.cs" />
     <Compile Include="Verbs\CreateRecord.cs" />
     <Compile Include="Verbs\CreateStaticBlock.cs" />
     <Compile Include="Verbs\CreateTuple.cs" />
@@ -748,13 +768,19 @@
     <Compile Include="Verbs\Generate.cs" />
     <Compile Include="Verbs\Guard.cs" />
     <Compile Include="Verbs\ImmediateMap.cs" />
+    <Compile Include="Verbs\Import.cs" />
+    <Compile Include="Verbs\Indent.cs" />
     <Compile Include="Verbs\IndexedSetter.cs" />
     <Compile Include="Verbs\IndexedSetterMessage.cs" />
     <Compile Include="Verbs\IsMatch.cs" />
+    <Compile Include="Verbs\IsNot.cs" />
     <Compile Include="Verbs\IsNotMatch.cs" />
+    <Compile Include="Verbs\IStatementResult.cs" />
     <Compile Include="Verbs\IYieldingStatement.cs" />
+    <Compile Include="Verbs\Let.cs" />
     <Compile Include="Verbs\Maybe.cs" />
     <Compile Include="Verbs\IStatement.cs" />
+    <Compile Include="Verbs\NewData.cs" />
     <Compile Include="Verbs\NoneVerb.cs" />
     <Compile Include="Verbs\NSCountedRange.cs" />
     <Compile Include="Verbs\NSLazyRange.cs" />
@@ -763,6 +789,7 @@
     <Compile Include="Verbs\One.cs" />
     <Compile Include="Verbs\OpenEndRange.cs" />
     <Compile Include="Verbs\RangeOperator.cs" />
+    <Compile Include="Verbs\ReturnExpression.cs" />
     <Compile Include="Verbs\Scan.cs" />
     <Compile Include="Verbs\SendMessageToField.cs" />
     <Compile Include="Verbs\SendMessageToProperty.cs" />
@@ -813,7 +840,6 @@
     <Compile Include="Verbs\ConcatenationAssign.cs" />
     <Compile Include="Verbs\Cons.cs" />
     <Compile Include="Verbs\ConvertToArray.cs" />
-    <Compile Include="Verbs\CountedRange.cs" />
     <Compile Include="Verbs\CreateAutoProperty.cs" />
     <Compile Include="Verbs\CreateField.cs" />
     <Compile Include="Verbs\CreateFields.cs" />
@@ -840,7 +866,6 @@
     <Compile Include="Verbs\PushNone.cs" />
     <Compile Include="Verbs\PushSome.cs" />
     <Compile Include="Verbs\SimpleMessage.cs" />
-    <Compile Include="Verbs\Do.cs" />
     <Compile Include="Verbs\During.cs" />
     <Compile Include="Verbs\CreateUnto.cs" />
     <Compile Include="Verbs\IfExecute.cs" />
@@ -858,14 +883,16 @@
     <Compile Include="Verbs\SafeDivide.cs" />
     <Compile Include="Verbs\Shift.cs" />
     <Compile Include="Verbs\SingleValueArray.cs" />
+    <Compile Include="Verbs\BlankLine.cs" />
     <Compile Include="Verbs\SkipUntil.cs" />
     <Compile Include="Verbs\SkipWhile.cs" />
     <Compile Include="Verbs\SomeOp.cs" />
+    <Compile Include="Verbs\Stop.cs" />
     <Compile Include="Verbs\TakeUntil.cs" />
     <Compile Include="Verbs\TakeWhile.cs" />
     <Compile Include="Verbs\ToList.cs" />
+    <Compile Include="Verbs\Try.cs" />
     <Compile Include="Verbs\UnlessVerb.cs" />
-    <Compile Include="Verbs\Until.cs" />
     <Compile Include="Verbs\From.cs" />
     <Compile Include="Verbs\CreateDelegate.cs" />
     <Compile Include="Verbs\CreateFunction.cs" />
@@ -881,7 +908,7 @@
     <Compile Include="Verbs\Cross.cs" />
     <Compile Include="Verbs\Defer.cs" />
     <Compile Include="Verbs\DivBy.cs" />
-    <Compile Include="Verbs\Each.cs" />
+    <Compile Include="Verbs\Iterate.cs" />
     <Compile Include="Verbs\EndOfDataAssign.cs" />
     <Compile Include="Verbs\NSExclusiveRange.cs" />
     <Compile Include="Verbs\ExitSignal.cs" />
@@ -910,7 +937,6 @@
     <Compile Include="Verbs\Dereference.cs" />
     <Compile Include="Verbs\EmptyArray.cs" />
     <Compile Include="Verbs\Inside.cs" />
-    <Compile Include="Verbs\Iterator.cs" />
     <Compile Include="Verbs\Join.cs" />
     <Compile Include="Verbs\NotDivBy.cs" />
     <Compile Include="Verbs\NotNil.cs" />
@@ -925,13 +951,13 @@
     <Compile Include="Verbs\Then.cs" />
     <Compile Include="Verbs\AllowIn.cs" />
     <Compile Include="Verbs\CaseExecute.cs" />
+    <Compile Include="Verbs\Unpipe.cs" />
     <Compile Include="Verbs\Use.cs" />
     <Compile Include="Verbs\UserDefinedOperator.cs" />
     <Compile Include="Verbs\ValueOperator.cs" />
     <Compile Include="Verbs\VerbList.cs" />
     <Compile Include="Verbs\WhenVerb.cs" />
     <Compile Include="Verbs\Where.cs" />
-    <Compile Include="Verbs\While.cs" />
     <Compile Include="Verbs\WhileExecute.cs" />
     <Compile Include="Verbs\With.cs" />
     <Compile Include="Verbs\Yield.cs" />
@@ -973,7 +999,6 @@
     <Compile Include="Verbs\Power.cs" />
     <Compile Include="Verbs\Print.cs" />
     <Compile Include="Verbs\PushFieldSeparator.cs" />
-    <Compile Include="Verbs\PushIndexerRange.cs" />
     <Compile Include="Verbs\PushKeyedValue.cs" />
     <Compile Include="Verbs\Push.cs" />
     <Compile Include="Verbs\RecordIterator.cs" />
@@ -1018,8 +1043,11 @@
   <ItemGroup>
     <Folder Include="FreePatterns\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

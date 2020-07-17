@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using Standard.Types.Strings;
-using Standard.Types.Tuples;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Parsers.StatementParser.InclusionType;
 using static Orange.Library.Runtime;
-using static Standard.Types.Tuples.TupleFunctions;
 using Array = Orange.Library.Values.Array;
 using Object = Orange.Library.Values.Object;
 
@@ -20,7 +18,7 @@ namespace Orange.Library.Parsers
    {
       const string LOCATION = "Class parser";
 
-      public static Tuple<string, Parameters, string[], int> Ancestors(string source, int index)
+      public static (string, Parameters, string[], int) Ancestors(string source, int index)
       {
          var inheritanceParser = new InheritanceParser();
          var doesParser = new DoesParser();
@@ -40,28 +38,27 @@ namespace Orange.Library.Parsers
             index = doesParser.Result.Position;
          }
 
-         return tuple(superName, superParameters, traits.ToArray(), index);
+         return (superName, superParameters, traits.ToArray(), index);
       }
 
       public ClassParser()
-         : base($"^ /('abstract' /s+)? /(('class' | 'enum' | 'union' | 'module' | 'extend' | 'view') /s+) " +
-              $"/({REGEX_VARIABLE}) /(\'(\')?")
-      {
-      }
+         : base(@"^ /(|tabs|) /('abstract' /s+)? /(('class' | 'enum' | 'module' | 'union' | 'extend' | 'view') /s+) " +
+            $"/({REGEX_VARIABLE}) /(\'(\')?") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
-         var isAbstract = tokens[1].IsNotEmpty();
-         var type = tokens[2].Trim();
-         var className = tokens[3];
-         var parameterBegin = tokens[4];
+         var isAbstract = tokens[2].IsNotEmpty();
+         var type = tokens[3].Trim();
+         var className = tokens[4];
+         var parameterBegin = tokens[5];
          ClassName = className;
          EnumerationValue = -1;
          CurrentVisibility = Object.VisibilityType.Public;
 
-         Color(position,tokens[1].Length, KeyWords);
+         Color(position, tokens[1].Length, Whitespaces);
          Color(tokens[2].Length, KeyWords);
-         Color(className.Length, Invokeables);
+         Color(tokens[3].Length, KeyWords);
+         Color(className.Length, Types);
          Color(parameterBegin.Length, Structures);
 
          Parameters parameters;
@@ -72,7 +69,7 @@ namespace Orange.Library.Parsers
             index = position + length;
             var parametersParser = new ParametersParser();
             var parsed = parametersParser.Parse(source, index);
-            if (!parsed.Assign(out parameters, out index))
+            if (!parsed.If(out parameters, out index))
                return null;
 
             if (type == "enum")
@@ -96,11 +93,8 @@ namespace Orange.Library.Parsers
             index = position + length;
          }
 
-         string superClass;
-         Parameters superParameters;
-         string[] traits;
-
-         Ancestors(source, index).Assign(out superClass, out superParameters, out traits, out index);
+         (var superClass, var superParameters, var traits, var newIndex) = Ancestors(source, index);
+         index = newIndex;
 
          var endParser = new EndParser();
          if (endParser.Scan(source, index))
@@ -114,9 +108,7 @@ namespace Orange.Library.Parsers
             if (type == "enum")
                addEnumerationSupport(className);
             LockedDown = type == "view";
-            Block block;
-            int newIndex;
-            if (GetBlock(source, index, true, InClass).Assign(out block, out newIndex))
+            if (GetBlock(source, index, true, InClass).If(out var block, out newIndex))
             {
                objectBlock = block;
                index = newIndex;
@@ -148,14 +140,15 @@ namespace Orange.Library.Parsers
          switch (type)
          {
             case "module":
-               return new CreateModule(className, cls, true);
+               return new CreateModule(className, cls, true) { Index = position };
             case "extend":
                return new CreateExtender(className, cls);
             default:
                var verb = new CreateClass(className, cls)
                {
                   HelperFunctions = HelperFunctions,
-                  HelperBlock = HelperBlock
+                  HelperBlock = HelperBlock,
+                  Index = position
                };
                HelperFunctions = null;
                HelperBlock = null;
@@ -173,7 +166,7 @@ namespace Orange.Library.Parsers
          builder.Push();
          builder.Verb(new PushArrayLiteral(new Array()));
          var expression = builder.Pop(true);
-         builder.AssignToNewField(true, "valueToName",expression);
+         builder.AssignToNewField(true, "valueToName", expression);
 
          builder.Push();
          builder.Verb(new PushArrayLiteral(new Array()));

@@ -9,6 +9,7 @@ namespace Orange.Library.Values
    {
       List<INSGenerator> generators;
       int index;
+      bool more;
 
       public GeneratorList()
       {
@@ -26,17 +27,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Generator;
 
@@ -49,13 +42,18 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "reset", v => ((GeneratorList)v).DoReset());
          manager.RegisterMessage(this, "next", v => ((INSGenerator)v).Next());
          manager.RegisterMessage(this, "if", v => ((INSGenerator)v).If());
+         manager.RegisterMessage(this, "ifNot", v => ((INSGenerator)v).IfNot());
          manager.RegisterMessage(this, "map", v => ((INSGenerator)v).Map());
+         manager.RegisterMessage(this, "mapIf", v => ((INSGenerator)v).MapIf());
          manager.RegisterMessage(this, "skip", v => ((INSGenerator)v).Skip());
          manager.RegisterMessage(this, "skipWhile", v => ((INSGenerator)v).SkipWhile());
          manager.RegisterMessage(this, "skipUntil", v => ((INSGenerator)v).SkipUntil());
          manager.RegisterMessage(this, "take", v => ((INSGenerator)v).Take());
          manager.RegisterMessage(this, "takeWhile", v => ((INSGenerator)v).TakeWhile());
          manager.RegisterMessage(this, "takeUntil", v => ((INSGenerator)v).TakeUntil());
+         manager.RegisterMessage(this, "unique", v => ((INSGenerator)v).Unique());
+         manager.RegisterMessage(this, "flat", v => ((INSGenerator)v).Flat());
+         manager.RegisterMessage(this, "first", v => ((INSGenerator)v).First());
          manager.RegisterMessage(this, "group", v => ((INSGenerator)v).Group());
          manager.RegisterMessage(this, "array", v => ((INSGenerator)v).Array());
          manager.RegisterMessage(this, "foldl", v => ((INSGenerator)v).FoldL());
@@ -68,6 +66,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "splitWhile", v => ((INSGenerator)v).SplitWhile());
          manager.RegisterMessage(this, "splitUntil", v => ((INSGenerator)v).SplitUntil());
          manager.RegisterMessage(this, "concat", v => ((GeneratorList)v).Concatenate());
+         manager.RegisterMessage(this, "more", v => ((GeneratorList)v).More);
       }
 
       public Value DoReset()
@@ -84,13 +83,17 @@ namespace Orange.Library.Values
             generator.Reset();
          }
          index = 0;
+         more = true;
       }
 
       public Value Next()
       {
          if (index >= generators.Count)
+         {
+            more = false;
             return NilValue;
-         for (var i = 0; i < MAX_LOOP && index<generators.Count; i++)
+         }
+         for (var i = 0; i < MAX_LOOP && index < generators.Count; i++)
          {
             var generator = generators[index];
             var value = generator.Next();
@@ -99,14 +102,22 @@ namespace Orange.Library.Values
                index++;
                continue;
             }
+
+            more = !value.IsNil;
             return value;
          }
+
+         more = false;
          return NilValue;
       }
 
       public Value If() => NSGenerator.If(this, Arguments);
 
+      public Value IfNot() => NSGenerator.IfNot(this, Arguments);
+
       public Value Map() => NSGenerator.Map(this, Arguments);
+
+      public Value MapIf() => NSGenerator.MapIf(this, Arguments);
 
       public Value Skip() => NSGenerator.Skip(this, Arguments);
 
@@ -142,6 +153,12 @@ namespace Orange.Library.Values
 
       public Value SplitUntil() => NSGenerator.SplitUntil(this, Arguments);
 
+      public Value Unique() => NSGenerator.Unique(this, Arguments);
+
+      public Value Flat() => NSGenerator.Flat(this, Arguments);
+
+      public Value First() => NSGenerator.First(this, Arguments);
+
       public Value Concatenate()
       {
          var generator = Arguments[0].PossibleGenerator();
@@ -150,17 +167,13 @@ namespace Orange.Library.Values
          return this;
       }
 
-      public Region Region
-      {
-         get;
-         set;
-      } = new Region();
+      public Region Region { get; set; } = new Region();
 
       public INSGeneratorSource GeneratorSource => null;
 
-      public void Visit(Value value)
-      {
-      }
+      public void Visit(Value value) { }
+
+      public bool More => more;
 
       public override string ToString() => Array().ToString();
    }

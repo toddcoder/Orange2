@@ -7,12 +7,6 @@
 		{
 		}
 
-		public override bool Usable
-		{
-			get
-			{
-				return false;
-			}
-		}
+		public override bool Usable => false;
 	}
 }

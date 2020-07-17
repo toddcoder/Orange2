@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Monads;
+using Core.Strings;
 using Orange.Library.Values;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.Strings;
 using static System.DateTime;
+using static System.Diagnostics.Debug;
 using static System.Math;
+using static Core.Monads.MonadFunctions;
+using static Core.Strings.StringFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Maybe.Maybe;
-using static Standard.Types.Strings.StringHelps;
 using Array = Orange.Library.Values.Array;
 using Double = Orange.Library.Values.Double;
 using Object = Orange.Library.Values.Object;
@@ -24,48 +23,41 @@ namespace Orange.Library.Managers
 {
    public class RegionManager
    {
-      public static RegionManager Regions
-      {
-         get;
-         set;
-      }
+      public static RegionManager Regions { get; set; }
 
       protected static StringSet specialVariables;
 
-      static RegionManager()
+      static RegionManager() => specialVariables = new StringSet
       {
-         specialVariables = new StringSet
-         {
-            "$out",
-            "$rout",
-            "$put",
-            "$write",
-            "$recs",
-            "$fields",
-            "$outb",
-            "$putb",
-            "$writeb",
-            "$recsb",
-            "$fieldsb",
-            "$output",
-            "$trace",
-            "$now",
-            "$today",
-            "$ans",
-            "$buff",
-            "$id",
-            "$uid",
-            "$guid",
-            "$root",
-            "$seed",
-            "_",
-            "$in",
-            "$fs",
-            "$fp",
-            "$rs",
-            "$rp"
-         };
-      }
+         "$out",
+         "$rout",
+         "$put",
+         "$write",
+         "$recs",
+         "$fields",
+         "$outb",
+         "$putb",
+         "$writeb",
+         "$recsb",
+         "$fieldsb",
+         "$output",
+         "$trace",
+         "$now",
+         "$today",
+         "$ans",
+         "$buff",
+         "$id",
+         "$uid",
+         "$guid",
+         "$root",
+         "$seed",
+         "_",
+         "$in",
+         "$fs",
+         "$fp",
+         "$rs",
+         "$rp"
+      };
 
       public static bool IsSpecialVariable(string variableName) => specialVariables.Contains(variableName);
 
@@ -74,15 +66,32 @@ namespace Orange.Library.Managers
          switch (values.Length)
          {
             case 0:
-               return NilValue;
+               return null;
             case 1:
                var asString = ValueAsString(values[0]);
                State.ConsoleManager.ConsolePrint(asString);
-               return asString;
+               return null;
             default:
-               var text = values.Select(ValueAsString).Listify("");
+               var text = values.Select(ValueAsString).Stringify("");
                State.ConsoleManager.ConsolePrint(text);
-               return text;
+               return null;
+         }
+      }
+
+      static Value write(Value[] values)
+      {
+         switch (values.Length)
+         {
+            case 0:
+               return null;
+            case 1:
+               var asString = ValueAsRep(values[0]);
+               State.ConsoleManager.ConsolePrint(asString);
+               return null;
+            default:
+               var text = values.Select(ValueAsRep).Stringify("");
+               State.ConsoleManager.ConsolePrint(text);
+               return null;
          }
       }
 
@@ -92,23 +101,44 @@ namespace Orange.Library.Managers
          {
             case 0:
                State.ConsoleManager.ConsolePrintln("");
-               return NilValue;
+               return null;
             case 1:
                var asString = ValueAsString(values[0]);
                State.ConsoleManager.ConsolePrintln(asString);
-               return asString;
+               return null;
             default:
-               var text = values.Select(ValueAsString).Listify("");
+               var text = values.Select(ValueAsString).Stringify("");
                State.ConsoleManager.ConsolePrintln(text);
-               return text;
+               return null;
+         }
+      }
+
+      static Value writeln(Value[] values)
+      {
+         switch (values.Length)
+         {
+            case 0:
+               State.ConsoleManager.ConsolePrintln("");
+               return null;
+            case 1:
+               var asString = ValueAsRep(values[0]);
+               State.ConsoleManager.ConsolePrintln(asString);
+               return null;
+            default:
+               var text = values.Select(ValueAsRep).Stringify("");
+               State.ConsoleManager.ConsolePrintln(text);
+               return null;
          }
       }
 
       static Value put(Value[] values)
       {
          foreach (var value in values)
+         {
             State.ConsoleManager.Put(ValueAsString(value));
-         return values.Listify(State.FieldSeparator.Text);
+         }
+
+         return null;
       }
 
       static Value peek(Value[] values)
@@ -126,12 +156,27 @@ namespace Orange.Library.Managers
          }
       }
 
+      static Value tabs(Value[] values)
+      {
+         switch (values.Length)
+         {
+            case 0:
+               return "\t";
+            default:
+               return "\t".Repeat(values[0].Int);
+         }
+      }
+
       static Value invokeDouble(Value[] values, Func<Double, Value> func)
       {
-         Assert(values.Length >= 1, LOCATION, "Native function missing required parameter");
-         var value = values[0].As<Double>();
-         Assert(value.IsSome, LOCATION, $"{values[0]} isn't a Number");
-         return func(value.Value);
+         Runtime.Assert(values.Length >= 1, LOCATION, "Native function missing required parameter");
+         if (values[0] is Double value)
+         {
+            return func(value);
+         }
+
+         Throw(LOCATION, $"{values[0]} isn't a Number");
+         return null;
       }
 
       static Value isArray(Value[] values) => values[0].Type == Value.ValueType.Array;
@@ -151,15 +196,14 @@ namespace Orange.Library.Managers
       {
          regions = new Region[MAX_VAR_DEPTH];
          level = 0;
-         var head = new Region
-         {
-            Level = level
-         };
+         var head = new Region { Level = level };
          regions[level] = head;
          SetGlobals(sys, text, head);
 
-         Debug.WriteLine("[g");
+         WriteLine("[g");
       }
+
+      public int Level => level;
 
       public static void SetGlobals(Sys sys, string text, Region head)
       {
@@ -167,6 +211,7 @@ namespace Orange.Library.Managers
          head.CreateAndSet("$", text);
          head.CreateAndSet("pi", PI);
          head.CreateAndSet("exp", E);
+         head.CreateAndSet("tab", "\t");
          head.CreateAndSet("id", CodeBuilder.Id());
          head.CreateAndSet("fprintln", CodeBuilder.FPrintln());
          head.CreateAndSet("fprint", CodeBuilder.FPrint());
@@ -177,9 +222,11 @@ namespace Orange.Library.Managers
          head.CreateAndSet("gen", new Generate());
          head.CreateAndSet("print", new NativeFunction("print", print));
          head.CreateAndSet("println", new NativeFunction("println", println));
+         head.CreateAndSet("manif", new NativeFunction("manif", write));
+         head.CreateAndSet("manifln", new NativeFunction("manifln", writeln));
          head.CreateAndSet("put", new NativeFunction("put", put));
          head.CreateAndSet("peek", new NativeFunction("peek", peek));
-         head.CreateAndSet("is_array", new NativeFunction("is_array", isArray));
+         head.CreateAndSet("isArray", new NativeFunction("isArray", isArray));
          head.CreateAndSet("sqrt", new NativeFunction("sqrt", v => invokeDouble(v, d => d.Sqrt())));
          head.CreateAndSet("abs", new NativeFunction("abs", v => invokeDouble(v, d => Abs(d.Number))));
          head.CreateAndSet("acos", new NativeFunction("acos", v => invokeDouble(v, d => Acos(d.Number))));
@@ -196,16 +243,15 @@ namespace Orange.Library.Managers
          head.CreateAndSet("now", new NativeFunction("now", v => now()));
          head.CreateAndSet("today", new NativeFunction("today", v => today()));
          head.CreateAndSet("time", new NativeFunction("time", v => time()));
+         head.CreateAndSet("tabs", new NativeFunction("tabs", tabs));
+         head.CreateAndSet("indentation", new NativeFunction("indentation", v => State.Indentation()));
       }
 
       public void Reset()
       {
          var sys = (Sys)regions[0]["sys"];
          var text = regions[0]["$"].Text;
-         var head = new Region
-         {
-            Level = 0
-         };
+         var head = new Region { Level = 0 };
          regions[0] = head;
          SetGlobals(sys, text, head);
       }
@@ -217,14 +263,18 @@ namespace Orange.Library.Managers
             value = getSpecialField(fieldName);
             return true;
          }
+
          value = null;
          for (var i = level; i >= 0; i--)
          {
             var region = regions[i];
             value = region[fieldName];
             if (value != null)
+            {
                return true;
+            }
          }
+
          Throw(LOCATION, $"Field {fieldName} not defined");
          return false;
       }
@@ -232,23 +282,30 @@ namespace Orange.Library.Managers
       public bool FieldExists(string fieldName)
       {
          if (specialVariables.Contains(fieldName))
+         {
             return true;
+         }
+
          for (var i = level; i >= 0; i--)
          {
             var region = regions[i];
             if (region.ContainsMessage(fieldName))
+            {
                return true;
+            }
          }
+
          return false;
       }
 
-      public void SetField(string fieldName, Value value, bool _override = false)
+      public void SetField(string fieldName, Value value)
       {
          if (specialVariables.Contains(fieldName))
          {
             setSpecialField(fieldName, value);
             return;
          }
+
          for (var i = level; i >= 0; i--)
          {
             var region = regions[i];
@@ -258,7 +315,41 @@ namespace Orange.Library.Managers
                return;
             }
          }
+
          Throw(LOCATION, $"Field {fieldName} not defined");
+      }
+
+      public void SetOrCreateField(string fieldName, Value value)
+      {
+         if (specialVariables.Contains(fieldName))
+         {
+            setSpecialField(fieldName, value);
+            return;
+         }
+
+         for (var i = level; i >= 0; i--)
+         {
+            var region = regions[i];
+            if (region.ContainsMessage(fieldName))
+            {
+               region[fieldName] = value;
+               return;
+            }
+         }
+
+         Regions.Current.CreateAndSet(fieldName, value);
+      }
+
+      public void SetBinding(string fieldName, Value value, bool assigning)
+      {
+         if (assigning)
+         {
+            SetOrCreateField(fieldName, value);
+         }
+         else
+         {
+            SetLocal(fieldName, value);
+         }
       }
 
       public void RemoveField(string fieldName)
@@ -273,6 +364,7 @@ namespace Orange.Library.Managers
                return;
             }
          }
+
          Throw(LOCATION, $"Field {fieldName} not defined");
       }
 
@@ -282,8 +374,11 @@ namespace Orange.Library.Managers
          {
             var region = regions[i];
             if (region.ContainsMessage(fieldName))
+            {
                return region.IsReadOnly(fieldName);
+            }
          }
+
          Throw(LOCATION, $"Field {fieldName} not defined");
          return false;
       }
@@ -321,9 +416,9 @@ namespace Orange.Library.Managers
             case "$id":
                return CompilerState.ObjectID();
             case "$uid":
-               return UniqueID();
+               return uniqueID();
             case "$guid":
-               return GUID();
+               return guid();
             case "$root":
                return new Graph("$root", "");
             case "$seed":
@@ -347,25 +442,50 @@ namespace Orange.Library.Managers
 
       public static string ValueAsString(Value value)
       {
-         var obj = value.As<Object>();
-         if (obj.IsSome && obj.Value.RespondsNoDefault("str"))
-            return SendMessage(obj.Value, "str").Text;
-         var generator = value.As<INSGenerator>();
-         if (generator.IsSome)
-            return ToArray(generator.Value).Text;
-         return value.Text;
+         switch (value)
+         {
+            case Object obj when obj.RespondsNoDefault("str"):
+               return SendMessage(obj, "str").Text;
+            case INSGenerator generator:
+               return ToArray(generator).Text;
+            default:
+               return value.Text;
+         }
+      }
+
+      public static string ValueAsRep(Value value)
+      {
+         switch (value)
+         {
+            case Object obj when obj.RespondsNoDefault("str"):
+               return SendMessage(obj, "str").ToString();
+            case INSGenerator generator:
+               return ToArray(generator).ToString();
+            default:
+               return value.ToString();
+         }
       }
 
       static void iterate(Value value, Action<string> action)
       {
          if (value.IsArray)
+         {
             foreach (var item in (Array)value.SourceArray)
+            {
                action(ValueAsString(item.Value));
+            }
+         }
          else if (value.Type == Value.ValueType.Iterator)
+         {
             foreach (var result in (IEnumerable<Value>)value)
+            {
                action(ValueAsString(result));
+            }
+         }
          else
+         {
             action(ValueAsString(value));
+         }
       }
 
       static void setSpecialField(string name, Value value)
@@ -427,14 +547,18 @@ namespace Orange.Library.Managers
                State.FieldSeparator = new String(value.Text);
                return;
             case "$fp":
-               State.FieldPattern = value.As<Pattern>().Map(p => p, () => new Pattern());
+            {
+               State.FieldPattern = value is Pattern p ? p : new Pattern();
                return;
+            }
             case "$rs":
                State.RecordSeparator = new String(value.Text);
                return;
             case "$rp":
-               State.RecordPattern = value.As<Pattern>().Map(p => p, () => new Pattern());
+            {
+               State.RecordPattern = value is Pattern p ? p : new Pattern();
                return;
+            }
          }
       }
 
@@ -442,20 +566,24 @@ namespace Orange.Library.Managers
       {
          get
          {
-            Debug.WriteLine("getting {0} in {1}", name, name);
+            WriteLine($"getting {name} in {name}");
 
             Reject(name.IsEmpty(), LOCATION, "Name zero length (getting)");
 
-            Value value;
-            if (Field(name, out value))
+            if (Field(name, out var value))
+            {
                return value;
+            }
+
             return null;
          }
          set
          {
-            Assert(name.IsNotEmpty(), LOCATION, "Name zero length (setting)");
+            Runtime.Assert(name.IsNotEmpty(), LOCATION, "Name zero length (setting)");
             if (value == null || value.IsNil)
+            {
                return;
+            }
 
             SetField(name, value);
          }
@@ -466,38 +594,40 @@ namespace Orange.Library.Managers
       public void Dispose()
       {
          for (var i = level; i >= 0; i--)
+         {
             regions[i].Dispose();
+         }
       }
 
       public Region Current => regions[level];
 
       public void Push(string tag)
       {
-         Assert(Count < MAX_VAR_DEPTH, LOCATION, "Regions nested too deeply");
+         Runtime.Assert(Count < MAX_VAR_DEPTH, LOCATION, "Regions nested too deeply");
          var region = new Region
          {
             Tag = tag,
             Level = ++level
          };
          regions[level] = region;
-         Debug.WriteLine("{0}[{1}={2}->{3}", "-".Repeat(level), tag, region.Name, regions[level - 1].Name);
+         //WriteLine($"{"-".Repeat(level)}[{tag}={region.Name}->{regions[level - 1].Name}");
       }
 
       public void Push(Region region, string tag)
       {
-         Assert(Count < MAX_VAR_DEPTH, LOCATION, "Regions nested too deeply");
+         Runtime.Assert(Count < MAX_VAR_DEPTH, LOCATION, "Regions nested too deeply");
          region.Tag = tag;
          region.Level = ++level;
          regions[level] = region;
-         Debug.WriteLine("{0}[{1}={2}->{3}", "-".Repeat(level), tag, region.Name, regions[level - 1].Name);
+         //WriteLine($"{"-".Repeat(level)}[{tag}={region.Name}->{regions[level - 1].Name}");
       }
 
       public void Pop(string text)
       {
-         Assert(Count > 0, LOCATION, "Regions popped unevenly");
+         Runtime.Assert(Count > 0, LOCATION, "Regions popped unevenly");
          var region = regions[level--];
          region.Dispose();
-         Debug.WriteLine("{0}]{1}", "-".Repeat(level), text);
+         WriteLine($"{"-".Repeat(level)}]{text}");
       }
 
       public string Dump() => Current.Dump();
@@ -505,15 +635,15 @@ namespace Orange.Library.Managers
       public int Count => level + 1;
 
       public void SetLocal(string name, Value value, Object.VisibilityType visibility = Object.VisibilityType.Public,
-         bool _override = false, bool allowNil = false)
+         bool @override = false, bool allowNil = false)
       {
-         Current.SetLocal(name, value, visibility, _override, allowNil);
+         Current.SetLocal(name, value, visibility, @override, allowNil);
       }
 
       public void SetParameter(string name, Value value, Object.VisibilityType visibility = Object.VisibilityType.Public,
-         bool _override = false, bool allowNil = false)
+         bool @override = false, bool allowNil = false)
       {
-         Current.SetParameter(name, value, visibility, _override, allowNil);
+         Current.SetParameter(name, value, visibility, @override, allowNil);
       }
 
       public void SetReadOnly(string name) => Current.SetReadOnly(name);
@@ -525,24 +655,24 @@ namespace Orange.Library.Managers
       public bool VariableExists(string name) => FieldExists(name);
 
       public void CreateVariable(string variableName, bool global = false,
-         Object.VisibilityType visibility = Object.VisibilityType.Public, bool _override = false)
+         Object.VisibilityType visibility = Object.VisibilityType.Public, bool @override = false)
       {
-         Current.CreateVariable(variableName, global, visibility, _override);
+         Current.CreateVariable(variableName, global, visibility, @override);
       }
 
-      public void CreateVariableIfNonexistant(string variableName, bool global = false,
-         Object.VisibilityType visibility = Object.VisibilityType.Public, bool _override = false)
+      public void CreateVariableIfNonexistent(string variableName, bool global = false,
+         Object.VisibilityType visibility = Object.VisibilityType.Public, bool @override = false)
       {
-         Current.CreateVariableIfNonexistant(variableName, global, visibility, _override);
+         Current.CreateVariableIfNonexistent(variableName, global, visibility, @override);
       }
 
       public void CreateReadOnlyVariable(string variableName, bool global = false,
-         Object.VisibilityType visibility = Object.VisibilityType.Public, bool _override = false)
+         Object.VisibilityType visibility = Object.VisibilityType.Public, bool @override = false)
       {
-         Current.CreateReadOnlyVariable(variableName, global, visibility, _override);
+         Current.CreateReadOnlyVariable(variableName, global, visibility, @override);
       }
 
-      public IMaybe<Value> ValueFromVariable(string name) => When(VariableExists(name), () => this[name]);
+      public IMaybe<Value> ValueFromVariable(string name) => maybe(VariableExists(name), () => this[name]);
 
       public bool IsReadOnly(string variableName) => FieldIsReadOnly(variableName);
 
@@ -563,7 +693,9 @@ namespace Orange.Library.Managers
       public void ForEachRegion(Action<Region> action)
       {
          for (var i = level; i >= 0; i--)
+         {
             action(regions[i]);
+         }
       }
 
       public Region RegionAtLevel(int requestedLevel) => regions[requestedLevel];

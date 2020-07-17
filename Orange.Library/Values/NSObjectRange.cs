@@ -1,7 +1,9 @@
-﻿using Orange.Library.Managers;
+﻿using System.Linq;
+using Orange.Library.Managers;
 using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -18,7 +20,7 @@ namespace Orange.Library.Values
          {
             this.start = start;
             this.stop = stop;
-            current = new None<Object>();
+            current = none<Object>();
             index = 0;
          }
 
@@ -33,12 +35,14 @@ namespace Orange.Library.Values
                current = next.Some();
                return result;
             }
+
             if (current.IsSome)
             {
                var result = current.Value;
-               current=new None<Object>();
+               current = none<Object>();
                return result;
             }
+
             return NilValue;
          }
 
@@ -58,17 +62,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Range;
 
@@ -79,6 +75,10 @@ namespace Orange.Library.Values
       protected override void registerMessages(MessageManager manager)
       {
          manager.RegisterMessage(this, "array", v => ((NSObjectRange)v).ToArray());
+         manager.RegisterMessage(this, "in", v => ((NSObjectRange)v).In());
+         manager.RegisterMessage(this, "notIn", v => ((NSObjectRange)v).NotIn());
+         manager.RegisterProperty(this, "min", v => ((NSObjectRange)v).Min());
+         manager.RegisterProperty(this, "max", v => ((NSObjectRange)v).Max());
       }
 
       public INSGenerator GetGenerator() => new NSObjectGenerator(start, stop);
@@ -89,10 +89,32 @@ namespace Orange.Library.Values
 
       public Array ToArray() => GeneratorToArray(this);
 
-      public override Value AlternateValue(string message) => ToArray();
+      public override Value AlternateValue(string message)
+      {
+         switch (message)
+         {
+            case "__$get_item":
+            case "__$set_item":
+            case "len":
+               return ToArray();
+            default:
+               return (Value)GetGenerator();
+         }
+      }
 
-      public override Value ArgumentValue() => ToArray();
+      public Value In()
+      {
+         var needle = Arguments[0];
+         var iterator = new NSIterator(GetGenerator());
+         return iterator.Any(value => needle.Compare(value) == 0);
+      }
 
-      public override Value AssignmentValue() => ToArray();
+      public Value NotIn() => !In().IsTrue;
+
+      public override string ToString() => $"{start}..{stop}";
+
+      public Value Min() => start.Compare(stop) < 0 ? start : stop;
+
+      public Value Max() => stop.Compare(start) > 0 ? stop : start;
    }
 }

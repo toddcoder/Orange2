@@ -2,10 +2,7 @@
 {
 	public class NSExclusiveRange : NSRange
 	{
-		public NSExclusiveRange()
-		{
-		   inclusive = false;
-		}
+		public NSExclusiveRange() => inclusive = false;
 
 	   public override string ToString() => "...";
 	}

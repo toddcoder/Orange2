@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Managers;
-using Standard.Types.Objects;
 using static System.StringComparison;
 
 namespace Orange.Library.Values
@@ -17,28 +16,16 @@ namespace Orange.Library.Values
          this.index = index;
       }
 
-      public override int Compare(Value value)
-      {
-         return value.As<KeyValue>().Map(kv => this.value.Compare(kv.value) + string.Compare(key, kv.key, Ordinal) +
-            index.CompareTo(kv.index), () => -1);
-      }
+      public override int Compare(Value value) => value is KeyValue kv ? this.value.Compare(kv.value) +
+         string.Compare(key, kv.key, Ordinal) + index.CompareTo(kv.index) : -1;
 
       public override string Text
       {
-         get
-         {
-            return value.Text;
-         }
-         set
-         {
-         }
+         get => value.Text;
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.KeyValue;
 

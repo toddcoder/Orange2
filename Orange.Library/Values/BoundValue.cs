@@ -1,100 +1,76 @@
 ﻿using Orange.Library.Managers;
 using Orange.Library.Messages;
+using static Orange.Library.Runtime;
+using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
 {
-	public class BoundValue : Value, IMessageHandler
-	{
-		const string LOCATION = "Bound value";
+   public class BoundValue : Value, IMessageHandler
+   {
+      const string LOCATION = "Bound value";
 
-		string name;
-		Value innerValue;
+      public static bool Unbind(Value value, out string name, out Value innerValue)
+      {
+         if (value is BoundValue boundValue)
+         {
+            name = boundValue.name;
+            innerValue = boundValue.innerValue;
+            return true;
+         }
 
-		public BoundValue(string name, Value innerValue)
-		{
-			this.name = name;
-			this.innerValue = innerValue;
-		}
+         name = "";
+         innerValue = NilValue;
+         return false;
+      }
 
-		public string Name
-		{
-			get
-			{
-				return name;
-			}
-		}
+      string name;
+      Value innerValue;
 
-		public Value InnerValue
-		{
-			get
-			{
-				return innerValue;
-			}
-		}
+      public BoundValue(string name, Value innerValue)
+      {
+         this.name = name;
+         this.innerValue = innerValue;
+      }
 
-		public override int Compare(Value value)
-		{
-			return innerValue.Compare(value);
-		}
+      public string Name => name;
 
-		public override string Text
-		{
-			get
-			{
-				return innerValue.Text;
-			}
-			set
-			{
-			}
-		}
+      public Value InnerValue => innerValue;
 
-		public override double Number
-		{
-			get
-			{
-				return innerValue.Number;
-			}
-			set
-			{
-			}
-		}
+      public override int Compare(Value value) => innerValue.Compare(value);
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.BoundValue;
-			}
-		}
+      public override string Text
+      {
+         get => innerValue.Text;
+         set { }
+      }
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return innerValue.IsTrue;
-			}
-		}
+      public override double Number
+      {
+         get => innerValue.Number;
+         set { }
+      }
 
-		public override Value Clone()
-		{
-			return new BoundValue(name, innerValue.Clone());
-		}
+      public override ValueType Type => ValueType.BoundValue;
 
-		protected override void registerMessages(MessageManager manager)
-		{
-		}
+      public override bool IsTrue => innerValue.IsTrue;
 
-		public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
-		{
-			handled = false;
-			Runtime.Throw(LOCATION, "Value must be unbound first");
-			return null;
-		}
+      public override Value Clone() => new BoundValue(name, innerValue.Clone());
 
-		public bool RespondsTo(string messageName)
-		{
-			Runtime.Throw(LOCATION, "Value must be unbound first");
-			return false;
-		}
-	}
+      protected override void registerMessages(MessageManager manager) { }
+
+      public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
+      {
+         handled = false;
+         Throw(LOCATION, "Value must be unbound first");
+         return null;
+      }
+
+      public bool RespondsTo(string messageName)
+      {
+         Throw(LOCATION, "Value must be unbound first");
+         return false;
+      }
+
+      public override string ToString() => $"{name} = {innerValue}";
+   }
 }

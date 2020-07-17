@@ -2,6 +2,7 @@
 using System.Linq;
 using Orange.Library.Verbs;
 using Standard.Types.Maybe;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers.Line
 {
@@ -16,7 +17,7 @@ namespace Orange.Library.Parsers.Line
       {
          result.Verb = null;
          result.Position = -1;
-         Parser = new None<Parser>();
+         Parser = none<Parser>();
          overridePosition = null;
 
          foreach (var parser in Parsers.Where(parser => parser.Scan(source, position)))

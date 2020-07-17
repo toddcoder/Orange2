@@ -1,215 +1,181 @@
-﻿using Orange.Library.Values;
+﻿using Core.Collections;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Objects;
 
 namespace Orange.Library
 {
-	public class BlockMatcher
-	{
-		public class VerbMatcher
-		{
-			public enum MatchType
-			{
-				NoMatch,
-				Value,
-				Variable,
-				Block
-			}
+   public class BlockMatcher
+   {
+      public class VerbMatcher
+      {
+         public enum MatchType
+         {
+            NoMatch,
+            Value,
+            Variable,
+            Block
+         }
 
-			Verb input;
-			Verb pattern;
-			Value inputValue;
-			Value patternValue;
-			string inputVariable;
-			string patternVariable;
-			Block inputBlock;
-			Block patternBlock;
+         Verb input;
+         Verb pattern;
+         Value inputValue;
+         Value patternValue;
+         string inputVariable;
+         string patternVariable;
+         Block inputBlock;
+         Block patternBlock;
 
-			public VerbMatcher(Verb input, Verb pattern)
-			{
-				this.input = input;
-				this.pattern = pattern;
-			}
+         public VerbMatcher(Verb input, Verb pattern)
+         {
+            this.input = input;
+            this.pattern = pattern;
+         }
 
-			public Value InputValue
-			{
-				get
-				{
-					return inputValue;
-				}
-				set
-				{
-					inputValue = value;
-				}
-			}
+         public Value InputValue
+         {
+            get => inputValue;
+            set => inputValue = value;
+         }
 
-			public Value PatternValue
-			{
-				get
-				{
-					return patternValue;
-				}
-				set
-				{
-					patternValue = value;
-				}
-			}
+         public Value PatternValue
+         {
+            get => patternValue;
+            set => patternValue = value;
+         }
 
-			public string InputVariable
-			{
-				get
-				{
-					return inputVariable;
-				}
-				set
-				{
-					inputVariable = value;
-				}
-			}
+         public string InputVariable
+         {
+            get => inputVariable;
+            set => inputVariable = value;
+         }
 
-			public string PatternVariable
-			{
-				get
-				{
-					return patternVariable;
-				}
-				set
-				{
-					patternVariable = value;
-				}
-			}
+         public string PatternVariable
+         {
+            get => patternVariable;
+            set => patternVariable = value;
+         }
 
-			public Block InputBlock
-			{
-				get
-				{
-					return inputBlock;
-				}
-				set
-				{
-					inputBlock = value;
-				}
-			}
+         public Block InputBlock
+         {
+            get => inputBlock;
+            set => inputBlock = value;
+         }
 
-			public Block PatternBlock
-			{
-				get
-				{
-					return patternBlock;
-				}
-				set
-				{
-					patternBlock = value;
-				}
-			}
+         public Block PatternBlock
+         {
+            get => patternBlock;
+            set => patternBlock = value;
+         }
 
-			static bool matchPush(Verb verb, out Value value)
-			{
-			   var push = verb.As<Push>();
-			   if (push.IsSome)
-			   {
-			      value = push.Value.Value;
-			      return true;
-			   }
-				value = null;
-				return false;
-			}
+         static bool matchPush(Verb verb, out Value value)
+         {
+            if (verb is Push push)
+            {
+               value = push.Value;
+               return true;
+            }
 
-			public MatchType MatchPush()
-			{
-				if (matchPush(input, out inputValue) && matchPush(pattern, out patternValue))
-				{
-				   var variable1 = inputValue.As<Variable>();
-				   var variable2 = patternValue.As<Variable>();
-				   if (variable1.IsSome && variable2.IsSome)
-				   {
-				      inputVariable = variable1.Value.Name;
-				      patternVariable = variable2.Value.Name;
-                  return MatchType.Variable;
-				   }
-               if (inputValue is Block && patternValue is Block)
-                  return MatchType.Block;
-               return MatchType.Value;
-				}
-				return MatchType.NoMatch;
-			}
-		}
+            value = null;
+            return false;
+         }
 
-		public Block Input
-		{
-			get;
-			set;
-		}
+         public MatchType MatchPush()
+         {
+            if (matchPush(input, out inputValue) && matchPush(pattern, out patternValue))
+            {
+               switch (inputValue)
+               {
+                  case Variable variable1 when patternValue is Variable variable2:
+                     inputVariable = variable1.Name;
+                     patternVariable = variable2.Name;
+                     return MatchType.Variable;
+                  case Block _ when patternValue is Block:
+                     return MatchType.Block;
+                  default:
+                     return MatchType.Value;
+               }
+            }
 
-		public Block Pattern
-		{
-			get;
-			set;
-		}
+            return MatchType.NoMatch;
+         }
+      }
 
-		public Block Replacement
-		{
-			get;
-			set;
-		}
+      public Block Input { get; set; }
 
-		public Value Replace()
-		{
-			if (Replacement == null)
-				return Input;
+      public Block Pattern { get; set; }
 
-			var patternVerbs = Pattern.AsAdded;
-			var patternCount = patternVerbs.Count;
+      public Block Replacement { get; set; }
 
-			var builder = new CodeBuilder();
+      public Value Replace()
+      {
+         if (Replacement == null)
+         {
+            return Input;
+         }
 
-			var inputVerbs = Input.AsAdded;
-			var inputCount = inputVerbs.Count;
+         var patternVerbs = Pattern.AsAdded;
+         var patternCount = patternVerbs.Count;
 
-			var mapping = new Hash<string, string>();
+         var builder = new CodeBuilder();
 
-			for (var i = 0; i < inputCount; i++)
-			{
-				const bool successful = true;
-				for (var j = 0; j < patternCount; j++)
-				{
-					var verb = inputVerbs[i];
-					var patternVerb = patternVerbs[j];
+         var inputVerbs = Input.AsAdded;
+         var inputCount = inputVerbs.Count;
 
-					if (verb.GetType() != patternVerb.GetType())
-						break;
+         var mapping = new Hash<string, string>();
 
-					var verbMatcher = new VerbMatcher(verb, patternVerb);
-					var breaking = false;
-					switch (verbMatcher.MatchPush())
-					{
-						case VerbMatcher.MatchType.NoMatch:
-							builder.Verb(verb);
-							break;
-						case VerbMatcher.MatchType.Value:
-							if (verbMatcher.InputValue == verbMatcher.PatternValue)
-							{
-								builder.Verb(verb);
-							}
-							else
-								breaking = true;
-							break;
-						case VerbMatcher.MatchType.Variable:
-							mapping[verbMatcher.InputVariable] = verbMatcher.PatternVariable;
-							break;
-						case VerbMatcher.MatchType.Block:
-							break;
-					}
-					if (breaking)
-						break;
-					//i++;
-				}
-				if (successful)
-					builder.Inline(Replacement);
-			}
+         for (var i = 0; i < inputCount; i++)
+         {
+            const bool successful = true;
+            for (var j = 0; j < patternCount; j++)
+            {
+               var verb = inputVerbs[i];
+               var patternVerb = patternVerbs[j];
 
-			return builder.Block;
-		}
-	}
+               if (verb.GetType() != patternVerb.GetType())
+               {
+                  break;
+               }
+
+               var verbMatcher = new VerbMatcher(verb, patternVerb);
+               var breaking = false;
+               switch (verbMatcher.MatchPush())
+               {
+                  case VerbMatcher.MatchType.NoMatch:
+                     builder.Verb(verb);
+                     break;
+                  case VerbMatcher.MatchType.Value:
+                     if (verbMatcher.InputValue == verbMatcher.PatternValue)
+                     {
+                        builder.Verb(verb);
+                     }
+                     else
+                     {
+                        breaking = true;
+                     }
+
+                     break;
+                  case VerbMatcher.MatchType.Variable:
+                     mapping[verbMatcher.InputVariable] = verbMatcher.PatternVariable;
+                     break;
+                  case VerbMatcher.MatchType.Block:
+                     break;
+               }
+
+               if (breaking)
+               {
+                  break;
+               }
+
+               //i++;
+            }
+
+            if (successful)
+            {
+               builder.Inline(Replacement);
+            }
+         }
+
+         return builder.Block;
+      }
+   }
 }

@@ -5,7 +5,7 @@ namespace Orange.Library.Parsers
    public class WithExpressionParser : WithParser
    {
       public WithExpressionParser()
-         : base("^ /(' '* 'with') /b", VerbPresidenceType.Push)
+         : base("^ /(' '* 'with') /b", VerbPrecedenceType.Push)
       {
 
       }

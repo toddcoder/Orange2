@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Managers;
-using Standard.Types.Objects;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
 
@@ -10,54 +9,48 @@ namespace Orange.Library.Values
       NSInnerComprehension innerComprehension;
       Block block;
       Region region;
+      bool more;
 
       public NSOuterComprehension(NSInnerComprehension innerComprehension, Block block)
       {
          this.innerComprehension = innerComprehension;
          region = new Region();
          this.block = block;
-       }
+      }
 
       public override int Compare(Value value) => 0;
 
       public override string Text
       {
-         get
-         {
-            return GeneratorToArray(this).Text;
-         }
-         set
-         {
-         }
+         get => GeneratorToArray(this).Text;
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Comprehension;
 
       public override bool IsTrue => false;
 
-      public override Value Clone()
-      {
-         return new NSOuterComprehension((NSInnerComprehension)innerComprehension.Clone(), (Block)block.Clone());
-      }
+      public override Value Clone() => new NSOuterComprehension((NSInnerComprehension)innerComprehension.Clone(), (Block)block.Clone());
 
       protected override void registerMessages(MessageManager manager)
       {
          manager.RegisterMessage(this, "reset", v => ((NSOuterComprehension)v).DoReset());
          manager.RegisterMessage(this, "next", v => ((NSOuterComprehension)v).Next());
          manager.RegisterMessage(this, "if", v => ((NSOuterComprehension)v).If());
+         manager.RegisterMessage(this, "ifNot", v => ((NSOuterComprehension)v).IfNot());
          manager.RegisterMessage(this, "map", v => ((NSOuterComprehension)v).Map());
+         manager.RegisterMessage(this, "mapIf", v => ((NSOuterComprehension)v).MapIf());
          manager.RegisterMessage(this, "skip", v => ((NSOuterComprehension)v).Skip());
          manager.RegisterMessage(this, "skipWhile", v => ((NSOuterComprehension)v).SkipWhile());
          manager.RegisterMessage(this, "skipUntil", v => ((NSOuterComprehension)v).SkipUntil());
          manager.RegisterMessage(this, "take", v => ((NSOuterComprehension)v).Take());
          manager.RegisterMessage(this, "takeWhile", v => ((NSOuterComprehension)v).TakeWhile());
          manager.RegisterMessage(this, "takeUntil", v => ((NSOuterComprehension)v).TakeUntil());
+         manager.RegisterMessage(this, "unique", v => ((NSOuterComprehension)v).Unique());
+         manager.RegisterMessage(this, "flat", v => ((NSOuterComprehension)v).Flat());
+         manager.RegisterMessage(this, "first", v => ((NSOuterComprehension)v).First());
          manager.RegisterMessage(this, "group", v => ((NSOuterComprehension)v).Group());
          manager.RegisterMessage(this, "array", v => ((NSOuterComprehension)v).Array());
          manager.RegisterMessage(this, "foldl", v => ((NSOuterComprehension)v).FoldL());
@@ -69,6 +62,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "split", v => ((NSOuterComprehension)v).Split());
          manager.RegisterMessage(this, "splitWhile", v => ((NSOuterComprehension)v).SplitWhile());
          manager.RegisterMessage(this, "splitUntil", v => ((NSOuterComprehension)v).SplitUntil());
+         manager.RegisterMessage(this, "more", v => ((NSOuterComprehension)v).More);
       }
 
       public Value DoReset()
@@ -84,6 +78,7 @@ namespace Orange.Library.Values
             popper.Push();
             innerComprehension.Reset();
          }
+         more = true;
       }
 
       public Value Next()
@@ -92,13 +87,23 @@ namespace Orange.Library.Values
          {
             popper.Push();
             var value = innerComprehension.Next();
-            return value.IsNil ? NilValue : block.Evaluate();
+            if (value.IsNil)
+            {
+               more = false;
+               return NilValue;
+            }
+
+            return block.Evaluate();
          }
       }
 
       public Value If() => NSGenerator.If(this, Arguments);
 
+      public Value IfNot() => NSGenerator.IfNot(this, Arguments);
+
       public Value Map() => NSGenerator.Map(this, Arguments);
+
+      public Value MapIf() => NSGenerator.MapIf(this, Arguments);
 
       public Value Skip() => NSGenerator.Skip(this, Arguments);
 
@@ -134,33 +139,28 @@ namespace Orange.Library.Values
 
       public Value SplitUntil() => NSGenerator.SplitUntil(this, Arguments);
 
+      public Value Unique() => NSGenerator.Unique(this, Arguments);
+
+      public Value Flat() => NSGenerator.Flat(this, Arguments);
+
+      public Value First() => NSGenerator.First(this, Arguments);
+
       public Region Region
       {
-         get
-         {
-            return region;
-         }
-         set
-         {
-            region = value.Clone();
-         }
+         get => region;
+         set => region = value.Clone();
       }
 
-      public INSGeneratorSource GeneratorSource => block.As<INSGeneratorSource>()
-         .Required($"{block} isn't a generator source");
+      public INSGeneratorSource GeneratorSource => block;
 
-      public void Visit(Value value)
-      {
-      }
+      public void Visit(Value value) { }
+
+      public bool More => more;
 
       public override string ToString() => $"(for {innerComprehension}: {block})";
 
       public override Value AlternateValue(string message) => GeneratorToArray(this);
 
-      public Region SharedRegion
-      {
-         get;
-         set;
-      }
+      public Region SharedRegion { get; set; }
    }
 }

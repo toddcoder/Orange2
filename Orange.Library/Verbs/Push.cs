@@ -1,43 +1,36 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
 {
-	public class Push : Verb, ITailCallVerb
-	{
-		protected Value value;
+   public class Push : Verb, ITailCallVerb
+   {
+      protected Value value;
 
-		public Push(Value value)
-		{
-			this.value = value;
-		}
+      public Push(Value value) => this.value = value;
 
-		public Push()
-			: this("")
-		{
-		}
+      public Push()
+         : this("") { }
 
-	   public override Value Evaluate() => value;
+      public override Value Evaluate() => value;
 
-	   public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
-	   public override string ToString() => value.ToString();
+      public override string ToString() => value.ToString();
 
-	   public Value Value => value;
+      public Value Value => value;
 
-	   public TailCallSearchType TailCallSearchType => Value is Block ? TailCallSearchType.NestedBlock :
-         TailCallSearchType.Cancel;
+      public TailCallSearchType TailCallSearchType => Value is Block ? TailCallSearchType.NestedBlock : TailCallSearchType.Cancel;
 
-	   public string NameProperty => null;
+      public string NameProperty => null;
 
-	   public Block NestedBlock => TailCallSearchType == TailCallSearchType.NestedBlock ? (Block)value : null;
+      public Block NestedBlock => TailCallSearchType == TailCallSearchType.NestedBlock ? (Block)value : null;
 
-		public IMaybe<string> Variable() => value.As<Variable>().Map(v => v.Name.Some());
+      public IMaybe<string> Variable() => value.IfCast<Variable>().Map(v => v.Name);
 
-	   public override IMaybe<Value.ValueType> PushType => value.Type.Some();
+      public override IMaybe<Value.ValueType> PushType => value.Type.Some();
 
-	   public override AffinityType Affinity => AffinityType.Value;
-	}
+      public override AffinityType Affinity => AffinityType.Value;
+   }
 }

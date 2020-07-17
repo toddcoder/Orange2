@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using Core.Collections;
 using Orange.Library.Values;
-using Standard.Types.Collections;
-using Standard.Types.Objects;
-using Standard.Types.RegularExpressions;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
@@ -25,61 +22,54 @@ namespace Orange.Library
          invariants = new Hash<string, IInvokeable>();
       }
 
-      public string InvokeableName(string name) => Object.InvokeableName(className, IsObject, name);
+      public string InvokableName(string name) => Object.InvokableName(className, IsObject, name);
 
       public override Value this[string name]
       {
-         get
-         {
-            return base[name];
-         }
+         get => base[name];
          set
          {
             if (IsSpecialVariable(name))
             {
                if (Empty)
                   return;
+
                base[name] = value;
                return;
             }
 
             Assert(variables.ContainsKey(name), LOCATION, $"Variable {name} undefined");
-            var invokeable = value.As<IInvokeable>();
-            if (invokeable.IsSome)
+            switch (value)
             {
-               var anAbstract = variables[name].As<Abstract>();
-               if (anAbstract.IsSome)
-                  Assert(invokeable.Value.Matches(anAbstract.Value.Signature), LOCATION,
-                     $"Signature for {name} doesn't match");
-               getContractInvokeable(name, invokeable.Value);
-               addPossibleInvariant(name, invokeable.Value);
-               var invokeableName = InvokeableName(name);
-               invokeable.Value.ImmediatelyInvokeable = true;
-               State.SetInvokeable(invokeableName, invokeable.Value);
-               SetVariable(name, new InvokeableReference(invokeableName));
-               //setAuto(name);
-               return;
+               case IInvokeable invokeable:
+                  if (variables[name] is Abstract anAbstract)
+                     Assert(invokeable.Matches(anAbstract.Signature), LOCATION, $"Signature for {name} doesn't match");
+                  getContractInvokeable(name, invokeable);
+                  addPossibleInvariant(name, invokeable);
+                  var invokeableName = InvokableName(name);
+                  invokeable.ImmediatelyInvokeable = true;
+                  State.SetInvokeable(invokeableName, invokeable);
+                  SetVariable(name, new InvokeableReference(invokeableName));
+                  break;
+               case InvokeableReference reference:
+                  SetVariable(name, reference);
+                  break;
+               default:
+                  SetVariable(name, value);
+                  break;
             }
-            var reference = value.As<InvokeableReference>();
-            if (reference.IsSome)
-            {
-               SetVariable(name, reference.Value);
-               return;
-            }
-            SetVariable(name, value);
          }
       }
 
       void setAuto(string name)
       {
-         name.Matches($"^ '__$get_' /({REGEX_VARIABLE})").If(m => SetVariable(m.FirstGroup, new InternalGetter(name)));
+         if (name.Matches($"^ '__$get_' /({REGEX_VARIABLE})").If(out var m))
+            SetVariable(m.FirstGroup, new InternalGetter(name));
       }
 
       void getContractInvokeable(string name, IInvokeable invokeable)
       {
-         string type;
-         string plainName;
-         if (!IsPrefixed(name, out type, out plainName))
+         if (!IsPrefixed(name, out var type, out var plainName))
             return;
 
          if (!type.IsMatch("^ 'req' | 'ens' $"))
@@ -89,39 +79,32 @@ namespace Orange.Library
             $"Invokeable {plainName} must be defined before any of its contract terms");
          var mainValue = variables[plainName];
 
-         var mainReference = mainValue.As<InvokeableReference>();
-         Assert(mainReference.IsSome, LOCATION, $"{plainName} must be an invokeable");
-         var mainInvokeable = mainReference.Value.Invokeable;
-
-         var contractInvokeable = mainInvokeable.As<ContractInvokeable>();
-         if (contractInvokeable.IsNone)
+         if (mainValue is InvokeableReference mainReference)
          {
-            var newInvokeable = new ContractInvokeable
+            var mainInvokeable = mainReference.Invokeable;
+            if (mainInvokeable is ContractInvokeable contractInvokeable)
             {
-               Main = mainInvokeable,
-               ImmediatelyInvokeable = true,
-               Name = plainName
-            };
-            State.SetInvokeable(mainReference.Value.VariableName, newInvokeable);
-            SetVariable(plainName, mainReference.Value);
+               var newInvokeable = new ContractInvokeable { Main = mainInvokeable, ImmediatelyInvokeable = true, Name = plainName };
+               State.SetInvokeable(mainReference.VariableName, newInvokeable);
+               SetVariable(plainName, mainReference);
+               switch (type)
+               {
+                  case "req":
+                     contractInvokeable.Require = invokeable;
+                     break;
+                  case "ens":
+                     contractInvokeable.Ensure = invokeable;
+                     break;
+               }
+            }
          }
-         switch (type)
-         {
-            case "req":
-               contractInvokeable.Value.Require = invokeable;
-               break;
-            case "ens":
-               contractInvokeable.Value.Ensure = invokeable;
-               break;
-         }
+         else
+            Throw(LOCATION, $"{plainName} must be an invokeable");
       }
 
       void addPossibleInvariant(string name, IInvokeable invokeable)
       {
-         string type;
-         string plainName;
-
-         if (!IsPrefixed(name, out type, out plainName))
+         if (!IsPrefixed(name, out var type, out var plainName))
             return;
 
          if (type != "inv")
@@ -133,14 +116,6 @@ namespace Orange.Library
          invariants[plainName] = invokeable;
       }
 
-      /*		void registerInvokeable(string name)
-            {
-               string type;
-               string plainName;
-               if (Runtime.IsPrefixed(name, out type, out plainName))
-                  contracts[plainName] = Contract.TypeToContractType(type);
-            }*/
-
       public ObjectRegion NewRegion(Object obj, bool purgeTempVariables)
       {
          lockVariables();
@@ -149,6 +124,7 @@ namespace Orange.Library
             region.SetLocal(item.Key, item.Value, visibilityTypes[item.Key]);
          foreach (var item in ReadOnlys.Where(item => item.Value == ReadOnlyType.ReadOnly))
             region.SetReadOnly(item.Key);
+
          if (purgeTempVariables)
             purgeTemporaryVariables(region);
          region.SetInitializers(Initializers);
@@ -186,35 +162,20 @@ namespace Orange.Library
 
       public override bool Exists(string name) => ContainsMessage(name);
 
-      public IStaticObject StaticObject
-      {
-         get;
-         set;
-      }
+      public IStaticObject StaticObject { get; set; }
 
-      public bool Empty
-      {
-         get;
-         set;
-      }
+      public bool Empty { get; set; }
 
-      public long ID
-      {
-         get;
-         set;
-      }
+      public long ID { get; set; }
 
-      public bool IsObject
-      {
-         get;
-         set;
-      }
+      public bool IsObject { get; set; }
 
       public override Region Public()
       {
          var region = new Region();
          foreach (var item in Variables.Where(i => isPublic(i.Key)))
             region[item.Key] = item.Value;
+
          return region;
       }
 
@@ -249,21 +210,21 @@ namespace Orange.Library
          }
       }
 
-      protected override void setValue(string name, Value value, VisibilityType visibility, bool _override, bool allowNil)
+      protected override void setValue(string name, Value value, VisibilityType visibility, bool _override,
+         bool allowNil, int index)
       {
-         base.setValue(name, value, visibility, _override, allowNil);
+         base.setValue(name, value, visibility, _override, allowNil, index);
          if (value is InvokeableReference)
             return;
+
          var builder = new CodeBuilder();
          builder.Parameter("$0");
-         builder.Variable(name);
-         builder.Assign();
-         builder.Variable("$0");
+         builder.AssignToField(name, new Variable("$0"), index);
          var lambda = builder.Lambda();
          var setterName = SetterName(name);
-         var invokeableName = InvokeableName(setterName);
+         var invokeableName = InvokableName(setterName);
          State.SetInvokeable(invokeableName, lambda);
-         base.setValue(setterName, new InvokeableReference(invokeableName), VisibilityType.Public, false, false);
+         base.setValue(setterName, new InvokeableReference(invokeableName), VisibilityType.Public, false, false, index);
          removeAbstracts(name);
       }
 
@@ -271,16 +232,16 @@ namespace Orange.Library
 
       public override Region ReferenceClone<TRegion>(TRegion target)
       {
-         var objectBuildingRegion = target.As<ObjectBuildingRegion>();
-         if (objectBuildingRegion.IsNone)
-            return target;
-
-         objectBuildingRegion.Value.staticBlocks = staticBlocks;
-         objectBuildingRegion.Value.invariants = invariants;
-         objectBuildingRegion.Value.ID = ID;
-         objectBuildingRegion.Value.StaticObject = StaticObject;
-         objectBuildingRegion.Value.Empty = Empty;
-         objectBuildingRegion.Value.ID = ID;
+         var objectBuildingRegion = target as ObjectBuildingRegion;
+         if (objectBuildingRegion != null)
+         {
+            objectBuildingRegion.staticBlocks = staticBlocks;
+            objectBuildingRegion.invariants = invariants;
+            objectBuildingRegion.ID = ID;
+            objectBuildingRegion.StaticObject = StaticObject;
+            objectBuildingRegion.Empty = Empty;
+            objectBuildingRegion.ID = ID;
+         }
 
          return target;
       }

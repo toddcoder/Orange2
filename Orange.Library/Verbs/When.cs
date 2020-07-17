@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
@@ -13,7 +12,8 @@ namespace Orange.Library.Verbs
          var left = stack.Pop(true, location);
          if (left.IsNil)
             return left;
-         right.As<Object>().If(obj =>
+
+         if (right is Object obj)
          {
             var cls = obj.Class;
             if (cls.RespondsTo("parse"))
@@ -22,16 +22,18 @@ namespace Orange.Library.Verbs
                if (!newValue.IsNil)
                   left = newValue;
             }
-         });
-         return left.As<Case>()
-            .Map(c => new Case(c, right, required, null), () => new Case(left, right, false, required, null));
+         }
+         if (left is Case c)
+            return new Case(c, right, required, null);
+
+         return new Case(left, right, false, required, null);
       }
 
       const string LOCATION = "When";
 
       public override Value Evaluate() => EvaluateWhen(false, LOCATION);
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Apply;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
 
       public override string ToString() => "when";
    }

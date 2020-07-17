@@ -1,6 +1,6 @@
 ﻿using System.Linq;
+using Core.Collections;
 using Orange.Library.Values;
-using Standard.Types.Collections;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -32,11 +32,7 @@ namespace Orange.Library
 
          public Block Comparisand => comparisand;
 
-         public Block Incrementer
-         {
-            get;
-            set;
-         }
+         public Block Incrementer { get; set; }
       }
 
       string functionName;
@@ -78,10 +74,16 @@ namespace Orange.Library
             {
                Regions.SetParameter(data.Name, data.Value);
                if (data.Comparisand == null)
+               {
                   continue;
+               }
+
                var right = data.Comparisand.Evaluate(region);
                if (Case.Match(data.Value, right, false, null))
+               {
                   continue;
+               }
+
                return new Block();
             }
 
@@ -95,12 +97,15 @@ namespace Orange.Library
                variableExpand();
                increment();
 
-               Block finalBlock;
-               if (terminated(out finalBlock))
+               if (terminated(out var finalBlock))
+               {
                   return finalBlock;
+               }
+
                result = builder.Block;
                builder = new CodeBuilder();
             }
+
             return null;
          }
       }
@@ -111,14 +116,18 @@ namespace Orange.Library
          {
             var data = item.Value;
             if (data.Incrementer == null)
+            {
                continue;
+            }
 
             var value = data.Incrementer.Evaluate(region);
             region.SetParameter(data.MangledName, value);
          }
 
          foreach (var data in allParameterData.Select(item => item.Value).Where(data => data.Incrementer != null))
+         {
             region[data.Name] = region[data.MangledName];
+         }
 
          foreach (var variableName in allParameterData
             .Select(item => new
@@ -144,7 +153,9 @@ namespace Orange.Library
                .Select(i => i.Value)
                .Where(v => v.Type == Value.ValueType.Placeholder)
                .Select(v => v.Text)))
+         {
             Regions.SetParameter(variableName, new Array());
+         }
       }
 
       void createSourceBlock()
@@ -154,9 +165,8 @@ namespace Orange.Library
          for (var i = 0; i < block.Count; i++)
          {
             var verb = asAdded[i];
-            string variableName;
-            Arguments arguments;
-            if (FunctionInvoke(block, ref i, out variableName, out arguments))
+            if (FunctionInvoke(block, ref i, out var variableName, out var arguments))
+            {
                if (variableName == functionName)
                {
                   if (incrementerToBeCreated)
@@ -169,17 +179,26 @@ namespace Orange.Library
                         item.Value.Incrementer = blocks[index++];
                         item.Value.Incrementer.AutoRegister = false;
                      }
+
                      builder.Variable(functionName);
                      incrementerToBeCreated = false;
                   }
                   else
+                  {
                      builder.Variable(variableName);
+                  }
                }
                else
+               {
                   builder.Verb(verb);
+               }
+            }
             else
+            {
                builder.Verb(verb);
+            }
          }
+
          sourceBlock = builder.Block;
          result = (Block)sourceBlock.Clone();
       }
@@ -188,11 +207,12 @@ namespace Orange.Library
       {
          foreach (var verb in result.AsAdded)
          {
-            string variableName;
-            if (PushVariable(verb, out variableName))
+            if (PushVariable(verb, out var variableName))
             {
                if (variableName == functionName)
+               {
                   builder.Inline(expression);
+               }
                else
                {
                   var value = Regions[variableName];
@@ -200,7 +220,9 @@ namespace Orange.Library
                }
             }
             else
+            {
                builder.Verb(verb);
+            }
          }
       }
 
@@ -212,6 +234,7 @@ namespace Orange.Library
             finalResult = new Block();
             return false;
          }
+
          switch (right.Type)
          {
             case Value.ValueType.Boolean:
@@ -221,6 +244,7 @@ namespace Orange.Library
                   evaluateTerminalExpression(out finalResult);
                   return true;
                }
+
                break;
             default:
                var left = region[checkExpressionVariable];
@@ -229,8 +253,10 @@ namespace Orange.Library
                   evaluateTerminalExpression(out finalResult);
                   return true;
                }
+
                break;
          }
+
          finalResult = null;
          return false;
       }
@@ -252,15 +278,17 @@ namespace Orange.Library
          builder.Push();
          foreach (var verb in result.AsAdded)
          {
-            string variableName;
-            if (PushVariable(verb, out variableName) && variableName != functionName)
+            if (PushVariable(verb, out var variableName) && variableName != functionName)
             {
                var value = Regions[variableName];
                builder.Value(value);
             }
             else
+            {
                builder.Verb(verb);
+            }
          }
+
          result = builder.Pop(true);
       }
 
@@ -268,11 +296,14 @@ namespace Orange.Library
       {
          foreach (var verb in result.AsAdded)
          {
-            string variableName;
-            if (PushVariable(verb, out variableName) && variableName == functionName)
+            if (PushVariable(verb, out var variableName) && variableName == functionName)
+            {
                builder.Inline(terminalBlock);
+            }
             else
+            {
                builder.Verb(verb);
+            }
          }
       }
    }

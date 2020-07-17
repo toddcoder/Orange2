@@ -10,16 +10,8 @@ namespace Orange.Library.Values
          Result = result;
       }
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public int Index { get; set; }
 
-      public string Result
-      {
-         get;
-         set;
-      }
+      public string Result { get; set; }
    }
 }

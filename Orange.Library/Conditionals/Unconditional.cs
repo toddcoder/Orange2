@@ -9,9 +9,6 @@ namespace Orange.Library.Conditionals
 		{
 		}
 
-		public override bool Evaluate(Element element)
-		{
-			return true;
-		}
+		public override bool Evaluate(Element element) => true;
 	}
 }

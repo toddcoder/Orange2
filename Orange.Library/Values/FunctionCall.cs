@@ -6,17 +6,11 @@ namespace Orange.Library.Values
 	{
 		Lambda lambda;
 
-		public FunctionCall(Lambda lambda)
-		{
-			this.lambda = lambda;
-		}
+		public FunctionCall(Lambda lambda) => this.lambda = lambda;
 
-		public override int Compare(Value value)
-		{
-			return 0;
-		}
+	   public override int Compare(Value value) => 0;
 
-		public override string Text
+	   public override string Text
 		{
 			get;
 			set;
@@ -28,40 +22,19 @@ namespace Orange.Library.Values
 			set;
 		}
 
-		public override ValueType Type
-		{
-			get
-			{
-				return ValueType.FunctionCall;
-			}
-		}
+		public override ValueType Type => ValueType.FunctionCall;
 
-		public override bool IsTrue
-		{
-			get
-			{
-				return false;
-			}
-		}
+	   public override bool IsTrue => false;
 
-		public override Value Clone()
-		{
-			return new FunctionCall((Lambda)lambda.Clone());
-		}
+	   public override Value Clone() => new FunctionCall((Lambda)lambda.Clone());
 
-		protected override void registerMessages(MessageManager manager)
+	   protected override void registerMessages(MessageManager manager)
 		{
 			manager.RegisterMessage(this, "eval", v => ((FunctionCall)v).Evaluate());
 		}
 
-		public Value Evaluate()
-		{
-			return lambda.Evaluate(Arguments);
-		}
+		public Value Evaluate() => lambda.Evaluate(Arguments);
 
-		public override string ToString()
-		{
-			return lambda.ToString();
-		}
+	   public override string ToString() => lambda.ToString();
 	}
 }

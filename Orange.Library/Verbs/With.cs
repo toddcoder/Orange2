@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
@@ -8,54 +7,55 @@ namespace Orange.Library.Verbs
    {
       Block sourceBlock;
       Block actionsBlock;
-      VerbPresidenceType presidence;
+      VerbPrecedenceType precedence;
       string result;
+      string typeName;
 
-      public With(Block sourceBlock, Block actionsBlock, VerbPresidenceType presidence)
+      public With(Block sourceBlock, Block actionsBlock, VerbPrecedenceType precedence)
       {
          this.sourceBlock = sourceBlock;
          this.actionsBlock = actionsBlock;
-         this.presidence = presidence;
+         this.precedence = precedence;
          result = "";
+         typeName = "";
       }
 
-      public With(VerbPresidenceType presidence)
+      public With(VerbPrecedenceType precedence)
       {
-         this.presidence = presidence;
+         this.precedence = precedence;
          sourceBlock = new Block();
          actionsBlock = new Block();
          result = "";
+         typeName = "";
       }
 
       public override Value Evaluate()
       {
          var value = sourceBlock.Evaluate();
-         var obj = value.As<Object>();
-         if (obj.IsSome)
+         if (value is Object obj)
          {
-            var region = new WithRegion(obj.Value);
+            var region = obj.Region;
             using (var popper = new RegionPopper(region, "with"))
             {
                popper.Push();
-               region.SetLocal("self", value);
                result = value.ToString();
+               typeName = value.Type.ToString();
                actionsBlock.Evaluate();
             }
-            return obj.Value;
+            return obj;
          }
+
          return value;
       }
 
-      public override VerbPresidenceType Presidence => presidence;
+      public override VerbPrecedenceType Precedence => precedence;
 
       public override string ToString() => $"with {sourceBlock} {actionsBlock}";
 
       public string Result => result;
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
+
+      public int Index { get; set; }
    }
 }

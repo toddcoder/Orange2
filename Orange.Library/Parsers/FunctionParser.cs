@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using Core.Strings;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
-using Standard.Types.Tuples;
 using static Orange.Library.Values.Object.VisibilityType;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -19,7 +19,7 @@ namespace Orange.Library.Parsers
       string functionName;
       bool singleLine;
       VisibilityType visibility;
-      bool _override;
+      bool @override;
       bool lockedDown;
       Lambda lambda;
       Parameters parameters;
@@ -28,8 +28,8 @@ namespace Orange.Library.Parsers
 
       public FunctionParser()
          : base("^ /(|tabs|) /(('public' | 'hidden' | 'imported') /s+)? /('override' /s+)? /('memo' /s+)?" +
-              "/(('x'? 'func' | 'get' | 'set' | 'init' | 'pure' | 'before' | 'after' | 'rec' | 'require' | 'ensure' " +
-              $"| 'invariant') /s+) /({REGEX_VARIABLE}) /(['(:['])")
+            "/(('x'? 'func' | 'get' | 'set' | 'init' | 'pure' | 'before' | 'after' | 'rec' | 'require' | 'ensure' " +
+            $"| 'invariant' | 'cofunc') |sp+|) /({REGEX_VARIABLE}) /(['(:['])")
       {
          functionBodyParser = new FunctionBodyParser();
          whereParser = new WhereParser();
@@ -45,7 +45,7 @@ namespace Orange.Library.Parsers
          visibility = ParseVisibility(visibilityName);
 
          var tokens3Length = tokens[3].Length;
-         _override = tokens3Length > 0;
+         @override = tokens3Length > 0;
 
          var tokens4Length = tokens[4].Length;
          var memoize = tokens4Length > 0;
@@ -72,9 +72,13 @@ namespace Orange.Library.Parsers
          var isDef = true;
          lockedDown = false;
          var isInit = false;
+         var isCoFunc = false;
 
          switch (type)
          {
+            case "cofunc":
+               isCoFunc = true;
+               break;
             case "xfunc":
                xMethod = true;
                break;
@@ -97,17 +101,25 @@ namespace Orange.Library.Parsers
          Color(tokens3Length, KeyWords);
          Color(tokens4Length, KeyWords);
          Color(tokens5Length, KeyWords);
-         var invokable = parametersType == ParametersType.Standard ||
-            parametersType == ParametersType.Pattern;
+         var invokable = parametersType == ParametersType.Standard || parametersType == ParametersType.Pattern;
          var entityType = invokable ? Invokeables : Messaging;
          Color(tokens6Length, entityType);
          Color(parameterType.Length, Structures);
 
          var index = NextPosition;
          var parametersParser = new ParametersParser(parametersType);
-         int newIndex;
-         if (parametersParser.Parse(source, index).Assign(out parameters, out newIndex))
-            index = newIndex;
+         if (parametersParser.Parse(source, index).If(out parameters, out index))
+         {
+            if (source.Drop(index).Keep(1) == "(")
+            {
+               var curriedFunctionParser = new CurriedFunctionParser(functionName, parameters, visibility, @override);
+               if (curriedFunctionParser.Scan(source, index))
+               {
+                  overridePosition = curriedFunctionParser.Position;
+                  return curriedFunctionParser.Verb;
+               }
+            }
+         }
          else
          {
             var builder = new StringBuilder();
@@ -124,7 +136,10 @@ namespace Orange.Library.Parsers
                index = variableParser.Position;
             }
             else
+            {
                return null;
+            }
+
             while (messageParameterParser.Scan(source, index))
             {
                var parameter = new Parameter(messageParameterParser.ParameterName);
@@ -133,14 +148,16 @@ namespace Orange.Library.Parsers
                builder.Append("_");
                index = messageParameterParser.Result.Position;
             }
+
             functionName = builder.ToString();
             parameters = new Parameters(parameterList);
          }
+
          RejectNull(parameters, VerboseName, "Parameters malformed");
          var currying = parametersParser.Currying;
 
          functionBodyParser.ExtractCondition = parametersType == ParametersType.Pattern;
-         return functionBodyParser.Parse(source, index).Map((block, i) =>
+         if (functionBodyParser.Parse(source, index).If(out var block, out var i))
          {
             index = i;
             var condition = functionBodyParser.Condition;
@@ -153,54 +170,73 @@ namespace Orange.Library.Parsers
                singleLine = !functionBodyParser.MultiCapable;
                return verb;
             }
+
+            if (isCoFunc)
+            {
+               overridePosition = index;
+               var builder = new CofunctionBuilder(functionName, parameters, block);
+               return builder.Generate();
+            }
+
             verb = createFunction(index, currying, condition, memoize, lockedDown, block);
             lambda.XMethod = xMethod;
             lambda.Expand = type == "rec";
             result.Value = lambda;
             singleLine = !functionBodyParser.MultiCapable;
             if (lambda.Where == null)
+            {
                lambda.Where = where;
+            }
+
             return verb;
-         }, () => null);
+         }
+
+         return null;
       }
 
-      Verb createFunction(int index, bool currying, Block condition, bool memoize, bool lockedDown, Block body)
-      {
-         return createFunction(index, body, currying, condition, memoize, lockedDown);
-      }
+      Verb createFunction(int index, bool currying, Block condition, bool memoize, bool lockedDown, Block body) =>
+         createFunction(index, body, currying, condition, memoize, lockedDown);
 
       Verb createFunction(int index, Block block, bool currying, Block inlineCondition, bool memoize, bool isLockedDown)
       {
          var region = getRegion();
-         if (block.Yielding)
+         if (currying)
          {
-            var generator = block.PossibleGenerator();
-            lambda = generator.IsSome ? new GeneratingLambda(region, block, parameters, false) :
-               new Lambda(region, block, parameters, false);
-         }
-         else if (currying)
             lambda = new CurryingLambda(region, block, parameters, false);
+         }
          else if (memoize && isLockedDown)
-            lambda = new MemoLambda(region, block, parameters, false);
-         else
-            lambda = new Lambda(region, block, parameters, true);
-         var condition = inlineCondition ?? ConditionParser.Parse(source, index).Map((b, i) =>
          {
-            index = i;
-            return b;
-         }, () => null);
+            lambda = new MemoLambda(region, block, parameters, false);
+         }
+         else
+         {
+            lambda = new Lambda(region, block, parameters, true);
+         }
+
+         var condition = inlineCondition;
+         if (condition is null)
+         {
+            if (ConditionParser.Parse(source, index).If(out var b, out var i))
+            {
+               index = i;
+               condition = b;
+            }
+            else
+            {
+               condition = null;
+            }
+         }
+
          if (whereParser.Scan(source, index))
          {
             var where = (Block)whereParser.Value;
             lambda.Where = where;
             index = whereParser.Position;
          }
+
          overridePosition = index;
-         return new CreateFunction(functionName, lambda, lambda.Parameters.Multi, visibility, _override, condition,
-            memoize: memoize)
-         {
-            Index = statementIndex
-         };
+         return new CreateFunction(functionName, lambda, lambda.Parameters.Multi, visibility, @override, condition, memoize: memoize)
+            { Index = statementIndex };
       }
 
       Region getRegion() => lockedDown ? new LockedDownRegion(functionName) : new Region();
@@ -209,15 +245,9 @@ namespace Orange.Library.Parsers
       {
          overridePosition = index;
          var region = getRegion();
-         lambda = new Lambda(region, block, parameters, false)
-         {
-            Initializer = true
-         };
+         lambda = new Lambda(region, block, parameters, false) { Initializer = true };
          var builder = new CodeBuilder();
-         var verb = new CreateFunction(functionName, lambda, false, Public, true, null)
-         {
-            Index = statementIndex
-         };
+         var verb = new CreateFunction(functionName, lambda, false, Public, true, null) { Index = statementIndex };
          builder.Verb(verb);
          AddStaticBlock(builder.Block);
          return new NullOp();

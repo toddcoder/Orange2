@@ -16,7 +16,7 @@ namespace Orange.Library.Verbs
          return (Value)generator.Value;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.ChangeSign;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.ChangeSign;
 
       public override AffinityType Affinity => AffinityType.Prefix;
 

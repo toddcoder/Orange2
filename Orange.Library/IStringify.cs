@@ -7,6 +7,6 @@ namespace Orange.Library
 		Value String
 		{
 			get;
-		} 
+		}
 	}
 }

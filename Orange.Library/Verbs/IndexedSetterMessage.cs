@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
@@ -8,12 +8,8 @@ namespace Orange.Library.Verbs
    {
       protected string message;
 
-      public IndexedSetterMessage(string fieldName, string message, Block index, IMatched<Verb> verb, Block expression,
-         bool insert)
-         : base(fieldName, index, verb, expression, insert)
-      {
-         this.message = message;
-      }
+      public IndexedSetterMessage(string fieldName, string message, Block index, IMatched<Verb> verb, Block expression, bool insert)
+         : base(fieldName, index, verb, expression, insert) => this.message = message;
 
       protected override Value getValue()
       {
@@ -23,7 +19,7 @@ namespace Orange.Library.Verbs
 
       public override string ToString()
       {
-         return $"{fieldName}.{message}[{(insert ? "+" : "")}{index}] {verb.Map(v => v.ToString(), () => "")}= {expression}";
+         return $"{fieldName}.{message}[{(insert ? "+" : "")}{index}] {verb.FlatMap(v => v.ToString(), () => "")}= {expression}";
       }
    }
 }

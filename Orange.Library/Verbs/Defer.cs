@@ -1,30 +1,23 @@
-﻿using Orange.Library.Managers;
-using Orange.Library.Values;
+﻿using Orange.Library.Values;
+using static Orange.Library.Managers.ExpressionManager;
+using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class Defer : Verb
-	{
-		public override Value Evaluate()
-		{
-			Value value = Runtime.State.Stack.Pop(true, "Defer");
-			if (value == null || value.IsNil)
-				return null;
-			Block block = Block.GuaranteeBlock(value);
-			return Runtime.SendMessage(block, "defer");
-		}
+   public class Defer : Verb
+   {
+      Block expression;
+      public Defer(Block expression) => this.expression = expression;
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+      public override Value Evaluate()
+      {
+         var value = expression.Evaluate();
+         State.ResultValue = value;
+         return value;
+      }
 
-		public override string ToString()
-		{
-			return ";?";
-		}
-	}
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
+
+      public override string ToString() => $"defer {expression}";
+   }
 }

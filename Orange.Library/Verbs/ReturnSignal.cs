@@ -2,37 +2,43 @@
 using Standard.Types.Maybe;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Verbs
 {
    public class ReturnSignal : Verb, ITailCallVerb, IStatement
    {
       IMaybe<Block> expression;
+      string typeName;
 
       public ReturnSignal()
       {
-         expression = new None<Block>();
+         expression = none<Block>();
+         typeName = "";
       }
 
       public ReturnSignal(Block expression)
       {
          this.expression = expression.Some();
+         typeName = "";
       }
 
       public ReturnSignal(Generator generator)
       {
          expression = generator.Pushed.Some();
+         typeName = "";
       }
 
       public override Value Evaluate()
       {
-         var value = expression.Map(e => e.Evaluate().AssignmentValue(), () => new Nil());
+         var value = expression.FlatMap(e => e.Evaluate().AssignmentValue(), () => new Nil());
+         typeName = value.Type.ToString();
          State.ReturnValue = value;
          State.ReturnSignal = true;
          return value;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => "return";
 
@@ -42,12 +48,10 @@ namespace Orange.Library.Verbs
 
       public Block NestedBlock => null;
 
-      public string Result => expression.Map(e => e.ToString(), () => "");
+      public string Result => expression.FlatMap(e => e.ToString(), () => "");
 
-      public int Index
-      {
-         get;
-         set;
-      }
+      public string TypeName => typeName;
+
+      public int Index { get; set; }
    }
 }

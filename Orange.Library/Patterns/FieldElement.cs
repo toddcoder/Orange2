@@ -1,46 +1,44 @@
-﻿using Orange.Library.Values;
-
-namespace Orange.Library.Patterns
+﻿namespace Orange.Library.Patterns
 {
-	public class FieldElement : Element
-	{
-		public override bool Evaluate(string input)
-		{
-			if (input.Length == 0)
-				return false;
+   public class FieldElement : Element
+   {
+      public override bool Evaluate(string input)
+      {
+         if (input.Length == 0)
+            return false;
 
-			if (Runtime.State.Position >= input.Length)
-			{
-				if (Runtime.State.Multi)
-					return false;
-				index = Runtime.State.Position;
-				length = 0;
-				return true;
-			}
+         if (Runtime.State.Position >= input.Length)
+         {
+            if (Runtime.State.Multi)
+               return false;
 
-			Pattern pattern = Runtime.State.FieldPattern;
-			index = Runtime.State.Position;
-			int at = pattern.Find(input, Runtime.State.Position, out length);
-			if (at == -1)
-			{
-				if (Runtime.State.Multi)
-					return false;
-				index = Runtime.State.Position;
-				length = input.Length - Runtime.State.Position;
-				return true;
-			}
-			length = at - Runtime.State.Position;
-			return true;
-		}
+            index = Runtime.State.Position;
+            length = 0;
+            return true;
+         }
 
-		public override Element Clone()
-		{
-			return new FieldElement
-			{
-				Next = cloneNext(),
-				Alternate = cloneAlternate(),
-				Replacement = cloneReplacement()
-			};
-		}
-	}
+         var pattern = Runtime.State.FieldPattern;
+         index = Runtime.State.Position;
+         var at = pattern.Find(input, Runtime.State.Position, out length);
+         if (at == -1)
+         {
+            if (Runtime.State.Multi)
+               return false;
+
+            index = Runtime.State.Position;
+            length = input.Length - Runtime.State.Position;
+            return true;
+         }
+
+         length = at - Runtime.State.Position;
+         return true;
+      }
+
+      public override Element Clone() => new FieldElement
+      {
+         Next = cloneNext(),
+         Alternate = cloneAlternate(),
+         Replacement = cloneReplacement()
+      };
+   }
 }

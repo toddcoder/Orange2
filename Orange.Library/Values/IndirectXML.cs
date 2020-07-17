@@ -11,12 +11,9 @@ namespace Orange.Library.Values
 		string variableName;
 
 		public IndirectXML(string variableName)
-			: base(null, null, null)
-		{
-			this.variableName = variableName;
-		}
+			: base(null, null, null) => this.variableName = variableName;
 
-		public IndirectXML()
+	   public IndirectXML()
 			: this("$unknown")
 		{
 		}

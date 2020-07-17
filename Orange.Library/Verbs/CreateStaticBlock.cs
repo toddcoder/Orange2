@@ -39,7 +39,7 @@ namespace Orange.Library.Verbs
          return null;
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.Statement;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
       public override string ToString() => $"static {className}{{{staticBlock}}}";
    }

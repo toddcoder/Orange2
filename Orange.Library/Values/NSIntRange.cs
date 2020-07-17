@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Orange.Library.Managers;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
@@ -39,7 +40,7 @@ namespace Orange.Library.Values
          this.start = start;
          this.stop = stop;
          this.inclusive = inclusive;
-         increment = 1;//start <= stop && start > -1 && stop > -1 ? 1 : -1;
+         increment = 1;
          setCompare();
       }
 
@@ -67,17 +68,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Range;
 
@@ -88,15 +81,37 @@ namespace Orange.Library.Values
       protected override void registerMessages(MessageManager manager)
       {
          manager.RegisterMessage(this, "array", v => ((NSIntRange)v).ToArray());
+         manager.RegisterMessage(this, "in", v => ((NSIntRange)v).In());
+         manager.RegisterMessage(this, "notIn", v => ((NSIntRange)v).NotIn());
+         manager.RegisterProperty(this, "min", v => ((NSIntRange)v).Min());
+         manager.RegisterProperty(this, "max", v => ((NSIntRange)v).Max());
       }
 
-      public override string ToString() => ToArray().ToString();
+      string incrementString()
+      {
+         if (increment == 1)
+            return "";
 
-      public override Value AlternateValue(string message) => ToArray();
+         if (increment > 0)
+            return $".+{increment}";
 
-      public override Value AssignmentValue() => ToArray();
+         return $".{increment}";
+      }
 
-      public override Value ArgumentValue() => ToArray();
+      public override string ToString() => $"{start}{(inclusive ? ".." : "...")}{stop}{incrementString()}";
+
+      public override Value AlternateValue(string message)
+      {
+         switch (message)
+         {
+            case "__$get_item":
+            case "__$set_item":
+            case "len":
+               return ToArray();
+            default:
+               return (Value)GetGenerator();
+         }
+      }
 
       public INSGenerator GetGenerator() => new NSIntRangeGenerator(this, 0, increment);
 
@@ -116,10 +131,23 @@ namespace Orange.Library.Values
 
       public int Start(int length) => start;
 
-      public int Stop(int length) => stop;//inclusive ? stop : stop - increment;
+      public int Stop(int length) => stop;
 
       public int Increment(int length) => increment;
 
       public bool Inclusive => inclusive;
+
+      public Value In()
+      {
+         var needle = Arguments[0];
+         var iterator = new NSIterator(GetGenerator());
+         return iterator.Any(value => needle.Compare(value) == 0);
+      }
+
+      public Value NotIn() => !In().IsTrue;
+
+      public Value Min() => start < stop ? start : stop;
+
+      public Value Max() => stop > start ? stop : start;
    }
 }

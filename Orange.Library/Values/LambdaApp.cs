@@ -6,16 +6,13 @@ namespace Orange.Library.Values
 	{
 		List<Lambda> lambdas;
 
-		public LambdaApp(Lambda left, Lambda right)
+		public LambdaApp(Lambda left, Lambda right) => lambdas = new List<Lambda>
 		{
-			lambdas = new List<Lambda>
-			{
-				left,
-				right
-			};
-		}
+		   left,
+		   right
+		};
 
-		public void Add(Lambda lambda)
+	   public void Add(Lambda lambda)
 		{
 			lambdas.Add(lambda);
 		}

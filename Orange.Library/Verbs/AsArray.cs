@@ -1,6 +1,6 @@
 ﻿using Orange.Library.Values;
-using Standard.Types.Objects;
 using static Orange.Library.Managers.ExpressionManager;
+using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
@@ -8,7 +8,7 @@ namespace Orange.Library.Verbs
 	{
 		public override Value Evaluate()
 		{
-			var value = Runtime.State.Stack.Pop(true, "As array");
+			var value = State.Stack.Pop(true, "As array");
 			switch (value.Type)
 			{
 				case Value.ValueType.String:
@@ -18,16 +18,15 @@ namespace Orange.Library.Verbs
 				case Value.ValueType.Array:
 					return ((Array)value).Flatten();
 				default:
-			      var source = value.As<ISequenceSource>();
-					if (source.IsSome)
-						return source.Value.Array;
+					if (value is ISequenceSource source)
+						return source.Array;
 					if (value.IsArray)
 						return value.SourceArray;
 					return value;
 			}
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Increment;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
 
 	   public override string ToString() => "!";
 

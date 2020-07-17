@@ -1,7 +1,7 @@
 ﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
+using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
@@ -23,7 +23,7 @@ namespace Orange.Library.Parsers
 
       public override Verb CreateVerb(string[] tokens)
       {
-         return fieldListParser.Parse(source, position).Map((fields, i) =>
+         if (fieldListParser.Parse(source, position).If(out var fields, out var i))
          {
             var index = i;
             var parameters = new Parameters(fields);
@@ -31,7 +31,7 @@ namespace Orange.Library.Parsers
             {
                index = freeParser.Position;
                freeParser.ColorAll(KeyWords);
-               return GetExpression(source, index, PassAlong("^ ' '* 'do' /b", true, KeyWords)).Map((arrayExp, j) =>
+               if (GetExpression(source, index, PassAlong("^ ' '* 'do' /b", true, KeyWords)).If(out var arrayExp, out var j))
                {
                   index = j;
                   var newSource = new Block();
@@ -44,12 +44,14 @@ namespace Orange.Library.Parsers
                         addingToIf = true;
                         continue;
                      }
+
                      if (addingToIf)
                         ifExpression.Add(verb);
                      else
                         newSource.Add(verb);
                   }
-                  return GetExpression(source, index, PassAlong("^ ' '* [',)']", false)).Map((yieldExp, k) =>
+
+                  if (GetExpression(source, index, PassAlong("^ ' '* [',)']", false)).If(out var yieldExp, out var k))
                   {
                      overridePosition = k;
                      var comprehension = new Comprehension(yieldExp, parameters, new Region()) { ArrayBlock = newSource };
@@ -57,11 +59,12 @@ namespace Orange.Library.Parsers
                         comprehension.SetIf(ifExpression);
                      result.Value = comprehension;
                      return new NullOp();
-                  }, () => null);
-               }, () => null);
+                  }
+               }
             }
-            return null;
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "array sub comprehension";

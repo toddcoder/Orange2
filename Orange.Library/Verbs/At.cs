@@ -16,7 +16,7 @@ namespace Orange.Library.Verbs
 			return SendMessage(target, "at", index);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.KeyedValue;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.KeyedValue;
 
 	   public override string ToString() => "@";
 	}

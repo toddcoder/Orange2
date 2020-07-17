@@ -7,12 +7,9 @@ namespace Orange.Library.Patterns
 		Block textBlock;
 
 		public BreakBlockElement(Block textBlock)
-			: base("")
-		{
-			this.textBlock = textBlock;
-		}
+			: base("") => this.textBlock = textBlock;
 
-		public override bool Evaluate(string input)
+	   public override bool Evaluate(string input)
 		{
 			text = Runtime.Expand(textBlock.Evaluate().Text);
 			return base.Evaluate(input);

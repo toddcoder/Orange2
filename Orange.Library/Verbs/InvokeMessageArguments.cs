@@ -37,6 +37,6 @@ namespace Orange.Library.Verbs
 			return SendMessage(target, message, arguments);
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Push;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 	}
 }

@@ -10,42 +10,27 @@ namespace Orange.Library.Values
 	{
 		List<Message> messages;
 
-		public MessagePath(Message message1, Message message2)
+		public MessagePath(Message message1, Message message2) => messages = new List<Message>
 		{
-			messages = new List<Message>
-			{
-				message1,
-				message2
-			};
-		}
+		   message1,
+		   message2
+		};
 
-		public MessagePath(List<Message> messages)
-		{
-			this.messages = messages;
-		}
+	   public MessagePath(List<Message> messages) => this.messages = messages;
 
-		public MessagePath(Message message)
-		{
-			messages = new List<Message>
-			{
-				message
-			};
-		}
+	   public MessagePath(Message message) => messages = new List<Message>
+	   {
+	      message
+	   };
 
-		public MessagePath(string message)
-		{
-			messages = new List<Message>
-			{
-				new Message(message, new Arguments())
-			};
-		}
+	   public MessagePath(string message) => messages = new List<Message>
+	   {
+	      new Message(message, new Arguments())
+	   };
 
-		public MessagePath()
-		{
-			messages = new List<Message>();
-		}
+	   public MessagePath() => messages = new List<Message>();
 
-		public MessagePath(MessagePath path)
+	   public MessagePath(MessagePath path)
 		{
 			messages = new List<Message>();
 			messages.AddRange(path.messages);

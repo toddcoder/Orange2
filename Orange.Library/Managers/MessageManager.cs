@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Linq;
+using Core.Collections;
+using Core.Computers;
+using Core.ObjectGraphs;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Messages;
 using Orange.Library.Values;
-using Standard.Computer;
-using Standard.ObjectGraphs;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.RegularExpressions;
 using Array = Orange.Library.Values.Array;
 using Message = Orange.Library.Messages.Message;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Runtime;
@@ -24,11 +22,7 @@ namespace Orange.Library.Managers
       const string LOCATION = "Message Manager";
       const string MSG_NO_MESSAGE_RECIPIENT = "No message recipient";
 
-      public static MessageManager MessagingState
-      {
-         get;
-         set;
-      }
+      public static MessageManager MessagingState { get; set; }
 
       public static string MessageKey(Value value, string message) => $"{value.ContainerType}~{message}";
 
@@ -43,17 +37,9 @@ namespace Orange.Library.Managers
          registeredTypes = new Hash<string, bool>();
       }
 
-      public bool TemplateMode
-      {
-         get;
-         set;
-      }
+      public bool TemplateMode { get; set; }
 
-      public Value LastValue
-      {
-         get;
-         set;
-      }
+      public Value LastValue { get; set; }
 
       public void ClearMessages() => messages.Clear();
 
@@ -68,7 +54,9 @@ namespace Orange.Library.Managers
          message = message.Replace("-", "_");
          var messageKey = MessageKey(value, message);
          if (!messages.ContainsKey(messageKey) || TemplateMode)
+         {
             messages[messageKey] = new BuiltInMessage(func, resolveArguments);
+         }
       }
 
       public void RegisterProperty(Value value, string message, Func<Value, Value> getter, Func<Value, Value> setter)
@@ -111,7 +99,10 @@ namespace Orange.Library.Managers
             value = variable.MessageTarget(messageName);
          }
          else
+         {
             variable = null;
+         }
+
          LastValue = value;
          var type = value.ContainerType;
          if (!registeredTypes.Find(type, s => false) || reregister)
@@ -134,32 +125,40 @@ namespace Orange.Library.Managers
                return result;
             }
          }
-         if (variable != null && variable.Name == "super")
+
+         if (variable != null && variable.Name == "super" && Regions["self"] is Object self)
          {
-            var self = Regions["self"].As<Object>();
-            if (self.IsSome)
-               return self.Value.InvokeSuper(messageName, arguments);
+            return self.InvokeSuper(messageName, arguments);
          }
-         var messageHander = value.As<IMessageHandler>();
-         if (messageHander.IsSome)
+
+         if (value is IMessageHandler messageHandler)
          {
-            var handlerResult = messageHander.Value.Send(value, messageName, arguments, out handled);
+            var handlerResult = messageHandler.Send(value, messageName, arguments, out handled);
             if (handled)
+            {
                return handlerResult;
+            }
          }
 
          result = DefaultSendMessage(value, messageName, arguments, out handled);
          if (handled)
+         {
             return result;
+         }
+
          var alternate = value.AlternateValue(messageName);
          if (value.IsEmpty && variable != null)
+         {
             variable.Value = alternate;
+         }
+
          if (alternate != null)
          {
             RegisterMessageCall(messageName);
             alternate.RegisterMessages();
             return Send(alternate, messageName, arguments);
          }
+
          Throw(LOCATION, $"Didn't understand message {Unmangle(messageName)} sent to <{value}>({value.Type}) " +
             $"with arguments {arguments}");
          return null;
@@ -167,8 +166,7 @@ namespace Orange.Library.Managers
 
       public static Value SendSuperMessage(Class super, string messageName, Arguments arguments)
       {
-         //var id = super.ID;
-         var reference = State.GetInvokeable(Object.InvokeableName(super.Name, true, messageName));
+         var reference = State.GetInvokeable(Object.InvokableName(super.Name, true, messageName));
          RejectNull(reference, LOCATION, $"reference for super.{Unmangle(messageName)} couldn't be found");
          using (var popper = new RegionPopper(new Region(), "super"))
          {
@@ -183,6 +181,7 @@ namespace Orange.Library.Managers
                popper.Push();
                Regions.SetParameter("super", "");
             }
+
             var value = reference.Invoke(arguments);
             return value;
          }
@@ -194,34 +193,38 @@ namespace Orange.Library.Managers
          {
             value.RegisterMessages();
             if (RespondsToRegisteredMessage(value, messageName))
+            {
                return true;
-
-            var variable = value.As<Variable>();
-            if (variable.IsSome && variable.Value.Name == "super")
-            {
-               var self = Regions["self"];
-               var obj = self.As<Object>();
-               if (obj.IsSome)
-                  return obj.Value.SuperRespondsTo(messageName);
             }
-            var messageHander = value.As<IMessageHandler>();
-            bool responds;
-            if (messageHander.IsSome)
+
+            if (value is Variable variable && variable.Name == "super" && Regions["self"] is Object obj)
             {
-               responds = messageHander.Value.RespondsTo(messageName);
+               return obj.SuperRespondsTo(messageName);
+            }
+
+            bool responds;
+            if (value is IMessageHandler messageHandler)
+            {
+               responds = messageHandler.RespondsTo(messageName);
                if (responds)
+               {
                   return true;
+               }
             }
 
             responds = DefaultRespondsTo(messageName);
             if (responds)
+            {
                return true;
+            }
+
             var alternate = value.AlternateValue(messageName);
             if (alternate != null)
             {
                value = alternate;
                continue;
             }
+
             return false;
          }
       }
@@ -240,19 +243,14 @@ namespace Orange.Library.Managers
          return message != null;
       }
 
-      static Value ifTrue(Value value, Arguments arguments)
-      {
-         if (value.PerformElse.HasValue && !value.PerformElse.Value)
-            return value;
-         return arguments.Executable.CanExecute && value.IsTrue ? ifTrueResult(arguments, false) :
-            value.SetPerformElse(true);
-      }
-
       static Value ifTrueResult(Arguments arguments, bool performElse)
       {
          var result = arguments.Executable.Evaluate();
          if (result == null)
+         {
             return new Nil(performElse);
+         }
+
          result.PerformElse = performElse;
          return result;
       }
@@ -265,6 +263,7 @@ namespace Orange.Library.Managers
             var result = executable.Evaluate();
             return result.IsArray ? new ArrayWrapper((Array)result.SourceArray) : result;
          }
+
          return new Nil();
       }
 
@@ -281,7 +280,10 @@ namespace Orange.Library.Managers
             Regions[variableName] = buffer;
          }
          else
+         {
             buffer = (Values.Buffer)value;
+         }
+
          return buffer;
       }
 
@@ -289,7 +291,9 @@ namespace Orange.Library.Managers
       {
          var argument = arguments[0];
          if (argument.IsEmpty)
+         {
             State.Print(text);
+         }
          else
          {
             var buffer = getBuffer(argument.Text);
@@ -301,7 +305,9 @@ namespace Orange.Library.Managers
       {
          var argument = arguments[0];
          if (argument.IsEmpty)
+         {
             State.Put(text);
+         }
          else
          {
             var buffer = getBuffer(argument.Text);
@@ -313,7 +319,9 @@ namespace Orange.Library.Managers
       {
          var argument = arguments[0];
          if (argument.IsEmpty)
+         {
             State.Write(text);
+         }
          else
          {
             var buffer = getBuffer(argument.Text);
@@ -332,6 +340,7 @@ namespace Orange.Library.Managers
             block.Evaluate();
             State.UnregisterBlock();
          }
+
          return value;
       }
 
@@ -340,13 +349,17 @@ namespace Orange.Library.Managers
          handled = false;
          var array = value.YieldValue;
          if (array == null)
+         {
             return value;
+         }
 
          using (var assistant = new ParameterAssistant(arguments))
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return value;
+            }
 
             Regions.Push("for");
 
@@ -356,7 +369,10 @@ namespace Orange.Library.Managers
                block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
+
                switch (signal)
                {
                   case Continuing:
@@ -403,14 +419,13 @@ namespace Orange.Library.Managers
 
       static bool can(Value value, Arguments arguments) => arguments.Values.All(v => can(value, v));
 
-      static bool invokeable(Value value) => value is IInvokeable;
+      static bool invokable(Value value) => value is IInvokeable;
 
       public static Value DefaultSendMessage(Value value, string messageName, Arguments arguments, out bool handled)
       {
          handled = true;
          InterpolatedString interpolated;
          double number;
-         IMaybe<Object> obj;
          switch (messageName)
          {
             case "print":
@@ -429,13 +444,9 @@ namespace Orange.Library.Managers
                var match = new Match(value);
                return match.Evaluate(arguments.Executable);
             case "str":
-               obj = value.As<Object>();
-               if (obj.IsSome)
-               {
-                  if (obj.Value.RespondsNoDefault("str"))
-                     return Runtime.SendMessage(obj.Value, "str", arguments);
-               }
-               return value.Text;
+            {
+               return value is Object obj && obj.RespondsNoDefault("str") ? Runtime.SendMessage(obj, "str", arguments) : value.Text;
+            }
             case "num":
                return value.Number;
             case "id":
@@ -447,24 +458,21 @@ namespace Orange.Library.Managers
                return null;
             case "newMessage":
                value.RegisterMessages();
-               var message = arguments[0].As<Values.Message>();
-               if (message.IsSome)
+               if (arguments[0] is Values.Message message)
                {
-                  value.RegisterUserMessage(message.Value);
+                  value.RegisterUserMessage(message);
                   return value;
                }
+
                return new Nil();
             case "cmp":
-               obj = value.As<Object>();
-               if (obj.IsSome)
-               {
-                  if (obj.Value.RespondsNoDefault("cmp"))
-                     return Runtime.SendMessage(obj.Value, "cmp", arguments);
-               }
-               return value.Compare(arguments[0]);
-            case "is_resp":
+            {
+               return value is Object obj && obj.RespondsNoDefault("cmp") ? Runtime.SendMessage(obj, "cmp", arguments) :
+                  value.Compare(arguments[0]);
+            }
+            case "isResp":
                return MessagingState.RespondsTo(value, arguments[0].Text);
-            case "is_empty":
+            case "isEmpty":
                return value.IsEmpty;
             case "fmt":
                var source = arguments[0].Text;
@@ -474,7 +482,10 @@ namespace Orange.Library.Managers
                value = value.Resolve();
                interpolated = value as InterpolatedString;
                if (interpolated != null)
+               {
                   value = interpolated.String;
+               }
+
                State.ReturnValue = value;
                State.ReturnSignal = true;
                return State.ReturnValue;
@@ -482,7 +493,10 @@ namespace Orange.Library.Managers
                value = value.Resolve();
                interpolated = value as InterpolatedString;
                if (interpolated != null)
+               {
                   value = interpolated.String;
+               }
+
                State.ResultValue = value;
                return value;
             case "squote":
@@ -491,11 +505,14 @@ namespace Orange.Library.Managers
                return value.Text.Quotify("`\"");
             case "rep":
                return value.Resolve().ToString();
-            case "is_num":
+            case "isNum":
                return value.IsNumeric() ? value.Number : value;
             case "exit":
                if (value.IsTrue)
+               {
                   State.ExitSignal = true;
+               }
+
                return null;
             case "after":
                State.LateBlock = arguments.Executable;
@@ -521,40 +538,66 @@ namespace Orange.Library.Managers
                {
                   var errorMessage = arguments[0].Text;
                   if (errorMessage.IsEmpty())
+                  {
                      errorMessage = "Assertion failed";
+                  }
+
                   throw new ApplicationException(errorMessage);
                }
+
                return null;
             case "freeze":
                freeze(value, arguments);
                return value;
             case "thaw":
                return thaw(value);
-            case "is_val":
+            case "isVal":
                return arguments.IsArray() ? arguments.AsArray().ContainsValue(value) : arguments[0].Text.Has(value.Text,
                   true);
-            case "is_key":
+            case "isKey":
                return arguments.IsArray() && arguments.AsArray().ContainsKey(value.Text);
             case "can":
                return can(value, arguments);
-            case "is_int":
+            case "isInt":
                number = value.Number;
                return number == Math.Truncate(number);
-            case "float?":
+            case "isFloat":
                number = value.Number;
                return number != Math.Truncate(number);
-            case "is_arr":
+            case "isArr":
                return value.IsArray;
-            case "is_inv":
-               return invokeable(value);
-            case "is_true":
+            case "isInv":
+               return invokable(value);
+            case "isTrue":
                return value.IsTrue;
-            case "is_iter":
+            case "isIter":
                return value.ProvidesGenerator;
+            case "tap":
+               return tap(value, arguments);
+            case "isFailure":
+               return value.Type == Value.ValueType.Failure;
          }
+
          handled = false;
 
          return null;
+      }
+
+      static Value tap(Value value, Arguments arguments)
+      {
+         using (var assistant = new ParameterAssistant(arguments))
+         {
+            var block = assistant.Block();
+            if (block == null)
+            {
+               return value;
+            }
+
+            assistant.IteratorParameter();
+            assistant.SetIteratorParameter(value);
+            block.Evaluate();
+            return value;
+         }
       }
 
       public static bool DefaultRespondsTo(string messageName)
@@ -573,10 +616,10 @@ namespace Orange.Library.Managers
             case "dup":
             case "write":
             case "newMessage":
-            case "is_resp":
-            case "is_num":
+            case "isResp":
+            case "isNum":
             case "cmp":
-            case "is_empty":
+            case "isEmpty":
             case "fmt":
             case "return":
             case "result":
@@ -594,15 +637,17 @@ namespace Orange.Library.Managers
             case "assert":
             case "freeze":
             case "thaw":
-            case "is_val":
-            case "is_key":
+            case "isVal":
+            case "isKey":
             case "can":
-            case "is_int":
-            case "is_float":
-            case "is_arr":
-            case "is_inv":
-            case "is_true":
-            case "is_iter":
+            case "isInt":
+            case "isFloat":
+            case "isArr":
+            case "isInv":
+            case "isTrue":
+            case "isIter":
+            case "tap":
+            case "isFailure":
                return true;
             default:
                return false;

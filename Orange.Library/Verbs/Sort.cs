@@ -27,17 +27,8 @@ namespace Orange.Library.Verbs
 			return Runtime.SendMessage(arrayValue, "sort", arguments);
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "sort";
-		}
+	   public override string ToString() => "sort";
 	}
 }

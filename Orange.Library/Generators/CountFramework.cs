@@ -7,26 +7,17 @@ namespace Orange.Library.Generators
 		int count;
 
 		public CountFramework(Generator generator, Arguments arguments)
-			: base(generator, null, arguments)
-		{
-			count = 0;
-		}
+			: base(generator, null, arguments) => count = 0;
 
-		public override Value Map(Value value)
+	   public override Value Map(Value value)
 		{
 			if (!value.IsNil)
 				count++;
 			return value;
 		}
 
-		public override bool Exit(Value value)
-		{
-			return value.IsNil;
-		}
+		public override bool Exit(Value value) => value.IsNil;
 
-		public override Value ReturnValue()
-		{
-			return count;
-		}
+	   public override Value ReturnValue() => count;
 	}
 }

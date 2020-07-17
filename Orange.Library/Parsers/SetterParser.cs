@@ -3,11 +3,9 @@ using Orange.Library.Verbs;
 using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Tuples;
 using static System.Activator;
-using static Orange.Library.Parsers.ExpressionParser;
-using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Parsers.TwoCharacterOperatorParser;
+using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -17,7 +15,8 @@ namespace Orange.Library.Parsers
       {
          var type = Operator(op);
          if (type == null)
-            return new None<Block>();
+            return none<Block>();
+
          var verb = (Verb)CreateInstance(type);
          var builder = new CodeBuilder();
          builder.SendMessage(GetterName(message), new Arguments());
@@ -27,9 +26,7 @@ namespace Orange.Library.Parsers
       }
 
       public SetterParser()
-         : base($" ^ /(|sp| '.') /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}")
-      {
-      }
+         : base($" ^ /(|sp| '.') /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -41,14 +38,13 @@ namespace Orange.Library.Parsers
 
          var assignParser = new AssignParser();
          var start = position + tokens[1].Length + message.Length + tokens[3].Length;
-         return assignParser.Parse(source, start).Map((assignment, i) =>
+         if (assignParser.Parse(source, start).If(out var assignment, out var index))
          {
-            return GetExpression(source, i, EndOfLine()).Map((expression, j) =>
-            {
-               overridePosition = j;
-               return new Setter(message, assignment.Verb, assignment.Expression);
-            }, () => null);
-         }, () => null);
+            overridePosition = index;
+            return new Setter(message, assignment.Verb, assignment.Expression) { Index = position };
+         }
+
+         return null;
       }
 
       public override string VerboseName => "setter";

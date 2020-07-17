@@ -11,10 +11,7 @@ namespace Orange.Library.Values
          bool oneReset;
 
          public ScannerGenerator(INSGeneratorSource generatorSource)
-            : base(generatorSource)
-         {
-            oneReset = true;
-         }
+            : base(generatorSource) => oneReset = true;
 
          public override void Reset()
          {

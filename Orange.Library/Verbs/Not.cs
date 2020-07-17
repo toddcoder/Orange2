@@ -23,7 +23,7 @@ namespace Orange.Library.Verbs
 			}
 		}
 
-		public override VerbPresidenceType Presidence => VerbPresidenceType.Not;
+		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Not;
 
 	   public override int OperandCount => 1;
 

@@ -8,12 +8,12 @@ namespace Orange.Library.Verbs
 		const string LOCATION = "Array operation ";
 
 		string message;
-		ExpressionManager.VerbPresidenceType presidence;
+		ExpressionManager.VerbPrecedenceType precedence;
 
-		public ArrayOperation(string message, ExpressionManager.VerbPresidenceType presidence)
+		public ArrayOperation(string message, ExpressionManager.VerbPrecedenceType precedence)
 		{
 			this.message = message;
-			this.presidence = presidence;
+			this.precedence = precedence;
 		}
 
 		public override Value Evaluate()
@@ -26,12 +26,6 @@ namespace Orange.Library.Verbs
 			return MessageManager.MessagingState.SendMessage(array, message, new Arguments(y));
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return presidence;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => precedence;
 	}
 }

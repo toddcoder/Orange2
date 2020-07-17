@@ -9,12 +9,9 @@ namespace Orange.Library.Values
 	{
 		string name;
 
-		public TypeName(string name)
-		{
-			this.name = name;
-		}
+		public TypeName(string name) => this.name = name;
 
-		public override int Compare(Value value)
+	   public override int Compare(Value value)
 		{
 			string typeName;
 			switch (value.Type)

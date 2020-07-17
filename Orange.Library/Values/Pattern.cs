@@ -1,16 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Core.Assertions;
+using Core.Exceptions;
+using Core.Monads;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
 using Orange.Library.Parsers;
 using Orange.Library.Patterns;
 using Orange.Library.Replacements;
-using Standard.Types.Booleans;
-using Standard.Types.Exceptions;
-using Standard.Types.Maybe;
-using Standard.Types.Objects;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant.SignalType;
@@ -25,13 +26,18 @@ namespace Orange.Library.Values
       const string LOCATION = "Pattern";
       const string REGEX_LIMIT = "^ '$' /(/d+) 'x'";
       const string REGEX_NTH = "^ '$' /(/d+) ('th' | 'st' | 'rd' | 'nd')";
+      const string TEXT_OUT_OF_CONTROL = "Text out of control";
 
       public static explicit operator Pattern(string source)
       {
          if (!source.IsMatch("^ /s+"))
+         {
             source = " " + source;
+         }
+
          var parser = new PatternParser();
-         parser.Scan(source, 0).Assert($"Could not parse pattern {source}");
+         assert(() => parser.Scan(source, 0)).Must().BeTrue().OrThrow($"Could not parse pattern {source}");
+
          return (Pattern)parser.Result.Value;
       }
 
@@ -53,15 +59,9 @@ namespace Orange.Library.Values
       }
 
       public Pattern()
-         : this(null)
-      {
-      }
+         : this(null) { }
 
-      public bool Direct
-      {
-         get;
-         set;
-      }
+      public bool Direct { get; set; }
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -69,7 +69,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "all", v => v.Do(true));
          manager.RegisterMessage(this, "times", v => ((Pattern)v).Times());
          manager.RegisterMessage(this, "trace", v => ((Pattern)v).Trace());
-         manager.RegisterMessage(this, "is_match", v => v.IsTrue);
+         manager.RegisterMessage(this, "isMatch", v => v.IsTrue);
          manager.RegisterMessage(this, "rp", v => ((Pattern)v).SetRecordPattern());
          manager.RegisterMessage(this, "fp", v => ((Pattern)v).SetFieldPattern());
          manager.RegisterMessage(this, "split", v => ((Pattern)v).Split());
@@ -80,8 +80,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "count", v => ((Pattern)v).Count());
          manager.RegisterMessageCall("applyNot");
          manager.RegisterMessage(this, "applyNot", v => ((Pattern)v).ApplyNot());
-         manager.RegisterProperty(this, "limit", v => ((Pattern)v).GetLimit(),
-            v => ((Pattern)v).SetLimit());
+         manager.RegisterProperty(this, "limit", v => ((Pattern)v).GetLimit(), v => ((Pattern)v).SetLimit());
          manager.RegisterMessage(this, "for", v => ((Pattern)v).For());
          manager.RegisterMessage(this, "while", v => ((Pattern)v).While());
          manager.RegisterMessage(this, "matches", v => ((Pattern)v).Matches());
@@ -124,6 +123,7 @@ namespace Orange.Library.Values
             State.RecordPattern = oldPattern;
             return value;
          }
+
          State.RecordPattern = this;
          return this;
       }
@@ -139,6 +139,7 @@ namespace Orange.Library.Values
             State.FieldPattern = oldPattern;
             return value;
          }
+
          State.FieldPattern = this;
          return this;
       }
@@ -157,6 +158,7 @@ namespace Orange.Library.Values
             State.PopPatternManager();
             return input;
          }
+
          State.PopPatternManager();
          return false;
       }
@@ -167,11 +169,7 @@ namespace Orange.Library.Values
          return Do((int)count.Number);
       }
 
-      public IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public IReplacement Replacement { get; set; }
 
       public Element Head => head;
 
@@ -185,8 +183,8 @@ namespace Orange.Library.Values
          var isVariable = variable != null;
          var isReadOnly = isVariable && Regions.IsReadOnly(variable.Name) || !isVariable;
          string input;
-         PatternResult patternResult;
-         if (argument.As<PatternResult>().Assign(out patternResult))
+         if (argument is PatternResult patternResult)
+         {
             if (patternResult.Success)
             {
                input = patternResult.Text;
@@ -194,16 +192,23 @@ namespace Orange.Library.Values
                isVariable = variable != null;
             }
             else
-               return PatternResult.Falure();
+            {
+               return PatternResult.Failure();
+            }
+         }
          else
+         {
             input = argument.Text;
+         }
+
          var matched = Scan(input);
          var text = State.Input.Copy();
          if (isReadOnly)
          {
             State.PopPatternManager();
-            return matched ? (Value)new Some(text.Skip(startIndex).Take(stopIndex - startIndex)) : new None();
+            return matched ? (Value)new Some(text.Drop(startIndex).Keep(stopIndex - startIndex)) : new None();
          }
+
          var result = matched ? new PatternResult
          {
             Input = input,
@@ -213,9 +218,12 @@ namespace Orange.Library.Values
             StartIndex = startIndex,
             StopIndex = stopIndex,
             Variable = variable
-         } : PatternResult.Falure();
+         } : PatternResult.Failure();
          if (isVariable && result.IsTrue)
+         {
             variable.Value = text;
+         }
+
          if (State.Result != null)
          {
             var managerResult = State.Result;
@@ -223,11 +231,12 @@ namespace Orange.Library.Values
             State.PopPatternManager();
             return managerResult;
          }
+
          State.PopPatternManager();
          return result;
       }
 
-      bool withinLimit(int index) => (limit == -1 || index < limit);
+      bool withinLimit(int index) => limit == -1 || index < limit;
 
       bool withinNth(int index) => nth == -1 || index == nth;
 
@@ -241,18 +250,20 @@ namespace Orange.Library.Values
          var isReadOnly = isVariable && Regions.IsReadOnly(variable.Name);
          var array = new Array();
          string input;
-         PatternResult patternResult;
-         if (argument.As<PatternResult>().Assign(out patternResult))
-            if (patternResult.Success)
-            {
+         switch (argument)
+         {
+            case PatternResult patternResult when patternResult.Success:
                input = patternResult.Text;
                variable = patternResult.Variable;
                isVariable = variable != null;
-            }
-            else
-               return PatternResult.Falure();
-         else
-            input = argument.Text;
+               break;
+            case PatternResult _:
+               return PatternResult.Failure();
+            default:
+               input = argument.Text;
+               break;
+         }
+
          var oneSuccess = false;
 
          for (var i = 0; i < MAX_LOOP && withinLimit(i); i++)
@@ -261,19 +272,28 @@ namespace Orange.Library.Values
             {
                State.Alternates.Clear();
                if (withinNth(i))
+               {
                   oneSuccess = true;
+               }
             }
             else
+            {
                break;
+            }
+
             input = State.Input;
             if (isReadOnly)
-               array.Add(input.Skip(startIndex).Take(stopIndex - startIndex));
+            {
+               array.Add(input.Drop(startIndex).Keep(stopIndex - startIndex));
+            }
          }
+
          if (isReadOnly)
          {
             State.PopPatternManager();
             return oneSuccess ? array : new Array();
          }
+
          var result = oneSuccess ? new PatternResult
          {
             Input = input,
@@ -283,9 +303,12 @@ namespace Orange.Library.Values
             StartIndex = startIndex,
             StopIndex = stopIndex,
             Variable = variable
-         } : PatternResult.Falure();
+         } : PatternResult.Failure();
          if (isVariable && result.IsTrue)
+         {
             variable.Value = State.Input.Copy();
+         }
+
          if (State.Result != null)
          {
             var managerResult = State.Result;
@@ -293,15 +316,12 @@ namespace Orange.Library.Values
             State.PopPatternManager();
             return managerResult;
          }
+
          State.PopPatternManager();
          return result;
       }
 
-      public Element LastElement
-      {
-         get;
-         set;
-      }
+      public Element LastElement { get; set; }
 
       public int Index => startIndex;
 
@@ -310,7 +330,10 @@ namespace Orange.Library.Values
       void trace(Element current, string input, bool success)
       {
          if (!State.Trace)
+         {
             return;
+         }
+
          var state = State;
 
          var length = stopIndex - startIndex;
@@ -335,7 +358,10 @@ namespace Orange.Library.Values
             if (startIndex > -1 && stopIndex > -1 && Replacement != null)
             {
                if (multiScan)
+               {
                   Replacement = Replacement.Clone();
+               }
+
                State.SaveWorkingInput();
                var slicer = new Slicer(State.WorkingInput);
                var length = stopIndex - startIndex;
@@ -352,7 +378,9 @@ namespace Orange.Library.Values
                      State.WorkingInput = slicer.ToString();
                   }
                   else
+                  {
                      State.RestoreWorkingInput();
+                  }
                }
                else
                {
@@ -360,17 +388,17 @@ namespace Orange.Library.Values
                   State.RestoreWorkingInput();
                }
             }
+
             if (!SubPattern)
+            {
                State.Replacements.Replace();
+            }
          }
+
          return success;
       }
 
-      public bool SubPattern
-      {
-         get;
-         set;
-      }
+      public bool SubPattern { get; set; }
 
       public override int Compare(Value value) => 0;
 
@@ -379,28 +407,24 @@ namespace Orange.Library.Values
          get
          {
             if (Arguments == null)
+            {
                return "";
+            }
+
             State.PushPatternManager();
             var value = Arguments[0];
             var input = value.Text;
-            var result = Scan(input) ? input.Skip(startIndex).Take(Length) : "";
+            var result = Scan(input) ? input.Drop(startIndex).Keep(Length) : "";
             State.PopPatternManager();
             return result;
          }
-         set
-         {
-         }
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return Text.ToDouble();
-         }
-         set
-         {
-         }
+         get => Text.ToDouble();
+         set { }
       }
 
       public override ValueType Type => ValueType.Pattern;
@@ -410,7 +434,10 @@ namespace Orange.Library.Values
          get
          {
             if (Arguments == null)
+            {
                return false;
+            }
+
             State.PushPatternManager();
             var value = Arguments[0];
             var input = value.Text;
@@ -425,7 +452,10 @@ namespace Orange.Library.Values
       public bool Scan(string input)
       {
          if (input.IsEmpty())
+         {
             return false;
+         }
+
          State.PatternDepth++;
          if (!SubPattern)
          {
@@ -433,6 +463,7 @@ namespace Orange.Library.Values
             State.Anchored = options[OptionType.Anchor];
             State.Input = input;
          }
+
          startIndex = -1;
          stopIndex = -1;
 
@@ -446,18 +477,23 @@ namespace Orange.Library.Values
 
          while (current != null)
          {
-            (textLength < warningLength).Assert("Runaway text");
+            assert(() => textLength).Must().BeLessThan(warningLength).OrThrow("Runaway text");
             if (startIndex == stuckIndex)
             {
-               if (++stuckAt > stuckLimit)
-                  throw "Past stuck limit".Throws();
+               stuckAt++;
+               assert(() => stuckAt).Must().Not.BeGreaterThan(stuckLimit).OrThrow("Past stuck limit");
             }
             else
             {
                stuckAt = 0;
                stuckIndex = startIndex;
             }
-            (textLength > MAX_PATTERN_INPUT_LENGTH && multiScan && State.Position > 0).Reject("Text out of control");
+
+            if (textLength > MAX_PATTERN_INPUT_LENGTH && multiScan && State.Position > 0)
+            {
+               throw TEXT_OUT_OF_CONTROL.Throws();
+            }
+
             current.Initialize();
 
             if (current.Alternate != null)
@@ -481,7 +517,7 @@ namespace Orange.Library.Values
                var replacement = current.Replacement;
                if (replacement != null)
                {
-                  var text = input.Skip(current.Index).Take(current.Length);
+                  var text = input.Drop(current.Index).Keep(current.Length);
 
                   if (multiScan)
                   {
@@ -491,14 +527,24 @@ namespace Orange.Library.Values
 
                   addToReplacements(replacement, text, current);
                }
+
                if (startIndex == -1)
+               {
                   startIndex = current.Index;
+               }
+
                if (!current.PositionAlreadyUpdated)
+               {
                   State.Position = current.Index + current.Length;
+               }
+
                stopIndex = State.Position;
-               (stopIndex >= startIndex).Assert("Stop index can't be less than start index");
+               assert(() => stopIndex).Must().BeGreaterThanOrEqual(startIndex).OrThrow("Stop index can't be less than start index");
                if (current.Next == null)
+               {
                   return result(true);
+               }
+
                current = current.Next;
             }
             else
@@ -510,6 +556,7 @@ namespace Orange.Library.Values
                   State.Aborted = false;
                   return result(false);
                }
+
                if (current.Aborted)
                {
                   State.Aborted = true;
@@ -521,31 +568,46 @@ namespace Orange.Library.Values
                   var peek = State.Alternates.Peek();
                   var noExit = peek.ElementID == ID;
                   if (SubPattern && current.Next == null && !noExit)
+                  {
                      return result(false);
+                  }
+
                   var oldNext = current.Next;
                   var alternate = State.Alternates.Pop();
                   if (noExit)
+                  {
                      alternate.OwnerNext = null;
+                  }
+
                   current = alternate.Alternate;
                   current.Next = alternate.Next ?? alternate.OwnerNext;
                   current.ID = alternate.ElementID;
                   State.Position = alternate.Position;
                   if (startIndex > State.Position)
+                  {
                      startIndex = State.Position;
+                  }
+
                   if (SubPattern && oldNext == null && !noExit)
+                  {
                      return result(false);
+                  }
                }
                else
                {
                   State.Replacements.Clear();
                   if (State.Anchored || State.Position >= textLength)
+                  {
                      return result(false);
+                  }
+
                   State.Position = ++firstIndex;
                   if (State.Position >= textLength)
                   {
                      State.Position--;
                      return result(false);
                   }
+
                   current = head;
                   startIndex = -1;
                   stopIndex = -1;
@@ -553,6 +615,7 @@ namespace Orange.Library.Values
                }
             }
          }
+
          return result(false);
       }
 
@@ -571,20 +634,14 @@ namespace Orange.Library.Values
             State.RestoreWorkingInput();
          }
          else
+         {
             State.Replacements.Add(current.Index, current.Length, replacement);
+         }
       }
 
-      public IReplacement OwnerReplacement
-      {
-         get;
-         set;
-      }
+      public IReplacement OwnerReplacement { get; set; }
 
-      public Element OwnerNext
-      {
-         get;
-         set;
-      }
+      public Element OwnerNext { get; set; }
 
       public override Value Do(bool repeat)
       {
@@ -600,20 +657,29 @@ namespace Orange.Library.Values
             for (var i = 0; i < MAX_LOOP; i++)
             {
                if (Scan(input))
+               {
                   oneSuccess = true;
+               }
                else
+               {
                   break;
+               }
+
                input = State.Input;
             }
          }
          else
+         {
             oneSuccess = Scan(input);
+         }
+
          if (oneSuccess && variableName.IsNotEmpty())
          {
             Regions[variableName] = State.Input;
             State.PopPatternManager();
             return null;
          }
+
          State.PopPatternManager();
          return input;
       }
@@ -627,8 +693,13 @@ namespace Orange.Library.Values
          var input = value.Text;
          State.Multi = true;
          for (var i = 0; i < count; i++)
+         {
             if (!Scan(input))
+            {
                break;
+            }
+         }
+
          if (isVariable)
          {
             var variable = (Variable)value;
@@ -636,6 +707,7 @@ namespace Orange.Library.Values
             State.PopPatternManager();
             return null;
          }
+
          State.PopPatternManager();
          return input;
       }
@@ -650,12 +722,16 @@ namespace Orange.Library.Values
             State.FirstScan = true;
             lastPosition = State.Position;
             if (!Scan(input))
+            {
                break;
+            }
+
             State.Alternates.Clear();
-            var text = input.Skip(lastPosition).Take(State.Position - lastPosition - Length);
+            var text = input.Drop(lastPosition).Keep(State.Position - lastPosition - Length);
             array.Add(text);
          }
-         array.Add(input.Skip(lastPosition).Take(State.Position - lastPosition - Length + 1));
+
+         array.Add(input.Drop(lastPosition).Keep(State.Position - lastPosition - Length + 1));
          State.PopPatternManager();
          return array.ToArray();
       }
@@ -673,7 +749,10 @@ namespace Orange.Library.Values
          State.PushPatternManager();
          var result = Scan(input);
          if (result)
+         {
             State.AssignPatternBindings();
+         }
+
          State.PopPatternManager();
          return result;
       }
@@ -681,12 +760,13 @@ namespace Orange.Library.Values
       public int Find(string input, int at, out int length)
       {
          State.PushPatternManager();
-         if (Scan(input.Skip(at)))
+         if (Scan(input.Drop(at)))
          {
             length = Length;
             State.PopPatternManager();
             return Index + at;
          }
+
          length = 0;
          State.PopPatternManager();
          return -1;
@@ -698,7 +778,10 @@ namespace Orange.Library.Values
          State.PushPatternManager();
          State.Multi = true;
          while (Scan(input))
+         {
             count++;
+         }
+
          State.PopPatternManager();
          return count;
       }
@@ -712,7 +795,10 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return new Nil();
+            }
+
             assistant.ReplacementParameters();
 
             State.PushPatternManager();
@@ -722,21 +808,25 @@ namespace Orange.Library.Values
                if (Scan(input))
                {
                   State.Alternates.Clear();
-                  assistant.SetReplacement(State.Input.Skip(Index).Take(Length), Index, Length);
+                  assistant.SetReplacement(State.Input.Drop(Index).Keep(Length), Index, Length, i);
                   var blockResult = block.Evaluate();
                   var signal = ParameterAssistant.Signal();
                   if (signal == Breaking)
+                  {
                      break;
+                  }
+
                   switch (signal)
                   {
                      case ReturningNull:
-                        {
-                           State.PopPatternManager();
-                           return null;
-                        }
+                     {
+                        State.PopPatternManager();
+                        return null;
+                     }
                      case Continuing:
                         continue;
                   }
+
                   if (blockResult != null && !blockResult.IsNil)
                   {
                      Slicer slicer = State.Input;
@@ -748,9 +838,13 @@ namespace Orange.Library.Values
                   }
                }
                else
+               {
                   break;
+               }
+
                input = State.Input;
             }
+
             State.PopPatternManager();
             return null;
          }
@@ -769,7 +863,10 @@ namespace Orange.Library.Values
          {
             var input = variable.Value.Text;
             if (originalInput == null)
+            {
                originalInput = input.Copy();
+            }
+
             State.PushPatternManager();
             State.Multi = true;
             if (Scan(input))
@@ -787,6 +884,7 @@ namespace Orange.Library.Values
                break;
             }
          }
+
          var result = oneSuccess ? new PatternResult
          {
             Input = originalInput,
@@ -796,15 +894,11 @@ namespace Orange.Library.Values
             StartIndex = startIndex,
             StopIndex = stopIndex,
             Variable = variable
-         } : PatternResult.Falure();
+         } : PatternResult.Failure();
          return result;
       }
 
-      public string Source
-      {
-         get;
-         set;
-      }
+      public string Source { get; set; }
 
       public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
       {
@@ -814,20 +908,20 @@ namespace Orange.Library.Values
             handled = true;
             return this;
          }
+
          if (matcher.IsMatch(messageName, REGEX_NTH))
          {
             nth = matcher[0, 1].ToInt() - 1;
             handled = true;
             return this;
          }
+
          handled = false;
          return null;
       }
 
-      public bool RespondsTo(string messageName)
-      {
-         return matcher.IsMatch(messageName, REGEX_LIMIT) || matcher.IsMatch(messageName, REGEX_NTH);
-      }
+      public bool RespondsTo(string messageName) =>
+         matcher.IsMatch(messageName, REGEX_LIMIT) || matcher.IsMatch(messageName, REGEX_NTH);
 
       public Value Matches()
       {
@@ -836,9 +930,10 @@ namespace Orange.Library.Values
          var array = new Array();
          while (Scan(input))
          {
-            var text = input.Skip(State.Position - Length).Take(Length);
+            var text = input.Drop(State.Position - Length).Keep(Length);
             array.Add(text);
          }
+
          State.PopPatternManager();
          return array;
       }
@@ -846,8 +941,10 @@ namespace Orange.Library.Values
       public void SetOverridenReplacement(IReplacement value)
       {
          Replacement = value;
-         if (Replacement != null && Replacement.FixedID.IsNone)
+         if (Replacement?.FixedID.IsNone == true)
+         {
             Replacement.FixedID = CompilerState.ObjectID().Some();
+         }
       }
 
       public Value Fail()
@@ -855,16 +952,17 @@ namespace Orange.Library.Values
          var input = Arguments[0].Text;
          for (var i = 0; i < input.Length && withinLimit(i); i++)
          {
-            var toScan = input.Skip(i);
+            var toScan = input.Drop(i);
             State.PushPatternManager();
             State.Multi = true;
             Scan(toScan);
             State.PopPatternManager();
          }
+
          return new PatternResult
          {
             Input = input,
-            Text = input.Skip(startIndex).Take(stopIndex - startIndex),
+            Text = input.Drop(startIndex).Keep(stopIndex - startIndex),
             Value = input,
             Success = true,
             StartIndex = startIndex,
@@ -884,6 +982,7 @@ namespace Orange.Library.Values
             State.PopPatternManager();
             return result;
          }
+
          State.PopPatternManager();
          return input;
       }
@@ -901,12 +1000,18 @@ namespace Orange.Library.Values
             {
                State.Alternates.Clear();
                if (withinNth(i))
+               {
                   oneSuccess = true;
+               }
             }
             else
+            {
                break;
+            }
+
             input = State.Input;
          }
+
          input = State.Input;
          State.PopPatternManager();
          return oneSuccess ? input : original;

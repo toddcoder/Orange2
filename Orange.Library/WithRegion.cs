@@ -9,24 +9,23 @@ namespace Orange.Library
 
       Object obj;
 
-      public WithRegion(Object obj)
-      {
-         this.obj = obj;
-      }
+      public WithRegion(Object obj) => this.obj = obj;
 
       public override Value this[string name]
       {
          get
          {
-            if (obj.RespondsNoDefault(name) && obj.IsPublic(name))
+            if (ContainsMessage(name))
                return SendMessage(obj, name);
             return null;
          }
          set
          {
-            if (obj.RespondsNoDefault(name) && obj.IsPublic(name))
+            if (ContainsMessage(name))
                SendMessage(obj, name, value);
          }
       }
+
+      public override bool ContainsMessage(string messageName) => obj.RespondsNoDefault(messageName) && obj.IsPublic(messageName);
    }
 }

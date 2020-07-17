@@ -15,17 +15,8 @@ namespace Orange.Library.Verbs
 			return MessageManager.MessagingState.RespondsTo(target, "join") ? Runtime.SendMessage(target, "join", argument) : target;
 		}
 
-		public override ExpressionManager.VerbPresidenceType Presidence
-		{
-			get
-			{
-				return ExpressionManager.VerbPresidenceType.Apply;
-			}
-		}
+		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
 
-		public override string ToString()
-		{
-			return "join";
-		}
+	   public override string ToString() => "join";
 	}
 }

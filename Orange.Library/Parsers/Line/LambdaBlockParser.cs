@@ -1,7 +1,7 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Tuples;
+using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Runtime;
@@ -15,10 +15,7 @@ namespace Orange.Library.Parsers.Line
 
       public LambdaBlockParser()
          : base($"^ /(' '* '(') /({REGEX_VARIABLE} | '_' | '(' {REGEX_VARIABLE} (/s* ',' /s* {REGEX_VARIABLE})+ ')') " +
-              $"/(/s*) /('->' | '=>') {REGEX_END1}")
-      {
-         parameterParser = new ParametersParser();
-      }
+            $"/(/s*) /('->' | '=>') {REGEX_END1}") => parameterParser = new ParametersParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -37,8 +34,9 @@ namespace Orange.Library.Parsers.Line
             var leftLength = tokens[1].Length + 1;
             index = position + leftLength;
             Color(position, leftLength, Structures);
-            if (!parameterParser.Parse(source, index).Assign(out parameters, out index))
+            if (!parameterParser.Parse(source, index).If(out parameters, out index))
                return null;
+
             index = NextPosition;
          }
          else
@@ -46,10 +44,11 @@ namespace Orange.Library.Parsers.Line
             Color(param.Length, Variables);
             parameters = new Parameters(array(new Parameter(param)));
          }
+
          Color(position + tokens[1].Length + tokens[2].Length, tokens[3].Length, Whitespaces);
          Color(type.Length, Structures);
          var splatting = type == "=>";
-         return GetBlock(source, index, true).Map((block, i) =>
+         if (GetBlock(source, index, true).If(out var block, out var i))
          {
             index = i;
             var freeParser = new FreeParser();
@@ -60,12 +59,15 @@ namespace Orange.Library.Parsers.Line
             }
             else
                return null;
+
             block.Expression = false;
-            var lambda = new Lambda(new Region(), block, parameters, false) {Splatting = splatting};
+            var lambda = new Lambda(new Region(), block, parameters, false) { Splatting = splatting };
             result.Value = lambda;
             overridePosition = index;
             return new CreateLambda(parameters, block, parameters.Splatting);
-         }, () => null);
+         }
+
+         return null;
       }
 
       public override string VerboseName => "lambda block parser";

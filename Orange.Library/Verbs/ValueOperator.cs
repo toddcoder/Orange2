@@ -12,7 +12,7 @@ namespace Orange.Library.Verbs
          return SendMessage(value, "value");
       }
 
-      public override VerbPresidenceType Presidence => VerbPresidenceType.SendMessage;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.SendMessage;
 
       public override string ToString() => "!";
    }

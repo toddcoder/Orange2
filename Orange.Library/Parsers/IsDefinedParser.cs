@@ -1,5 +1,4 @@
 ﻿using Orange.Library.Verbs;
-using static Orange.Library.Parsers.IDEColor;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 
@@ -8,9 +7,7 @@ namespace Orange.Library.Parsers
    public class IsDefinedParser : Parser
    {
       public IsDefinedParser()
-         : base($"^ /(' ' '?') /({REGEX_VARIABLE})")
-      {
-      }
+         : base($"^ /(' ' '?') /({REGEX_VARIABLE})") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
