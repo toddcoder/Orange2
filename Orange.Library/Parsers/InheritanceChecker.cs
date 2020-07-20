@@ -157,8 +157,7 @@ namespace Orange.Library.Parsers
             .Select(item => new { item, absSignature = item.Value })
             .Select(t => new { t, signature = signatures.Map(t.item.Key) })
             .Where(t => !t.signature.IsSome || t.signature
-               .FlatMap(s => s.IfCast<SpecialAssignment>()
-                  .FlatMap(sa => sa.IsAbstract, () => false), () => false))
+               .Map(s => s.IfCast<SpecialAssignment>().Map(sa => sa.IsAbstract).DefaultTo(() => false)).DefaultTo(() => false))
             .Select(t => t.t.absSignature))
          {
             return $"{absSignature.UnmangledSignature} hasn't been implemented".Failure<string>();
