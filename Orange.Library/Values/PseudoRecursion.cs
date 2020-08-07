@@ -183,7 +183,7 @@ namespace Orange.Library.Values
                Parameters.SetArguments(values);
             initialization.Evaluate(region);
             var failedArrayComparison = false;
-            for (var i = 0; i < MAX_TAILCALL; i++)
+            for (var i = 0; i < MAX_TAIL_CALL; i++)
             {
                var value = region[mainParameterName];
 

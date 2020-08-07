@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Enumerables;
+using Core.Monads;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Case;
 using static Orange.Library.Values.Nil;
 using static Orange.Library.Values.Parameters;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
-   public class MultiLambda : Value, IXMethod, IHasRegion, IInvokeable, IWhere
+   public class MultiLambda : Value, IXMethod, IHasRegion, IInvokable, IWhere
    {
       const string LOCATION = "MultiLambda";
 
@@ -33,7 +33,9 @@ namespace Orange.Library.Values
       {
          items.Add(item);
          if (item.Where != null)
+         {
             Where = item.Where;
+         }
       }
 
       public override int Compare(Value value) => 0;
@@ -89,12 +91,14 @@ namespace Orange.Library.Values
             var values = parameters1.GetArguments(arguments);
             popper.Push();
 
-            (var checkExpression, var checkVariable) = firstComparisand(lambda0.Parameters);
+            var (checkExpression, checkVariable) = firstComparisand(lambda0.Parameters);
             var expander = new Expander(functionName, item1.Lambda.Block, checkExpression, checkVariable, lambda0.Block, region);
 
             SetArguments(values);
             foreach (var parameter in parameters1.GetParameters())
+            {
                expander.AddParameter(parameter);
+            }
 
             var block = expander.Expand();
             return block;
@@ -108,7 +112,7 @@ namespace Orange.Library.Values
          return (selectedParameter.Comparisand, selectedParameter.Name);
       }
 
-      public override string ToString() => items.Select(i => i.ToString()).Listify();
+      public override string ToString() => items.Select(i => i.ToString()).Stringify();
 
       protected static bool canInvoke(Parameters parameters, List<ParameterValue> values, bool required)
       {
@@ -116,19 +120,23 @@ namespace Orange.Library.Values
          {
             case 0:
                return true;
-            case 1 when parameters[0].Comparisand[0].PushType.FlatMap(pt => pt, () => ValueType.Nil) == ValueType.Any:
+            case 1 when parameters[0].Comparisand[0].PushType.Map(pt => pt).DefaultTo(() => ValueType.Nil) == ValueType.Any:
                return true;
          }
 
          if (parameters.Length != values.Count)
+         {
             return false;
+         }
 
          for (var i = 0; i < parameters.Length; i++)
          {
             var parameter = parameters[i];
             var value = values[i].Value;
             if (canInvoke(parameter, value, required))
+            {
                continue;
+            }
 
             return false;
          }
@@ -141,7 +149,9 @@ namespace Orange.Library.Values
          var comparisand = parameter.Comparisand;
          var right = comparisand?.Evaluate();
          if (right == null)
+         {
             return true;
+         }
 
          return Match(value, right, required, null) && (parameter.Condition?.IsTrue ?? true);
       }
@@ -149,7 +159,9 @@ namespace Orange.Library.Values
       public virtual Value Invoke(Arguments arguments)
       {
          if (items.All(i => i.Expand))
+         {
             return InvokeExpanded(arguments);
+         }
 
          arguments.DefaultValue = new Nil();
          foreach (var item in items)
@@ -160,19 +172,30 @@ namespace Orange.Library.Values
                var parameters = item.Lambda.Parameters;
                var values = parameters.GetArguments(arguments);
                if (memoize)
+               {
                   memo.Value.Evaluate(values);
+               }
+
                popper.Push();
                SetArguments(values);
                if (canInvoke(parameters, values, item.Required))
                {
                   ExecuteWhere(this);
                   if (!(parameters.Condition?.Evaluate().IsTrue ?? true))
+                  {
                      continue;
+                  }
+
                   if (!(item.Condition?.Evaluate().IsTrue ?? true))
+                  {
                      continue;
+                  }
 
                   if (Region != null)
+                  {
                      item.Lambda.Region = Region;
+                  }
+
                   var item1 = item;
                   var result = memoize ? memo.Value.Evaluate(() => evaluate(arguments, item1)) : evaluate(arguments, item);
                   /*                  if (result != null && result.IsNil)
@@ -201,7 +224,7 @@ namespace Orange.Library.Values
 
       public Region Region { get; set; }
 
-      public bool ImmediatelyInvokeable { get; set; }
+      public bool ImmediatelyInvokable { get; set; }
 
       public int ParameterCount => items.Select(i => i.Lambda.ParameterCount).Max();
 

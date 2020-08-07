@@ -141,7 +141,7 @@ namespace Orange.Library.Values
 
       public override void AssignTo(Variable variable)
       {
-         if (graph.Name == VAR_AUTOASSIGN)
+         if (graph.Name == VAR_AUTO_ASSIGN)
             graph = graph.Duplicate(variable.Name);
          base.AssignTo(variable);
       }

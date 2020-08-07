@@ -10,15 +10,15 @@ namespace Orange.Library
       const string LOCATION = "Object region";
 
       protected Object obj;
-      protected Hash<string, IInvokeable> invariants;
+      protected Hash<string, IInvokable> invariants;
 
       public ObjectRegion(Object obj)
       {
          this.obj = obj;
-         invariants = new Hash<string, IInvokeable>();
+         invariants = new Hash<string, IInvokable>();
       }
 
-      public ObjectRegion(Object obj, Hash<string, IInvokeable> invariants)
+      public ObjectRegion(Object obj, Hash<string, IInvokable> invariants)
       {
          this.obj = obj;
          this.invariants = invariants;

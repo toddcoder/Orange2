@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Core.Monads;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
@@ -30,12 +31,12 @@ namespace Orange.Library.Values
                   .Select(item => (int)item.Value.Number)
                   .Where(index => index >= 0)
                   .Select(index => list[index])
-                  .Where(value => value.IsSome)
-                  .Aggregate(result, (current, value) => current.Add(value.Value));
+                  .SomeValue()
+                  .Aggregate(result, (current, value) => current.Add(value));
             }
 
             var intIndex = (int)evaluated.Number;
-            return list[intIndex].FlatMap(v => v, () => NilValue);
+            return list[intIndex].Map(v => v).DefaultTo(() => NilValue);
          }
          set { }
       }

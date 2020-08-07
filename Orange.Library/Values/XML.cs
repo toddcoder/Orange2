@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Internet.Sgml;
 using Orange.Library.Managers;
-using Standard.Internet.XML;
 using static Orange.Library.Managers.RegionManager;
 
 namespace Orange.Library.Values
@@ -48,18 +48,22 @@ namespace Orange.Library.Values
                var region = namespaces.Dequeue();
                Regions.Push(region, "xml");
             }
+
             var element = new Element { Name = name.IsVariable ? ((Variable)name).Name : name.Text };
             if (attributes != null)
             {
                attributes.ResolveVariables = true;
                var attributesValue = attributes.Evaluate();
                if (attributesValue != null)
+               {
                   switch (attributesValue.Type)
                   {
                      case ValueType.Array:
                         var array = (Array)attributesValue;
                         foreach (var item in array)
+                        {
                            element.Attributes.Add(item.Key, item.Value.Text);
+                        }
 
                         break;
                      case ValueType.KeyedValue:
@@ -67,25 +71,43 @@ namespace Orange.Library.Values
                         element.Attributes.Add(keyedValue.Key, keyedValue.Value.Text);
                         break;
                   }
+               }
             }
 
             if (innerText != null)
+            {
                element.Text = innerText.Text;
+            }
+
             var childrenValue = Children?.Evaluate();
             if (childrenValue != null)
             {
-               if (childrenValue is XML xml)
-                  children.Add(xml);
-               if (childrenValue is Array array)
-                  addArray(array);
+               switch (childrenValue)
+               {
+                  case XML xml:
+                     children.Add(xml);
+                     break;
+                  case Array array:
+                     addArray(array);
+                     break;
+               }
             }
+
             if (ChildrenArray != null)
+            {
                addArray(ChildrenArray);
+            }
+
             foreach (var child in children)
+            {
                element.Children.Add(child.Element);
+            }
 
             if (hasContent)
+            {
                Regions.Pop("element");
+            }
+
             return element;
          }
       }
@@ -96,7 +118,9 @@ namespace Orange.Library.Values
             .Select(item => new { item, value = item.Value })
             .Where(t => t.item.Value.Type == ValueType.XML)
             .Select(t => (XML)t.value))
+         {
             children.Add(xml);
+         }
       }
 
       public override string Text
@@ -137,7 +161,9 @@ namespace Orange.Library.Values
          var region = new Region();
          var parameters = (Parameters)Arguments.ApplyValue;
          foreach (var variableName in parameters.VariableNames)
+         {
             region.SetLocal(variableName, Regions[variableName].AssignmentValue());
+         }
 
          namespaces.Enqueue(region);
          return this;

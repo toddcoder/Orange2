@@ -1,14 +1,14 @@
-﻿using Standard.Types.Maybe;
+﻿using Core.Monads;
 
 namespace Orange.Library.Values
 {
-   public interface IInvokeable
+   public interface IInvokable
    {
       Value Invoke(Arguments arguments);
 
       Region Region { get; set; }
 
-      bool ImmediatelyInvokeable { get; set; }
+      bool ImmediatelyInvokable { get; set; }
 
       int ParameterCount { get; }
 

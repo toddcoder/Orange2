@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Standard.Types.Maybe;
+using Core.Monads;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
@@ -13,9 +13,9 @@ namespace Orange.Library.Values
          var targetGenerator = includeTargetStrings ? target.PossibleGenerator() : target.PossibleIndexGenerator();
          var sourceGenerator = includeSourceStrings ? source.PossibleGenerator() : source.PossibleIndexGenerator();
 
-         var targetIterator = targetGenerator.FlatMap(g => new NSIterator(g), () => new NSIterator(new NSOneItemGenerator(target)));
+         var targetIterator = targetGenerator.Map(g => new NSIterator(g)).DefaultTo(() => new NSIterator(new NSOneItemGenerator(target)));
          targetIterator.Reset();
-         var sourceIterator = sourceGenerator.FlatMap(g => new NSIterator(g), () => new NSIterator(new NSOneItemGenerator(source)));
+         var sourceIterator = sourceGenerator.Map(g => new NSIterator(g)).DefaultTo(() => new NSIterator(new NSOneItemGenerator(source)));
          sourceIterator.Reset();
          var targetArray = new Array();
          var pusher = new Array.Pusher();
@@ -26,7 +26,9 @@ namespace Orange.Library.Values
             targetArray.Add(targetValue);
             var sourceValue = sourceIterator.Next();
             if (sourceValue.IsNil)
+            {
                break;
+            }
 
             pusher.Add(sourceValue);
             targetValue = targetIterator.Next();
@@ -60,8 +62,7 @@ namespace Orange.Library.Values
             continuing = (v, i) => i < MAX_LOOP;
          }
 
-         public NSIteratorEnumerator(NSIterator iterator, Func<Value, int, bool> continuing)
-            : this(iterator) => this.continuing = continuing;
+         public NSIteratorEnumerator(NSIterator iterator, Func<Value, int, bool> continuing) : this(iterator) => this.continuing = continuing;
 
          public void Dispose() { }
 
@@ -86,8 +87,7 @@ namespace Orange.Library.Values
 
       protected INSGenerator mainGenerator;
 
-      public NSIterator(INSGenerator generator)
-         : base(null) => mainGenerator = generator;
+      public NSIterator(INSGenerator generator) : base(null) => mainGenerator = generator;
 
       public override void Reset()
       {

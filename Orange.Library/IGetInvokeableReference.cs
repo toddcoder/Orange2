@@ -4,6 +4,6 @@ namespace Orange.Library
 {
 	public interface IGetInvokeableReference
 	{
-		InvokeableReference InvokableReference(string message, bool isObject);
+		InvokableReference InvokableReference(string message, bool isObject);
 	}
 }

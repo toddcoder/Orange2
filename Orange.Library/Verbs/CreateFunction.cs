@@ -44,17 +44,17 @@ namespace Orange.Library.Verbs
          if (multiCapable)
          {
             MultiLambda multiLambda = null;
-            InvokeableReference reference = null;
+            InvokableReference reference = null;
             var isAReference = false;
             if (Regions.VariableExists(functionName))
             {
                var value = Regions[functionName];
 
                //isAReference = value.As<InvokeableReference>().Assign(out reference);
-               if (value is InvokeableReference invokeableReference)
+               if (value is InvokableReference invokeableReference)
                {
                   isAReference = true;
-                  var invokeable = invokeableReference.Invokeable;
+                  var invokeable = invokeableReference.Invokable;
                   RejectNull(invokeable, "Create function", "Not an invokeable");
                   value = (Value)invokeable;
                }
@@ -78,7 +78,7 @@ namespace Orange.Library.Verbs
             var item = new MultiLambdaItem(lambda, false, condition);
             multiLambda.Add(item);
             if (isAReference)
-               reference.Invokeable = multiLambda;
+               reference.Invokable = multiLambda;
             else
                Regions[functionName] = multiLambda;
             if (lambda.Where != null)

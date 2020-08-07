@@ -1,23 +1,23 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Monads;
+using Core.Strings;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.TwoCharacterOperatorParser;
 using static System.Activator;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
-   public class AssignParser : SpecialParser<AssignParser.Assigment>
+   public class AssignParser : SpecialParser<AssignParser.Assignment>
    {
-      public class Assigment
+      public class Assignment
       {
-         public Assigment(IMatched<Verb> verb, Block expression)
+         public Assignment(IMatched<Verb> verb, Block expression)
          {
             Verb = verb;
             Expression = expression;
@@ -28,7 +28,7 @@ namespace Orange.Library.Parsers
          public Block Expression { get; }
       }
 
-      public override IMaybe<(Assigment, int)> Parse(string source, int index)
+      public override IMaybe<(Assignment, int)> Parse(string source, int index)
       {
          if (freeParser.Scan(source, index, $"^ {REGEX_ASSIGN}"))
          {
@@ -44,17 +44,18 @@ namespace Orange.Library.Parsers
                   if (type == null)
                   {
                      matched = $"Didn't understand operator {op}".FailedMatch<Verb>();
-                     return none<(Assigment, int)>();
+                     return none<(Assignment, int)>();
                   }
 
                   var verb = (Verb)CreateInstance(type);
                   matched = verb.Matched();
                }
 
-               return (new Assigment(matched, expression), i).Some();
+               return (new Assignment(matched, expression), i).Some();
             }
          }
-         return none<(Assigment, int)>();
+
+         return none<(Assignment, int)>();
       }
    }
 }

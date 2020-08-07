@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using Orange.Library.Values;
-using Standard.Types.Collections;
-using Standard.Types.Numbers;
-using Standard.Types.Strings;
 using Array = Orange.Library.Values.Array;
 using System.Linq;
-using Standard.Types.Enumerables;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Numbers;
+using Core.Strings;
 
 namespace Orange.Library
 {
@@ -29,7 +29,9 @@ namespace Orange.Library
          {
             var length = value.Length;
             if (length > MaxLength)
+            {
                MaxLength = length;
+            }
          }
       }
 
@@ -48,7 +50,7 @@ namespace Orange.Library
 
          string getKey() => getKey(rowIndex, columns.Count);
 
-         string getKey(int rowIndex, int columnIndex) => $"{rowIndex} {columnIndex}";
+         static string getKey(int rowIndex, int columnIndex) => $"{rowIndex} {columnIndex}";
 
          public void AddColumn(string text) => columns.Add(text);
 
@@ -74,19 +76,20 @@ namespace Orange.Library
                var data = metaData[i];
                var value = IndexExists(i) ? columns[i] : "";
                if (value == null)
+               {
                   continue;
+               }
 
                var padType = overriddenPadTypes.Find(getKey(rowIndex, i), s => data.PadType);
                var paddedItem = value.Pad(padType, data.MaxLength);
                fields.Add(paddedItem);
             }
 
-            var renderedRow = leftDivider + fields.Listify(middleDivider) + rightDivider;
+            var renderedRow = leftDivider + fields.Stringify(middleDivider) + rightDivider;
             return renderedRow;
          }
 
-         public string RenderAsHeader(string leftDivider, string middleDivider, string rightDivider,
-            List<MetaData> metaData)
+         public string RenderAsHeader(string leftDivider, string middleDivider, string rightDivider, List<MetaData> metaData)
          {
             var headers = new List<string>();
             for (var i = 0; i < metaData.Count; i++)
@@ -94,17 +97,19 @@ namespace Orange.Library
                var data = metaData[i];
                var value = IndexExists(i) ? columns[i] : "";
                if (value == null)
+               {
                   continue;
+               }
 
                var paddedItem = value.Pad(PadType.Center, data.MaxLength);
                headers.Add(paddedItem);
             }
 
-            var renderedHeader = leftDivider + headers.Listify(middleDivider) + rightDivider;
+            var renderedHeader = leftDivider + headers.Stringify(middleDivider) + rightDivider;
             return renderedHeader;
          }
 
-         public string Representation => "| " + columns.Listify(" | ") + " |...";
+         public string Representation => "| " + columns.Stringify(" | ") + " |...";
       }
 
       const string LOCATION = "Table";
@@ -112,9 +117,14 @@ namespace Orange.Library
       static PadType getPadType(Bits32<Value.OptionType> option)
       {
          if (option[Value.OptionType.RJust])
+         {
             return PadType.Left;
+         }
+
          if (option[Value.OptionType.Center])
+         {
             return PadType.Center;
+         }
 
          return PadType.Right;
       }
@@ -125,7 +135,7 @@ namespace Orange.Library
          return (value.Text, getPadType(options), options[Value.OptionType.None]);
       }
 
-      static string spread(string text, int length) => text.Repeat(length).Take(length);
+      static string spread(string text, int length) => text.Repeat(length).Keep(length);
 
       List<MetaData> metaData;
       Row headerRow;
@@ -140,7 +150,7 @@ namespace Orange.Library
          headerRow = new Row(-1, overriddenPadding);
          foreach (var item in array)
          {
-            (var text, var padType, var _) = extractText(item.Value);
+            var (text, padType, _) = extractText(item.Value);
             headerRow.AddColumn(text);
             var data = new MetaData(padType);
             data.Evaluate(text);
@@ -175,11 +185,16 @@ namespace Orange.Library
          rows.Add(row);
          for (var i = 0; i < length; i++)
          {
-            (var text, var padType, var useDefault) = extractText(array[i]);
+            var (text, padType, useDefault) = extractText(array[i]);
             if (useDefault)
+            {
                row.AddColumn(text);
+            }
             else
+            {
                row.AddColumn(text, padType);
+            }
+
             var data = metaData[i];
             data.Evaluate(text);
          }
@@ -198,27 +213,35 @@ namespace Orange.Library
          using (var writer = new StringWriter())
          {
             if (hasHorizontal)
+            {
                writer.WriteLine(horizontal);
+            }
+
             var header = headerRow.RenderAsHeader(leftDivider, middleDivider, rightDivider, metaData);
             writer.WriteLine(header);
             if (hasHeaderDivider)
+            {
                writer.WriteLine(headerDivider);
+            }
+
             foreach (var renderedRow in rows.Select(row => row.Render(leftDivider, middleDivider, rightDivider, metaData)))
             {
                writer.WriteLine(renderedRow);
                if (hasHorizontal)
+               {
                   writer.WriteLine(horizontal);
+               }
             }
 
             return writer.ToString();
          }
       }
 
-      string getRightDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Take(1) : "";
+      string getRightDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Keep(1) : "";
 
-      string getMiddleDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Take(1) + " " : " ";
+      string getMiddleDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Keep(1) + " " : " ";
 
-      string getLeftDivider() => Vertical.IsNotEmpty() ? Vertical.Take(1) + " " : "";
+      string getLeftDivider() => Vertical.IsNotEmpty() ? Vertical.Keep(1) + " " : "";
 
       string getHorizontal(int length) => Horizontal.IsNotEmpty() ? spread(Horizontal, length) : null;
 

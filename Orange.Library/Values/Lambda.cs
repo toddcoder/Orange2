@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Monads;
 using Orange.Library.Managers;
-using Standard.Types.Maybe;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Values
 {
-   public class Lambda : Value, IExecutable, IXMethod, IHasRegion, IInvokeable, IImmediatelyInvokeable, IMacroBlock,
+   public class Lambda : Value, IExecutable, IXMethod, IHasRegion, IInvokable, IImmediatelyInvokable, IMacroBlock,
       IWhere, ISharedRegion, INSGeneratorSource
    {
       public class LambdaGenerator : NSGenerator
@@ -90,11 +90,11 @@ namespace Orange.Library.Values
 
          if (setArguments)
          {
-            List<ParameterValue> values;
-            bool partial;
-            evaluateArguments(arguments, out values, out partial, register);
+            evaluateArguments(arguments, out var values, out var partial, register);
             if (partial)
+            {
                return createPartial(values).Some();
+            }
          }
 
          Regions.SetParameter("this", this);
@@ -111,22 +111,35 @@ namespace Orange.Library.Values
          if (register)
          {
             if (enclosing)
+            {
                State.RegisterBlock(block, new Region());
+            }
             else
+            {
                State.RegisterBlock(block);
+            }
+
             if (sharedRegion != null)
+            {
                Regions.Push(sharedRegion, "shared");
+            }
          }
       }
 
       protected Value postscript(Value result, bool register, bool setArguments)
       {
          if (result is ISharedRegion sr)
+         {
             sr.SharedRegion = Regions.Current;
+         }
+
          if (register && setArguments)
          {
             if (sharedRegion != null && Regions.Current.Name == "shared")
+            {
                Regions.Pop("shared");
+            }
+
             State.UnregisterBlock();
          }
          State.UnregisterLambdaRegion();
@@ -137,8 +150,10 @@ namespace Orange.Library.Values
          bool setArguments = true)
       {
          var partialLambda = preamble(arguments, setArguments, register, instance);
-         if (partialLambda.IsSome)
-            return partialLambda.Value;
+         if (partialLambda.If(out var lambda))
+         {
+            return lambda;
+         }
 
          var result = evaluateBlock();
 
@@ -172,7 +187,9 @@ namespace Orange.Library.Values
       protected virtual Value evaluateBlock()
       {
          if (block.Yielding)
+         {
             return new LambdaGenerator(this);
+         }
 
          var result = block.Evaluate();
          result = State.UseReturnValue(result);
@@ -317,7 +334,7 @@ namespace Orange.Library.Values
          base.AssignTo(variable);
       }
 
-      public bool ImmediatelyInvokeable { get; set; }
+      public bool ImmediatelyInvokable { get; set; }
 
       public int ParameterCount => parameters.Length;
 

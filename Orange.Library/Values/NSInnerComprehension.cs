@@ -1,8 +1,8 @@
 ﻿using System;
+using Core.Monads;
 using Orange.Library.Managers;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -36,11 +36,13 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      public override Value Clone() => new NSInnerComprehension((Parameters)parameters.Clone(),
-         (Block)generatorSource.Clone(), ifBlock.Map(b => ((Block)b.Clone()).Some()))
+      public override Value Clone()
       {
-         NextComprehension = NextComprehension.Map(c => ((NSInnerComprehension)c.Clone()).Some())
-      };
+         return new NSInnerComprehension((Parameters)parameters.Clone(), (Block)generatorSource.Clone(), ifBlock.Map(b => ((Block)b.Clone()).Some()))
+         {
+            NextComprehension = NextComprehension.Map(c => ((NSInnerComprehension)c.Clone()).Some())
+         };
+      }
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -84,8 +86,8 @@ namespace Orange.Library.Values
       {
          index = 0;
          var value = generatorSource.Evaluate().PossibleGenerator();
-         Assert(value.IsSome, "Inner comprehension", "Source must be a generator");
-         iterator = new NSIterator(value.Value);
+         var innerValue = Assert(value, "Inner comprehension", "Source must be a generator");
+         iterator = new NSIterator(innerValue);
          iterator.Reset();
          more = true;
       }
@@ -114,9 +116,8 @@ namespace Orange.Library.Values
       public Value Next()
       {
          Value next;
-         if (NextComprehension.IsSome)
+         if (NextComprehension.If(out var nextComprehension))
          {
-            var nextComprehension = NextComprehension.Value;
             if (index == 0)
             {
                next = nextGeneratorValue();
@@ -144,7 +145,9 @@ namespace Orange.Library.Values
             }
          }
          else
+         {
             next = nextGeneratorValue();
+         }
 
          more = !next.IsNil;
          return next;
@@ -204,21 +207,27 @@ namespace Orange.Library.Values
          set => region = value.Clone();
       }
 
-      public INSGeneratorSource GeneratorSource => generatorSource.Evaluate() is INSGeneratorSource source ? source :
-         throw new ApplicationException($"{generatorSource} not a generator source");
+      public INSGeneratorSource GeneratorSource
+      {
+         get
+         {
+            return generatorSource.Evaluate() is INSGeneratorSource source ? source
+               : throw new ApplicationException($"{generatorSource} not a generator source");
+         }
+      }
 
       public void Visit(Value value) { }
 
       public bool More => more;
 
-      bool ifTrue() => ifBlock.FlatMap(b => b.IsTrue, () => true);
+      bool ifTrue() => ifBlock.Map(b => b.IsTrue).DefaultTo(() => true);
 
       public void SetValue(Value value) => parameters.SetValues(value, index++);
 
       public override string ToString()
       {
-         return $"{parameters} in {generatorSource}{ifBlock.FlatMap(b => $" if {b} ", () => "")}" +
-            $"{NextComprehension.FlatMap(c => $", {c}", () => "")}";
+         return $"{parameters} in {generatorSource}{ifBlock.Map(b => $" if {b} ").DefaultTo(() => "")}" +
+            $"{NextComprehension.Map(c => $", {c}").DefaultTo(() => "")}";
       }
    }
 }

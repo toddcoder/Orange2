@@ -1,9 +1,9 @@
 ﻿using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterBlock;
 using static Orange.Library.Runtime;
@@ -38,24 +38,14 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return fields.ValueArray().Listify(State.FieldSeparator.Text);
-         }
-         set
-         {
-         }
+         get => fields.ValueArray().Stringify(State.FieldSeparator.Text);
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return fields.Count;
-         }
-         set
-         {
-         }
+         get => fields.Count;
+         set { }
       }
 
       public override ValueType Type => ValueType.InternalList;
@@ -69,8 +59,11 @@ namespace Orange.Library.Values
             Default = DefaultType.Value,
             DefaultValue = ""
          };
-         foreach (var item in fields)
-            newFields[item.Key] = item.Value.Clone();
+         foreach (var (key, value) in fields)
+         {
+            newFields[key] = value.Clone();
+         }
+
          return new InternalList(newFields);
       }
 
@@ -89,6 +82,7 @@ namespace Orange.Library.Values
             return possibleExecutable.IsExecutable ? invokeExecutable(possibleExecutable, arguments) :
                new ListField(messageName, this);
          }
+
          handled = false;
          return null;
       }
@@ -113,7 +107,9 @@ namespace Orange.Library.Values
       {
          var keyedValue = value as KeyedValue;
          if (keyedValue != null)
+         {
             this[keyedValue.Key] = keyedValue.Value;
+         }
          else
          {
             fields[anonymousName] = value;
@@ -123,24 +119,28 @@ namespace Orange.Library.Values
 
       public void Add(string key, Value value) => fields[key] = value;
 
-      public override string ToString() => fields.Select(i => $"{i.Key} := {i.Value}").Listify();
+      public override string ToString() => fields.Select(i => $"{i.Key} := {i.Value}").Stringify();
 
       public Value Array()
       {
          var array = new Array();
-         foreach (var item in fields)
-            array[item.Key] = item.Value;
+         foreach (var (key, value) in fields)
+         {
+            array[key] = value;
+         }
+
          return array;
       }
 
       public Value Assign()
       {
          var array = new Array();
-         foreach (var item in fields)
+         foreach (var (key, value) in fields)
          {
-            Regions[item.Key] = item.Value;
-            array[item.Key] = item.Value;
+            Regions[key] = value;
+            array[key] = value;
          }
+
          return array;
       }
    }

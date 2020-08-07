@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
+using Core.Monads;
+using Core.Strings;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
@@ -70,7 +70,9 @@ namespace Orange.Library.Parsers
             var parametersParser = new ParametersParser();
             var parsed = parametersParser.Parse(source, index);
             if (!parsed.If(out parameters, out index))
+            {
                return null;
+            }
 
             if (type == "enum")
             {
@@ -93,12 +95,14 @@ namespace Orange.Library.Parsers
             index = position + length;
          }
 
-         (var superClass, var superParameters, var traits, var newIndex) = Ancestors(source, index);
+         var (superClass, superParameters, traits, newIndex) = Ancestors(source, index);
          index = newIndex;
 
          var endParser = new EndParser();
          if (endParser.Scan(source, index))
+         {
             index = endParser.Position;
+         }
 
          Block objectBlock;
          InClassDefinition = true;
@@ -106,33 +110,44 @@ namespace Orange.Library.Parsers
          try
          {
             if (type == "enum")
+            {
                addEnumerationSupport(className);
+            }
+
             LockedDown = type == "view";
             if (GetBlock(source, index, true, InClass).If(out var block, out newIndex))
             {
                objectBlock = block;
                index = newIndex;
                if (type == "enum")
+               {
                   addEnumerationInstanceSupport(ref objectBlock);
+               }
             }
             else
+            {
                objectBlock = new Block();
+            }
          }
          finally
          {
             InClassDefinition = false;
             if (EnumerationMappingCode != null)
+            {
                AddStaticBlock(EnumerationMappingCode.Block);
+            }
+
             EnumerationMappingCode = null;
             LockedDown = false;
          }
 
          var checker = new InheritanceChecker(className, objectBlock, parameters, superClass, isAbstract, traits);
-         var passes = checker.Passes();
-         Assert(passes.IsSuccessful, LOCATION, () => passes.Exception.Message);
+         if (checker.Passes().IfNot(out var exception))
+         {
+            Throw(LOCATION, exception.Message);
+         }
 
-         var cls = new Class(parameters, objectBlock, GetStaticBlock(), superClass, traits, superParameters,
-            type == "view");
+         var cls = new Class(parameters, objectBlock, GetStaticBlock(), superClass, traits, superParameters, type == "view");
          CompilerState.RegisterClass(ClassName, cls);
          result.Value = cls;
          overridePosition = index;
@@ -172,26 +187,6 @@ namespace Orange.Library.Parsers
          builder.Verb(new PushArrayLiteral(new Array()));
          expression = builder.Pop(true);
          builder.AssignToNewField(true, "nameToValue", expression);
-         //builder.Setter("valueToName", SetterName("default"), new NotMatched<Verb>(), new Failure("No such value").Pushed);
-         /*         builder.Define("valueToName", Protected);
-                  builder.Assign();
-                  builder.Verb(new PushArrayLiteral(new Array()));
-                  builder.End();
-                  builder.Variable("valueToName");
-                  builder.SendMessage("default");
-                  builder.Assign();
-                  builder.Error("No such value");
-                  builder.End();
-
-                  builder.Define("nameToValue", Protected);
-                  builder.Assign();
-                  builder.Verb(new PushArrayLiteral(new Array()));
-                  builder.End();
-                  builder.Variable("nameToValue");
-                  builder.SendMessage("default");
-                  builder.Assign();
-                  builder.Error("No such name");
-                  builder.End();*/
 
          staticCode.Inline(builder);
 

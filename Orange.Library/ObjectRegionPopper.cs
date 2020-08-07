@@ -1,4 +1,4 @@
-﻿using Standard.Types.Maybe;
+﻿using Core.Monads;
 
 namespace Orange.Library
 {
@@ -10,19 +10,23 @@ namespace Orange.Library
          : base(null, name)
       {
          exists = objectRegion.IsSome;
-         region = exists ? objectRegion.Value : null;
+         region = objectRegion.Map(r => r).DefaultTo(() => null);
       }
 
       public override void Push()
       {
          if (exists)
+         {
             base.Push();
+         }
       }
 
       public override void Pop()
       {
          if (exists)
+         {
             base.Pop();
+         }
       }
    }
 }

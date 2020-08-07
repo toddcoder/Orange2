@@ -337,7 +337,7 @@ namespace Orange.Library
 
       public void Variable(string variableName, bool immediatelyInvokable = false)
       {
-         var variable = immediatelyInvokable ? new ImmediatelyInvokeableVariable(variableName) :
+         var variable = immediatelyInvokable ? new ImmediatelyInvokableVariable(variableName) :
             new Variable(variableName);
          block.Add(new Push(variable));
       }

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using Core.Collections;
 using Orange.Library.Junctions;
 using Orange.Library.Managers;
-using Standard.Types.Collections;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Runtime;
@@ -69,14 +69,11 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
-               return ToArray(generator);
-
-            var hash = new AutoHash<string, List<Value>>
             {
-               Default = DefaultType.Lambda,
-               DefaultLambda = k => new List<Value>(),
-               AutoAddDefault = true
-            };
+               return ToArray(generator);
+            }
+
+            var hash = new AutoHash<string, List<Value>>(k => new List<Value>(), true);
 
             assistant.IteratorParameter();
             var iterator = new NSIterator(generator);
@@ -89,8 +86,10 @@ namespace Orange.Library.Values
             }
 
             var array = new Array();
-            foreach (var item in hash)
-               array[item.Key] = new Array(item.Value);
+            foreach (var (key, value1) in hash)
+            {
+               array[key] = new Array(value1);
+            }
 
             return array;
          }
@@ -103,7 +102,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return NilValue;
+            }
 
             iterator.Reset();
 
@@ -111,17 +112,23 @@ namespace Orange.Library.Values
             var initialFromArguments = arguments[0];
             var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
             if (initialValue.IsNil)
+            {
                return initialValue;
+            }
 
             var secondValue = iterator.Next();
             if (secondValue.IsNil)
+            {
                return initialValue;
+            }
 
             assistant.SetParameterValues(initialValue, secondValue);
             var value = block.Evaluate();
             var signal = Signal();
             if (signal == Breaking)
+            {
                return value;
+            }
 
             switch (signal)
             {
@@ -133,7 +140,9 @@ namespace Orange.Library.Values
 
             var next = iterator.Next();
             if (next.IsNil)
+            {
                return value;
+            }
 
             for (var i = 0; i < MAX_LOOP; i++)
             {
@@ -141,7 +150,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -153,7 +164,9 @@ namespace Orange.Library.Values
 
                next = iterator.Next();
                if (next.IsNil)
+               {
                   return value;
+               }
             }
 
             return value;
@@ -168,7 +181,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return NilValue;
+            }
 
             iterator.Reset();
 
@@ -177,17 +192,23 @@ namespace Orange.Library.Values
             iterator.Reset();
             var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
             if (initialValue.IsNil)
+            {
                return initialValue;
+            }
 
             var secondValue = iterator.Next();
             if (secondValue.IsNil)
+            {
                return initialValue;
+            }
 
             assistant.SetParameterValues(secondValue, initialValue);
             var value = block.Evaluate();
             var signal = Signal();
             if (signal == Breaking)
+            {
                return value;
+            }
 
             switch (signal)
             {
@@ -199,7 +220,9 @@ namespace Orange.Library.Values
 
             var next = iterator.Next();
             if (next.IsNil)
+            {
                return value;
+            }
 
             for (var i = 0; i < MAX_LOOP; i++)
             {
@@ -207,7 +230,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -219,7 +244,9 @@ namespace Orange.Library.Values
 
                next = iterator.Next();
                if (next.IsNil)
+               {
                   return value;
+               }
             }
 
             return value;
@@ -257,10 +284,8 @@ namespace Orange.Library.Values
          var iterator = new NSIterator(generator);
          iterator.Reset();
          var next = iterator.Next();
-         if (next.IsNil)
-            return new None();
 
-         return new Some(next);
+         return next.IsNil ? (Value)new None() : new Some(next);
       }
 
       protected INSGeneratorSource generatorSource;
@@ -341,6 +366,7 @@ namespace Orange.Library.Values
       {
          var next = generatorSource.Next(++index);
          more = !next.IsNil;
+
          return next;
       }
 
@@ -394,8 +420,6 @@ namespace Orange.Library.Values
 
       public override string ToString() => generatorSource.ToString();
 
-      //public override Value AssignmentValue() => Array();
-
       public static Value Split(INSGenerator generator, Arguments arguments)
       {
          var iterator = new NSIterator(generator);
@@ -409,14 +433,18 @@ namespace Orange.Library.Values
             {
                var count = arguments[0].Int;
                if (count == 0)
+               {
                   return generator.Array();
+               }
 
                Value value;
                for (var i = 0; i < count; i++)
                {
                   value = iterator.Next();
                   if (value.IsNil)
+                  {
                      break;
+                  }
 
                   left.Add(value);
                }
@@ -438,7 +466,9 @@ namespace Orange.Library.Values
                var result = block.IsTrue;
                var signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -449,9 +479,13 @@ namespace Orange.Library.Values
                }
 
                if (result)
+               {
                   left.Add(item);
+               }
                else
+               {
                   right.Add(item);
+               }
             }
 
             return new Array { left, right };
@@ -468,7 +502,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return generator.Array();
+            }
 
             var left = new Array();
             var right = new Array();
@@ -476,13 +512,16 @@ namespace Orange.Library.Values
             assistant.IteratorParameter();
             var iterator = new NSIterator(generator);
             foreach (var item in iterator)
+            {
                if (adding)
                {
                   assistant.SetIteratorParameter(item);
                   var result = block.IsTrue;
                   var signal = Signal();
                   if (signal == Breaking)
+                  {
                      break;
+                  }
 
                   switch (signal)
                   {
@@ -493,7 +532,9 @@ namespace Orange.Library.Values
                   }
 
                   if (result)
+                  {
                      left.Add(item);
+                  }
                   else
                   {
                      right.Add(item);
@@ -501,7 +542,10 @@ namespace Orange.Library.Values
                   }
                }
                else
+               {
                   right.Add(item);
+               }
+            }
 
             return new Array { left, right };
          }
@@ -515,7 +559,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return generator.Array();
+            }
 
             var left = new Array();
             var right = new Array();
@@ -523,13 +569,16 @@ namespace Orange.Library.Values
             assistant.IteratorParameter();
             var iterator = new NSIterator(generator);
             foreach (var item in iterator)
+            {
                if (adding)
                {
                   assistant.SetIteratorParameter(item);
                   var result = block.IsTrue;
                   var signal = Signal();
                   if (signal == Breaking)
+                  {
                      break;
+                  }
 
                   switch (signal)
                   {
@@ -540,7 +589,9 @@ namespace Orange.Library.Values
                   }
 
                   if (!result)
+                  {
                      left.Add(item);
+                  }
                   else
                   {
                      right.Add(item);
@@ -548,7 +599,10 @@ namespace Orange.Library.Values
                   }
                }
                else
+               {
                   right.Add(item);
+               }
+            }
 
             return new Array { left, right };
          }
@@ -562,7 +616,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.IteratorParameter();
 
@@ -579,7 +635,9 @@ namespace Orange.Library.Values
          {
             sharedRegion = value?.Clone();
             if (generatorSource is ISharedRegion sr)
+            {
                sr.SharedRegion = sharedRegion;
+            }
          }
       }
    }

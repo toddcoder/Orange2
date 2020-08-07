@@ -13,13 +13,13 @@ namespace Orange.Library
 
       string className;
       List<Block> staticBlocks;
-      Hash<string, IInvokeable> invariants;
+      Hash<string, IInvokable> invariants;
 
       public ObjectBuildingRegion(string className)
       {
          this.className = className;
          staticBlocks = new List<Block>();
-         invariants = new Hash<string, IInvokeable>();
+         invariants = new Hash<string, IInvokable>();
       }
 
       public string InvokableName(string name) => Object.InvokableName(className, IsObject, name);
@@ -41,17 +41,17 @@ namespace Orange.Library
             Assert(variables.ContainsKey(name), LOCATION, $"Variable {name} undefined");
             switch (value)
             {
-               case IInvokeable invokeable:
+               case IInvokable invokeable:
                   if (variables[name] is Abstract anAbstract)
                      Assert(invokeable.Matches(anAbstract.Signature), LOCATION, $"Signature for {name} doesn't match");
                   getContractInvokeable(name, invokeable);
                   addPossibleInvariant(name, invokeable);
                   var invokeableName = InvokableName(name);
-                  invokeable.ImmediatelyInvokeable = true;
-                  State.SetInvokeable(invokeableName, invokeable);
-                  SetVariable(name, new InvokeableReference(invokeableName));
+                  invokeable.ImmediatelyInvokable = true;
+                  State.SetInvokable(invokeableName, invokeable);
+                  SetVariable(name, new InvokableReference(invokeableName));
                   break;
-               case InvokeableReference reference:
+               case InvokableReference reference:
                   SetVariable(name, reference);
                   break;
                default:
@@ -67,7 +67,7 @@ namespace Orange.Library
             SetVariable(m.FirstGroup, new InternalGetter(name));
       }
 
-      void getContractInvokeable(string name, IInvokeable invokeable)
+      void getContractInvokeable(string name, IInvokable invokable)
       {
          if (!IsPrefixed(name, out var type, out var plainName))
             return;
@@ -79,21 +79,21 @@ namespace Orange.Library
             $"Invokeable {plainName} must be defined before any of its contract terms");
          var mainValue = variables[plainName];
 
-         if (mainValue is InvokeableReference mainReference)
+         if (mainValue is InvokableReference mainReference)
          {
-            var mainInvokeable = mainReference.Invokeable;
-            if (mainInvokeable is ContractInvokeable contractInvokeable)
+            var mainInvokeable = mainReference.Invokable;
+            if (mainInvokeable is ContractInvokable contractInvokeable)
             {
-               var newInvokeable = new ContractInvokeable { Main = mainInvokeable, ImmediatelyInvokeable = true, Name = plainName };
-               State.SetInvokeable(mainReference.VariableName, newInvokeable);
+               var newInvokeable = new ContractInvokable { Main = mainInvokeable, ImmediatelyInvokable = true, Name = plainName };
+               State.SetInvokable(mainReference.VariableName, newInvokeable);
                SetVariable(plainName, mainReference);
                switch (type)
                {
                   case "req":
-                     contractInvokeable.Require = invokeable;
+                     contractInvokeable.Require = invokable;
                      break;
                   case "ens":
-                     contractInvokeable.Ensure = invokeable;
+                     contractInvokeable.Ensure = invokable;
                      break;
                }
             }
@@ -102,7 +102,7 @@ namespace Orange.Library
             Throw(LOCATION, $"{plainName} must be an invokeable");
       }
 
-      void addPossibleInvariant(string name, IInvokeable invokeable)
+      void addPossibleInvariant(string name, IInvokable invokable)
       {
          if (!IsPrefixed(name, out var type, out var plainName))
             return;
@@ -113,7 +113,7 @@ namespace Orange.Library
          var setterName = VAR_MANGLE + "set_" + plainName;
          Assert(variables.ContainsKey(setterName) || variables.ContainsKey(plainName), LOCATION,
             $"Field {plainName} for invariant must be defined first");
-         invariants[plainName] = invokeable;
+         invariants[plainName] = invokable;
       }
 
       public ObjectRegion NewRegion(Object obj, bool purgeTempVariables)
@@ -214,7 +214,7 @@ namespace Orange.Library
          bool allowNil, int index)
       {
          base.setValue(name, value, visibility, _override, allowNil, index);
-         if (value is InvokeableReference)
+         if (value is InvokableReference)
             return;
 
          var builder = new CodeBuilder();
@@ -223,8 +223,8 @@ namespace Orange.Library
          var lambda = builder.Lambda();
          var setterName = SetterName(name);
          var invokeableName = InvokableName(setterName);
-         State.SetInvokeable(invokeableName, lambda);
-         base.setValue(setterName, new InvokeableReference(invokeableName), VisibilityType.Public, false, false, index);
+         State.SetInvokable(invokeableName, lambda);
+         base.setValue(setterName, new InvokableReference(invokeableName), VisibilityType.Public, false, false, index);
          removeAbstracts(name);
       }
 

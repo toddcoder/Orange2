@@ -1,9 +1,9 @@
 ﻿using System;
+using Core.Monads;
 using Orange.Library.Managers;
-using Standard.Types.Maybe;
+using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Lambdas.LambdaFunctions;
 
 namespace Orange.Library.Values
 {
@@ -60,10 +60,13 @@ namespace Orange.Library.Values
          {
             popper.Push();
             if (index == 0)
+            {
                region.SetParameter(variable, init.Evaluate());
+            }
+
             if (conditionFunc())
             {
-               var result = yielding.FlatMap(y => y.Evaluate(), () => region[variable]);
+               var result = yielding.Map(y => y.Evaluate()).DefaultTo(() => region[variable]);
                region[variable] = increment.Evaluate();
                return result;
             }
@@ -87,7 +90,7 @@ namespace Orange.Library.Values
       public override string ToString()
       {
          var direction = positive ? "while" : "until";
-         var yieldingAs = yielding.FlatMap(y => y.ToString(), () => variable);
+         var yieldingAs = yielding.Map(y => y.ToString()).DefaultTo(() => variable);
          return $"(loop {variable} = {init} {direction} then {increment} yield {yieldingAs})";
       }
 

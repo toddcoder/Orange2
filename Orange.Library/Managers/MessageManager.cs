@@ -166,7 +166,7 @@ namespace Orange.Library.Managers
 
       public static Value SendSuperMessage(Class super, string messageName, Arguments arguments)
       {
-         var reference = State.GetInvokeable(Object.InvokableName(super.Name, true, messageName));
+         var reference = State.GetInvokable(Object.InvokableName(super.Name, true, messageName));
          RejectNull(reference, LOCATION, $"reference for super.{Unmangle(messageName)} couldn't be found");
          using (var popper = new RegionPopper(new Region(), "super"))
          {
@@ -419,7 +419,7 @@ namespace Orange.Library.Managers
 
       static bool can(Value value, Arguments arguments) => arguments.Values.All(v => can(value, v));
 
-      static bool invokable(Value value) => value is IInvokeable;
+      static bool invokable(Value value) => value is IInvokable;
 
       public static Value DefaultSendMessage(Value value, string messageName, Arguments arguments, out bool handled)
       {

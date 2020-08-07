@@ -1,6 +1,6 @@
-﻿using Orange.Library.Managers;
+﻿using Core.Collections;
+using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Collections;
 
 namespace Orange.Library.Values
 {
@@ -35,7 +35,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "vars", v => ((Module)v).Vars());
       }
 
-      public Value Vars() => new Array(region.Locals.ToAutoHash(new Nil()));
+      public Value Vars() => new Array(region.Locals.Values);
 
       public Value Use()
       {
@@ -48,8 +48,12 @@ namespace Orange.Library.Values
             Runtime.State.UnregisterBlock();
          }
          else
-            foreach (var item in region.Locals)
-               RegionManager.Regions[item.Key] = item.Value;
+         {
+            foreach (var (key, value) in region.Locals)
+            {
+               RegionManager.Regions[key] = value;
+            }
+         }
 
          return this;
       }

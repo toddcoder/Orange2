@@ -1,11 +1,11 @@
 ﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
 using If = Orange.Library.Verbs.If;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -14,8 +14,7 @@ namespace Orange.Library.Parsers
       FieldListParser fieldListParser;
       FreeParser freeParser;
 
-      public ArraySubComprehensionParser()
-         : base($"^ ' '* /({REGEX_VARIABLE})")
+      public ArraySubComprehensionParser() : base($"^ ' '* /({REGEX_VARIABLE})")
       {
          fieldListParser = new FieldListParser();
          freeParser = new FreeParser();
@@ -46,9 +45,13 @@ namespace Orange.Library.Parsers
                      }
 
                      if (addingToIf)
+                     {
                         ifExpression.Add(verb);
+                     }
                      else
+                     {
                         newSource.Add(verb);
+                     }
                   }
 
                   if (GetExpression(source, index, PassAlong("^ ' '* [',)']", false)).If(out var yieldExp, out var k))
@@ -56,7 +59,10 @@ namespace Orange.Library.Parsers
                      overridePosition = k;
                      var comprehension = new Comprehension(yieldExp, parameters, new Region()) { ArrayBlock = newSource };
                      if (ifExpression.Count > 0)
+                     {
                         comprehension.SetIf(ifExpression);
+                     }
+
                      result.Value = comprehension;
                      return new NullOp();
                   }

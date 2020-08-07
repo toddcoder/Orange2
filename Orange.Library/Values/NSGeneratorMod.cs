@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using Core.Collections;
+using Core.Enumerables;
 using Orange.Library.Managers;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Ignore;
 using static Orange.Library.Values.Nil;
@@ -100,7 +100,9 @@ namespace Orange.Library.Values
          public Value Evaluate(Value value)
          {
             if (value is Ignore)
+            {
                return value;
+            }
 
             this.value = value;
             using (var popper = new SharedRegionPopper(region, this, "modifier"))
@@ -109,7 +111,10 @@ namespace Orange.Library.Values
                parameters.SetValues(value, ++index);
                var next = Next();
                if (State.ReturnSignal)
+               {
                   State.ReturnSignal = false;
+               }
+
                return next;
             }
          }
@@ -127,8 +132,7 @@ namespace Orange.Library.Values
 
       public class IfModifier : Modifier
       {
-         public IfModifier(Arguments arguments)
-            : base(arguments) { }
+         public IfModifier(Arguments arguments) : base(arguments) { }
 
          public override Value Next() => expression.Evaluate().IsTrue ? value : IgnoreValue;
 
@@ -137,8 +141,7 @@ namespace Orange.Library.Values
 
       public class IfNotModifier : Modifier
       {
-         public IfNotModifier(Arguments arguments)
-            : base(arguments) { }
+         public IfNotModifier(Arguments arguments) : base(arguments) { }
 
          public override Value Next() => expression.Evaluate().IsTrue ? IgnoreValue : value;
 
@@ -147,19 +150,20 @@ namespace Orange.Library.Values
 
       public class MapModifier : Modifier
       {
-         public MapModifier(Arguments arguments)
-            : base(arguments) { }
+         public MapModifier(Arguments arguments) : base(arguments) { }
 
          public override Value Next()
          {
             var next = expression.Evaluate();
-            if (next is None)
-               return IgnoreValue;
-
-            if (next is Some some)
-               return some.Value();
-
-            return next;
+            switch (next)
+            {
+               case None _:
+                  return IgnoreValue;
+               case Some some:
+                  return some.Value();
+               default:
+                  return next;
+            }
          }
 
          public override string ToString() => $"map {base.ToString()}";
@@ -167,16 +171,12 @@ namespace Orange.Library.Values
 
       public class MapIfModifier : Modifier
       {
-         public MapIfModifier(Arguments arguments)
-            : base(arguments) { }
+         public MapIfModifier(Arguments arguments) : base(arguments) { }
 
          public override Value Next()
          {
             var result = expression.Evaluate();
-            if (result.IsNull)
-               return value;
-
-            return result;
+            return result.IsNull ? value : result;
          }
 
          public override string ToString() => $"map if {base.ToString()}";
@@ -186,8 +186,7 @@ namespace Orange.Library.Values
       {
          protected int count;
 
-         public SkipModifier(Arguments arguments)
-            : base(arguments) => count = arguments[0].Int;
+         public SkipModifier(Arguments arguments) : base(arguments) => count = arguments[0].Int;
 
          public override Value Next() => index < count ? IgnoreValue : value;
 
@@ -198,8 +197,7 @@ namespace Orange.Library.Values
       {
          protected bool applies;
 
-         public SkipWhileModifier(Arguments arguments)
-            : base(arguments) { }
+         public SkipWhileModifier(Arguments arguments) : base(arguments) { }
 
          public override void Reset()
          {
@@ -216,9 +214,14 @@ namespace Orange.Library.Values
          public override Value Next()
          {
             if (index == 0)
+            {
                applies = true;
+            }
+
             if (applies && condition())
+            {
                return ifTrue();
+            }
 
             applies = false;
             return ifFalse();
@@ -229,8 +232,7 @@ namespace Orange.Library.Values
 
       public class SkipUntilModifier : SkipWhileModifier
       {
-         public SkipUntilModifier(Arguments arguments)
-            : base(arguments) { }
+         public SkipUntilModifier(Arguments arguments) : base(arguments) { }
 
          protected override bool condition() => !base.condition();
 
@@ -239,8 +241,7 @@ namespace Orange.Library.Values
 
       public class TakeModifier : SkipModifier
       {
-         public TakeModifier(Arguments arguments)
-            : base(arguments) { }
+         public TakeModifier(Arguments arguments) : base(arguments) { }
 
          public override Value Next() => index < count ? value : NilValue;
 
@@ -249,8 +250,7 @@ namespace Orange.Library.Values
 
       public class TakeWhileModifier : SkipWhileModifier
       {
-         public TakeWhileModifier(Arguments arguments)
-            : base(arguments) { }
+         public TakeWhileModifier(Arguments arguments) : base(arguments) { }
 
          protected override Value ifTrue() => value;
 
@@ -261,8 +261,7 @@ namespace Orange.Library.Values
 
       public class TakeUntilModifier : TakeWhileModifier
       {
-         public TakeUntilModifier(Arguments arguments)
-            : base(arguments) { }
+         public TakeUntilModifier(Arguments arguments) : base(arguments) { }
 
          protected override bool condition() => !base.condition();
 
@@ -273,15 +272,19 @@ namespace Orange.Library.Values
       {
          Set<Value> set;
 
-         public UniqueModifier(Arguments arguments)
-            : base(arguments) => set = new Set<Value>();
+         public UniqueModifier(Arguments arguments) : base(arguments) => set = new Set<Value>();
 
          public override Value Next()
          {
             if (value.IsNil)
+            {
                return value;
+            }
+
             if (set.Contains(value))
+            {
                return IgnoreValue;
+            }
 
             set.Add(value);
             return value;
@@ -321,7 +324,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return GeneratorToArray(this).Text; }
+         get => GeneratorToArray(this).Text;
          set { }
       }
 
@@ -374,7 +377,9 @@ namespace Orange.Library.Values
       {
          iterator.Reset();
          foreach (var modifier in modifiers)
+         {
             modifier.Reset();
+         }
 
          more = true;
       }
@@ -457,7 +462,7 @@ namespace Orange.Library.Values
 
       public bool More => more;
 
-      public override string ToString() => $"{generator} {modifiers.Listify(" ")}";
+      public override string ToString() => $"{generator} {modifiers.Stringify(" ")}";
 
       public override Value AlternateValue(string message) => GeneratorToArray(this);
 

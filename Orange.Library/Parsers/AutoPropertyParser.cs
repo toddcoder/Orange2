@@ -1,6 +1,6 @@
-﻿using Orange.Library.Values;
+﻿using Core.Strings;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 
@@ -12,8 +12,7 @@ namespace Orange.Library.Parsers
       Lambda getter;
       Lambda setter;
 
-      public AutoPropertyParser()
-         : base($"^ /([' ' /t]*) /('auto' | 'readonly') /(/s+) /({REGEX_VARIABLE})? -(> '(' )") { }
+      public AutoPropertyParser() : base($"^ /([' ' /t]*) /('auto' | 'readonly') /(/s+) /({REGEX_VARIABLE})? -(> '(' )") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -29,6 +28,7 @@ namespace Orange.Library.Parsers
          getter = creator.GetLambda;
          setter = creator.SetLambda;
          result.Value = null;
+
          return new CreateAutoProperty(propertyName, readOnly);
       }
 

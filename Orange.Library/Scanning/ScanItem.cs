@@ -1,5 +1,5 @@
-﻿using Standard.Types.Maybe;
-using static Standard.Types.Maybe.MaybeFunctions;
+﻿using Core.Monads;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Scanning
 {

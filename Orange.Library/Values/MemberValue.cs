@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
+using Core.Numbers;
 using Orange.Library.Invocations;
 using Orange.Library.Managers;
-using Standard.Types.Numbers;
 
 namespace Orange.Library.Values
 {
@@ -24,7 +24,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return member; }
+         get => member;
          set { }
       }
 

@@ -6,7 +6,7 @@ using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
-   public class Delegate : Value, IInvokeable
+   public class Delegate : Value, IInvokable
    {
       const string LOCATION = "Delegate";
 
@@ -42,7 +42,7 @@ namespace Orange.Library.Values
          if (target.IsEmpty())
          {
             var value = RegionManager.Regions[targetMessage];
-            if (value is IInvokeable invokeable)
+            if (value is IInvokable invokeable)
                return invokeable.Invoke(arguments);
 
             Throw(LOCATION, $"{targetMessage} isn't an invokeable");
@@ -55,7 +55,7 @@ namespace Orange.Library.Values
 
       public Region Region { get; set; }
 
-      public bool ImmediatelyInvokeable { get; set; }
+      public bool ImmediatelyInvokable { get; set; }
 
       public int ParameterCount => 0;
 
@@ -66,19 +66,19 @@ namespace Orange.Library.Values
             if (RegionManager.Regions.VariableExists("self"))
                if (RegionManager.Regions["self"] is Object obj)
                {
-                  if (obj.Region[targetMessage] is InvokeableReference invokeableReference)
+                  if (obj.Region[targetMessage] is InvokableReference invokeableReference)
                      return invokeableReference.MatchesSignature(signature);
                }
                else
                   Throw(LOCATION, "Self not an object");
 
-            if (RegionManager.Regions[targetMessage] is InvokeableReference reference)
+            if (RegionManager.Regions[targetMessage] is InvokableReference reference)
                return reference.MatchesSignature(signature);
 
             Throw(LOCATION, $"{targetMessage} isn't invokeable");
          }
 
-         if (RegionManager.Regions[target] is IInvokeable invokeable)
+         if (RegionManager.Regions[target] is IInvokable invokeable)
             return invokeable.Matches(signature);
 
          Throw(LOCATION, $"{targetMessage} isn't an invokeable");

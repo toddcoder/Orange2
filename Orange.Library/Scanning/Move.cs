@@ -1,6 +1,6 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
-using static Standard.Types.Maybe.MaybeFunctions;
+﻿using Core.Monads;
+using Orange.Library.Values;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Scanning
 {
@@ -14,7 +14,7 @@ namespace Orange.Library.Scanning
       {
          var length = (int)expression.Evaluate().Number;
          var newLength = position.Length + length;
-         return when(newLength < source.Length, () => new Position(position.Index, newLength));
+         return maybe(newLength < source.Length, () => new Position(position.Index, newLength));
       }
    }
 }

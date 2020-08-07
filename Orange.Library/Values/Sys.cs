@@ -78,7 +78,7 @@ namespace Orange.Library.Values
 
       public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
       {
-         if (Regions.VariableExists(messageName) && Regions[messageName] is IInvokeable invokeable)
+         if (Regions.VariableExists(messageName) && Regions[messageName] is IInvokable invokeable)
          {
             handled = true;
             return invokeable.Invoke(arguments);

@@ -5,15 +5,15 @@ using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
-   public class ContractInvokeable : Value, IInvokeable
+   public class ContractInvokable : Value, IInvokable
    {
       const string LOCATION = "Contract Invokeable";
 
-      public IInvokeable Main { get; set; }
+      public IInvokable Main { get; set; }
 
-      public IInvokeable Require { get; set; }
+      public IInvokable Require { get; set; }
 
-      public IInvokeable Ensure { get; set; }
+      public IInvokable Ensure { get; set; }
 
       public string Name { get; set; }
 
@@ -27,9 +27,9 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      static IInvokeable cloneInvokeable(IInvokeable value) => (IInvokeable)((Value)value)?.Clone();
+      static IInvokable cloneInvokeable(IInvokable value) => (IInvokable)((Value)value)?.Clone();
 
-      public override Value Clone() => new ContractInvokeable
+      public override Value Clone() => new ContractInvokable
       {
          Main = cloneInvokeable(Main),
          Require = cloneInvokeable(Require),
@@ -60,7 +60,7 @@ namespace Orange.Library.Values
 
       public Region Region { get; set; }
 
-      public bool ImmediatelyInvokeable { get; set; }
+      public bool ImmediatelyInvokable { get; set; }
 
       public int ParameterCount => Main.ParameterCount;
 

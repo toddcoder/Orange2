@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Verbs;
 using static System.Math;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
@@ -7,10 +7,7 @@ namespace Orange.Library.Parsers
 {
    public class BinParser : Parser
    {
-      public BinParser()
-         : base("^ ' '* '0b' /{01_}", true)
-      {
-      }
+      public BinParser() : base("^ ' '* '0b' /{01_}", true) { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -29,6 +26,7 @@ namespace Orange.Library.Parsers
             var index = "01".IndexOf(bin[i]);
             accum += binBase * index;
          }
+
          return accum;
       }
 

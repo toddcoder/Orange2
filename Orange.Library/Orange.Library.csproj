@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Orange.Library</RootNamespace>
     <AssemblyName>Orange.Library</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -34,24 +34,21 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Core, Version=1.1.1.3, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.dll</HintPath>
+    <Reference Include="Core, Version=1.1.3.1, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.3.1\lib\net45\Core.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Data, Version=1.1.1.3, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.Data.dll</HintPath>
+    <Reference Include="Core.Data, Version=1.1.3.1, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.3.1\lib\net45\Core.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Internet, Version=1.1.1.3, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.Internet.dll</HintPath>
+    <Reference Include="Core.Internet, Version=1.1.3.1, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.3.1\lib\net45\Core.Internet.dll</HintPath>
     </Reference>
-    <Reference Include="Core.ObjectGraphs, Version=1.1.1.3, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.1.1.3\lib\net45\Core.ObjectGraphs.dll</HintPath>
+    <Reference Include="Core.ObjectGraphs, Version=1.1.3.1, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.1.3.1\lib\net45\Core.ObjectGraphs.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net461\System.ValueTuple.dll</HintPath>
-    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -122,7 +119,7 @@
     <Compile Include="IGetGenerator.cs" />
     <Compile Include="IGetInvokeableReference.cs" />
     <Compile Include="IHasRegion.cs" />
-    <Compile Include="IImmediatelyInvokeable.cs" />
+    <Compile Include="IImmediatelyInvokable.cs" />
     <Compile Include="IInsideIndexer.cs" />
     <Compile Include="ITraitName.cs" />
     <Compile Include="InteractiveFileCache.cs" />
@@ -468,7 +465,7 @@
     <Compile Include="Values\YieldGenerator.cs" />
     <Compile Include="Values\BlockPattern.cs" />
     <Compile Include="Values\BoundValue.cs" />
-    <Compile Include="Values\ContractInvokeable.cs" />
+    <Compile Include="Values\ContractInvokable.cs" />
     <Compile Include="Values\CurryingLambda.cs" />
     <Compile Include="Values\ExpansibleLambda.cs" />
     <Compile Include="Values\Folder.cs" />
@@ -476,7 +473,7 @@
     <Compile Include="Values\GeneratorComprehension.cs" />
     <Compile Include="Values\Grammar.cs" />
     <Compile Include="Values\IMacroBlock.cs" />
-    <Compile Include="Values\ImmediatelyInvokeableVariable.cs" />
+    <Compile Include="Values\ImmediatelyInvokableVariable.cs" />
     <Compile Include="Values\LambdaApp.cs" />
     <Compile Include="Values\LazyBlock.cs" />
     <Compile Include="Values\Macro.cs" />
@@ -511,14 +508,14 @@
     <Compile Include="Values\Graph.cs" />
     <Compile Include="Values\GraphVariable.cs" />
     <Compile Include="Values\If.cs" />
-    <Compile Include="Values\IInvokeable.cs" />
+    <Compile Include="Values\IInvokable.cs" />
     <Compile Include="Values\Trait.cs" />
     <Compile Include="Values\IStaticObject.cs" />
     <Compile Include="Values\IExecutable.cs" />
     <Compile Include="Values\ObjectPropertyVariable2.cs" />
     <Compile Include="Values\ObjectRange.cs" />
     <Compile Include="Values\ObjectVariable.cs" />
-    <Compile Include="Values\InvokeableReference.cs" />
+    <Compile Include="Values\InvokableReference.cs" />
     <Compile Include="Values\MessageArguments.cs" />
     <Compile Include="Values\MultiLambda.cs" />
     <Compile Include="Values\MultiLambdaItem.cs" />

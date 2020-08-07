@@ -47,16 +47,16 @@ namespace Orange.Library.Values
 
       public bool ImplementedBy(Class builder) => builder.Traits.ContainsKey(name);
 
-      public InvokeableReference InvokableReference(string message, bool isObject)
+      public InvokableReference InvokableReference(string message, bool isObject)
       {
          var key = Object.InvokableName(name, isObject, message);
-         return new InvokeableReference(key);
+         return new InvokableReference(key);
       }
 
       public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
       {
          handled = false;
-         if (members[messageName] is IInvokeable invokable)
+         if (members[messageName] is IInvokable invokable)
          {
             handled = true;
             return invokable.Invoke(arguments);
@@ -70,7 +70,7 @@ namespace Orange.Library.Values
          if (members.ContainsKey(messageName))
          {
             var member = members[messageName];
-            return member is IInvokeable;
+            return member is IInvokable;
          }
 
          return false;

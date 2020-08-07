@@ -9,7 +9,6 @@ using Core.Assertions;
 using Core.Collections;
 using Core.Computers;
 using Core.Enumerables;
-using Core.Internet.Sgml;
 using Core.Monads;
 using Core.Numbers;
 using Core.Strings;
@@ -26,6 +25,7 @@ using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Values.Nil;
 using Core.RegularExpressions;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Values
 {
@@ -95,8 +95,7 @@ namespace Orange.Library.Values
          this.text = text;
       }
 
-      public String()
-         : this("") { }
+      public String() : this("") { }
 
       protected virtual string getText()
       {
@@ -234,9 +233,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "invCase", v => ((String)v).InvertCase());
          manager.RegisterMessage(this, "toBase64", v => ((String)v).ToBase64());
          manager.RegisterMessage(this, "fromBase64", v => ((String)v).FromBase64());
-         manager.RegisterMessage(this, "xtidy", v => ((String)v).XTidy());
-         manager.RegisterMessage(this, "xmlify", v => ((String)v).XMLify());
-         manager.RegisterMessage(this, "unxmlify", v => ((String)v).UnXMLify());
          manager.RegisterMessage(this, "sprint", v => ((String)v).SPrint());
          manager.RegisterMessage(this, "sput", v => ((String)v).SPut());
          manager.RegisterMessage(this, "swrite", v => ((String)v).SWrite());
@@ -498,6 +494,7 @@ namespace Orange.Library.Values
             ellipses = false;
             count = -count;
          }
+
          var str = getText();
          if (reserved == 0)
          {
@@ -639,11 +636,13 @@ namespace Orange.Library.Values
             needle = needle.Replace("'", "");
             extra = " squote";
          }
+
          if (needle.Contains("\""))
          {
             needle = needle.Replace("\"", "");
             extra += " dquote";
          }
+
          return needle.Aggregate(text, (current, chr) => current.Substitute($"['{chr}'{extra}]+", chr.ToString()));
       }
 
@@ -695,14 +694,12 @@ namespace Orange.Library.Values
       {
          var possiblePattern = Arguments[0];
          var str = getText();
-         if (possiblePattern is Pattern pattern)
+         switch (possiblePattern)
          {
-            return new Array(pattern.Split(str));
-         }
-
-         if (possiblePattern is Regex possibleRegex)
-         {
-            return possibleRegex.Split(str);
+            case Pattern pattern:
+               return new Array(pattern.Split(str));
+            case Regex possibleRegex:
+               return possibleRegex.Split(str);
          }
 
          if (possiblePattern.IsNumeric())
@@ -947,7 +944,7 @@ namespace Orange.Library.Values
          return index == -1 ? (Value)None.NoneValue : new Some(index);
       }
 
-      Value indexBackOf(string str, string needle, int start)
+      static Value indexBackOf(string str, string needle, int start)
       {
          if (start >= str.Length)
          {
@@ -1079,6 +1076,7 @@ namespace Orange.Library.Values
             var padding = getPaddingAsChar(Arguments[2].Text);
             oldText = oldText.PadRight(index, padding);
          }
+
          return oldText.Insert(index, newText);
       }
 
@@ -1162,7 +1160,7 @@ namespace Orange.Library.Values
 
       public Value Evaluate()
       {
-         if (GetBlock(getText(), 0, true).If(out var block, out var _))
+         if (GetBlock(getText(), 0, true).If(out var block, out var x))
          {
             Regions.Push("evaluate()");
             MessagingState.TemplateMode = true;
@@ -1181,7 +1179,7 @@ namespace Orange.Library.Values
          to = Runtime.Expand(to);
          if (!ignore && to.Length == 1 && from.Length > 1)
          {
-            to = to.Repeat(@from.Length);
+            to = to.Repeat(from.Length);
          }
 
          var mapping = new AutoHash<string, string>(k => k);
@@ -1189,7 +1187,7 @@ namespace Orange.Library.Values
          var length = Math.Min(to.Length, from.Length);
          for (var i = 0; i < length; i++)
          {
-            mapping[@from[i].ToString()] = to[i].ToString();
+            mapping[from[i].ToString()] = to[i].ToString();
          }
 
          if (ignore)
@@ -1232,7 +1230,7 @@ namespace Orange.Library.Values
          var result = new StringBuilder();
          if (to.IsEmpty())
          {
-            foreach (var c in getText().Where(c => @from.IndexOf(c) > -1))
+            foreach (var c in getText().Where(c => from.IndexOf(c) > -1))
             {
                result.Append(c);
             }
@@ -1242,7 +1240,7 @@ namespace Orange.Library.Values
             var replacement = to[0];
             foreach (var c in getText())
             {
-               result.Append(@from.IndexOf(c) > -1 ? c : replacement);
+               result.Append(from.IndexOf(c) > -1 ? c : replacement);
             }
          }
 
@@ -1307,6 +1305,7 @@ namespace Orange.Library.Values
             lastSubjectWord = subjectMatcher[i];
             targetMatcher[i] = convertWord(lastSubjectWord, targetMatcher[i]);
          }
+
          for (var i = length; i < targetMatcher.MatchCount; i++)
          {
             targetMatcher[i] = convertWord(lastSubjectWord, targetMatcher[i]);
@@ -1716,6 +1715,7 @@ namespace Orange.Library.Values
                value.SetPrevious(lastWord.Value);
                lastWord.Value.SetNext(value);
             }
+
             array.Add(value);
             lastWord = value.Some();
             before = "";
@@ -1787,6 +1787,7 @@ namespace Orange.Library.Values
                matcher[0] = matcher[0].ToLower();
                result = matcher.ToString();
             }
+
             return result;
          }
 
@@ -1820,6 +1821,7 @@ namespace Orange.Library.Values
                matcher[0] = matcher[0].ToUpper();
                result = matcher.ToString();
             }
+
             return result;
          }
 
@@ -2294,6 +2296,7 @@ namespace Orange.Library.Values
                secondValue = values[0];
                start = 1;
             }
+
             assistant.SetParameterValues(initialValue, secondValue);
             var value = block.Evaluate();
             var signal = Signal();
@@ -2375,6 +2378,7 @@ namespace Orange.Library.Values
                secondValue = values[init];
                start = init - 1;
             }
+
             assistant.SetParameterValues(secondValue, initialValue);
             var value = block.Evaluate();
             var signal = Signal();

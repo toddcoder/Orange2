@@ -2,16 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Collections;
+using Core.Monads;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
+using static Core.Arrays.ArrayFunctions;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Arrays.ArrayFunctions;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -29,7 +29,10 @@ namespace Orange.Library.Values
 
          var stack = new Stack<Value>();
          foreach (var value in array.Values)
+         {
             stack.Push(value);
+         }
+
          while (stack.Count > 1)
          {
             var right = stack.Pop();
@@ -43,7 +46,7 @@ namespace Orange.Library.Values
 
       public static List FromValue(Value value)
       {
-         return value.PossibleIndexGenerator().FlatMap(generator => FromArray((Array)generator.Array()), () => new List(value));
+         return value.PossibleIndexGenerator().Map(generator => FromArray((Array)generator.Array())).DefaultTo(() => new List(value));
       }
 
       public static List Cons(Value x, Value y) => y is List list ? new List(x, list) : new List(x, y);
@@ -80,7 +83,9 @@ namespace Orange.Library.Values
       public List Add(Value value)
       {
          if (isEmpty)
+         {
             return new List(value);
+         }
 
          var result = FoldR(Cons, new List(value), this);
          return result is List l ? l : new List(result);
@@ -103,15 +108,25 @@ namespace Orange.Library.Values
       static int compareLists(List left, List right)
       {
          if (left.IsEmpty && right.IsEmpty)
+         {
             return 0;
+         }
+
          if (left.IsEmpty)
+         {
             return 1;
+         }
+
          if (right.IsEmpty)
+         {
             return -1;
+         }
 
          var result = left.Head.Compare(right.Head);
          if (result == 0)
+         {
             return compareLists(left.Tail, right.Tail);
+         }
 
          return result;
       }
@@ -174,26 +189,34 @@ namespace Orange.Library.Values
       public IEnumerator<Value> GetEnumerator()
       {
          for (var current = this; !current.IsEmpty; current = current.Tail)
+         {
             yield return current.Head;
+         }
       }
 
       IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
       public override string ToString() => $"[{getText(this, true)}]";
 
-      protected static string getText(List list, bool first) =>
-         list.isEmpty ? "" : $"{(first ? "" : ", ")}{list.head}{getText(list.Tail, false)}";
+      protected static string getText(List list, bool first)
+      {
+         return list.isEmpty ? "" : $"{(first ? "" : ", ")}{list.head}{getText(list.Tail, false)}";
+      }
 
       public bool Match(List comparisand)
       {
          if (isEmpty || comparisand.IsEmpty)
+         {
             return isEmpty == comparisand.IsEmpty;
+         }
 
          var bindings = new Hash<string, Value>();
          if (Match(this, comparisand, bindings))
          {
-            foreach (var item in bindings)
-               Regions.SetParameter(item.Key, item.Value);
+            foreach (var (key, value) in bindings)
+            {
+               Regions.SetParameter(key, value);
+            }
 
             return true;
          }
@@ -204,7 +227,9 @@ namespace Orange.Library.Values
       public static bool Match(List left, List right, Hash<string, Value> bindings)
       {
          if (right.IsEmpty)
+         {
             return true;
+         }
 
          var lHead = left.Head;
          var rHead = right.Head;
@@ -212,7 +237,10 @@ namespace Orange.Library.Values
          if (rHead is Placeholder || rHead is Any || Case.Match(lHead, rHead, false, null))
          {
             if (rHead is Placeholder placeholder)
+            {
                bindings[placeholder.Text] = right.Tail.IsEmpty ? left : lHead;
+            }
+
             return Match(left.Tail, right.Tail, bindings);
          }
 
@@ -222,25 +250,37 @@ namespace Orange.Library.Values
       public static Value FoldR(Func<Value, Value, Value> func, Value accum, List list)
       {
          if (list.IsEmpty)
+         {
             return accum;
-
-         return func(list.Head, FoldR(func, accum, list.Tail));
+         }
+         else
+         {
+            return func(list.Head, FoldR(func, accum, list.Tail));
+         }
       }
 
       public static Value FoldR(Func<Value, Value, Value> func, Value accum, List list, Func<Value, List, bool> predicate)
       {
          if (list.IsEmpty || predicate(list.Head, list.Tail))
+         {
             return accum;
-
-         return func(list.Head, FoldR(func, accum, list.Tail, predicate));
+         }
+         else
+         {
+            return func(list.Head, FoldR(func, accum, list.Tail, predicate));
+         }
       }
 
       public static Value FoldL(Func<Value, Value, Value> func, Value accum, List list)
       {
          if (list.IsEmpty)
+         {
             return accum;
-
-         return func(FoldL(func, accum, list.Tail), list.Head);
+         }
+         else
+         {
+            return func(FoldL(func, accum, list.Tail), list.Head);
+         }
       }
 
       public static Value Map(Func<Value, Value> mappingFunc, List list)
@@ -256,7 +296,9 @@ namespace Orange.Library.Values
       public static Value Append(List list1, List list2)
       {
          if (list1.IsEmpty)
+         {
             return list2;
+         }
 
          return new List(list1.head, Append(list1.Tail, list2.Tail));
       }
@@ -269,7 +311,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push("list-map");
             assistant.IteratorParameter();
@@ -279,6 +323,7 @@ namespace Orange.Library.Values
                return block.Evaluate();
             }, this);
             Regions.Pop("list-map");
+
             return result;
          }
       }
@@ -289,7 +334,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push("list-if");
             assistant.IteratorParameter();
@@ -299,6 +346,7 @@ namespace Orange.Library.Values
                return block.Evaluate().IsTrue;
             }, this);
             Regions.Pop("list-if");
+
             return result;
          }
       }
@@ -310,7 +358,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push("foldr-list");
             assistant.TwoValueParameters();
@@ -320,6 +370,7 @@ namespace Orange.Library.Values
                return block.Evaluate();
             }, accum, this);
             Regions.Pop("foldr-list");
+
             return result;
          }
       }
@@ -331,7 +382,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push("foldl-list");
             assistant.TwoValueParameters();
@@ -341,6 +394,7 @@ namespace Orange.Library.Values
                return block.Evaluate();
             }, accum, this);
             Regions.Pop("foldl-list");
+
             return result;
          }
       }
@@ -355,12 +409,15 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push("find-list");
             assistant.IteratorParameter();
             var result = find(this, assistant, block);
             Regions.Pop("find-list");
+
             return result;
          }
       }
@@ -368,37 +425,51 @@ namespace Orange.Library.Values
       static Value find(List list, ParameterAssistant assistant, Block block)
       {
          if (list.IsEmpty)
+         {
             return new None();
+         }
 
          var head = list.Head;
          assistant.SetIteratorParameter(head);
          if (block.Evaluate().IsTrue)
+         {
             return new Some(head);
-
-         return find(list.Tail, assistant, block);
+         }
+         else
+         {
+            return find(list.Tail, assistant, block);
+         }
       }
 
       public Value Zip()
       {
          if (Arguments[0] is List right)
+         {
             using (var assistant = new ParameterAssistant(Arguments))
             {
                var block = assistant.Block();
                Func<Value, Value, Value> func;
                if (block == null)
+               {
                   func = (x, y) => new Array(array(x, y));
+               }
                else
+               {
                   func = (x, y) =>
                   {
                      assistant.SetParameterValues(x, y);
                      return block.Evaluate();
                   };
+               }
+
                Regions.Push("zip-list");
                assistant.TwoValueParameters();
                var result = zip(this, right, func);
                Regions.Pop("zip-list");
+
                return result;
             }
+         }
 
          return this;
       }
@@ -406,9 +477,14 @@ namespace Orange.Library.Values
       static List zip(List left, List right, Func<Value, Value, Value> func)
       {
          if (left.IsEmpty)
+         {
             return left;
+         }
+
          if (right.IsEmpty)
+         {
             return right;
+         }
 
          return Cons(func(left.Head, right.Head), zip(left.Tail, right.Tail, func));
       }
@@ -419,12 +495,15 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push(regionName);
             assistant.IteratorParameter();
             var result = func(assistant, block);
             Regions.Pop(regionName);
+
             return result;
          }
       }
@@ -497,7 +576,9 @@ namespace Orange.Library.Values
                   var result = block.Evaluate();
                   var signal = Signal();
                   if (signal == Breaking)
+                  {
                      break;
+                  }
 
                   switch (signal)
                   {
@@ -508,14 +589,19 @@ namespace Orange.Library.Values
                   }
 
                   if (result.IsTrue)
+                  {
                      leftList = leftList.Add(value);
+                  }
                   else
+                  {
                      rightList = rightList.Add(value);
+                  }
                }
 
                var list = Empty;
                list = list.Add(leftList);
                list = list.Add(rightList);
+
                return list;
             }
          }
@@ -540,6 +626,7 @@ namespace Orange.Library.Values
             array.Add(v);
             return list;
          }, list, this);
+
          return ((Array)result).Values;
       }
 
@@ -554,7 +641,10 @@ namespace Orange.Library.Values
          }, list, this);
          var newArray = (Array)result;
          if (newArray.Length == 0)
+         {
             newArray.Add(Empty);
+         }
+
          return newArray.Values;
       }
 
@@ -564,7 +654,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             Regions.Push("list-for");
             assistant.IteratorParameter();
@@ -576,6 +668,7 @@ namespace Orange.Library.Values
             }
 
             Regions.Pop("list-for");
+
             return this;
          }
       }
@@ -587,12 +680,15 @@ namespace Orange.Library.Values
       public static Value Sort(List list)
       {
          if (list.isEmpty)
+         {
             return list;
+         }
 
          var head = list.head;
          var less = Sort((List)Filter(v => v.Compare(head) < 0, list.Tail));
          var greater = Sort((List)Filter(v => v.Compare(head) >= 0, list.Tail));
          var result = Concat((List)less, new List(head));
+
          return Concat((List)result, (List)greater);
       }
 
@@ -607,7 +703,9 @@ namespace Orange.Library.Values
       public Value Max() => FoldR((v, a) =>
       {
          if (a.IsNil)
+         {
             return v;
+         }
 
          return v.Compare(a) > 0 ? v : a;
       }, NilValue, this);
@@ -615,7 +713,9 @@ namespace Orange.Library.Values
       public Value Min() => FoldR((v, a) =>
       {
          if (a.IsNil)
+         {
             return v;
+         }
 
          return v.Compare(a) < 0 ? v : a;
       }, NilValue, this);
@@ -636,7 +736,9 @@ namespace Orange.Library.Values
             foreach (var value in this)
             {
                if (i == index)
+               {
                   return value.Some();
+               }
 
                i++;
             }
@@ -648,9 +750,13 @@ namespace Orange.Library.Values
       public List Reverse()
       {
          if (isEmpty)
+         {
             return this;
-
-         return tail.Reverse().Add(head);
+         }
+         else
+         {
+            return tail.Reverse().Add(head);
+         }
       }
 
       public Value Array() => new Array(Values());
@@ -658,7 +764,7 @@ namespace Orange.Library.Values
       public Value GetItem()
       {
          var index = Arguments[0].Int;
-         return this[index].FlatMap(v => v, () => Empty);
+         return this[index].Map(v => v).DefaultTo(() => Empty);
       }
    }
 }

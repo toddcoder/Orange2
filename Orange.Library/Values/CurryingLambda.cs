@@ -32,7 +32,7 @@
             for (var i = 1; i < blocks.Length; i++)
             {
                var value = blocks[i].Evaluate();
-               if (value is IInvokeable invokeable)
+               if (value is IInvokable invokeable)
                   value = invokeable.Invoke(new Arguments());
                newArguments.AddArgument(value);
             }

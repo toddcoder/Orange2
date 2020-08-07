@@ -93,7 +93,7 @@ namespace Orange.Library.Values
          initialized = true;
       }
 
-      void setObjectPropertyVariable(string name, ObjectPropertyVariable2 variable, Action<ObjectPropertyVariable2, IInvokeable> action)
+      void setObjectPropertyVariable(string name, ObjectPropertyVariable2 variable, Action<ObjectPropertyVariable2, IInvokable> action)
       {
          if (!region.Variables.ContainsKey(name))
          {
@@ -101,8 +101,8 @@ namespace Orange.Library.Values
          }
 
          var value = region.Variables[name];
-         var reference = value.RequiredCast<InvokeableReference>(() => $"{name} must be an invokable");
-         action(variable, reference.Invokeable);
+         var reference = value.RequiredCast<InvokableReference>(() => $"{name} must be an invokable");
+         action(variable, reference.Invokable);
       }
 
       static Value defaultFunc(string messageName)
@@ -194,7 +194,7 @@ namespace Orange.Library.Values
             handled = true;
             switch (retrieved)
             {
-               case InvokeableReference invokableReference:
+               case InvokableReference invokableReference:
                {
                   var result = invoke(invokableReference, arguments.AddLambdaAsArgument());
                   return result;
@@ -229,7 +229,7 @@ namespace Orange.Library.Values
          {
             var retrieved = region["unknown"];
             handled = true;
-            if (retrieved is InvokeableReference)
+            if (retrieved is InvokableReference)
             {
                arguments.Unshift(messageName);
                var result = invoke(reference, arguments.AddLambdaAsArgument());
@@ -241,12 +241,12 @@ namespace Orange.Library.Values
          return null;
       }
 
-      public InvokeableReference Invokable(string message)
+      public InvokableReference Invokable(string message)
       {
-         return region.ContainsMessage(message) && region[message] is InvokeableReference reference ? reference : null;
+         return region.ContainsMessage(message) && region[message] is InvokableReference reference ? reference : null;
       }
 
-      Value invoke(InvokeableReference reference, Arguments arguments)
+      Value invoke(InvokableReference reference, Arguments arguments)
       {
          var name = $"invoking reference {reference.VariableName}";
          using (var popper = new RegionPopper(region, name))
@@ -259,7 +259,7 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Invoke(IInvokeable invokable, Arguments arguments)
+      public Value Invoke(IInvokable invokable, Arguments arguments)
       {
          using (var popper = new RegionPopper(region, "Invoking invokable"))
          {
@@ -289,41 +289,28 @@ namespace Orange.Library.Values
 
       public bool RespondsTo(string messageName)
       {
-         if (!initialized)
-         {
-            return false;
-         }
-
-         return RespondsNoDefault(messageName) || DefaultRespondsTo(messageName) ||
-            IsXMethodAvailable(messageName) || State.CanExtend(className, messageName);
+         return initialized && (RespondsNoDefault(messageName) || DefaultRespondsTo(messageName) || IsXMethodAvailable(messageName) ||
+            State.CanExtend(className, messageName));
       }
 
       public bool RespondsNoDefault(string messageName)
       {
-         if (!initialized)
-         {
-            return false;
-         }
-
-         if (region.ContainsMessage("unknown"))
-         {
-            return true;
-         }
-
-         return region.ContainsMessage(messageName) || IsXMethodAvailable(messageName) ||
-            State.CanExtend(className, messageName);
+         return initialized && (region.ContainsMessage("unknown") || region.ContainsMessage(messageName) || IsXMethodAvailable(messageName) ||
+            State.CanExtend(className, messageName));
       }
 
       public Class Class
       {
          get
          {
-            if (className == "base")
+            if (className != "base" && Regions[className] is Class cls)
+            {
+               return cls;
+            }
+            else
             {
                return null;
             }
-
-            return Regions[className] is Class cls ? cls : null;
          }
       }
 
@@ -338,9 +325,9 @@ namespace Orange.Library.Values
             var traitLambda = value.RequiredCast<Lambda>(() => $"Trait member {key} must be a lambda");
             if (region.ContainsMessage(key))
             {
-               if (region[key] is InvokeableReference reference)
+               if (region[key] is InvokableReference reference)
                {
-                  var invokable = reference.Invokeable;
+                  var invokable = reference.Invokable;
                   if (invokable is LambdaApp app)
                   {
                      app.Add(traitLambda);
@@ -350,7 +337,7 @@ namespace Orange.Library.Values
                      if (invokable is Lambda lambda)
                      {
                         app = new LambdaApp(lambda, traitLambda);
-                        reference.Invokeable = app;
+                        reference.Invokable = app;
                      }
                   }
                }
@@ -358,8 +345,8 @@ namespace Orange.Library.Values
             else
             {
                var invokableName = InvokableName(className, true, key);
-               traitLambda.ImmediatelyInvokeable = true;
-               State.SetInvokeable(invokableName, traitLambda);
+               traitLambda.ImmediatelyInvokable = true;
+               State.SetInvokable(invokableName, traitLambda);
             }
          }
       }
@@ -395,9 +382,9 @@ namespace Orange.Library.Values
       public void CopyAllNonPrivateTo(Region other)
       {
          var abstractsToPurge = new List<string>();
-         foreach (var item in region.Variables)
+         foreach (var (key, _) in region.Variables)
          {
-            if (!IsPrefixed(item.Key, out var type, out var name))
+            if (!IsPrefixed(key, out var type, out var name))
             {
                continue;
             }
@@ -412,12 +399,12 @@ namespace Orange.Library.Values
                switch (type)
                {
                   case "get":
-                     abstractsToPurge.Add(item.Key);
+                     abstractsToPurge.Add(key);
                      break;
                   case "set":
                      if (!region.IsReadOnly(name))
                      {
-                        abstractsToPurge.Add(item.Key);
+                        abstractsToPurge.Add(key);
                      }
 
                      break;
@@ -452,12 +439,13 @@ namespace Orange.Library.Values
          return invoke(reference, arguments);
       }
 
-      InvokeableReference superInvokable(string messageName)
+      InvokableReference superInvokable(string messageName)
       {
          var super = Super;
          RejectNull(super, LOCATION, "Couldn't retrieve super");
          var name = InvokableName(super.Name, isObject, messageName);
-         var reference = new InvokeableReference(name);
+         var reference = new InvokableReference(name);
+
          return reference;
       }
 
@@ -520,12 +508,12 @@ namespace Orange.Library.Values
          }
       }
 
-      public Hash<string, InvokeableReference> AllPublicInvokables
+      public Hash<string, InvokableReference> AllPublicInvokables
       {
          get
          {
             return region.Variables.Where(i => IsPublic(i.Key) && i.Value.Type == ValueType.InvokableReference)
-               .ToHash(i => i.Key, i => (InvokeableReference)i.Value);
+               .ToHash(i => i.Key, i => (InvokableReference)i.Value);
          }
       }
 
@@ -592,10 +580,10 @@ namespace Orange.Library.Values
 
          var comparisandVariables = obj.ComparisonVariables;
          var variables = ComparisonVariables;
-         foreach (var item in comparisandVariables)
+         foreach (var (key, value1) in comparisandVariables)
          {
-            var comparisandValue = item.Value;
-            var currentValue = variables[item.Key];
+            var comparisandValue = value1;
+            var currentValue = variables[key];
             if (BoundValue.Unbind(comparisandValue, out var boundName, out var boundValue))
             {
                bindings[boundName] = boundValue;
@@ -608,13 +596,12 @@ namespace Orange.Library.Values
                   continue;
                case ValueType.Placeholder:
                   var newChain = new MessagePath(currentPath);
-                  newChain.Add(item.Key);
+                  newChain.Add(key);
                   chains[comparisandValue.Text] = newChain;
                   continue;
             }
 
-            if ((comparisandValue.Type == ValueType.Abstract || comparisandValue.Type == ValueType.ToDo) &&
-               variables.ContainsKey(item.Key))
+            if ((comparisandValue.Type == ValueType.Abstract || comparisandValue.Type == ValueType.ToDo) && variables.ContainsKey(key))
             {
                continue;
             }
@@ -638,7 +625,7 @@ namespace Orange.Library.Values
                continue;
             }
 
-            if (variables.ContainsKey(item.Key))
+            if (variables.ContainsKey(key))
             {
                var value = currentValue;
                if (value is Object obj1)
@@ -646,7 +633,7 @@ namespace Orange.Library.Values
                   if (comparisandValue is Object obj2)
                   {
                      var newChain = new MessagePath(currentPath);
-                     newChain.Add(item.Key);
+                     newChain.Add(key);
                      var repeating = false;
                      while (true)
                      {
@@ -699,7 +686,7 @@ namespace Orange.Library.Values
 
                      if (MatchObjects(obj1, obj2, false, assigning))
                      {
-                        bindings[item.Key] = obj1;
+                        bindings[key] = obj1;
                         continue;
                      }
 
@@ -736,8 +723,7 @@ namespace Orange.Library.Values
       {
          var value = Arguments[0];
          var cls = Class;
-         return value is Class otherBuilder && cls.Compare(otherBuilder) == 0 ||
-            value is Trait trait && cls.ImplementsTrait(trait);
+         return value is Class otherBuilder && cls.Compare(otherBuilder) == 0 || value is Trait trait && cls.ImplementsTrait(trait);
       }
 
       public bool ImplementsInterface(Trait @interface)
@@ -749,8 +735,7 @@ namespace Orange.Library.Values
             {
                if (value is Signature signature && RespondsNoDefault(key))
                {
-                  return (!(region[key] is InvokeableReference reference) || reference.MatchesSignature(signature)) &&
-                     signature.Optional;
+                  return (!(region[key] is InvokableReference reference) || reference.MatchesSignature(signature)) && signature.Optional;
                }
             }
 
@@ -761,13 +746,12 @@ namespace Orange.Library.Values
       public Value Members()
       {
          var array = new Array();
-         foreach (var item in AllPublicNonBuiltIn)
+         foreach (var (name, value1) in AllPublicNonBuiltIn)
          {
-            var name = item.Key;
-            var value = item.Value;
-            if (value is InvokeableReference reference)
+            var value = value1;
+            if (value is InvokableReference reference)
             {
-               value = (Value)reference.Invokeable;
+               value = (Value)reference.Invokable;
             }
 
             array[name] = value;
@@ -778,9 +762,9 @@ namespace Orange.Library.Values
 
       public override Value AlternateValue(string message)
       {
-         if (IsGeneratorAvailable)
+         if (IsGeneratorAvailable && PossibleGenerator().If(out var generator))
          {
-            return (Value)PossibleGenerator().Value;
+            return (Value)generator;
          }
 
          return null;

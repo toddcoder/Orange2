@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Strings;
 using static System.StringComparison;
+using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Lambdas.LambdaFunctions;
 
 namespace Orange.Library.Values
 {
@@ -31,11 +31,15 @@ namespace Orange.Library.Values
       void setCompare()
       {
          if (inclusive)
+         {
             compare = forward ? func(() => string.Compare(current, stop, Ordinal) <= 0) :
                func(() => string.Compare(current, stop, Ordinal) >= 0);
+         }
          else
+         {
             compare = forward ? func(() => string.Compare(current, stop, Ordinal) < 0) :
                func(() => string.Compare(current, stop, Ordinal) > 0);
+         }
       }
 
       public override int Compare(Value value) => 0;
@@ -68,11 +72,18 @@ namespace Orange.Library.Values
       public Value Next(int index)
       {
          if (index == 0)
+         {
             current = start;
+         }
          else if (forward)
+         {
             current = succ();
+         }
          else
+         {
             current = pred();
+         }
+
          return compare() ? (Value)current : NilValue;
       }
 

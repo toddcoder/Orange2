@@ -192,7 +192,7 @@ namespace Orange.Library.Values
             region.DetectToDos();
          }
          foreach (var item in region.Variables)
-            if (item.Value is InvokeableReference reference)
+            if (item.Value is InvokableReference reference)
                invokeables[item.Key] = reference.VariableName;
 
          obj.Initialize(region, isObject, name, lockedDown);
@@ -223,7 +223,7 @@ namespace Orange.Library.Values
             return;
 
          var reference = staticObject.Invokable("init_common");
-         var invokeable = reference.Invokeable;
+         var invokeable = reference.Invokable;
          if (invokeable == null)
             return;
 
@@ -255,7 +255,7 @@ namespace Orange.Library.Values
                   if (region.ContainsMessage(member.Key))
                   {
                      var value = region[member.Key];
-                     if (value is InvokeableReference reference)
+                     if (value is InvokableReference reference)
                         Assert(reference.MatchesSignature(signature), LOCATION, $"Trait {traitName}.{signature.Name} has not been implemented");
                   }
                   else
@@ -296,9 +296,9 @@ namespace Orange.Library.Values
          {
             var oldParameters = parameters;
             var oldBlock = objectBlock;
-            if (staticObject.Region[messageName] is InvokeableReference reference)
+            if (staticObject.Region[messageName] is InvokableReference reference)
             {
-               var invokeable = reference.Invokeable;
+               var invokeable = reference.Invokable;
                RejectNull(invokeable, LOCATION, $"Invokeable {messageName} not found");
                if (invokeable is Lambda lambda)
                {
@@ -362,7 +362,7 @@ namespace Orange.Library.Values
          }
       }
 
-      public InvokeableReference InvokableReference(string message, bool isObject) => new InvokeableReference(Object.InvokableName(name, isObject, message));
+      public InvokableReference InvokableReference(string message, bool isObject) => new InvokableReference(Object.InvokableName(name, isObject, message));
 
       public Value Required()
       {

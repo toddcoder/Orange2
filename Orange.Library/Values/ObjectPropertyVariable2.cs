@@ -11,15 +11,15 @@ namespace Orange.Library.Values
       public ObjectPropertyVariable2(Object obj, string name)
          : base(name) => this.obj = obj;
 
-      public IInvokeable Getter { get; set; }
+      public IInvokable Getter { get; set; }
 
-      public IInvokeable Setter { get; set; }
+      public IInvokable Setter { get; set; }
 
-      public IInvokeable Before { get; set; }
+      public IInvokable Before { get; set; }
 
-      public IInvokeable After { get; set; }
+      public IInvokable After { get; set; }
 
-      public IInvokeable Invariant { get; set; }
+      public IInvokable Invariant { get; set; }
 
       public override Value Value
       {

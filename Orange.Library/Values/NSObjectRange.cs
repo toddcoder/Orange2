@@ -1,9 +1,9 @@
 ﻿using System.Linq;
+using Core.Monads;
 using Orange.Library.Managers;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -28,17 +28,20 @@ namespace Orange.Library.Values
 
          public override Value Next()
          {
-            if (current.IsSome && index++ < MAX_LOOP && compare(current.Value, stop) < 0)
+            if (current.If(out var value))
             {
-               var next = successor(current.Value);
-               var result = current.Value;
-               current = next.Some();
-               return result;
+               if (index++ < MAX_LOOP && compare(value, stop) < 0)
+               {
+                  var next = successor(value);
+                  var result = value;
+                  current = next.Some();
+                  return result;
+               }
             }
 
-            if (current.IsSome)
+            if (current.If(out value))
             {
-               var result = current.Value;
+               var result = value;
                current = none<Object>();
                return result;
             }
@@ -106,6 +109,7 @@ namespace Orange.Library.Values
       {
          var needle = Arguments[0];
          var iterator = new NSIterator(GetGenerator());
+
          return iterator.Any(value => needle.Compare(value) == 0);
       }
 

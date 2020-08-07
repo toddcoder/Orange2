@@ -1,13 +1,11 @@
-﻿using Standard.Types.Maybe;
+﻿using Core.Monads;
 
 namespace Orange.Library.Junctions
 {
    public class AnyJunction : Junction
    {
       public AnyJunction(INSGenerator generator, Arguments arguments)
-         : base(generator, arguments)
-      {
-      }
+         : base(generator, arguments) { }
 
       public override bool IfNil() => false;
 

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using Orange.Library.Managers;
+using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Lambdas.LambdaFunctions;
 
 namespace Orange.Library.Values
 {
@@ -14,8 +14,7 @@ namespace Orange.Library.Values
          protected int start;
          protected int increment;
 
-         public NSIntRangeGenerator(INSGeneratorSource generatorSource, int start, int increment)
-            : base(generatorSource)
+         public NSIntRangeGenerator(INSGeneratorSource generatorSource, int start, int increment) : base(generatorSource)
          {
             this.start = start;
             this.increment = increment;
@@ -47,20 +46,22 @@ namespace Orange.Library.Values
       void setCompare()
       {
          if (inclusive)
+         {
             compare = increment > 0 ? func<int, bool>(i => i <= stop) : func<int, bool>(i => i >= stop);
+         }
          else
+         {
             compare = increment > 0 ? func<int, bool>(i => i < stop) : func<int, bool>(i => i > stop);
+         }
       }
 
-      public NSIntRange(int start, int stop, int increment, bool inclusive)
-         : this(start, stop, inclusive)
+      public NSIntRange(int start, int stop, int increment, bool inclusive) : this(start, stop, inclusive)
       {
          this.increment = increment;
          setCompare();
       }
 
-      public NSIntRange(NSIntRange otherRange, int increment)
-         : this(otherRange.start, otherRange.stop, otherRange.inclusive)
+      public NSIntRange(NSIntRange otherRange, int increment) : this(otherRange.start, otherRange.stop, otherRange.inclusive)
       {
          this.increment = increment;
          setCompare();
@@ -90,12 +91,17 @@ namespace Orange.Library.Values
       string incrementString()
       {
          if (increment == 1)
+         {
             return "";
-
-         if (increment > 0)
+         }
+         else if (increment > 0)
+         {
             return $".+{increment}";
-
-         return $".{increment}";
+         }
+         else
+         {
+            return $".{increment}";
+         }
       }
 
       public override string ToString() => $"{start}{(inclusive ? ".." : "...")}{stop}{incrementString()}";
@@ -141,6 +147,7 @@ namespace Orange.Library.Values
       {
          var needle = Arguments[0];
          var iterator = new NSIterator(GetGenerator());
+
          return iterator.Any(value => needle.Compare(value) == 0);
       }
 

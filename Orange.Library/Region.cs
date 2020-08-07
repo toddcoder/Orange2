@@ -130,12 +130,12 @@ namespace Orange.Library
             readonlys[name] = ReadOnly;
          }
 
-         if (!(value is InvokeableReference reference))
+         if (!(value is InvokableReference reference))
          {
             return;
          }
 
-         var invokable = reference.Invokeable;
+         var invokable = reference.Invokable;
 
          if (invokable?.Initializer == true)
          {

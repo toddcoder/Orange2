@@ -4,13 +4,13 @@ namespace Orange.Library.Values
 {
 	public class AutoInvoker : Value
 	{
-		IInvokeable invokeable;
+		IInvokable invokable;
 		Value invokeableAsValue;
 
-		public AutoInvoker(IInvokeable invokeable)
+		public AutoInvoker(IInvokable invokable)
 		{
-			this.invokeable = invokeable;
-			invokeableAsValue = (Value)this.invokeable;
+			this.invokable = invokable;
+			invokeableAsValue = (Value)this.invokable;
 		}
 
 		public override int Compare(Value value) => invokeableAsValue.Compare(value);
@@ -41,7 +41,7 @@ namespace Orange.Library.Values
 
 	   public override bool IsTrue => invokeableAsValue.IsTrue;
 
-	   public override Value Clone() => new AutoInvoker(invokeable);
+	   public override Value Clone() => new AutoInvoker(invokable);
 
 	   protected override void registerMessages(MessageManager manager)
 		{
@@ -53,6 +53,6 @@ namespace Orange.Library.Values
 
 	   public override Value AssignmentValue() => invoke();
 
-	   Value invoke() => invokeable.Invoke(new Arguments());
+	   Value invoke() => invokable.Invoke(new Arguments());
 	}
 }
