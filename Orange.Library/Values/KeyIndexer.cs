@@ -30,6 +30,7 @@ namespace Orange.Library.Values
          setLength();
          var keyValues = new List<string>();
          foreach (var value in keyArray.Values)
+         {
             switch (value.Type)
             {
                case ValueType.Array:
@@ -39,6 +40,7 @@ namespace Orange.Library.Values
                   keyValues.Add(value.Text);
                   break;
             }
+         }
 
          return keyValues.ToArray();
       }
@@ -63,7 +65,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.ArrayParameters();
 
@@ -77,7 +81,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                var signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -88,19 +94,29 @@ namespace Orange.Library.Values
                }
 
                if (value.Type == ValueType.Nil)
+               {
                   continue;
+               }
 
                if (value is KeyedValue keyedValue)
+               {
                   changes[keyedValue.Key] = keyedValue.Value;
+               }
                else
+               {
                   changes[key] = value;
+               }
             }
 
             if (changes.Length == 0)
+            {
                return this;
+            }
 
             foreach (var item in changes)
+            {
                array[item.Key] = item.Value;
+            }
 
             return this;
          }
@@ -110,7 +126,9 @@ namespace Orange.Library.Values
       {
          var keysToDelete = getIndicators();
          foreach (var key in keysToDelete)
+         {
             array.Remove(key);
+         }
 
          return array;
       }
@@ -131,7 +149,9 @@ namespace Orange.Library.Values
                   value = block.Evaluate();
                   var signal = Signal();
                   if (signal == Breaking)
+                  {
                      break;
+                  }
 
                   switch (signal)
                   {
@@ -142,7 +162,9 @@ namespace Orange.Library.Values
                   }
 
                   if (value != null)
+                  {
                      array[key] = value;
+                  }
                }
 
                return array;
@@ -150,7 +172,9 @@ namespace Orange.Library.Values
 
             value = Arguments[0];
             foreach (var key in getIndicators())
+            {
                array[key] = value.Clone();
+            }
 
             return array;
          }
@@ -161,7 +185,9 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var insertKeys = getIndicators();
          foreach (var key in insertKeys)
+         {
             array.Insert(key, value);
+         }
 
          return array;
       }
@@ -192,7 +218,9 @@ namespace Orange.Library.Values
             case 1:
                var key = keys[0];
                if (array.ContainsKey(key))
+               {
                   return array[key];
+               }
 
                get = defaultValue.Value();
                array[key] = get;
@@ -200,14 +228,18 @@ namespace Orange.Library.Values
             default:
                var newArray = new Array();
                foreach (var keyToFind in keys)
+               {
                   if (array.ContainsKey(keyToFind))
+                  {
                      newArray.Add(array[keyToFind]);
+                  }
                   else
                   {
                      get = defaultValue.Value();
                      array[keyToFind] = get;
                      newArray.Add(get);
                   }
+               }
 
                return newArray;
          }
@@ -218,13 +250,17 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var result = new Array();
          foreach (var key in getIndicators())
+         {
             if (array.ContainsKey(key))
+            {
                result[key] = array[key];
+            }
             else
             {
                array[key] = value;
                result[key] = value;
             }
+         }
 
          return result.Length == 1 ? result[0] : result;
       }

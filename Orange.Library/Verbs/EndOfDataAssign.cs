@@ -16,7 +16,9 @@ namespace Orange.Library.Verbs
          if (pop is Variable variable)
          {
             if (value.Type == Value.ValueType.Nil)
+            {
                return false;
+            }
 
             value.AssignmentValue().AssignTo(variable);
             return true;

@@ -1,11 +1,12 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Monads;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object.VisibilityType;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -18,8 +19,7 @@ namespace Orange.Library.Parsers
       HexParser hexParser;
       bool useCase;
 
-      public EnumerationValueParser(bool useCase = true)
-         : base(useCase ? REGEX_CASE : REGEX_COMMA)
+      public EnumerationValueParser(bool useCase = true) : base(useCase ? REGEX_CASE : REGEX_COMMA)
       {
          integerParser = new IntegerParser();
          hexParser = new HexParser();
@@ -29,7 +29,9 @@ namespace Orange.Library.Parsers
       public override Verb CreateVerb(string[] tokens)
       {
          if (!InClassDefinition)
+         {
             return null;
+         }
 
          Color(position, tokens[1].Length, Whitespaces);
          Color(tokens[2].Length, useCase ? KeyWords : Operators);
@@ -41,9 +43,10 @@ namespace Orange.Library.Parsers
          Color(tokens5Length, type == "=" ? Operators : Structures);
          var index = position + length;
          var staticFunction = new CodeBuilder();
-         Parameters parameters;
-         int newIndex;
          if (tokens5Length > 0)
+         {
+            Parameters parameters;
+            int newIndex;
             switch (type)
             {
                case "=":
@@ -64,7 +67,9 @@ namespace Orange.Library.Parsers
                      staticFunction.ValueAsArgument(caseName);
                   }
                   else
+                  {
                      return null;
+                  }
 
                   break;
                case "(":
@@ -103,6 +108,7 @@ namespace Orange.Library.Parsers
                default:
                   return null;
             }
+         }
          else
          {
             staticFunction.ValueAsArgument(++EnumerationValue);
@@ -117,7 +123,10 @@ namespace Orange.Library.Parsers
          AddStaticBlock(staticBlock);
          var commaParser = new EnumerationValueParser(false);
          if (commaParser.Scan(source, index))
+         {
             index = commaParser.Result.Position;
+         }
+
          overridePosition = index;
          return new NullOp();
       }
@@ -127,8 +136,8 @@ namespace Orange.Library.Parsers
          RejectNull(builder, "Case parser", "Not called from an enumeration");
          var enumerationValue = new Double(EnumerationValue).Pushed;
          var name = new String(caseName).Pushed;
-         builder.IndexedSetterMessage("valueToName", "item", enumerationValue, new NotMatched<Verb>(), name, false);
-         builder.IndexedSetterMessage("nameToValue", "item", name, new NotMatched<Verb>(), enumerationValue, false);
+         builder.IndexedSetterMessage("valueToName", "item", enumerationValue, notMatched<Verb>(), name, false);
+         builder.IndexedSetterMessage("nameToValue", "item", name, notMatched<Verb>(), enumerationValue, false);
       }
 
       public override string VerboseName => "case";

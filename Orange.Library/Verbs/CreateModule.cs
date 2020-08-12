@@ -1,11 +1,11 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Values;
+using static Core.Strings.StringFunctions;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
 using static Orange.Library.Values.Object.VisibilityType;
-using static Standard.Types.Strings.StringFunctions;
 
 namespace Orange.Library.Verbs
 {
@@ -28,7 +28,7 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         var id = objectName.IsEmpty() ? UniqueID() : objectName;
+         var id = objectName.IsEmpty() ? uniqueID() : objectName;
          var className = $"{VAR_MANGLE}{id.ToTitleCase()}Module";
          var current = Regions.Current;
          current.CreateVariable(className, visibility: visibility);
@@ -41,6 +41,7 @@ namespace Orange.Library.Verbs
             current.CreateVariable(objectName);
             current[objectName] = obj;
          }
+
          result = $"module {objectName}";
          return obj;
       }

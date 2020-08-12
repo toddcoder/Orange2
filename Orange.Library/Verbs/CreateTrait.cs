@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Collections;
 using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
@@ -19,17 +20,20 @@ namespace Orange.Library.Verbs
          result = "";
       }
 
-      public CreateTrait()
-         : this(null, new List<string>()) { }
+      public CreateTrait() : this(null, new List<string>()) { }
 
       public override Value Evaluate()
       {
          if (traitNames != null)
-            foreach (var item in traitNames
+         {
+            foreach (var (key, value) in traitNames
                .Select(name => Regions[name]).OfType<Trait>()
                .SelectMany(parentTrait => parentTrait.Members
                   .Where(item => !trait.Members.ContainsKey(item.Key))))
-               trait.Members[item.Key] = item.Value;
+            {
+               trait.Members[key] = value;
+            }
+         }
 
          Regions.CreateVariable(trait.Name);
          Regions[trait.Name] = trait;

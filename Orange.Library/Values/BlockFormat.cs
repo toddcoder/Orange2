@@ -1,7 +1,7 @@
 ﻿using Orange.Library.Managers;
-using Standard.Types.Strings;
 using System.Linq;
-using Standard.Types.Enumerables;
+using Core.Enumerables;
+using Core.Strings;
 using static System.Math;
 
 namespace Orange.Library.Values
@@ -22,24 +22,14 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return ToString();
-         }
-         set
-         {
-         }
+         get => ToString();
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return Text.ToDouble();
-         }
-         set
-         {
-         }
+         get => Text.ToDouble();
+         set { }
       }
 
       public override ValueType Type => ValueType.Format;
@@ -59,10 +49,16 @@ namespace Orange.Library.Values
          Runtime.State.RegisterBlock(block);
          var minLength = Min(newParameters.Length, arguments.Length);
          for (var i = 0; i < minLength; i++)
+         {
             RegionManager.Regions.SetLocal(newParameters[i], arguments[i]);
+         }
+
          var result = block.Evaluate();
          if (result.IsArray)
-            result = ((Array)result.SourceArray).Values.Select(v => v.Text).Listify("");
+         {
+            result = ((Array)result.SourceArray).Values.Select(v => v.Text).Stringify("");
+         }
+
          Runtime.State.UnregisterBlock();
 
          return result;

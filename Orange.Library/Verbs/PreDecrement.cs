@@ -6,33 +6,37 @@ using static Orange.Library.Verbs.Verb.AffinityType;
 
 namespace Orange.Library.Verbs
 {
-	public class PreDecrement : Verb
-	{
-		const string LOCATION = "Predecrement";
+   public class PreDecrement : Verb
+   {
+      const string LOCATION = "Predecrement";
 
-		public static Value GetPredecessor(Value value) => SendMessage(value, "pred");
+      public static Value GetPredecessor(Value value) => SendMessage(value, "pred");
 
-	   public override Value Evaluate()
-		{
-			var value = State.Stack.Pop(false, LOCATION);
-			if (value.IsVariable)
-			{
-				var variable = (Variable)value;
-				value = variable.Value;
-				var predecessor = GetPredecessor(value);
-				if (value.Type != ValueType.Object)
-					variable.Value = predecessor;
-				return variable;
-			}
-			return GetPredecessor(value);
-		}
+      public override Value Evaluate()
+      {
+         var value = State.Stack.Pop(false, LOCATION);
+         if (value.IsVariable)
+         {
+            var variable = (Variable)value;
+            value = variable.Value;
+            var predecessor = GetPredecessor(value);
+            if (value.Type != ValueType.Object)
+            {
+               variable.Value = predecessor;
+            }
 
-		public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreDecrement;
+            return variable;
+         }
 
-	   public override string ToString() => "--";
+         return GetPredecessor(value);
+      }
 
-	   public override AffinityType Affinity => Prefix;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreDecrement;
 
-	   public override int OperandCount => 1;
-	}
+      public override string ToString() => "--";
+
+      public override AffinityType Affinity => Prefix;
+
+      public override int OperandCount => 1;
+   }
 }

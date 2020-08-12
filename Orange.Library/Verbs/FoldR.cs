@@ -16,7 +16,9 @@ namespace Orange.Library.Verbs
          var operatorValue = stack.Pop(true, LOCATION);
          var value = stack.Pop(true, LOCATION).Self;
          if (operatorValue is Lambda lambda)
+         {
             return MessagingState.SendMessage(value, "foldr", FromValue(lambda));
+         }
 
          Throw(LOCATION, "Expected lambda");
          return null;

@@ -89,8 +89,11 @@ namespace Orange.Library.Values
 					{
 						value = evaluate(next, value);
 						if (!evaluate(ifBlock, value).IsTrue)
-							break;
-						array.Add(value);
+                  {
+                     break;
+                  }
+
+                  array.Add(value);
 					}
 				}
 				return array;
@@ -130,13 +133,19 @@ namespace Orange.Library.Values
 	   protected static Value evaluate(ParameterBlock parameterBlock, Value current)
 		{
 			if (parameterBlock == null)
-				return true;
-			using (var assistant = new ParameterAssistant(parameterBlock))
+         {
+            return true;
+         }
+
+         using (var assistant = new ParameterAssistant(parameterBlock))
 			{
 				var block = assistant.Block();
 				if (block == null)
-					return true;
-				assistant.IteratorParameter();
+            {
+               return true;
+            }
+
+            assistant.IteratorParameter();
 				assistant.SetIteratorParameter(current);
 				return block.Evaluate();
 			}

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 
@@ -26,9 +26,12 @@ namespace Orange.Library.Verbs
          result = value.ToString();
          typeName = value.Type.ToString();
          if (fieldName.IsEmpty())
+         {
             return result;
+         }
 
          Regions.Current.CreateAndSet(fieldName, value);
+
          return null;
       }
 

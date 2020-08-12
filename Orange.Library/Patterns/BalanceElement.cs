@@ -1,6 +1,6 @@
-﻿using Standard.Types.DataStructures;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
+﻿using Core.DataStructures;
+using Core.RegularExpressions;
+using Core.Strings;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Patterns
@@ -10,7 +10,7 @@ namespace Orange.Library.Patterns
       public override bool Evaluate(string input)
       {
          index = State.Position;
-         var current = input.Skip(index);
+         var current = input.Drop(index);
          if (!current.IsMatch("['()[]{}']"))
          {
             length = current.Length;
@@ -18,7 +18,9 @@ namespace Orange.Library.Patterns
          }
 
          if (!current.IsMatch("^ ['([{']"))
+         {
             return false;
+         }
 
          var stack = new MaybeStack<char>();
          for (var i = index; i < input.Length; i++)
@@ -38,11 +40,13 @@ namespace Orange.Library.Patterns
                case ')':
                case '}':
                case ']':
-                  var previous = stack.Pop();
-                  if (previous.IsSome)
+                  if (stack.Pop().If(out var previous))
                   {
-                     if (previous.Value != currentChar)
+                     if (previous != currentChar)
+                     {
                         return false;
+                     }
+
                      if (stack.Count == 0)
                      {
                         length = i - index + 1;
@@ -50,12 +54,19 @@ namespace Orange.Library.Patterns
                      }
                   }
                   else
+                  {
                      return false;
+                  }
+
                   break;
             }
          }
+
          if (stack.Count > 0)
+         {
             return false;
+         }
+
          length = current.Length;
          return true;
       }

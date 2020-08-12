@@ -17,7 +17,9 @@ namespace Orange.Library
          if (verb is End)
          {
             if (asAdded.Count == 0)
+            {
                return;
+            }
 
             asAdded.Add(verb);
 
@@ -35,9 +37,13 @@ namespace Orange.Library
          }
 
          if (verb.Precedence == VerbPrecedenceType.Push)
+         {
             verbs.Add(verb);
+         }
          else
+         {
             stack.Push(verb);
+         }
       }
 
       void endOfBlock()
@@ -74,7 +80,9 @@ namespace Orange.Library
          var newList = asAdded;
          asAdded = new List<Verb>();
          foreach (var verb in newList)
+         {
             Add(verb);
+         }
       }
    }
 }

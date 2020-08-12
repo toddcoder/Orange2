@@ -1,16 +1,15 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class ElseParser : Parser, IReturnsBlock
    {
-      public ElseParser()
-         : base("^ |tabs| 'else' (/r /n | /r | /n)") { }
+      public ElseParser() : base("^ |tabs| 'else' (/r /n | /r | /n)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

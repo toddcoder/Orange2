@@ -18,7 +18,9 @@
          set
          {
             if (obj.ID == value.ID)
+            {
                return;
+            }
 
             region[Name] = value;
          }

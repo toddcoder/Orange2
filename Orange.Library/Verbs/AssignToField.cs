@@ -27,7 +27,10 @@ namespace Orange.Library.Verbs
          Assert(Regions.FieldExists(fieldName), "Assign to field", $"{fieldName} doesn't exist");
          var assignmentValue = expression.Evaluate().AssignmentValue();
          if (reference)
+         {
             fieldName = Regions[fieldName].Text;
+         }
+
          Regions[fieldName] = assignmentValue;
          result = assignmentValue.ToString();
          typeName = assignmentValue.Type.ToString();

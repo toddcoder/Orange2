@@ -21,9 +21,11 @@ namespace Orange.Library.Verbs
          }
 
          if (!OperatorBlock(operatorValue).If(out var tuple))
+         {
             return value;
+         }
 
-         (var block, var leftToRight) = tuple;
+         var (block, leftToRight) = tuple;
          var message = leftToRight ? "reduce" : "rreduce";
          return MessageManager.MessagingState.SendMessage(value, message, new Arguments(new Block(), block));
       }

@@ -3,6 +3,7 @@ using Orange.Library.Verbs;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Patterns
 {

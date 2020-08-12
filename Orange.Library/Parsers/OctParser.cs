@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Verbs;
 using static System.Math;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
@@ -7,15 +7,13 @@ namespace Orange.Library.Parsers
 {
    public class OctParser : Parser
    {
-      public OctParser()
-         : base("^ ' '* '0o' /{0-7_}", true)
-      {
-      }
+      public OctParser() : base("^ ' '* '0o' /{0-7_}", true) { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length, Numbers);
          result.Value = GetNumber(tokens[1]);
+
          return new Push(result.Value);
       }
 
@@ -29,6 +27,7 @@ namespace Orange.Library.Parsers
             var index = "01234567".IndexOf(oct[i]);
             accum += octBase * index;
          }
+
          return accum;
       }
 

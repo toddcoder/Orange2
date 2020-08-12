@@ -6,27 +6,27 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Core.Arrays;
+using Core.Collections;
+using Core.Computers;
+using Core.Dates;
+using Core.Enumerables;
+using Core.Monads;
+using Core.Numbers;
+using Core.Strings;
+using Core.WinForms.Consoles;
+using Core.WinForms.Documents;
 using Orange.Library;
 using Orange.Library.Values;
-using Standard.Computer;
-using Standard.Types.Arrays;
-using Standard.Types.Collections;
-using Standard.Types.Dates;
-using Standard.Types.Maybe;
-using Standard.Types.Numbers;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
-using Standard.WinForms.Consoles;
-using Standard.WinForms.Documents;
 using static System.Math;
 using static System.Windows.Forms.Application;
 using static System.Windows.Forms.Clipboard;
+using static Core.Arrays.ArrayFunctions;
+using static Core.Monads.MonadFunctions;
 using static Newtonsoft.Json.JsonConvert;
 using static Orange.Library.Runtime;
-using static Standard.Types.Arrays.ArrayFunctions;
-using static Standard.WinForms.Consoles.TextBoxConsole.ConsoleColorType;
-using static Standard.WinForms.Documents.Document;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.RegularExpressions.RegexExtensions;
+using static Core.WinForms.Documents.Document;
 
 namespace OrangePlayground
 {
@@ -66,30 +66,35 @@ namespace OrangePlayground
             folder = @"C:\Configurations";
             file = folder + "orange.json";
          }
-         return when(file.Exists(), () => file);
+
+         return maybe(file.Exists(), () => file);
       }
 
       static FolderName getSettingsFolder()
       {
          FolderName folder = @"C:\Enterprise\Configurations\Orange";
          if (folder.Exists())
+         {
             return folder;
+         }
 
          folder = @"C:\Configurations";
          if (folder.Exists())
+         {
             return folder;
+         }
 
          return FolderName.Current;
       }
 
-      static Settings getSettings() => getSettingsFile().FlatMap(f => DeserializeObject<Settings>(f.Text), () => new Settings());
+      static Settings getSettings() => getSettingsFile().Map(f => DeserializeObject<Settings>(f.Text)).DefaultTo(() => new Settings());
 
       void Playground_Load(object sender, EventArgs e)
       {
          results = new AutoHash<int, string>(k => "");
          settings = getSettings();
 
-         errorConsole = new TextBoxConsole(this, textErrors, settings.ErrorFont, settings.ErrorFontSize, Cathode);
+         errorConsole = new TextBoxConsole(this, textErrors, settings.ErrorFont, settings.ErrorFontSize, TextBoxConsole.ConsoleColorType.Cathode);
          errorWriter = errorConsole.Writer();
          try
          {
@@ -103,7 +108,8 @@ namespace OrangePlayground
                displayException(exception);
             }
 
-            outputConsole = new TextBoxConsole(this, textConsole, settings.ConsoleFont, settings.ConsoleFontSize, Quick);
+            outputConsole = new TextBoxConsole(this, textConsole, settings.ConsoleFont, settings.ConsoleFontSize,
+               TextBoxConsole.ConsoleColorType.Quick);
             consoleWriter = outputConsole.Writer();
             textReader = outputConsole.Reader();
 
@@ -127,32 +133,37 @@ namespace OrangePlayground
             menus.Menu($"&{MENU_TEXT}");
             menus.Menu(MENU_TEXT, "Clipboard -> Text", (s, evt) =>
             {
-               var text = ClipboardText();
-               if (text.IsSome)
+               if (ClipboardText().If(out var clipboardText))
                {
-                  var windowsText = GetWindowsText(text.Value);
+                  var windowsText = GetWindowsText(clipboardText);
                   if (textText.SelectionLength == 0)
+                  {
                      textText.Text = windowsText;
+                  }
                   else
+                  {
                      textText.SelectedText = windowsText;
+                  }
+
                   tabs.SelectedTab = tabText;
                }
             }, "^|V");
             menus.Menu(MENU_TEXT, "Clipboard -> Append to Text", (s, evt) =>
             {
-               var text = ClipboardText();
-               if (text.IsSome)
+               if (ClipboardText().If(out var clipboardText))
                {
-                  var windowsText = GetWindowsText(text.Value);
+                  var windowsText = GetWindowsText(clipboardText);
                   textText.AppendText(windowsText);
                   tabs.SelectedTab = tabText;
                }
             });
             menus.Menu(MENU_TEXT, "Clipboard -> Text & Run", (s, evt) =>
             {
-               var text = ClipboardText();
-               if (text.IsSome)
-                  textText.Text = GetWindowsText(text.Value);
+               if (ClipboardText().If(out var clipboardText))
+               {
+                  textText.Text = GetWindowsText(clipboardText);
+               }
+
                DoEvents();
                run();
                var selectedText = textConsole.SelectionLength == 0 ? textConsole.Text : textConsole.SelectedText;
@@ -213,12 +224,19 @@ namespace OrangePlayground
 
             setManual(settings.Manual);
             if (settings.DefaultFolder != null)
+            {
                FolderName.Current = settings.DefaultFolder;
+            }
+
             textText.Text = settings.Text.FromBase64(Encoding.UTF8) ?? "";
-            if (PassedFileName.IsSome)
-               document.Open(PassedFileName.Value);
+            if (PassedFileName.If(out var passedFileName))
+            {
+               document.Open(passedFileName);
+            }
             else if (settings.LastFile != null && ((FileName)settings.LastFile).Exists())
+            {
                document.Open(settings.LastFile);
+            }
          }
          catch (Exception exception)
          {
@@ -240,12 +258,11 @@ namespace OrangePlayground
             var firstVisibleLine = textEditor.GetLineFromCharIndex(firstVisibleChar);
             var resultLines = Enumerable.Range(0, textEditor.Lines.Length).Select(l => "").ToArray();
             var tops = Enumerable.Range(0, textEditor.Lines.Length).Select(l => 0f).ToArray();
-            foreach (var item in results)
+            foreach (var (key, value) in results)
             {
-               var lineIndex = textEditor.GetLineFromCharIndex(item.Key);
-               resultLines[lineIndex] = lineIndex >= firstVisibleLine ?
-                  item.Value.VisibleWhitespace(false).Truncate(128) : "";
-               tops[lineIndex] = textEditor.GetPositionFromCharIndex(item.Key).Y;
+               var lineIndex = textEditor.GetLineFromCharIndex(key);
+               resultLines[lineIndex] = lineIndex >= firstVisibleLine ? value.VisibleWhitespace(false).Truncate(128) : "";
+               tops[lineIndex] = textEditor.GetPositionFromCharIndex(key).Y;
             }
 
             var font = textEditor.Font;
@@ -265,16 +282,20 @@ namespace OrangePlayground
                   var fillRectangle = new RectangleF(location.X, location.Y + 1, resultSize.Width, resultSize.Height - 2);
                   e.Graphics.FillRectangle(Brushes.LightGreen, fillRectangle);
                   using (var pen = new Pen(SystemColors.ButtonShadow, 1))
+                  {
                      e.Graphics.DrawRectangle(pen, getRectangle(fillRectangle));
+                  }
+
                   var format = new StringFormat(StringFormatFlags.LineLimit);
                   e.Graphics.DrawString(result, font, Brushes.Black, location, format);
                }
+
                var tabSize = getSize(e.Graphics.MeasureString("\t", font));
                if (line.Matches("^ /(/t1%4)").If(out var matcher))
                {
                   var x = 8;
-                  var chindex = textEditor.GetFirstCharIndexFromLine(i);
-                  var y = textEditor.GetPositionFromCharIndex(chindex).Y;
+                  var charIndex = textEditor.GetFirstCharIndexFromLine(i);
+                  var y = textEditor.GetPositionFromCharIndex(charIndex).Y;
                   var height = y + tabSize.Height / 2;
                   var tabStopIndex = matcher.FirstGroup.Length - 1;
                   var width = tabStops[tabStopIndex];
@@ -283,13 +304,16 @@ namespace OrangePlayground
                      pen.CustomEndCap = new AdjustableArrowCap(3, 3, true);
                      e.Graphics.DrawLine(pen, x, height, x + width, height);
                   }
+
                   using (var pen = new Pen(Color.LightGray, 1))
+                  {
                      for (var j = 0; j < tabStopIndex; j++)
                      {
                         var tabStop = tabStops[j];
                         var left = x + tabStop;
                         e.Graphics.DrawLine(pen, left, height - 8, left, height + 8);
                      }
+                  }
                }
             }
          }
@@ -308,13 +332,20 @@ namespace OrangePlayground
          {
             var currentLineIndex = textEditor.CurrentLineIndex();
             if (textEditor.AtEnd() && textEditor.Text.IsMatch("/n $"))
+            {
                currentLineIndex--;
+            }
+
             var lines = textEditor.Lines;
             if (currentLineIndex.Between(0).Until(lines.Length))
+            {
                dupLine = lines[currentLineIndex].Copy();
+            }
          }
          else
+         {
             dupLine = textEditor.SelectedText;
+         }
 
          textEditor.AppendAtEnd(dupLine, "/n");
       }
@@ -325,7 +356,9 @@ namespace OrangePlayground
          {
             dialog.SelectedPath = FolderName.Current.ToString();
             if (dialog.ShowDialog() == DialogResult.OK)
+            {
                FolderName.Current = dialog.SelectedPath;
+            }
          }
       }
 
@@ -334,7 +367,9 @@ namespace OrangePlayground
       void update(bool execute, bool fromMenu)
       {
          if (locked || textEditor.TextLength == 0)
+         {
             return;
+         }
 
          locked = true;
 
@@ -344,7 +379,9 @@ namespace OrangePlayground
             DoEvents();
          }
          else if (fromMenu)
+         {
             document.Save();
+         }
 
          try
          {
@@ -359,9 +396,14 @@ namespace OrangePlayground
             stopwatch.Reset();
             stopwatch.Start();
             if (execute)
+            {
                orange.Execute();
+            }
             else
+            {
                orange.ColorizeOnly();
+            }
+
             stopwatch.Stop();
             orange.Colorize();
             document.Clean();
@@ -399,7 +441,9 @@ namespace OrangePlayground
       void textEditor_TextChanged(object sender, EventArgs e)
       {
          if (document == null)
+         {
             return;
+         }
 
          update(!manual, false);
          document.Dirty();
@@ -410,7 +454,9 @@ namespace OrangePlayground
          textEditor.SelectedText = text;
          textEditor.SelectionStart += selectionOffset;
          if (length > -1)
+         {
             textEditor.SelectionLength = length;
+         }
       }
 
       void surround(string before, string after)
@@ -423,17 +469,22 @@ namespace OrangePlayground
       void insertDelimiterText(string delimiter, int selectionOffset, int length, int halfLength = -1)
       {
          if (textEditor.SelectionLength == 0)
+         {
             insertText(delimiter, selectionOffset, length);
+         }
          else
          {
             var selection = textEditor.SelectedText;
             if (halfLength == -1)
+            {
                halfLength = delimiter.Length / 2;
-            textEditor.SelectedText = delimiter.Take(halfLength) + selection + delimiter.Skip(halfLength);
+            }
+
+            textEditor.SelectedText = delimiter.Keep(halfLength) + selection + delimiter.Drop(halfLength);
          }
       }
 
-      string textAtInsert(int take, int skip = 0) => textEditor.Text.Skip(textEditor.SelectionStart + skip).Take(take);
+      string textAtInsert(int take, int skip = 0) => textEditor.Text.Drop(textEditor.SelectionStart + skip).Keep(take);
 
       void setTextAtInsert(int take, int skip = 0, string text = "")
       {
@@ -458,6 +509,7 @@ namespace OrangePlayground
                   moveSelectionRelative();
                   e.Handled = true;
                }
+
                break;
             case '{':
                insertDelimiterText("{}", -1, 0);
@@ -469,6 +521,7 @@ namespace OrangePlayground
                   moveSelectionRelative();
                   e.Handled = true;
                }
+
                break;
             case '[':
                insertDelimiterText("[]", -1, 0);
@@ -480,6 +533,7 @@ namespace OrangePlayground
                   moveSelectionRelative();
                   e.Handled = true;
                }
+
                break;
             case '\'':
                if (textAtInsert(1) == "'")
@@ -509,16 +563,23 @@ namespace OrangePlayground
                   moveSelectionRelative();
                   e.Handled = true;
                }
+
                break;
             case ';':
                if (textAtInsert(1) == ";")
                {
                   if (textAtInsert(1, -1) == "\n")
+                  {
                      insertPass();
+                  }
                   else
+                  {
                      moveSelectionRelative();
+                  }
+
                   e.Handled = true;
                }
+
                break;
          }
       }
@@ -526,6 +587,7 @@ namespace OrangePlayground
       void Playground_FormClosing(object sender, FormClosingEventArgs e)
       {
          if (document.FileName.If(out var fileName))
+         {
             try
             {
                settings.LastFile = fileName;
@@ -539,6 +601,7 @@ namespace OrangePlayground
             {
                MessageBox.Show(exception.Message);
             }
+         }
       }
 
       void textEditor_KeyUp(object sender, KeyEventArgs e)
@@ -571,6 +634,7 @@ namespace OrangePlayground
                   e.Handled = true;
                   setTextAtInsert(1);
                }
+
                break;
             case Keys.F12:
                insertPass();
@@ -582,6 +646,7 @@ namespace OrangePlayground
                   matchPass(true);
                   e.Handled = true;
                }
+
                break;
             case Keys.Left:
                if (e.Alt)
@@ -589,10 +654,14 @@ namespace OrangePlayground
                   matchPass(false);
                   e.Handled = true;
                }
+
                break;
             case Keys.F1:
                if (getWord().If(out var word) && findWord(word).If(out var found))
-                  insertText(found.Skip(word.Length), 0);
+               {
+                  insertText(found.Drop(word.Length), 0);
+               }
+
                e.Handled = true;
                break;
          }
@@ -601,7 +670,7 @@ namespace OrangePlayground
       IMaybe<string> getWord()
       {
          var startIndex = textEditor.SelectionStart;
-         var begin = textEditor.Text.Take(startIndex);
+         var begin = textEditor.Text.Keep(startIndex);
          return begin.Matches("/(/w+) $").Map(m => m.FirstGroup);
       }
 
@@ -616,12 +685,12 @@ namespace OrangePlayground
          var matches = textEditor.Text.Matches("/b 'pass' /b");
          if (matches.If(out var matcher))
          {
-            var passMatch = matcher.GetMatch(first ? 0 : matcher.MatchCount - 1);
-            textEditor.Select(passMatch.Index, passMatch.Length);
+            var (_, index, length) = matcher.GetMatch(first ? 0 : matcher.MatchCount - 1);
+            textEditor.Select(index, length);
          }
       }
 
-      string getIndent() => textEditor.CurrentLine().Matches("^ /t*").FlatMap(m => m[0], () => "");
+      string getIndent() => textEditor.CurrentLine().Matches("^ /t*").Map(m => m[0]).DefaultTo(() => "");
 
       void insertTemplate(string template, string replacement)
       {
@@ -629,7 +698,9 @@ namespace OrangePlayground
          var expandedTemplate = $"{indent}{template}\n{indent}\tpass";
          var index = expandedTemplate.IndexOf(replacement, StringComparison.Ordinal);
          if (index == -1)
+         {
             insertText(expandedTemplate, 0, 0);
+         }
          else
          {
             index = -(expandedTemplate.Length - index);
@@ -650,7 +721,9 @@ namespace OrangePlayground
          var stopIndex = textEditor.GetLineFromCharIndex(textEditor.SelectionStart + textEditor.SelectionLength);
          var lines = textEditor.Lines;
          if (startIndex.Between(0).Until(lines.Length) && stopIndex.Between(0).Until(lines.Length))
+         {
             return (lines.RangeOf(startIndex, stopIndex), startIndex).Some();
+         }
 
          return none<(string[], int)>();
       }
@@ -660,12 +733,13 @@ namespace OrangePlayground
          try
          {
             var lines = textEditor.Lines;
-            if (linesFromSelection().If(out var fromSelection))
+            if (linesFromSelection().If(out var selectedLines, out var offset))
             {
-               (var selectedLines, var offset) = fromSelection;
                var saved = saveSelection();
                for (var i = 0; i < selectedLines.Length; i++)
+               {
                   textEditor.Lines[i + offset] = $"\t{selectedLines[i]}";
+               }
 
                textEditor.Lines = lines;
                restoreSelection(saved);
@@ -682,13 +756,16 @@ namespace OrangePlayground
          try
          {
             var lines = textEditor.Lines;
-            if (linesFromSelection().Assign(out var fromSelection))
+            if (linesFromSelection().If(out var selectedLines, out var offset))
             {
-               (var selectedLines, var offset) = fromSelection;
                var saved = saveSelection();
                for (var i = 0; i < selectedLines.Length; i++)
+               {
                   if (selectedLines[i].Matches("^ /t /@").If(out var matcher))
+                  {
                      lines[i + offset] = matcher.FirstGroup;
+                  }
+               }
 
                textEditor.Lines = lines;
                restoreSelection(saved);

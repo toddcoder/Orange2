@@ -51,11 +51,19 @@ namespace Orange.Library.Values
       {
          var array = new Array();
          if (start.Compare(stop) < 0)
+         {
             for (var date = (Date)start.Clone(); date.Compare(stop) <= 0; date = date.Add(interval))
+            {
                array.Add(date);
+            }
+         }
          else
+         {
             for (var date = (Date)start.Clone(); date.Compare(stop) >= 0; date = date.Sub(interval))
+            {
                array.Add(date);
+            }
+         }
 
          return array;
       }

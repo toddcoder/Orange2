@@ -4,47 +4,54 @@ using static Orange.Library.Values.Object;
 
 namespace Orange.Library.Verbs
 {
-	public class Define : Verb
-	{
-		string variableName;
-		VisibilityType visibility;
-		bool readOnly;
+   public class Define : Verb
+   {
+      string variableName;
+      VisibilityType visibility;
+      bool readOnly;
 
-		public Define(string variableName, VisibilityType visibility, bool readOnly = false)
-		{
-			this.variableName = variableName;
-			this.visibility = visibility;
-			this.readOnly = readOnly;
-		}
+      public Define(string variableName, VisibilityType visibility, bool readOnly = false)
+      {
+         this.variableName = variableName;
+         this.visibility = visibility;
+         this.readOnly = readOnly;
+      }
 
-		public Define()
-		{
-			variableName = "";
-			visibility = VisibilityType.Public;
-			readOnly = false;
-		}
+      public Define()
+      {
+         variableName = "";
+         visibility = VisibilityType.Public;
+         readOnly = false;
+      }
 
-		public override Value Evaluate() => new Variable(variableName);
+      public override Value Evaluate() => new Variable(variableName);
 
-	   Value evaluate(Region region)
-		{
-			if (readOnly)
-				region.CreateReadOnlyVariable(variableName, visibility: visibility);
-			else if (region.ContainsMessage(variableName))
-				region.FlagExistingVariable(variableName, visibility);
-			else
-				region.CreateVariable(variableName, visibility: visibility);
-			return new Variable(variableName);
-		}
+      Value evaluate(Region region)
+      {
+         if (readOnly)
+         {
+            region.CreateReadOnlyVariable(variableName, visibility: visibility);
+         }
+         else if (region.ContainsMessage(variableName))
+         {
+            region.FlagExistingVariable(variableName, visibility);
+         }
+         else
+         {
+            region.CreateVariable(variableName, visibility: visibility);
+         }
 
-		public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
+         return new Variable(variableName);
+      }
 
-	   public string VariableName => variableName;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
 
-	   public VisibilityType Visibility => visibility;
+      public string VariableName => variableName;
 
-	   public bool ReadOnly => readOnly;
+      public VisibilityType Visibility => visibility;
 
-	   public override string ToString() => $"{(readOnly ? "val" : "var")} {variableName}";
-	}
+      public bool ReadOnly => readOnly;
+
+      public override string ToString() => $"{(readOnly ? "val" : "var")} {variableName}";
+   }
 }

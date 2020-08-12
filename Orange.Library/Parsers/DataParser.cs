@@ -1,15 +1,14 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
+﻿using Core.Collections;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class DataParser : Parser
    {
-      public DataParser()
-         : base($"^ /(|tabs|) /'type' /(/s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
+      public DataParser() : base($"^ /(|tabs|) /'type' /(/s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -26,14 +25,20 @@ namespace Orange.Library.Parsers
 
          var index = NextPosition;
          while (index < source.Length)
+         {
             if (constructorParser.Parse(source, index).If(out var data, out index))
             {
                constructors[data.Name] = data.Count;
                if (!data.Trailing)
+               {
                   break;
+               }
             }
             else
+            {
                return null;
+            }
+         }
 
          overridePosition = index;
 

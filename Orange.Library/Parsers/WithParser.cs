@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
@@ -10,8 +10,10 @@ namespace Orange.Library.Parsers
    {
       VerbPrecedenceType precedence;
 
-      public WithParser(string pattern = "^ /(|tabs| 'with') /b", VerbPrecedenceType precedence = VerbPrecedenceType.Statement)
-         : base(pattern) => this.precedence = precedence;
+      public WithParser(string pattern = "^ /(|tabs| 'with') /b", VerbPrecedenceType precedence = VerbPrecedenceType.Statement) : base(pattern)
+      {
+         this.precedence = precedence;
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {

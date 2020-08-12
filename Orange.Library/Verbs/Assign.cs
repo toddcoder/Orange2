@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using Core.Enumerables;
 using Orange.Library.Values;
-using Standard.Types.Enumerables;
 using static System.Math;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
@@ -20,13 +20,17 @@ namespace Orange.Library.Verbs
          if (target is Parameters parameters)
          {
             if (value is Object obj)
+            {
                return fromObject(parameters, obj);
+            }
 
             return value.IsArray ? fromFields(target, value.SourceArray) : fromText(target, value);
          }
 
          if (target.IsArray)
+         {
             return value.IsArray ? fromArray(target, value.SourceArray) : fromArrayText(target, value);
+         }
 
          if (target is Variable variable)
          {
@@ -58,7 +62,7 @@ namespace Orange.Library.Verbs
          return fromText(parameters, value);
       }
 
-      public static Array FromFields(Array sourceArray, Parameters parameters, bool readOnly = false)
+      public static Array FromFields(Array sourceArray, Parameters parameters)
       {
          var length = sourceArray.Length;
          var parametersLength = parameters.Length;
@@ -74,21 +78,28 @@ namespace Orange.Library.Verbs
          if (length > minLength)
          {
             if (minLength == 0)
+            {
                return new Array();
+            }
 
             var parameter = parameters[minLength - 1];
             var variableName = parameter.Name;
             var lastValue = Regions[variableName];
             var array = new Array { lastValue };
             for (var i = minLength; i < length; i++)
+            {
                array.Add(ConvertIfNumeric(sourceArray[i]));
+            }
 
             Regions.CreateVariableIfNonexistent(variableName);
             Regions[variableName] = array;
             if (parameter.ReadOnly)
+            {
                Regions.SetReadOnly(variableName);
+            }
          }
          else if (parametersLength > minLength)
+         {
             for (var i = minLength; i < parametersLength; i++)
             {
                var parameter = parameters[i];
@@ -96,8 +107,11 @@ namespace Orange.Library.Verbs
                Regions.CreateVariableIfNonexistent(variableName);
                Regions[variableName] = ConvertIfNumeric(parameter.DefaultValue?.Evaluate() ?? "");
                if (parameter.ReadOnly)
+               {
                   Regions.SetReadOnly(variableName);
+               }
             }
+         }
 
          var result = new Array();
          for (var i = 0; i < parametersLength; i++)
@@ -109,7 +123,7 @@ namespace Orange.Library.Verbs
          return result;
       }
 
-      public static Array FromFieldsLocal(Array sourceArray, Parameters parameters, bool keepOneItemAsArray = false)
+      public static Array FromFieldsLocal(Array sourceArray, Parameters parameters)
       {
          var length = sourceArray.Length;
          var parametersLength = parameters.Length;
@@ -118,7 +132,10 @@ namespace Orange.Library.Verbs
             var variableName = parameters[0].Name;
             Regions.SetLocal(variableName, sourceArray[0]);
             if (parameters[0].ReadOnly)
+            {
                Regions.SetReadOnly(variableName);
+            }
+
             return sourceArray;
          }
 
@@ -129,7 +146,9 @@ namespace Orange.Library.Verbs
             var variable = parameter.Name;
             Regions.SetLocal(variable, ConvertIfNumeric(sourceArray[i]));
             if (parameter.ReadOnly)
+            {
                Regions.SetReadOnly(variable);
+            }
          }
 
          if (length > minLength)
@@ -141,22 +160,30 @@ namespace Orange.Library.Verbs
                var lastValue = Regions[variableName];
                var array = new Array { lastValue };
                for (var i = minLength; i < length; i++)
+               {
                   array.Add(ConvertIfNumeric(sourceArray[i]));
+               }
 
                Regions.SetLocal(variableName, array);
                if (parameter.ReadOnly)
+               {
                   Regions.SetReadOnly(variableName);
+               }
             }
          }
          else if (parametersLength > minLength)
+         {
             for (var i = minLength; i < parametersLength; i++)
             {
                var parameter = parameters[i];
                var variable = parameter.Name;
                Regions.SetLocal(variable, ConvertIfNumeric(parameter.DefaultValue?.Evaluate() ?? ""));
                if (parameter.ReadOnly)
+               {
                   Regions.SetReadOnly(variable);
+               }
             }
+         }
 
          var result = new Array();
          for (var i = 0; i < parametersLength; i++)
@@ -168,7 +195,7 @@ namespace Orange.Library.Verbs
          return result;
       }
 
-      public static void FromFieldsLocal(Array sourceArray, string[] parameters, bool keepOneItemAsArray = false)
+      public static void FromFieldsLocal(Array sourceArray, string[] parameters)
       {
          var length = sourceArray.Length;
          var parametersLength = parameters.Length;
@@ -180,7 +207,9 @@ namespace Orange.Library.Verbs
 
          var minLength = Min(length, parametersLength);
          for (var i = 0; i < minLength; i++)
+         {
             Regions.SetLocal(parameters[i], ConvertIfNumeric(sourceArray[i]));
+         }
 
          if (length > minLength)
          {
@@ -188,13 +217,19 @@ namespace Orange.Library.Verbs
             var lastValue = Regions[variableName];
             var array = new Array { lastValue };
             for (var i = minLength; i < length; i++)
+            {
                array.Add(ConvertIfNumeric(sourceArray[i]));
+            }
 
             Regions.SetLocal(variableName, array);
          }
          else if (parametersLength > minLength)
+         {
             for (var i = minLength; i < parametersLength; i++)
+            {
                Regions.SetLocal(parameters[i], "");
+            }
+         }
 
          var result = new Array();
          for (var i = 0; i < parametersLength; i++)
@@ -219,9 +254,11 @@ namespace Orange.Library.Verbs
             {
                var fieldList = new List<string> { field };
                while (fieldQueue.Count > 0)
+               {
                   fieldList.Add(fieldQueue.Dequeue());
+               }
 
-               field = fieldList.Listify(State.FieldSeparator.Text);
+               field = fieldList.Stringify(State.FieldSeparator.Text);
             }
 
             Regions.CreateVariableIfNonexistent(variableName);
@@ -235,6 +272,7 @@ namespace Orange.Library.Verbs
       {
          var array = new Array();
          foreach (var variableName in target.VariableNames)
+         {
             if (SendMessage(source, variableName) is Variable variable)
             {
                var value = variable.Value;
@@ -242,6 +280,7 @@ namespace Orange.Library.Verbs
                Regions[variableName] = value;
                array[variableName] = value;
             }
+         }
 
          return array;
       }

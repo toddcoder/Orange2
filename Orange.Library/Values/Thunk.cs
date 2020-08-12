@@ -1,5 +1,5 @@
-﻿using Orange.Library.Managers;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Managers;
 using static Orange.Library.Managers.RegionManager;
 
 namespace Orange.Library.Values
@@ -22,13 +22,13 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return getValue().Text; }
+         get => getValue().Text;
          set { }
       }
 
       public override double Number
       {
-         get { return getValue().Number; }
+         get => getValue().Number;
          set { }
       }
 

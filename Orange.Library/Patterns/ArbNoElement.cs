@@ -24,19 +24,28 @@ namespace Orange.Library.Patterns
          State.Anchored = true;
          pattern.OwnerNext = next;
          if (!(pattern.Replacement?.Immediate ?? false))
+         {
             pattern.OwnerReplacement = pattern.Replacement;
+         }
+
          pattern.SubPattern = true;
          var startIndex = -1;
          var fullLength = 0;
          while (pattern.Scan(input))
          {
             if (startIndex == -1)
+            {
                startIndex = pattern.Index;
+            }
+
             fullLength += pattern.Length;
          }
          State.Anchored = anchored;
          if (startIndex == -1)
+         {
             return false;
+         }
+
          index = startIndex;
          length = fullLength;
          return true;

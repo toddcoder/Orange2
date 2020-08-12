@@ -110,11 +110,15 @@ namespace Orange.Library.Values
       {
          var n = value;
          if (n <= 2)
+         {
             return n;
+         }
 
          BigInteger result = 1;
          for (var i = 2; i <= n; i++)
+         {
             result *= i;
+         }
 
          return result;
       }

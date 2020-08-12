@@ -1,6 +1,6 @@
 ﻿using System;
 using Orange.Library.Managers;
-using Standard.Types.Strings;
+using Core.Strings;
 using System.Linq;
 using static Orange.Library.Managers.RegionManager;
 
@@ -21,24 +21,14 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return ToString();
-         }
-         set
-         {
-         }
+         get => ToString();
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return Text.ToDouble();
-         }
-         set
-         {
-         }
+         get => Text.ToDouble();
+         set { }
       }
 
       public override ValueType Type => ValueType.Format;
@@ -69,7 +59,10 @@ namespace Orange.Library.Values
       {
          var minLength = Math.Min(parameters.Length, arguments.Length);
          for (var i = 0; i < minLength; i++)
+         {
             Regions.SetLocal(parameters[i], arguments[i]);
+         }
+
          var result = stringify.String.Text;
 
          return result;

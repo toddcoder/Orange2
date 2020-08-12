@@ -1,7 +1,7 @@
-﻿using Standard.Types.DataStructures;
-using Standard.Types.Maybe;
+﻿using Core.DataStructures;
+using Core.Monads;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -21,7 +21,7 @@ namespace Orange.Library.Values
 
       public void Add(Value value)
       {
-         var iterator = new NSIterator(value.PossibleGenerator().FlatMap(g => g, () => new NSOneItemGenerator(value)));
+         var iterator = new NSIterator(value.PossibleGenerator().DefaultTo(() => new NSOneItemGenerator(value)));
          iterators.Enqueue(iterator);
       }
 
@@ -29,31 +29,43 @@ namespace Orange.Library.Values
       {
          var sourceIterator = new NSIterator(sourceGenerator);
          foreach (var item in sourceIterator)
+         {
             Add(item);
+         }
       }
 
       public override Value Next()
       {
-         if (currentIterator.IsSome)
+         if (currentIterator.If(out var iterator))
          {
-            var value = currentIterator.Value.Next();
+            var value = iterator.Next();
             if (value.IsNil)
+            {
                currentIterator = none<NSIterator>();
+            }
             else
+            {
                return value;
+            }
          }
 
          while (iterators.Count > 0)
          {
             currentIterator = iterators.Dequeue();
-            if (currentIterator.IsNone)
+            if (currentIterator.If(out iterator))
+            {
+               iterator.Reset();
+
+               var value = iterator.Next();
+               if (!value.IsNil)
+               {
+                  return value;
+               }
+            }
+            else
+            {
                return NilValue;
-
-            currentIterator.Value.Reset();
-
-            var value = currentIterator.Value.Next();
-            if (!value.IsNil)
-               return value;
+            }
          }
 
          return NilValue;

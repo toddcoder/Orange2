@@ -3,6 +3,7 @@ using Orange.Library.Verbs;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Patterns
 {
@@ -21,6 +22,7 @@ namespace Orange.Library.Parsers.Patterns
                {
                   Element = new BreakXBlockElement(block);
                   overridePosition = index;
+
                   return new NullOp();
                }
 
@@ -32,6 +34,7 @@ namespace Orange.Library.Parsers.Patterns
                   var text = parser.Value.Text;
                   Element = new BreakXElement(text);
                   overridePosition = parser.Position;
+
                   return new NullOp();
                }
 

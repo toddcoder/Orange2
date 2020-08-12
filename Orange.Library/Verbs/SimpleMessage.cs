@@ -25,11 +25,17 @@ namespace Orange.Library.Verbs
 			var stack = State.Stack;
 			var right = stack.Pop(true, message);
 		   if (self)
-		      right = right.Self;
-			var left = stack.Pop(true, message);
+         {
+            right = right.Self;
+         }
+
+         var left = stack.Pop(true, message);
 		   if (self)
-		      left = left.Self;
-		   if (swap)
+         {
+            left = left.Self;
+         }
+
+         if (swap)
 		   {
 		      var temp = left;
 		      left = right;
@@ -40,8 +46,11 @@ namespace Orange.Library.Verbs
 			{
 				var value = stack.Pop(true, message);
 			   if (self)
-			      value = value.Self;
-				arguments.AddArgument(value);
+            {
+               value = value.Self;
+            }
+
+            arguments.AddArgument(value);
 			}
 			return SendMessage(left, message, arguments);
 		}

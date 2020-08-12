@@ -12,7 +12,9 @@ namespace Orange.Library.Verbs
       public static Value GetGenerator(Value seed, Value increment)
       {
          if (increment.Type == ValueType.Lambda)
+         {
             return new Values.NSLazyRange(seed, (Lambda)increment);
+         }
 
          Throw(LOCATION, "Not a range");
          return null;

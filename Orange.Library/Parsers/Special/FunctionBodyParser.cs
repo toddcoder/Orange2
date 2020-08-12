@@ -1,10 +1,10 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Parser;
 using static Orange.Library.Parsers.StatementParser;
-using static Standard.Types.Maybe.MaybeFunctions;
 using If = Orange.Library.Verbs.If;
 
 namespace Orange.Library.Parsers.Special
@@ -26,14 +26,19 @@ namespace Orange.Library.Parsers.Special
                {
                   var newBlock = createCondition(block);
                   if (newBlock != null)
+                  {
                      block = newBlock;
+                  }
                }
+
                return (block, i1).Some();
             }
          }
 
          if (ConsumeEndOfLine(source, index).If(out var i2))
+         {
             index = i2;
+         }
 
          if (GetBlock(source, index, true).If(out var b2, out var i3))
          {
@@ -74,7 +79,10 @@ namespace Orange.Library.Parsers.Special
          }
 
          if (buildingCondition)
+         {
             Condition = conditionBuilder.Block;
+         }
+
          block = blockBuilder.Block;
          return block;
       }

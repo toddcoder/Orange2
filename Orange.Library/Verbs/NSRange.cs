@@ -11,17 +11,20 @@ namespace Orange.Library.Verbs
 
       public static Value GetGenerator(Value left, Value right, bool inclusive)
       {
-         if (left.Type == ValueType.Number && right.Type == ValueType.Number)
-            return new NSIntRange(left.Int, right.Int, inclusive);
-         if (left.Type == ValueType.String && right.Type == ValueType.String)
-            return new NSStringRange(left.Text, right.Text, inclusive);
-         if (left.Type == ValueType.Date && right.Type == ValueType.Date)
-            return new NSDateRange((Date)left, (Date)right, inclusive);
-         if (left.Type == ValueType.Object && right.Type == ValueType.Object)
-            return new NSObjectRange((Object)left, (Object)right);
-
-         Throw(LOCATION, "Not a range");
-         return null;
+         switch (left.Type)
+         {
+            case ValueType.Number when right.Type == ValueType.Number:
+               return new NSIntRange(left.Int, right.Int, inclusive);
+            case ValueType.String when right.Type == ValueType.String:
+               return new NSStringRange(left.Text, right.Text, inclusive);
+            case ValueType.Date when right.Type == ValueType.Date:
+               return new NSDateRange((Date)left, (Date)right, inclusive);
+            case ValueType.Object when right.Type == ValueType.Object:
+               return new NSObjectRange((Object)left, (Object)right);
+            default:
+               Throw(LOCATION, "Not a range");
+               return null;
+         }
       }
 
       protected bool inclusive;

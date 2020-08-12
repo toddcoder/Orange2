@@ -61,7 +61,9 @@ namespace Orange.Library.Values
       {
          var current = start.AddDays(index);
          if (inclusive)
+         {
             return current <= stop ? (Value)current : NilValue;
+         }
 
          return current < stop ? (Value)current : NilValue;
       }

@@ -1,7 +1,7 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Compiler;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Replacements
 {

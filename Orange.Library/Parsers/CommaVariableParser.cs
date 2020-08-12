@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
+using Core.Monads;
+using Core.RegularExpressions;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.DefineParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Parser;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -21,7 +21,9 @@ namespace Orange.Library.Parsers
          {
             var variableName = matcher[0, 2];
             if (IsDefinedKeyword(variableName))
+            {
                break;
+            }
 
             Color(matcher[0, 1].Length, Structures);
             Color(variableName.Length, Variables);
@@ -29,7 +31,7 @@ namespace Orange.Library.Parsers
             index += matcher[0].Length;
          }
 
-         return when(list.Count > 0, () => (index, list.ToArray()));
+         return maybe(list.Count > 0, () => (index, list.ToArray()));
       }
    }
 }

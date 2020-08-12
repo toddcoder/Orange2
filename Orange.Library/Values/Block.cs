@@ -123,14 +123,9 @@ namespace Orange.Library.Values
                }
 
                value = State.ReturnValue.Resolve();
-               anyGenerator = value.PossibleIndexGenerator();
-               if (anyGenerator.IsSome)
+               if (value.PossibleIndexGenerator().If(out var generator1) && evaluateGenerator(generator1, i).If(out var evaluatedValue))
                {
-                  var evaluated = evaluateGenerator(anyGenerator.Value, i);
-                  if (evaluated.IsSome)
-                  {
-                     return evaluated.Value;
-                  }
+                  return evaluatedValue;
                }
 
                index = i + 1;
@@ -143,13 +138,11 @@ namespace Orange.Library.Values
             }
 
             value = State.Stack.Pop(block.ResolveVariables, LOCATION).ArgumentValue();
-            anyGenerator = value.PossibleIndexGenerator();
-            if (anyGenerator.IsSome)
+            if (value.PossibleIndexGenerator().If(out var generator2))
             {
-               var evaluated = evaluateGenerator(anyGenerator.Value, index);
-               if (evaluated.IsSome)
+               if (evaluateGenerator(generator2, index).If(out var evaluatedValue))
                {
-                  return evaluated.Value;
+                  return evaluatedValue;
                }
 
                return NilValue;
@@ -193,14 +186,12 @@ namespace Orange.Library.Values
       {
          if (value.IsExecutable)
          {
-            if (value is Block block)
+            switch (value)
             {
-               return block;
-            }
-
-            if (value is Lambda lambda)
-            {
-               return lambda.Block;
+               case Block block:
+                  return block;
+               case Lambda lambda:
+                  return lambda.Block;
             }
          }
 
@@ -231,14 +222,12 @@ namespace Orange.Library.Values
          AutoRegister = true;
       }
 
-      public Block(string text)
-         : this()
+      public Block(string text) : this()
       {
          Add(new Push(new String(text)));
       }
 
-      public Block(List<Verb> verbs)
-         : this()
+      public Block(List<Verb> verbs) : this()
       {
          foreach (var verb in verbs)
          {
@@ -258,13 +247,13 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return Evaluate()?.Text ?? ""; }
+         get => Evaluate()?.Text ?? "";
          set { }
       }
 
       public override double Number
       {
-         get { return Text.ToDouble(); }
+         get => Text.ToDouble();
          set { }
       }
 
@@ -490,6 +479,7 @@ namespace Orange.Library.Values
 
             State.UnregisterBlock();
          }
+
          if (ResetReturnSignal)
          {
             State.ReturnSignal = false;
@@ -577,6 +567,7 @@ namespace Orange.Library.Values
                   region = new Region();
                   State.RegisterBlock(this, region, ResolveVariables);
                }
+
                break;
             default:
                if (AutoRegister)
@@ -612,14 +603,10 @@ namespace Orange.Library.Values
             }
 
             var result = tryEvaluateVerb(verb);
-            if (result.IsRight)
+            if (result.If(out _, out var exception)) { }
+            else
             {
-               return new Failure(result.Right.Message);
-            }
-
-            if (result.Left)
-            {
-               continue;
+               return new Failure(exception.Message);
             }
 
             if (!State.ReturnSignal)

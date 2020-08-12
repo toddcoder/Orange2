@@ -1,12 +1,12 @@
-﻿using Orange.Library.Parsers.Line;
+﻿using Core.Collections;
+using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -14,8 +14,7 @@ namespace Orange.Library.Parsers
    {
       class OneLineMemberParser : Parser
       {
-         public OneLineMemberParser()
-            : base($"^ /(|sp|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
+         public OneLineMemberParser() : base($"^ /(|sp|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
          public override Verb CreateVerb(string[] tokens)
          {
@@ -30,6 +29,7 @@ namespace Orange.Library.Parsers
                overridePosition = index;
                MemberName = memberName;
                Thunk = new Thunk(exp);
+
                return new NullOp();
             }
 
@@ -45,8 +45,7 @@ namespace Orange.Library.Parsers
 
       class MultiLineMemberParser : Parser
       {
-         public MultiLineMemberParser()
-            : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
+         public MultiLineMemberParser() : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
 
          public override Verb CreateVerb(string[] tokens)
          {
@@ -76,8 +75,7 @@ namespace Orange.Library.Parsers
 
       FreeParser freeParser;
 
-      public RecordParser()
-         : base($"^ /(|sp|) /'('? /'rec' (/(/s+ 'of' /s+) /({REGEX_VARIABLE}))? ") => freeParser = new FreeParser();
+      public RecordParser() : base($"^ /(|sp|) /'('? /'rec' (/(/s+ 'of' /s+) /({REGEX_VARIABLE}))? ") => freeParser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -115,7 +113,9 @@ namespace Orange.Library.Parsers
          {
             var endOfLineParser = new EndOfLineParser();
             if (endOfLineParser.Scan(source, index))
+            {
                index = endOfLineParser.Position;
+            }
 
             AdvanceTabs();
 

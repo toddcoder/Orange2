@@ -73,14 +73,20 @@ namespace Orange.Library.Values
          builder.Define(VAR_ACCUM);
          builder.Assign();
          if (Initialization != null)
+         {
             builder.Parenthesize(Initialization);
+         }
          else
          {
             var defaultValue = parameter.DefaultValue;
             if (defaultValue != null && defaultValue.Count > 0)
+            {
                builder.Parenthesize(defaultValue);
+            }
             else
+            {
                builder.Variable(parameter.Name);
+            }
          }
          initialization = builder.Block;
          initialization.AutoRegister = false;
@@ -96,6 +102,7 @@ namespace Orange.Library.Values
          builder.Variable(VAR_ACCUM);
          builder.Assign();
          for (var i = 0; i < block.Count; i++)
+         {
             if (CodeBuilder.FunctionInvoke(block, ref i, out var functionName, out var foundArguments) && functionName == name)
             {
                Reject(found, LOCATION, $"{name} already invoked");
@@ -104,7 +111,10 @@ namespace Orange.Library.Values
                builder.Variable(VAR_ACCUM);
             }
             else
+            {
                builder.Verb(block[i]);
+            }
+         }
 
          invariant = builder.Block;
          invariant.AutoRegister = false;
@@ -133,7 +143,9 @@ namespace Orange.Library.Values
                setup = true;
             }
             else
+            {
                builder.Verb(verb);
+            }
          }
 
          builder.End();
@@ -161,7 +173,9 @@ namespace Orange.Library.Values
                builder.Variable(variableName == name ? VAR_ACCUM : variableName);
             }
             else
+            {
                builder.Verb(verb);
+            }
          }
 
          terminalExpression = builder.Pop(true);
@@ -177,10 +191,16 @@ namespace Orange.Library.Values
          {
             List<ParameterValue> values = null;
             if (parameters != null)
+            {
                values = parameters.GetArguments(Arguments);
+            }
+
             popper.Push();
             if (values != null)
+            {
                Parameters.SetArguments(values);
+            }
+
             initialization.Evaluate(region);
             var failedArrayComparison = false;
             for (var i = 0; i < MAX_TAIL_CALL; i++)
@@ -196,12 +216,14 @@ namespace Orange.Library.Values
                      {
                         var array = (Array)right.SourceArray;
                         foreach (var item in array)
+                        {
                            if (item.Value is Placeholder placeholder)
                            {
                               var variableName = placeholder.Text;
                               region.CreateVariableIfNonexistent(variableName);
                               region[variableName] = new Array();
                            }
+                        }
                      }
 
                      failedArrayComparison = true;
@@ -211,7 +233,9 @@ namespace Orange.Library.Values
                var comparisand = checkExpression.Evaluate(region);
                if (failedArrayComparison || comparisand.Type == ValueType.Boolean && comparisand.IsTrue ||
                   Case.Match(value, comparisand, region, false, false, parameters.Condition))
+               {
                   return useTerminalExpression ? terminalExpression.Evaluate(region) : region[VAR_ACCUM];
+               }
 
                increment.Evaluate(region);
                invariant.Evaluate(region);

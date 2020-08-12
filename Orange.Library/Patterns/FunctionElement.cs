@@ -1,7 +1,7 @@
 ﻿using System;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Values;
-using Standard.Types.Strings;
 using static Orange.Library.Runtime;
 using Array = Orange.Library.Values.Array;
 
@@ -21,10 +21,7 @@ namespace Orange.Library.Patterns
          this.arguments = arguments;
       }
 
-      public FunctionElement()
-         : this("", new Arguments())
-      {
-      }
+      public FunctionElement() : this("", new Arguments()) { }
 
       public override bool PositionAlreadyUpdated => positionAlreadyUpdated;
 
@@ -59,8 +56,10 @@ namespace Orange.Library.Patterns
                   positionAlreadyUpdated = true;
                   State.Anchored = anchored;
                   popNamespace();
+
                   return true;
                }
+
                State.Anchored = anchored;
                break;
             case Value.ValueType.Array:
@@ -76,10 +75,12 @@ namespace Orange.Library.Patterns
                         index = element.Index;
                         length = element.Length;
                         popNamespace();
+
                         return true;
                      }
                   }
                }
+
                return false;
             default:
                text = value.Text;
@@ -88,6 +89,7 @@ namespace Orange.Library.Patterns
                   popNamespace();
                   return false;
                }
+
                element = new StringElement(text);
                result = func(element);
                if (result)
@@ -95,16 +97,18 @@ namespace Orange.Library.Patterns
                   index = element.Index;
                   length = element.Length;
                }
+
                popNamespace();
                return result;
          }
+
          popNamespace();
          return false;
       }
 
-      void pushNamespace(Lambda lambda) => RegionManager.Regions.Push(lambda.Region, "function element");
+      static void pushNamespace(Lambda lambda) => RegionManager.Regions.Push(lambda.Region, "function element");
 
-      void popNamespace() => RegionManager.Regions.Pop("function element");
+      static void popNamespace() => RegionManager.Regions.Pop("function element");
 
       public override bool Evaluate(string input) => evaluate(e => e.Evaluate(input), p => p.Scan(input));
 

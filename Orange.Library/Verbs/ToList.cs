@@ -12,13 +12,20 @@ namespace Orange.Library.Verbs
       public override Value Evaluate()
       {
          if (block.Count == 0)
+         {
             return new List();
+         }
 
          var value = block.Evaluate();
          if (value is List list)
+         {
             return list;
+         }
+
          if (value.IsArray)
+         {
             return List.FromArray((Array)value.SourceArray);
+         }
 
          return List.FromValue(value);
       }

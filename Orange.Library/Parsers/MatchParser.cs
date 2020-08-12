@@ -1,10 +1,10 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Runtime;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -13,8 +13,7 @@ namespace Orange.Library.Parsers
       protected CaseParser caseParser;
       protected CodeBuilder builder;
 
-      public MatchParser()
-         : base($"^ /(|tabs|) /'match' /b (/(/s+) /({REGEX_VARIABLE}) /(/s* '='))?")
+      public MatchParser() : base($"^ /(|tabs|) /'match' /b (/(/s+) /({REGEX_VARIABLE}) /(/s* '='))?")
       {
          caseParser = new CaseParser();
          builder = new CodeBuilder();
@@ -35,16 +34,21 @@ namespace Orange.Library.Parsers
          {
             AdvanceTabs();
             while (index < source.Length)
+            {
                if (caseParser.Parse(source, index).If(out var verb, out var newIndex))
                {
                   index = newIndex;
                   builder.Verb(verb);
                }
                else
+               {
                   break;
+               }
+            }
 
             RegressTabs();
             overridePosition = index;
+
             return new MatchExecute(target, builder.Block, fieldName) { Index = position };
          }
 

@@ -14,9 +14,13 @@ namespace Orange.Library.Verbs
          {
             var result = lambda.Invoke(new Arguments(value));
             if (result.IsTrue)
+            {
                return false;
+            }
+
             value = iterator.Next();
          }
+
          return true;
       }
 

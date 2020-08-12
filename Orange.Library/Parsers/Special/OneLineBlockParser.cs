@@ -1,8 +1,8 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.StatementParser;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers.Special
 {
@@ -17,7 +17,10 @@ namespace Orange.Library.Parsers.Special
          if (OneLineStatement(source, index).If(out var block, out var i))
          {
             if (addEnd)
+            {
                block.Add(new End());
+            }
+
             return (block, i).Some();
          }
 

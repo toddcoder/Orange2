@@ -1,13 +1,14 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Collections;
+using Core.Monads;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
 using Array = Orange.Library.Values.Array;
 using If = Orange.Library.Verbs.If;
 using SendMessage = Orange.Library.Verbs.SendMessage;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -17,11 +18,11 @@ namespace Orange.Library.Parsers
       {
          if (ExpressionParser.GetExpression(source, index, stop).If(out var expression, out var i))
          {
-            (var comparisand, var condition) = GetComparisand(expression);
+            var (comparisand, condition) = GetComparisand(expression);
             return (comparisand, condition, i).Some();
          }
 
-         return MaybeFunctions.none<(Block, Block, int)>();
+         return none<(Block, Block, int)>();
       }
 
       public static (Block, Block) GetComparisand(Block block)
@@ -77,6 +78,7 @@ namespace Orange.Library.Parsers
                         name = listVariable.Name;
                         value = evaluateVariable(name);
                      }
+
                      list = list.Add(value);
                   }
 
@@ -89,23 +91,24 @@ namespace Orange.Library.Parsers
                      builder.PopLastVerb();
                      builder.Variable(placeholder.Text);
                   }
+
                   arguments = sendMessage.Arguments;
                   arguments = convertArguments(arguments);
                   builder.SendMessage(sendMessage.Message, arguments);
                   break;
                case Or or:
                   var expression = or.Expression;
-                  (var expressionBlock, _) = GetComparisand(expression);
+                  var (expressionBlock, _) = GetComparisand(expression);
                   builder.Verb(new AppendToAlternation());
                   builder.Inline(expressionBlock);
                   break;
                case CreateRecord createRecord:
                   var members = createRecord.Members;
                   var newMembers = new Hash<string, Thunk>();
-                  foreach (var item in members)
+                  foreach (var (key, thunk) in members)
                   {
-                     (var thunkBlock, _) = GetComparisand(item.Value.Block);
-                     newMembers[item.Key] = new Thunk(thunkBlock, item.Value.Region);
+                     var (thunkBlock, _) = GetComparisand(thunk.Block);
+                     newMembers[key] = new Thunk(thunkBlock, thunk.Region);
                   }
 
                   builder.Verb(new CreateRecord(newMembers, createRecord.FieldName));
@@ -129,14 +132,17 @@ namespace Orange.Library.Parsers
                               value = evaluateVariable(name);
                            }
                            else
+                           {
                               value = item.Value;
+                           }
+
                            newArray.Add(value);
                         }
 
                         value = newArray;
                         break;
                      case Block pushedBlock:
-                        (var retrievedBlock, _) = GetComparisand(pushedBlock);
+                        var (retrievedBlock, _) = GetComparisand(pushedBlock);
                         value = retrievedBlock;
                         break;
                   }
@@ -147,7 +153,10 @@ namespace Orange.Library.Parsers
                      bindNextValue = false;
                   }
                   else
+                  {
                      builder.Value(value);
+                  }
+
                   break;
                case PushSome pushSome:
                   var someBlock = pushSome.Expression;
@@ -167,27 +176,31 @@ namespace Orange.Library.Parsers
          }
 
          if (condition != null)
+         {
             condition.AutoRegister = false;
+         }
+
          return (builder.Block, condition);
       }
 
       static Value evaluateVariable(string name)
       {
          if (name == "_")
+         {
             return new Any();
+         }
 
-         var possibleClass = CompilerState.Class(name);
-         if (possibleClass.IsSome)
-            return possibleClass.Value;
+         if (CompilerState.Class(name).If(out var cls))
+         {
+            return cls;
+         }
 
-         var possibleTrait = CompilerState.Trait(name);
-         if (possibleTrait.IsSome)
-            return possibleTrait.Value;
+         if (CompilerState.Trait(name).If(out var trait))
+         {
+            return trait;
+         }
 
-         if (IsClassName(name))
-            return new Variable(name);
-
-         return new Placeholder(name);
+         return IsClassName(name) ? (Value)new Variable(name) : new Placeholder(name);
       }
 
       static Arguments convertArguments(Arguments arguments)
@@ -198,7 +211,9 @@ namespace Orange.Library.Parsers
             var list = patternParameterParser.List;
             var builder = new CodeBuilder();
             foreach (var parameter in list)
+            {
                builder.Argument(parameter.Comparisand);
+            }
 
             return builder.Arguments;
          }

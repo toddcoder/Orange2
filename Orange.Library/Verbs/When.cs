@@ -11,7 +11,9 @@ namespace Orange.Library.Verbs
          var right = stack.Pop(true, location);
          var left = stack.Pop(true, location);
          if (left.IsNil)
+         {
             return left;
+         }
 
          if (right is Object obj)
          {
@@ -20,11 +22,16 @@ namespace Orange.Library.Verbs
             {
                var newValue = Runtime.SendMessage(cls, "parse", left);
                if (!newValue.IsNil)
+               {
                   left = newValue;
+               }
             }
          }
+
          if (left is Case c)
+         {
             return new Case(c, right, required, null);
+         }
 
          return new Case(left, right, false, required, null);
       }

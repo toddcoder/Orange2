@@ -14,7 +14,10 @@ namespace Orange.Library.Verbs
          var value = stack.Pop(true, LOCATION);
          var when = value as Values.When;
          if (when == null)
+         {
             return value;
+         }
+
          when.Otherwise = block;
          return when;
       }

@@ -1,8 +1,8 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Core.RegularExpressions;
+using Core.Strings;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
@@ -11,8 +11,7 @@ namespace Orange.Library.Parsers
 {
    public class SomeParser : Parser
    {
-      public SomeParser()
-         : base("^ /(' '*) /('?(')") { }
+      public SomeParser() : base("^ /(' '*) /('?(')") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -20,10 +19,9 @@ namespace Orange.Library.Parsers
          Color(tokens[2].Length, Structures);
 
          var index = position + length;
-         var matches = source.Skip(index).Matches("^ /s* ')'");
-         if (matches.IsSome)
+         var matches = source.Drop(index).Matches("^ /s* ')'");
+         if (matches.If(out var matcher))
          {
-            var matcher = matches.Value;
             Color(matcher.Length, Structures);
             overridePosition = index + matcher.Length;
             result.Value = new None();

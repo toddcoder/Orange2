@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
+using Core.Monads;
+using Core.Strings;
 using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Parsers.WordOperatorParser;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
+using static Core.RegularExpressions.RegexExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -18,7 +18,7 @@ namespace Orange.Library.Parsers
       public static IMaybe<(Block, int)> GetExpression(string source, int index, Stop stop)
       {
          var parser = new ShortLambdaParser("", stop);
-         return when(parser.Scan(source, index), () => (parser.Lambda.Block, parser.Position));
+         return maybe(parser.Scan(source, index), () => (parser.Lambda.Block, parser.Position));
       }
 
       Stop stop;
@@ -28,8 +28,7 @@ namespace Orange.Library.Parsers
       FreeParser freeParser;
       int maxIndex;
 
-      public ShortLambdaParser(string prefix, Stop stop = null)
-         : base($"^ /(' '*) /'{prefix}'")
+      public ShortLambdaParser(string prefix, Stop stop = null) : base($"^ /(' '*) /'{prefix}'")
       {
          valueParser = new FillInValueParser();
          operatorParser = new InfixOperatorParser();
@@ -54,6 +53,7 @@ namespace Orange.Library.Parsers
             block.Add(push);
             addPossibleParameter(variable);
          }
+
          while (sendMessageParser.Scan(source, index))
          {
             block.Add(sendMessageParser.Verb);
@@ -68,7 +68,9 @@ namespace Orange.Library.Parsers
       void addPossibleParameter(Value value)
       {
          if (value is Variable variable)
+         {
             addPossibleParameter(variable.Name);
+         }
       }
 
       void addPossibleParameter(string name)
@@ -77,7 +79,9 @@ namespace Orange.Library.Parsers
          {
             var index = matcher.FirstGroup.ToInt();
             if (index > maxIndex)
+            {
                maxIndex = index;
+            }
          }
       }
 
@@ -122,27 +126,31 @@ namespace Orange.Library.Parsers
          var block = new Block();
          maxIndex = -1;
 
-         IMaybe<int> newIndex;
          var index = NextPosition;
 
          if (index < source.Length)
          {
-            newIndex = isStopping(index);
-            if (newIndex.IsSome)
-               return returnLambda(block, newIndex.Value);
+            if (isStopping(index).If(out var newIndex))
+            {
+               return returnLambda(block, newIndex);
+            }
 
-            newIndex = getTerm(block, index);
-            if (newIndex.IsNone)
+            if (getTerm(block, index).If(out newIndex))
+            {
+               index = newIndex;
+            }
+            else
+            {
                return null;
-
-            index = newIndex.Value;
+            }
          }
 
          while (index < source.Length)
          {
-            newIndex = isStopping(index);
-            if (newIndex.IsSome)
-               return returnLambda(block, newIndex.Value);
+            if (isStopping(index).If(out var newIndex))
+            {
+               return returnLambda(block, newIndex);
+            }
 
             if (operatorParser.Scan(source, index))
             {
@@ -150,13 +158,18 @@ namespace Orange.Library.Parsers
                index = operatorParser.Position;
             }
             else
+            {
                break;
+            }
 
-            newIndex = getTerm(block, index);
-            if (newIndex.IsNone)
+            if (getTerm(block, index).If(out newIndex))
+            {
+               index = newIndex;
+            }
+            else
+            {
                return null;
-
-            index = newIndex.Value;
+            }
          }
 
          return returnLambda(block, index);

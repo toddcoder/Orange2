@@ -1,35 +1,31 @@
 ﻿using System.Collections.Generic;
+using Core.Enumerables;
 using Orange.Library.Values;
-using Standard.Types.Enumerables;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
 {
-	public class InvokePlaceholder : Verb
-	{
-		string functionName;
-		List<Verb> verbs;
+   public class InvokePlaceholder : Verb
+   {
+      string functionName;
+      List<Verb> verbs;
 
-		public InvokePlaceholder(string functionName, List<Verb> verbs)
-		{
-			this.functionName = functionName;
-			this.verbs = verbs;
-		}
+      public InvokePlaceholder(string functionName, List<Verb> verbs)
+      {
+         this.functionName = functionName;
+         this.verbs = verbs;
+      }
 
-		public string FunctionName => functionName;
+      public string FunctionName => functionName;
 
-	   public List<Verb> Verbs => verbs;
+      public List<Verb> Verbs => verbs;
 
-	   public Value CurrentValue
-		{
-			get;
-			set;
-		}
+      public Value CurrentValue { get; set; }
 
-		public override Value Evaluate() => null;
+      public override Value Evaluate() => null;
 
-	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
-	   public override string ToString() => $"<{functionName}({verbs.Listify(" ")})>";
-	}
+      public override string ToString() => $"<{functionName}({verbs.Stringify(" ")})>";
+   }
 }

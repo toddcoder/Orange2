@@ -1,16 +1,13 @@
-﻿using Orange.Library.Patterns;
+﻿using Core.Strings;
+using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers.Patterns
 {
    public class HexElementParser : Parser, IElementParser
    {
-      public HexElementParser()
-         : base(@"^ /(/s*) ('\') /(/w2%4)")
-      {
-      }
+      public HexElementParser() : base(@"^ /(/s*) ('\') /(/w2%4)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -22,26 +19,26 @@ namespace Orange.Library.Parsers.Patterns
          string character;
          try
          {
-            var intValue = hexValue.FromHex();
-            if (intValue.IsSome)
-               character = ((char)intValue.Value).ToString();
+            if (hexValue.FromHex().If(out var hex))
+            {
+               character = ((char)hex).ToString();
+            }
             else
+            {
                return null;
+            }
          }
          catch
          {
             return null;
          }
+
          Element = new StringElement(character);
          return new NullOp();
       }
 
       public override string VerboseName => "hex element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

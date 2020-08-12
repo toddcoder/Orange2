@@ -19,12 +19,17 @@ namespace Orange.Library.Values
 			{
 				popper.Push();
 				if (current == null)
-					current = (Double)seed.Number;
-				else
+            {
+               current = (Double)seed.Number;
+            }
+            else
 				{
 					if (current.Number >= limit)
-						return new Nil();
-					current = (Double)(current.Number + 1);
+               {
+                  return new Nil();
+               }
+
+               current = (Double)(current.Number + 1);
 				}
 				return current;
 			}

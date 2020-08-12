@@ -1,6 +1,6 @@
 ﻿using System;
+using Core.Dates;
 using Orange.Library.Managers;
-using Standard.Types.Dates;
 
 namespace Orange.Library.Values
 {
@@ -28,8 +28,11 @@ namespace Orange.Library.Values
 	   public Date(Value value)
 		{
 			if (value.Type == ValueType.Date)
-				dateTime = ((Date)value).dateTime;
-		   dateTime = DateTime.TryParse(value.Text, out var converted) ? converted : new DateTime((long)value.Number);
+         {
+            dateTime = ((Date)value).dateTime;
+         }
+
+         dateTime = DateTime.TryParse(value.Text, out var converted) ? converted : new DateTime((long)value.Number);
 		}
 
 		public override int Compare(Value value) => dateTime.Ticks.CompareTo((long)value.Number);
@@ -164,7 +167,8 @@ namespace Orange.Library.Values
 				default:
 					return Clone();
 			}
-			return result;
+
+         return result;
 		}
 
 		public Value Difference() => (dateTime - ((Date)Arguments[0]).dateTime).Ticks;

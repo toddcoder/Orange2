@@ -40,9 +40,11 @@ namespace Orange.Library.Values
 			set
 			{
 				if (obj.ID == value.ID)
-					return;
+            {
+               return;
+            }
 
-				var name = LongToMangledPrefix("set", "item");
+            var name = LongToMangledPrefix("set", "item");
 				SendMessage(obj, name, getArguments(value));
 			}
 		}

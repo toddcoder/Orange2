@@ -20,9 +20,11 @@
 		   set
 			{
 				if (obj.ID == value.ID)
-					return;
+            {
+               return;
+            }
 
-				Runtime.SendMessage(obj, setterName, value);
+            Runtime.SendMessage(obj, setterName, value);
 			}
 		}
 

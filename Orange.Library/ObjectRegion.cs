@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Collections;
+﻿using Core.Collections;
+using Orange.Library.Values;
 using static Orange.Library.Runtime;
 using Object = Orange.Library.Values.Object;
 
@@ -37,7 +37,10 @@ namespace Orange.Library
 
          Value oldValue = new Nil();
          if (variables.ContainsKey(name))
+         {
             oldValue = variables[name];
+         }
+
          base.SetVariable(name, value);
          var arguments = new Arguments();
          arguments.AddArgument(oldValue);

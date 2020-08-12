@@ -1,20 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using Core.RegularExpressions;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Runtime;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class InterpolatedStringParser2 : Parser
    {
-      public InterpolatedStringParser2()
-         : base("^ |sp| /['$#'] /[quote]") { }
+      public InterpolatedStringParser2() : base("^ |sp| /['$#'] /[quote]") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -36,7 +35,10 @@ namespace Orange.Library.Parsers
                      escaped = false;
                   }
                   else
+                  {
                      escaped = true;
+                  }
+
                   Color(1, Interpolated);
                   break;
                case '(':
@@ -57,7 +59,9 @@ namespace Orange.Library.Parsers
                         i = index - 1;
                      }
                      else
+                     {
                         return null;
+                     }
                   }
 
                   break;

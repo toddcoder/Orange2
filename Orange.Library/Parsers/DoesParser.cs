@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Verbs;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 
@@ -24,7 +24,8 @@ namespace Orange.Library.Parsers
          var index = position + length;
          var matcher = new Matcher();
          while (index < source.Length)
-            if (matcher.IsMatch(source.Skip(index), REGEX_TRAIT))
+         {
+            if (matcher.IsMatch(source.Drop(index), REGEX_TRAIT))
             {
                var comma = matcher.FirstGroup;
                var traitName = matcher.SecondGroup;
@@ -34,7 +35,10 @@ namespace Orange.Library.Parsers
                index += matcher.Length;
             }
             else
+            {
                break;
+            }
+         }
 
          overridePosition = index;
          return new NullOp();

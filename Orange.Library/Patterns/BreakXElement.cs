@@ -1,9 +1,10 @@
 ﻿using System.Text;
+using Core.Assertions;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Replacements;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Runtime;
-using static Standard.Types.Booleans.Assertions;
 
 namespace Orange.Library.Patterns
 {
@@ -13,11 +14,15 @@ namespace Orange.Library.Patterns
       {
          var possiblePattern = text;
          if (possiblePattern == "")
+         {
             return null;
+         }
 
          possiblePattern = Expand(possiblePattern);
          if (possiblePattern.Has("-"))
+         {
             possiblePattern = possiblePattern.Replace("-", "") + "-";
+         }
 
          var pattern = new StringBuilder("-[");
          pattern.Append(possiblePattern.Escape());
@@ -40,21 +45,27 @@ namespace Orange.Library.Patterns
       {
          var pattern = getPattern(text);
          if (pattern == null)
+         {
             return false;
+         }
 
          index = State.Position;
          var slicer = new Matcher();
-         if (slicer.IsMatch(input.Skip(index), pattern, State.IgnoreCase))
+         if (slicer.IsMatch(input.Drop(index), pattern, State.IgnoreCase))
          {
             matchCount = slicer.MatchCount;
             if (matchIndex >= matchCount)
+            {
                return false;
+            }
 
-            var match = slicer.GetMatch(matchIndex);
-            if (matchIndex == 0 && match.Index > 0)
+            var (_, i, length1) = slicer.GetMatch(matchIndex);
+            if (matchIndex == 0 && i > 0)
+            {
                return false;
+            }
 
-            length = match.Length + match.Index;
+            length = length1 + i;
             return true;
          }
 
@@ -67,9 +78,11 @@ namespace Orange.Library.Patterns
          get
          {
             if (matchCount > 0 && matchIndex >= matchCount)
+            {
                return alternate;
+            }
 
-            Assert(matchIndex <= MAX_LOOP, "BreakX: infinite loop");
+            assert(() => matchIndex).Must().BeLessThanOrEqual(MAX_LOOP).OrThrow("BreakX: infinite loop");
             return new BreakXElement(text, matchIndex + 1) { Next = next, Alternate = alternate };
          }
          set => base.Alternate = value;

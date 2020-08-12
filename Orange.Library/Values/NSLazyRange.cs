@@ -28,7 +28,9 @@ namespace Orange.Library.Values
          public override Value Next()
          {
             if (++index >= MAX_LOOP)
+            {
                return NilValue;
+            }
 
             return current = index == 0 ? seed : increment.Invoke(new Arguments(current));
          }

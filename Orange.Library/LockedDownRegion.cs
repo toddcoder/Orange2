@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Collections;
+using Orange.Library.Values;
 
 namespace Orange.Library
 {
@@ -8,28 +9,34 @@ namespace Orange.Library
 
       string functionName;
 
-      public LockedDownRegion(ObjectRegion region, string functionName)
-         : base(region.Object)
+      public LockedDownRegion(ObjectRegion region, string functionName) : base(region.Object)
       {
-         foreach (var item in region.AllVariables())
-            variables[item.Key] = item.Value;
+         foreach (var (key, value) in region.AllVariables())
+         {
+            variables[key] = value;
+         }
+
          this.functionName = functionName;
       }
 
-      public LockedDownRegion(string functionName)
-         : base(null) => this.functionName = functionName;
+      public LockedDownRegion(string functionName) : base(null) => this.functionName = functionName;
 
-      public LockedDownRegion(Object obj, string functionName)
-         : base(obj) => this.functionName = functionName;
+      public LockedDownRegion(Object obj, string functionName) : base(obj) => this.functionName = functionName;
 
       public override Value this[string name]
       {
          get
          {
             if (name == functionName)
+            {
                return base[name];
+            }
+
             if (variables.ContainsKey(name))
+            {
                return variables[name];
+            }
+
             throwError(name);
             return null;
          }
@@ -42,9 +49,8 @@ namespace Orange.Library
 
       static void throwError(string name) => Runtime.Throw(LOCATION, $"{name} is read-only");
 
-      public override void SetLocal(string name, Value value,
-         Object.VisibilityType visibility = Object.VisibilityType.Public, bool _override = false, bool allowNil = false,
-         int index = -1)
+      public override void SetLocal(string name, Value value, Object.VisibilityType visibility = Object.VisibilityType.Public,
+         bool overriding = false, bool allowNil = false, int index = -1)
       {
          throwError(name);
       }

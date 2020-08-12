@@ -16,8 +16,7 @@ namespace Orange.Library.Verbs
       string result;
       string typeName;
 
-      public AssignToNewField(string fieldName, bool readOnly, Block expression, VisibilityType visibilityType,
-         bool global = false)
+      public AssignToNewField(string fieldName, bool readOnly, Block expression, VisibilityType visibilityType, bool global = false)
       {
          this.fieldName = fieldName;
          this.readOnly = readOnly;
@@ -33,14 +32,24 @@ namespace Orange.Library.Verbs
          var current = Regions.Current;
          Reject(current.Exists(fieldName), "Assign to field", $"{fieldName} already exists");
          if (readOnly)
+         {
             current.CreateReadOnlyVariable(fieldName, visibility: visibilityType, global: global);
+         }
          else
+         {
             current.CreateVariable(fieldName, visibility: visibilityType, global: global);
+         }
+
          var assignmentValue = expression.Evaluate().AssignmentValue();
          if (global)
+         {
             Regions[fieldName] = assignmentValue;
+         }
          else
+         {
             current.SetLocal(fieldName, assignmentValue, visibilityType, index: Index);
+         }
+
          result = assignmentValue.ToString();
          typeName = assignmentValue.Type.ToString();
          return null;

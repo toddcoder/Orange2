@@ -1,4 +1,4 @@
-﻿using Standard.Computer;
+﻿using Core.Computers;
 
 namespace OrangePlayground
 {

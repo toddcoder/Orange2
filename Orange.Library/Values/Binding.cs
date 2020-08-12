@@ -50,9 +50,14 @@ namespace Orange.Library.Values
 				Runtime.State.UnregisterBlock();
 			}
 			else
-				foreach (var item in region.Locals)
-					RegionManager.Regions[item.Key] = item.Value;
-			return this;
+         {
+            foreach (var item in region.Locals)
+            {
+               RegionManager.Regions[item.Key] = item.Value;
+            }
+         }
+
+         return this;
 		}
 	}
 }

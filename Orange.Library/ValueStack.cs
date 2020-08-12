@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
+using Core.Enumerables;
+using Core.Exceptions;
 using Orange.Library.Values;
-using Standard.Types.Enumerables;
-using Standard.Types.Exceptions;
-using static Standard.Types.Booleans.Assertions;
+using static Core.Assertions.AssertionFunctions;
 
 namespace Orange.Library
 {
@@ -15,9 +16,9 @@ namespace Orange.Library
 
       public bool IsEmpty => stack.Count == 0;
 
-      void assertStackNotEmpty(string location) => Reject(IsEmpty, $"Bad syntax at {location}");
+      void assertStackNotEmpty(string location) => assert(() => IsEmpty).Must().Not.BeTrue().OrThrow($"Bad syntax at {location}");
 
-      void assertStackNotEmpty() => Reject(IsEmpty, "Bad syntax");
+      void assertStackNotEmpty() => assert(() => IsEmpty).Must().Not.BeTrue().OrThrow("Bad syntax");
 
       public void Push(Value value) => stack.Push(value);
 
@@ -29,8 +30,11 @@ namespace Orange.Library
          {
             value = value.Resolve();
             if (stringify && value is IStringify stringified)
+            {
                value = stringified.String;
+            }
          }
+
          return value;
       }
 
@@ -42,17 +46,20 @@ namespace Orange.Library
          {
             value = value.Resolve();
             if (stringify && stringify && value is IStringify stringified)
+            {
                value = stringified.String;
+            }
          }
+
          return value;
       }
 
-      public TValue Pop<TValue>(bool resolve, string location)
-         where TValue : Value
+      public TValue Pop<TValue>(bool resolve, string location) where TValue : Value
       {
-         var value = Pop(resolve, location);
-         if (value is TValue tvalue)
-            return tvalue;
+         if (Pop(resolve, location) is TValue value)
+         {
+            return value;
+         }
 
          throw $"Expecting type {typeof(TValue).Name}".Throws();
       }
@@ -66,12 +73,13 @@ namespace Orange.Library
             value = value.Resolve();
             value = stringify(value);
          }
+
          return value;
       }
 
       static Value stringify(Value value) => value is IStringify s ? s.String : value;
 
-      public override string ToString() => IsEmpty ? "" : stack.Select(v => v.ToString()).Listify(" ");
+      public override string ToString() => IsEmpty ? "" : stack.Select(v => v.ToString()).Stringify(" ");
 
       public void Clear() => stack.Clear();
 

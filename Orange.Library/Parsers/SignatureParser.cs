@@ -4,7 +4,7 @@ using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -12,17 +12,20 @@ namespace Orange.Library.Parsers
    {
       FreeParser freeParser;
 
-      public SignatureParser(bool tabs)
-         : base($"^ /(|{(tabs ? "tabs" : "sp")}|) /(('req' | 'optional') /s+) /(('func' | 'get' | 'set' |" +
-            $" 'before' | 'after' | 'require' | 'ensure' | 'invariant') /s+) /({REGEX_VARIABLE}) /(['(:'])") =>
+      public SignatureParser(bool tabs) : base($"^ /(|{(tabs ? "tabs" : "sp")}|) /(('req' | 'optional') /s+) /(('func' | 'get' | 'set' |" +
+         $" 'before' | 'after' | 'require' | 'ensure' | 'invariant') /s+) /({REGEX_VARIABLE}) /(['(:'])")
+      {
          freeParser = new FreeParser();
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
          var optionalLength = tokens[2].Length;
          var optional = tokens[2].Trim() == "optional";
          if (!InClassDefinition && optional)
+         {
             return null;
+         }
 
          Color(position, tokens[1].Length, Whitespaces);
          Color(optionalLength, KeyWords);
@@ -45,9 +48,13 @@ namespace Orange.Library.Parsers
                var endParser = new EndParser();
                index = newIndex;
                if (endParser.Scan(source, index))
+               {
                   index = endParser.Position;
+               }
+
                overridePosition = index;
                result.Value = new Signature(name, parameterCount, optional);
+
                return new NullOp();
             }
 
@@ -68,7 +75,9 @@ namespace Orange.Library.Parsers
             index = variableParser.Result.Position;
          }
          else
+         {
             return null;
+         }
 
          while (messageParameterParser.Scan(source, index))
          {
@@ -85,6 +94,7 @@ namespace Orange.Library.Parsers
             overridePosition = freeParser.Position;
             name = builder.ToString();
             result.Value = new Signature(name, parameterList.Count, optional);
+
             return new NullOp();
          }
 

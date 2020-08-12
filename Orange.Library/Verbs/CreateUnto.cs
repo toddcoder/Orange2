@@ -3,25 +3,28 @@ using Orange.Library.Values;
 
 namespace Orange.Library.Verbs
 {
-	public class CreateUnto : Verb
-	{
-		const string LOCATION = "Create unto";
+   public class CreateUnto : Verb
+   {
+      const string LOCATION = "Create unto";
 
-		Unto unto;
+      Unto unto;
 
-		public override Value Evaluate()
-		{
-			var stack = Runtime.State.Stack;
-			var stop = stack.Pop(true, LOCATION);
-			var start = stack.Pop(true, LOCATION);
-			if (unto == null)
-				unto = new Unto();
-			unto.SetStartAndStop(start, stop);
-			return unto;
-		}
+      public override Value Evaluate()
+      {
+         var stack = Runtime.State.Stack;
+         var stop = stack.Pop(true, LOCATION);
+         var start = stack.Pop(true, LOCATION);
+         if (unto == null)
+         {
+            unto = new Unto();
+         }
 
-		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Equals;
+         unto.SetStartAndStop(start, stop);
+         return unto;
+      }
 
-	   public override string ToString() => "unto";
-	}
+      public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Equals;
+
+      public override string ToString() => "unto";
+   }
 }

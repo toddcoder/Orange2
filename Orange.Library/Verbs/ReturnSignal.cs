@@ -1,8 +1,8 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Verbs
 {
@@ -31,7 +31,7 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         var value = expression.FlatMap(e => e.Evaluate().AssignmentValue(), () => new Nil());
+         var value = expression.Map(e => e.Evaluate().AssignmentValue()).DefaultTo(() => new Nil());
          typeName = value.Type.ToString();
          State.ReturnValue = value;
          State.ReturnSignal = true;
@@ -48,7 +48,7 @@ namespace Orange.Library.Verbs
 
       public Block NestedBlock => null;
 
-      public string Result => expression.FlatMap(e => e.ToString(), () => "");
+      public string Result => expression.Map(e => e.ToString()).DefaultTo(() => "");
 
       public string TypeName => typeName;
 

@@ -31,7 +31,9 @@ namespace Orange.Library.Verbs
                Regions[name] = pseudoRecursion;
             }
             else
+            {
                pseudoRecursion = (PseudoRecursion)value;
+            }
          }
          else
          {
@@ -39,19 +41,25 @@ namespace Orange.Library.Verbs
             Regions.CreateVariable(name);
             Regions[name] = pseudoRecursion;
          }
+
          if (parameters.Length == 0)
+         {
             pseudoRecursion.Initialization = block;
+         }
          else
          {
             var parameterBlock = new ParameterBlock(parameters, block, parameters.Splatting);
             if (pseudoRecursion.TerminalExpression == null)
+            {
                pseudoRecursion.TerminalExpression = parameterBlock;
+            }
             else
             {
                pseudoRecursion.Main = parameterBlock;
                pseudoRecursion.Initialize();
             }
          }
+
          result = ToString();
          return null;
       }

@@ -1,11 +1,11 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static System.Activator;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.TwoCharacterOperatorParser;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -15,7 +15,9 @@ namespace Orange.Library.Parsers
       {
          var type = Operator(op);
          if (type == null)
+         {
             return none<Block>();
+         }
 
          var verb = (Verb)CreateInstance(type);
          var builder = new CodeBuilder();
@@ -25,8 +27,7 @@ namespace Orange.Library.Parsers
          return builder.Block.Some();
       }
 
-      public SetterParser()
-         : base($" ^ /(|sp| '.') /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}") { }
+      public SetterParser() : base($" ^ /(|sp| '.') /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

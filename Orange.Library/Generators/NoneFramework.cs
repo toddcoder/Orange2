@@ -2,22 +2,24 @@
 
 namespace Orange.Library.Generators
 {
-	public class NoneFramework : GeneratorFramework
-	{
-		bool none;
+   public class NoneFramework : GeneratorFramework
+   {
+      bool none;
 
-		public NoneFramework(Generator generator, Block block, Arguments arguments)
-			: base(generator, block, arguments) => none = true;
+      public NoneFramework(Generator generator, Block block, Arguments arguments) : base(generator, block, arguments) => none = true;
 
-	   public override Value Map(Value value)
-		{
-			if (block.Evaluate().IsTrue)
-				none = false;
-			return none;
-		}
+      public override Value Map(Value value)
+      {
+         if (block.Evaluate().IsTrue)
+         {
+            none = false;
+         }
 
-		public override bool Exit(Value value) => !none;
+         return none;
+      }
 
-	   public override Value ReturnValue() => none;
-	}
+      public override bool Exit(Value value) => !none;
+
+      public override Value ReturnValue() => none;
+   }
 }

@@ -23,7 +23,9 @@ namespace Orange.Library.Values
          if(value is KeyedValue other)
          {
             if (key != other.key)
+            {
                return string.Compare(key, other.key, Ordinal);
+            }
 
             return this.value.Compare(other.value);
          }

@@ -1,15 +1,14 @@
 ﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class LazyBlockParser : Parser
    {
-      public LazyBlockParser()
-         : base("^ /(' '* 'lazy') /b") { }
+      public LazyBlockParser() : base("^ /(' '* 'lazy') /b") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

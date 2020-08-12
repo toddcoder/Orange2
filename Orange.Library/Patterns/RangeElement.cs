@@ -29,16 +29,20 @@ namespace Orange.Library.Patterns
          var anchored = State.Anchored;
          State.Anchored = true;
          for (var i = 0; i < count; i++)
+         {
             if (pattern.Scan(input))
             {
                if (index == -1)
+               {
                   index = pattern.Index;
+               }
             }
             else
             {
                State.Anchored = anchored;
                return false;
             }
+         }
 
          State.Anchored = anchored;
          length = State.Position - index;
@@ -50,7 +54,9 @@ namespace Orange.Library.Patterns
          get
          {
             if (count <= from)
+            {
                return alternate;
+            }
 
             return new RangeElement(from, to, pattern, count - 1) { Next = next, Alternate = alternate };
          }

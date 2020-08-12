@@ -1,97 +1,90 @@
 ﻿using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
-	public class Enumeration : Value, IMessageHandler
-	{
-		string name;
-		Hash<string, int> values;
+   public class Enumeration : Value, IMessageHandler
+   {
+      string name;
+      Hash<string, int> values;
 
-		public Enumeration()
-		{
-			name = "$unknown";
-			values = new Hash<string, int>();
-		}
+      public Enumeration()
+      {
+         name = "$unknown";
+         values = new Hash<string, int>();
+      }
 
-		public Enumeration(Hash<string, int> values)
-			: this()
-		{
-			foreach (var item in values)
-				this.values[item.Key] = item.Value;
-		}
+      public Enumeration(Hash<string, int> values) : this()
+      {
+         foreach (var (key, value) in values)
+         {
+            this.values[key] = value;
+         }
+      }
 
-		public void Add(string memberName, int value) => values[memberName] = value;
+      public void Add(string memberName, int value) => values[memberName] = value;
 
-	   public override int Compare(Value value) => 0;
+      public override int Compare(Value value) => 0;
 
-	   public override string Text
-		{
-			get
-			{
-				return values.KeyArray().Listify(State.FieldSeparator.Text);
-			}
-			set
-			{
-			}
-		}
+      public override string Text
+      {
+         get => values.KeyArray().Stringify(State.FieldSeparator.Text);
+         set { }
+      }
 
-		public override double Number
-		{
-			get
-			{
-				return 0;
-			}
-			set
-			{
-			}
-		}
+      public override double Number
+      {
+         get => 0;
+         set { }
+      }
 
-		public override ValueType Type => ValueType.Enumeration;
+      public override ValueType Type => ValueType.Enumeration;
 
-	   public override bool IsTrue => true;
+      public override bool IsTrue => true;
 
-	   public override Value Clone() => new Enumeration(values);
+      public override Value Clone() => new Enumeration(values);
 
-	   protected override void registerMessages(MessageManager manager)
-		{
-		}
+      protected override void registerMessages(MessageManager manager) { }
 
-		public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
-		{
-			if (RespondsTo(messageName))
-			{
-				handled = true;
-				return new EnumerationItem(name, messageName, values[messageName]);
-			}
-			handled = false;
-			return null;
-		}
+      public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
+      {
+         if (RespondsTo(messageName))
+         {
+            handled = true;
+            return new EnumerationItem(name, messageName, values[messageName]);
+         }
 
-		public bool RespondsTo(string messageName) => values.ContainsKey(messageName);
+         handled = false;
+         return null;
+      }
 
-	   public override Value AlternateValue(string message)
-		{
-			var array = new Array();
-			foreach (var item in values)
-				array[item.Key] = item.Value;
-			return array;
-		}
+      public bool RespondsTo(string messageName) => values.ContainsKey(messageName);
 
-		public override bool IsArray => true;
+      public override Value AlternateValue(string message)
+      {
+         var array = new Array();
+         foreach (var (key, value) in values)
+         {
+            array[key] = value;
+         }
 
-	   public override Value SourceArray => AlternateValue("source array");
+         return array;
+      }
 
-	   public override string ToString() => values.Select(i => $"{i.Key} => {i.Value}").Listify(State.FieldSeparator.Text);
+      public override bool IsArray => true;
 
-	   public override void AssignTo(Variable variable)
-		{
-			name = variable.Name;
-			base.AssignTo(variable);
-		}
-	}
+      public override Value SourceArray => AlternateValue("source array");
+
+      public override string ToString() => values.Select(i => $"{i.Key} => {i.Value}").Stringify(State.FieldSeparator.Text);
+
+      public override void AssignTo(Variable variable)
+      {
+         name = variable.Name;
+         base.AssignTo(variable);
+      }
+   }
 }

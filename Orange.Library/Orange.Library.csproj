@@ -64,7 +64,6 @@
     <Compile Include="BlockMatcher.cs" />
     <Compile Include="BlockState.cs" />
     <Compile Include="Buffer.cs" />
-    <Compile Include="ClassBuilder.cs" />
     <Compile Include="CodeBuilder.cs" />
     <Compile Include="ConsoleManager.cs" />
     <Compile Include="Debugging\Breakpoint.cs" />
@@ -154,7 +153,6 @@
     <Compile Include="Parsers\MiddleParser.cs" />
     <Compile Include="Parsers\AltLoopRangeParser.cs" />
     <Compile Include="Parsers\ApplyInvokeParser.cs" />
-    <Compile Include="Parsers\ArrayComprehensionParser.cs" />
     <Compile Include="Parsers\ArraySubComprehensionParser.cs" />
     <Compile Include="Parsers\AssertParser.cs" />
     <Compile Include="Parsers\AssignParser.cs" />
@@ -598,7 +596,6 @@
     <Compile Include="Values\Symbol.cs" />
     <Compile Include="Values\Table.cs" />
     <Compile Include="Values\Ternary.cs" />
-    <Compile Include="Values\ToDo.cs" />
     <Compile Include="Values\TypeName.cs" />
     <Compile Include="Values\TypeValue.cs" />
     <Compile Include="Values\ValueAttributeVariable.cs" />
@@ -666,7 +663,6 @@
     <Compile Include="Patterns\BreakXElement.cs" />
     <Compile Include="Patterns\ConditionalReplacements.cs" />
     <Compile Include="Managers\PatternManager.cs" />
-    <Compile Include="Parsers\EndBlockParser.cs" />
     <Compile Include="Parsers\PatternParser.cs" />
     <Compile Include="Parsers\Patterns\IElementParser.cs" />
     <Compile Include="Parsers\Patterns\StringElementParser.cs" />
@@ -716,7 +712,6 @@
     <Compile Include="Replacements\UniqueReplacement.cs" />
     <Compile Include="Runtime.cs" />
     <Compile Include="Managers\BlockManager.cs" />
-    <Compile Include="Managers\ElseManager.cs" />
     <Compile Include="Region.cs" />
     <Compile Include="Managers\RegionManager.cs" />
     <Compile Include="OrangeRuntime.cs" />

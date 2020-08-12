@@ -42,7 +42,9 @@ namespace Orange.Library.Values
       {
          var value = Arguments[0];
          if (!value.IsTrue)
+         {
             throw new ApplicationException(message.Text);
+         }
 
          return NilValue;
       }
@@ -51,7 +53,9 @@ namespace Orange.Library.Values
       {
          var value = Arguments[0];
          if (value.IsTrue)
+         {
             throw new ApplicationException(message.Text);
+         }
 
          return NilValue;
       }

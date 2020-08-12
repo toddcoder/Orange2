@@ -16,7 +16,10 @@ namespace Orange.Library.Verbs
       {
          var value = State.Stack.Pop(true, "Where");
          if (value is IWhere where)
+         {
             where.Where = block;
+         }
+
          return value;
       }
 

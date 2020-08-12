@@ -41,7 +41,10 @@ namespace Orange.Library.Values
       {
          var keys = (Array)keyBlock.ToActualArguments().Flatten();
          if (keysAllInt(keys.Values))
+         {
             return new IndexIndexer(array, keys);
+         }
+
          return new KeyIndexer(array, keys);
       }
 

@@ -16,17 +16,23 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var y = stack.Pop(true, LOCATION);
          var x = stack.Pop(true, LOCATION);
-         var generator = x.PossibleGenerator();
          var arguments = GuaranteedExecutable(y);
-         if (generator.IsSome)
+         if (x.PossibleGenerator().If(out var generator))
          {
-            Iterate(generator.Value, arguments.Parameters, arguments.Executable);
+            Iterate(generator, arguments.Parameters, arguments.Executable);
             return null;
          }
+
          if (x.Type == ValueType.Number)
+         {
             x = SendMessage(x, "range");
+         }
+
          if (x.Type == ValueType.Object && x.IsArray)
+         {
             x = x.SourceArray;
+         }
+
          SendMessage(x, "for", arguments);
          return null;
       }

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Collections;
+﻿using Core.Collections;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 
@@ -15,15 +15,22 @@ namespace Orange.Library.Verbs
       {
          var current = Regions.Current;
          current.CreateAndSet(data.Name, data);
-         foreach (var item in data.Constructors)
+         foreach (var (key, i) in data.Constructors)
          {
             Value value;
-            if (item.Value == 0)
-               value = new Constructor(data.Name, item.Key, new Value[0]);
+            if (i == 0)
+            {
+               value = new Constructor(data.Name, key, new Value[0]);
+            }
             else
-               value = new ConstructorProxy(data.Name, item.Key);
-            if (!current.ContainsMessage(item.Key))
-               current.CreateAndSet(item.Key, value);
+            {
+               value = new ConstructorProxy(data.Name, key);
+            }
+
+            if (!current.ContainsMessage(key))
+            {
+               current.CreateAndSet(key, value);
+            }
          }
 
          return null;

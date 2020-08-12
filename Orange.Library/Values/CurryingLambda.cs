@@ -8,7 +8,9 @@
       public override Value Evaluate(Arguments arguments, Value instance = null, bool register = true, bool setArguments = true)
       {
          if (parameters.Length <= 1)
+         {
             return base.Evaluate(arguments, instance, register, setArguments);
+         }
 
          var allParameters = parameters.GetParameters();
          var firstParameter = allParameters[0];
@@ -33,7 +35,10 @@
             {
                var value = blocks[i].Evaluate();
                if (value is IInvokable invokeable)
+               {
                   value = invokeable.Invoke(new Arguments());
+               }
+
                newArguments.AddArgument(value);
             }
 

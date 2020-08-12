@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Collections;
+using Core.Internet.Sgml;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Internet.XML;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -26,19 +27,29 @@ namespace Orange.Library.Values
          {
             var array = (Array)value.SourceArray;
             if (array.Length > 0 && array.All(i => i.Value.Type == ValueType.Graph))
+            {
                foreach (var valueGraph in array.Select(item => item.Value).OfType<Graph>().Select(child => child.graph))
+               {
                   graph[valueGraph.Name] = valueGraph;
+               }
+            }
             else
+            {
                graph.Value = array;
+            }
          }
          else if (name.IsNotEmpty() && valueIsGraph && ((Graph)value).graph.Name.IsEmpty())
          {
             var childGraph = (Graph)value;
-            foreach (var item in childGraph.graph.Children)
-               graph[item.Key] = item.Value;
+            foreach (var (key, valueGraph) in childGraph.graph.Children)
+            {
+               graph[key] = valueGraph;
+            }
          }
          else
+         {
             graph.Value = value;
+         }
       }
 
       public Graph(ValueGraph graph) => this.graph = graph;
@@ -98,8 +109,10 @@ namespace Orange.Library.Values
       public Value Children()
       {
          var array = new Array();
-         foreach (var item in graph.Children)
-            array[item.Key] = new Graph(item.Value);
+         foreach (var (key, value) in graph.Children)
+         {
+            array[key] = new Graph(value);
+         }
 
          return array;
       }
@@ -108,7 +121,9 @@ namespace Orange.Library.Values
       {
          handled = true;
          if (DefaultRespondsTo(messageName) && !MessagingState.RespondsToRegisteredMessage(value, messageName))
+         {
             return DefaultSendMessage(value, messageName, arguments, out handled);
+         }
 
          var childGraph = graph[messageName];
          if (childGraph == null)
@@ -119,7 +134,9 @@ namespace Orange.Library.Values
          }
 
          if (childGraph.Value is Lambda closure)
+         {
             return dispatchClosure(closure, arguments);
+         }
 
          return childGraph.Children.Count > 0 ? (Value)new Graph(childGraph) : new GraphVariable(messageName, childGraph);
       }
@@ -142,7 +159,10 @@ namespace Orange.Library.Values
       public override void AssignTo(Variable variable)
       {
          if (graph.Name == VAR_AUTO_ASSIGN)
+         {
             graph = graph.Duplicate(variable.Name);
+         }
+
          base.AssignTo(variable);
       }
 
@@ -157,13 +177,15 @@ namespace Orange.Library.Values
       static Value getValue(ValueGraph graph)
       {
          if (graph.Children.Count == 0)
+         {
             return graph.Value;
+         }
 
          var array = new Array();
-         foreach (var item in graph.Children)
+         foreach (var (_, valueGraph) in graph.Children)
          {
-            var value = getValue(item.Value);
-            array[item.Value.Name] = value;
+            var value = getValue(valueGraph);
+            array[valueGraph.Name] = value;
          }
 
          return array;
@@ -171,32 +193,40 @@ namespace Orange.Library.Values
 
       public Value XML()
       {
-         var builder = new XMLBuilder(graph.Name);
-         renderXML(graph, builder.Root.Value);
+         var builder = new SgmlBuilder(graph.Name);
+         renderXML(graph, builder.Root);
          return builder.ToString();
       }
 
       static void renderXML(ValueGraph graph, Element element)
       {
          if (graph.Children.Count > 0)
-            foreach (var item in graph.Children)
+         {
+            foreach (var (key, value) in graph.Children)
             {
-               var name = item.Key;
+               var name = key;
                name = name.Substitute("'-' /d+ $", "");
                name = name.Substitute("'_' /(/d+) $", "-$1");
                if (name.StartsWith("$"))
-                  element.Attributes.Add(name.Skip(1), item.Value.Value.Text);
+               {
+                  element.Attributes.Add(name.Drop(1), value.Value.Text);
+               }
                else if (name == "text")
-                  element.Text = item.Value.Value.Text;
+               {
+                  element.Text = value.Value.Text;
+               }
                else
                {
                   var childElement = new Element { Name = name };
                   element.Children.Add(childElement);
-                  renderXML(item.Value, childElement);
+                  renderXML(value, childElement);
                }
             }
+         }
          else
+         {
             element.Text = graph.Value.Text;
+         }
       }
 
       public Value If()
@@ -205,7 +235,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return new Graph(graph.Name, "");
+            }
 
             assistant.IteratorParameter();
             if (graph.Children.Count == 0)
@@ -217,7 +249,9 @@ namespace Orange.Library.Values
 
             var list = new List<Graph>();
             foreach (var item in graph.Children)
+            {
                addToList(assistant, block, item.Value, list);
+            }
 
             return new Graph(graph.Name, new Array(list));
          }
@@ -235,9 +269,14 @@ namespace Orange.Library.Values
          var value = new Graph(graph);
          assistant.SetIteratorParameter(value);
          if (block.IsTrue)
+         {
             list.Add(value);
+         }
+
          foreach (var item in graph.Children)
+         {
             addToList(assistant, block, item.Value, list);
+         }
       }
 
       public Value Array() => getValue(graph);
@@ -264,7 +303,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             var array = new Array();
             assistant.ArrayParameters();
@@ -275,7 +316,9 @@ namespace Orange.Library.Values
                var value = block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == ParameterAssistant.SignalType.Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -298,17 +341,21 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.ArrayParameters();
             var index = 0;
-            foreach (var item in graph.Children)
+            foreach (var (key, valueGraph) in graph.Children)
             {
-               assistant.SetParameterValues(new Graph(item.Value), item.Key, index++);
+               assistant.SetParameterValues(new Graph(valueGraph), key, index++);
                block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == ParameterAssistant.SignalType.Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {

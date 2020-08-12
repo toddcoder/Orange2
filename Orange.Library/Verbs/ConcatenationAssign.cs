@@ -12,10 +12,16 @@ namespace Orange.Library.Verbs
 		{
 			var variableValue = variable.Value;
 			if (variableValue.IsArray)
-				variableValue = variableValue.SourceArray;
-			if (value.IsArray)
-				value = value.SourceArray;
-			if (variableValue.Type == ValueType.Array && value.Type == ValueType.Array)
+         {
+            variableValue = variableValue.SourceArray;
+         }
+
+         if (value.IsArray)
+         {
+            value = value.SourceArray;
+         }
+
+         if (variableValue.Type == ValueType.Array && value.Type == ValueType.Array)
 			{
 				var xArray = (Array)variableValue;
 				var yArray = (Array)value.Resolve();

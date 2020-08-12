@@ -84,11 +84,20 @@ namespace Orange.Library.Values
       {
          var array = new Array();
          if (start.Compare(stop) < 0)
+         {
             for (var current = start; current.Compare(stop) <= 0; current = current.Successor(increment))
+            {
                array.Add(current);
+            }
+         }
          else
+         {
             for (var current = start; current.Compare(stop) >= 0; current = current.Predecessor(increment))
+            {
                array.Add(current);
+            }
+         }
+
          return array;
       }
 

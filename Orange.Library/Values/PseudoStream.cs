@@ -22,8 +22,10 @@
 				{
 					var current = array[index];
 					if (evaluate(ifBlock, current).IsTrue)
-						return current;
-				}
+               {
+                  return current;
+               }
+            }
 				return new Nil();
 			}
 		}

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Core.Collections;
+using Core.RegularExpressions;
 using Orange.Library;
 using Orange.Library.Parsers;
 using static System.Drawing.Color;
@@ -52,15 +53,26 @@ namespace OrangePlayground
                textBox.SelectionBackColor = getBackColor(color);
                Font selectionFont;
                if (isItalic(color.Type))
+               {
                   selectionFont = italicFont;
+               }
                else if (isBold(color.Type))
+               {
                   selectionFont = boldFont;
+               }
                else if (isUnderline(color.Type))
+               {
                   selectionFont = underlineFont;
+               }
                else if (isSpecial(color.Type))
+               {
                   selectionFont = specialFont;
+               }
                else
+               {
                   selectionFont = normalFont;
+               }
+
                textBox.SelectionFont = selectionFont;
             }
 
@@ -78,12 +90,14 @@ namespace OrangePlayground
       void markText(string pattern, Color backColor)
       {
          if (textBox.Text.Matches(pattern).If(out var matcher))
+         {
             for (var i = 0; i < matcher.MatchCount; i++)
             {
-               var match = matcher.GetMatch(i);
-               textBox.Select(match.Index, match.Length);
+               var (_, index, length) = matcher.GetMatch(i);
+               textBox.Select(index, length);
                textBox.SelectionBackColor = backColor;
             }
+         }
       }
 
       static bool isBold(EntityType type)

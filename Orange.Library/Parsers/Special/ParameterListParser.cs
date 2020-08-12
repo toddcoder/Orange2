@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
+using Core.Monads;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Values.Object;
 using static Orange.Library.Values.Object.VisibilityType;
-using static Standard.Types.Maybe.MaybeFunctions;
 using When = Orange.Library.Verbs.When;
 
 namespace Orange.Library.Parsers.Special
@@ -58,7 +58,7 @@ namespace Orange.Library.Parsers.Special
 
       public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
-         return GetExpression(source, index, stop).Map(t => Parse(t.Item1).Map(list => (list, t.Item2)));
+         return GetExpression(source, index, stop).Map((block, position) => Parse(block).Map(list => (list, position)));
       }
 
       public IMaybe<List<Parameter>> Parse(Block incomingBlock)
@@ -91,7 +91,10 @@ namespace Orange.Library.Parsers.Special
                   comparisand = null;
                   stage = ParsingStage.Variable;
                   if (verbType == VerbType.End)
+                  {
                      Currying = true;
+                  }
+
                   break;
                case VerbType.EqualSign:
                   switch (stage)
@@ -141,12 +144,16 @@ namespace Orange.Library.Parsers.Special
                   {
                      case ParsingStage.Default:
                         foreach (var outVerb in outBlock.AsAdded)
+                        {
                            defaultValue.Add(outVerb);
+                        }
 
                         break;
                      case ParsingStage.Comparisand:
                         foreach (var outVerb in outBlock.AsAdded)
+                        {
                            comparisand.Add(outVerb);
+                        }
 
                         break;
                      default:
@@ -172,7 +179,10 @@ namespace Orange.Library.Parsers.Special
          }
 
          if (variableName != null)
+         {
             list.Add(new Parameter(variableName, defaultValue, visibility, readOnly, lazy, comparisand));
+         }
+
          return list.Some();
       }
 

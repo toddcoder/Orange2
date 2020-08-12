@@ -1,10 +1,10 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.ComparisandParser;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers.Special
 {

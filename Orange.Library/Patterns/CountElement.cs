@@ -21,17 +21,22 @@ namespace Orange.Library.Patterns
 			var anchored = State.Anchored;
 			State.Anchored = true;
 		   for (var i = 0; i < count; i++)
-		      if (pattern.Scan(input))
-		      {
-		         if (index == -1)
-		            index = pattern.Index;
-		      }
-		      else
-		      {
-		         State.Anchored = anchored;
-		         return false;
-		      }
-		   State.Anchored = anchored;
+         {
+            if (pattern.Scan(input))
+            {
+               if (index == -1)
+               {
+                  index = pattern.Index;
+               }
+            }
+            else
+            {
+               State.Anchored = anchored;
+               return false;
+            }
+         }
+
+         State.Anchored = anchored;
 			length = State.Position - index;
 			return true;
 		}

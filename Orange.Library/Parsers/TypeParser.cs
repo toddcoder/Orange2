@@ -1,4 +1,5 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Monads;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
@@ -8,13 +9,14 @@ namespace Orange.Library.Parsers
 {
    public class TypeParser : Parser
    {
-      public TypeParser()
-         : base($"^ /(|tabs| 'type' /s+) /({REGEX_VARIABLE}) /(/s* '(')?") { }
+      public TypeParser() : base($"^ /(|tabs| 'type' /s+) /({REGEX_VARIABLE}) /(/s* '(')?") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          if (!InClassDefinition)
+         {
             return null;
+         }
 
          Color(position, tokens[1].Length, KeyWords);
          var name = tokens[2];
@@ -28,7 +30,9 @@ namespace Orange.Library.Parsers
             var parametersParser = new ParametersParser();
             var newIndex = parametersParser.Parse(source, index);
             if (!newIndex.If(out parameters, out index))
+            {
                return null;
+            }
          }
 
          overridePosition = index;
@@ -52,10 +56,16 @@ namespace Orange.Library.Parsers
             var verb = new CreateClass(name, cls);
             builder.Verb(verb);
          }
+
          if (HelperBlock == null)
+         {
             HelperBlock = new Block();
+         }
+
          foreach (var verb in builder.Block.AsAdded)
+         {
             HelperBlock.Add(verb);
+         }
 
          return new NullOp();
       }
@@ -70,6 +80,7 @@ namespace Orange.Library.Parsers
          var lambda = builder.Lambda();
          builder.Pop(true);
          builder.Function(LongToMangledPrefix("get", "name"), lambda);
+
          return builder.Block;
       }
    }

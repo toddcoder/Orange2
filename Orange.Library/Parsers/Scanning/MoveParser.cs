@@ -1,16 +1,15 @@
 ﻿using Orange.Library.Scanning;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Scanning
 {
    public class MoveParser : Parser, IScanItem
    {
-      public MoveParser()
-         : base("^ /(/s* '->(')") { }
+      public MoveParser() : base("^ /(/s* '->(')") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

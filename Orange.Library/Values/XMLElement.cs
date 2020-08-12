@@ -35,16 +35,22 @@ namespace Orange.Library.Values
          get
          {
             if (name == null)
+            {
                return "";
+            }
 
             return name.StartsWith("@") ? GetAttributeValue(name) : GetNodeValue(name);
          }
          set
          {
             if (name.StartsWith("@"))
+            {
                SetAttributeValue(name, value.Text);
+            }
             else
+            {
                SetNodeValue(name, value.Text);
+            }
          }
       }
 
@@ -76,13 +82,18 @@ namespace Orange.Library.Values
       {
          var result = element.Elements(nodeName).FirstOrDefault();
          if (result != null)
+         {
             result.Value = value;
+         }
       }
 
       public string GetAttributeValue(string attributeName)
       {
          if (attributeName.StartsWith("@"))
+         {
             attributeName = attributeName.Substring(1);
+         }
+
          var result = element.Attribute(attributeName);
          return result?.Value ?? "";
       }
@@ -90,10 +101,15 @@ namespace Orange.Library.Values
       public void SetAttributeValue(string attributeName, string value)
       {
          if (attributeName.StartsWith("@"))
+         {
             attributeName = attributeName.Substring(1);
+         }
+
          var result = element.Attribute(attributeName);
          if (result != null)
+         {
             result.Value = value;
+         }
       }
 
       public override string ToString() => element.ToString();

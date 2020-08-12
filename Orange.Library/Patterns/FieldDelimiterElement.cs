@@ -7,7 +7,10 @@
          if (input.Length == 0)
          {
             if (Runtime.State.Multi)
+            {
                return false;
+            }
+
             index = Runtime.State.Position;
             length = 0;
             return true;
@@ -18,7 +21,10 @@
          if (at == -1)
          {
             if (Runtime.State.Multi)
+            {
                return false;
+            }
+
             index = Runtime.State.Position;
             length = 0;
             return true;

@@ -1,6 +1,6 @@
 ﻿using System.Linq;
+using Core.Computers;
 using Orange.Library.Values;
-using Standard.Computer;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.NewOrangeCompiler;
@@ -35,12 +35,16 @@ namespace Orange.Library.Verbs
       string getSource()
       {
          if (path.Contains("\\"))
+         {
             return ((FileName)path).Text;
+         }
 
          var fullName = path.EndsWith(".orange") ? path : path + ".orange";
 
          foreach (var fileName in State.ModuleFolders.Select(folder => folder + fullName).Where(fileName => fileName.Exists()))
+         {
             return fileName.Text;
+         }
 
          Throw(LOCATION, $"Couldn't find module {path}");
          return null;

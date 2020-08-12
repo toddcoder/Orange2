@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Linq;
+using Core.Dates;
+using Core.Monads;
+using static Core.RegularExpressions.RegexExtensions;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Dates;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
 using static System.Math;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Array;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -28,7 +28,7 @@ namespace Orange.Library.Values
 
       public Double(double number) => this.number = number;
 
-      public override int Compare(Value value) => value is Double vnumber ? number.CompareTo(vnumber.number) : -1;
+      public override int Compare(Value value) => value is Double numberValue ? number.CompareTo(numberValue.number) : -1;
 
       public override string ToString() => Text;
 
@@ -104,7 +104,6 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "compare", v => ((Double)v).Compare());
          manager.RegisterMessage(this, "time", v => ((Double)v).ToTime());
          manager.RegisterMessage(this, "trunc", v => ((Double)v).Truncate());
-         //manager.RegisterMessage(this, "iter", v => ((Double)v).Iterate());
          manager.RegisterMessage(this, "mod2", v => ((Double)v).Mod2());
          manager.RegisterMessage(this, "divrem", v => ((Double)v).DivRem());
          manager.RegisterMessage(this, "succ", v => ((Double)v).Succ());
@@ -147,7 +146,9 @@ namespace Orange.Library.Values
       {
          var count = (int)Arguments[0].Number;
          if (count == 0)
+         {
             return Text;
+         }
 
          return Text.Repeat(count);
       }
@@ -156,14 +157,15 @@ namespace Orange.Library.Values
       {
          var count = (int)Arguments[0].Number;
          if (count == 0)
+         {
             return new Array();
+         }
 
          var asInt = (int)number;
          return asInt == 0 ? getRandomArray(count) : getRandomArray(asInt, count);
       }
 
-      static Array getRandomArray(int size, int count) => new Array(Enumerable.Range(0, count)
-         .Select(i => (Value)State.Random(size)));
+      static Array getRandomArray(int size, int count) => new Array(Enumerable.Range(0, count).Select(i => (Value)State.Random(size)));
 
       static Array getRandomArray(int count) => new Array(Enumerable.Range(0, count).Select(i => (Value)State.Random()));
 
@@ -177,9 +179,8 @@ namespace Orange.Library.Values
 
       public Value DivRem()
       {
-         int remainder;
          var divisor = Arguments[0].Int;
-         var result = Math.DivRem((int)number, divisor, out remainder);
+         var result = Math.DivRem((int)number, divisor, out var remainder);
          return new OTuple(new Value[] { result, remainder });
       }
 
@@ -204,7 +205,9 @@ namespace Orange.Library.Values
       {
          var placesValue = Arguments[0];
          if (placesValue.IsEmpty)
+         {
             return Math.Truncate(number);
+         }
 
          var amount = (int)Math.Pow(10, placesValue.Number);
          return Math.Truncate(number * amount) / amount;
@@ -214,7 +217,9 @@ namespace Orange.Library.Values
       {
          var baseValue = Arguments[0];
          if (baseValue.IsEmpty)
+         {
             return Log10(number);
+         }
 
          var baseNumber = baseValue.Number;
          return Math.Log(number, baseNumber);
@@ -260,7 +265,9 @@ namespace Orange.Library.Values
             {
                Regions.SetLocal(varName, i);
                if (block.IsTrue || !isWhile)
+               {
                   array.Add(i);
+               }
                else
                {
                   Regions.Pop("range-while");
@@ -285,6 +292,7 @@ namespace Orange.Library.Values
             victim = -victim;
             amount--;
          }
+
          return sign + victim.ToString().PadLeft(amount, '0');
       }
 
@@ -300,7 +308,9 @@ namespace Orange.Library.Values
 
          var array = new Array();
          for (var i = start; i <= stop; i++)
+         {
             array.Add(i);
+         }
 
          return array;
       }
@@ -310,15 +320,25 @@ namespace Orange.Library.Values
          var start = (int)number;
          var array = new Array();
          if (count == 0)
+         {
             return new Array();
+         }
 
          var stop = start + count - 1;
          if (increment > 0)
+         {
             for (var i = start; i <= stop; i += increment)
+            {
                array.Add(i);
+            }
+         }
          else
+         {
             for (var i = start; i >= stop; i += increment)
+            {
                array.Add(i);
+            }
+         }
 
          return array;
       }
@@ -335,17 +355,30 @@ namespace Orange.Library.Values
       {
          var start = (int)number;
          if (start > stop)
+         {
             increment = -Abs(increment);
+         }
+
          var array = new Array();
          if (stop == 0 && increment > 0)
+         {
             return array;
+         }
 
          if (increment > 0)
+         {
             for (var i = start; i <= stop; i += increment)
+            {
                array.Add(i);
+            }
+         }
          else
+         {
             for (var i = start; i >= stop; i += increment)
+            {
                array.Add(i);
+            }
+         }
 
          return array;
       }
@@ -357,7 +390,9 @@ namespace Orange.Library.Values
          {
             var count = (int)Math.Min(number, MAX_LOOP);
             for (var i = 0; i < count; i++)
+            {
                block.Evaluate();
+            }
          }
 
          return null;
@@ -399,11 +434,15 @@ namespace Orange.Library.Values
       {
          var n = (int)number;
          if (n <= 2)
+         {
             return n;
+         }
 
          double result = 1;
          for (var i = 2; i <= n; i++)
+         {
             result *= i;
+         }
 
          return result;
       }
@@ -412,11 +451,17 @@ namespace Orange.Library.Values
       {
          var n = (int)number;
          if ((n & 1) == 0)
+         {
             return n == 2;
+         }
 
          for (var i = 3; i * i <= n; i += 2)
+         {
             if (n % i == 0)
+            {
                return false;
+            }
+         }
 
          return n != 1;
       }
@@ -424,23 +469,39 @@ namespace Orange.Library.Values
       public Value Words()
       {
          if ((int)number == 0)
+         {
             return "zero";
+         }
 
          if (nums == null)
+         {
             nums = STR_WORDS.Split("/s+");
+         }
+
          if (tens == null)
+         {
             tens = "ten twenty thirty forty fifty sixty seventy eighty ninety".Split("/s+");
+         }
+
          return intoWords((int)number);
       }
 
       string intoWords(int n)
       {
          if (n >= 1000)
+         {
             return intoWords(n / 1000) + " thousand " + intoWords(n % 1000);
+         }
+
          if (n >= 100)
+         {
             return intoWords(n / 100) + " hundred " + intoWords(n % 100);
+         }
+
          if (n >= 20)
+         {
             return tens[n / 10 - 1] + " " + intoWords(n % 10);
+         }
 
          return nums[n - 1];
       }
@@ -498,13 +559,21 @@ namespace Orange.Library.Values
       {
          var error = Arguments[0].Number;
          if (error == 0)
+         {
             error = 0.000001;
+         }
+
          var n = (int)Floor(number);
          var x = number - n;
          if (x < error)
+         {
             return new Rational(n, 1);
+         }
+
          if (1 - error < x)
+         {
             return new Rational(n + 1, 1);
+         }
 
          var lowerN = 0;
          var lowerD = 1;
@@ -529,7 +598,9 @@ namespace Orange.Library.Values
                lowerD = middleD;
             }
             else
+            {
                return new Rational(n * middleD + middleN, middleD);
+            }
          }
       }
 
@@ -541,7 +612,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return (Array)Range().SourceArray;
+            }
 
             assistant.IteratorParameter();
             var array = new Array();
@@ -551,7 +624,9 @@ namespace Orange.Library.Values
                var value = block.Evaluate();
                var signal = Signal();
                if (signal == Breaking)
+               {
                   return array;
+               }
 
                switch (signal)
                {

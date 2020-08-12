@@ -1,6 +1,6 @@
 ﻿using System.Linq;
+using Core.Enumerables;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
 using static System.Math;
 using static Orange.Library.Managers.RegionManager;
 
@@ -23,7 +23,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get => $"{name}" + (values.Length == 0 ? "" : $"({values.Select(v => v.Text).Listify()})");
+         get => $"{name}" + (values.Length == 0 ? "" : $"({values.Select(v => v.Text).Stringify()})");
          set { }
       }
 
@@ -59,7 +59,9 @@ namespace Orange.Library.Values
                   var left = values[i];
                   var right = constructor.values[i];
                   if (!Case.Match(left, right, true, new Boolean(true).Block))
+                  {
                      return false;
+                  }
                }
 
                return true;

@@ -55,7 +55,10 @@ namespace Orange.Library.Values
       {
          var applyValue = Arguments.ApplyValue;
          if (applyValue.IsArray)
+         {
             applyValue = applyValue.SourceArray;
+         }
+
          var array = applyValue.Type == ValueType.Array ? (Array)applyValue : new Array
          {
             applyValue

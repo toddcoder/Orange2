@@ -1,13 +1,13 @@
-﻿using Orange.Library.Parsers.Line;
+﻿using Core.Monads;
+using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 using Maybe = Orange.Library.Verbs.Maybe;
 
 namespace Orange.Library.Parsers
@@ -47,8 +47,12 @@ namespace Orange.Library.Parsers
                   guardBlock = guard.Some();
                }
             }
+
             if (endOfLineParser.Scan(source, currentIndex))
+            {
                currentIndex = endOfLineParser.Position;
+            }
+
             if (GetBlock(source, currentIndex, true).If(out var ifTrue, out var j))
             {
                currentIndex = j;
@@ -63,8 +67,12 @@ namespace Orange.Library.Parsers
                      guardBlock = elseBlock.Some();
                   }
                }
+
                if (guardBlock.IsSome)
+               {
                   Assert(ifTrue.LastIsReturn, "Maybe", "return required");
+               }
+
                overridePosition = currentIndex;
                return new Maybe(fieldName, expression, ifTrue, ifFalse, guardBlock) { Index = position };
             }

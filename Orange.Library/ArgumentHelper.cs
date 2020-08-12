@@ -10,21 +10,19 @@ namespace Orange.Library
          argumentsAsBlock.ResolveVariables = false;
          var arguments = argumentsAsBlock.Evaluate();
          if (arguments == null)
+         {
             return new Array();
+         }
+
          if (arguments.Type == Value.ValueType.Array)
+         {
             return getVariables((Array)arguments.Resolve());
-         return new Array
-          {
-             getVariable(arguments)
-          };
+         }
+
+         return new Array { getVariable(arguments) };
       }
 
-      static Variable getVariable(Value value)
-      {
-         if (value.IsVariable)
-            return (Variable)value;
-         return new Variable(value.Text);
-      }
+      static Variable getVariable(Value value) => value.IsVariable ? (Variable)value : new Variable(value.Text);
 
       static Array getVariables(Array array) => new Array(array.Values.Select(getVariable));
 
@@ -33,15 +31,23 @@ namespace Orange.Library
          argumentsAsBlock.ResolveVariables = false;
          var arguments = argumentsAsBlock.Evaluate();
          if (arguments == null)
+         {
             return new Array();
+         }
+
          arguments = arguments.Resolve();
          if (arguments.IsArray)
+         {
             arguments = arguments.SourceArray;
+         }
          else
+         {
             arguments = new Array
             {
                arguments
             };
+         }
+
          return (Array)arguments;
       }
 
@@ -50,15 +56,20 @@ namespace Orange.Library
          argumentsAsBlock.ResolveVariables = false;
          var arguments = argumentsAsBlock.Evaluate();
          if (arguments == null)
+         {
             return new Array();
+         }
+
          arguments = arguments.Resolve();
          if (arguments.IsArray)
+         {
             arguments = arguments.SliceArray;
+         }
          else
-            arguments = new Array
-            {
-               arguments
-            };
+         {
+            arguments = new Array { arguments };
+         }
+
          return (Array)arguments;
       }
    }

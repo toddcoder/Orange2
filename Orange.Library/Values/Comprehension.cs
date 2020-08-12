@@ -26,7 +26,10 @@ namespace Orange.Library.Values
             Regions.Current.CopyAllVariablesTo(this.region);
          }
          else
+         {
             this.region = region;
+         }
+
          sortBlock = null;
          sortDescBlock = null;
          orderBlock = null;
@@ -111,20 +114,28 @@ namespace Orange.Library.Values
       public void SetIf(Block aBlock)
       {
          if (innerComprehension == null)
+         {
             ifBlock = aBlock;
+         }
          else
+         {
             innerComprehension.SetIf(aBlock);
+         }
       }
 
       Array getArray()
       {
          if (arrayBlock == null)
+         {
             return new Array();
+         }
 
          arrayBlock.AutoRegister = false;
          var value = arrayBlock.Evaluate();
          if (value == null || value.Type == ValueType.Nil)
+         {
             return new Array();
+         }
 
          if (value is ISequenceSource sequenceSource)
          {
@@ -145,7 +156,9 @@ namespace Orange.Library.Values
          }))
          {
             if (arrayBlock == null)
+            {
                return new Array();
+            }
 
             using (var popper = new RegionPopper(region, "comprehension"))
             {
@@ -155,41 +168,57 @@ namespace Orange.Library.Values
                if (ifBlock != null)
                {
                   if (innerComprehension == null)
+                  {
                      foreach (var item in getArray())
                      {
                         assistant.SetParameterValues(item);
 
                         if (!ifBlock.Evaluate().IsTrue)
+                        {
                            continue;
+                        }
 
                         var value = block.Evaluate();
                         if (value.Type != ValueType.Nil)
+                        {
                            newArray.Add(value);
+                        }
                      }
+                  }
                   else
+                  {
                      foreach (var item in getArray())
                      {
                         assistant.SetParameterValues(item);
                         if (ifBlock.Evaluate().IsTrue)
+                        {
                            innerComprehension.Evaluate(newArray);
+                        }
                      }
+                  }
                }
                else
                {
                   if (innerComprehension == null)
+                  {
                      foreach (var item in getArray())
                      {
                         assistant.SetParameterValues(item);
                         var value = block.Evaluate();
                         if (value.Type != ValueType.Nil)
+                        {
                            newArray.Add(value);
+                        }
                      }
+                  }
                   else
+                  {
                      foreach (var item in getArray())
                      {
                         assistant.SetParameterValues(item);
                         innerComprehension.Evaluate(newArray);
                      }
+                  }
                }
 
                newArray = sortArrayIf(newArray, assistant.Arguments.Parameters);
@@ -235,41 +264,57 @@ namespace Orange.Library.Values
             if (ifBlock != null)
             {
                if (innerComprehension == null)
+               {
                   foreach (var item in getArray())
                   {
                      assistant.SetParameterValues(item);
 
                      if (!ifBlock.Evaluate().IsTrue)
+                     {
                         continue;
+                     }
 
                      var value = block.Evaluate();
                      if (value.Type != ValueType.Nil)
+                     {
                         newArray.Add(value);
+                     }
                   }
+               }
                else
+               {
                   foreach (var item in getArray())
                   {
                      assistant.SetParameterValues(item);
                      if (ifBlock.Evaluate().IsTrue)
+                     {
                         innerComprehension.Evaluate(newArray);
+                     }
                   }
+               }
             }
             else
             {
                if (innerComprehension == null)
+               {
                   foreach (var item in getArray())
                   {
                      assistant.SetParameterValues(item);
                      var value = block.Evaluate();
                      if (value.Type != ValueType.Nil)
+                     {
                         newArray.Add(value);
+                     }
                   }
+               }
                else
+               {
                   foreach (var item in getArray())
                   {
                      assistant.SetParameterValues(item);
                      innerComprehension.Evaluate(newArray);
                   }
+               }
             }
 
             newArray = sortArrayIf(newArray, assistant.Arguments.Parameters);
@@ -285,7 +330,9 @@ namespace Orange.Library.Values
       public void PushDownInnerComprehension(Comprehension comprehension)
       {
          if (innerComprehension != null)
+         {
             innerComprehension.PushDownInnerComprehension(comprehension);
+         }
          else
          {
             innerComprehension = comprehension;

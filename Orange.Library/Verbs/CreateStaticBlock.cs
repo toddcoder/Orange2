@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -29,6 +29,7 @@ namespace Orange.Library.Verbs
             var newClass = new Class(new Parameters(), new Block(), null, "", new string[0], new Parameters(), false);
             Create(className, newClass);
          }
+
          Assert(Regions.VariableExists(className), LOCATION, $"Class {className} doesn't exist");
          var value = Regions[className];
          Assert(value.Type == ValueType.Class, LOCATION, $"{className} isn't a class");

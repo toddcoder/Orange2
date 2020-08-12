@@ -30,10 +30,16 @@ namespace Orange.Library.Patterns
 		{
 			var result = new StringBuilder();
 			if (Not)
-				result.Append("!");
-			if (count > 1)
-				result.Append(count);
-			result.Append("(");
+         {
+            result.Append("!");
+         }
+
+         if (count > 1)
+         {
+            result.Append(count);
+         }
+
+         result.Append("(");
 			result.Append(Expand(block.Evaluate().Text));
 			result.Append(")");
 			return result.ToString();

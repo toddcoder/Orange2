@@ -1,7 +1,7 @@
 ﻿using System;
 using Orange.Library.Managers;
-using Standard.Types.Strings;
 using System.IO;
+using Core.Strings;
 
 namespace Orange.Library.Values
 {
@@ -19,17 +19,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      }
+      public override string Text { get; set; }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.FLines;
 
@@ -41,8 +33,7 @@ namespace Orange.Library.Values
       {
          manager.RegisterMessage(this, "for", v => ((FileLines)v).For());
          manager.RegisterMessage(this, "if", v => ((FileLines)v).If());
-         manager.RegisterProperty(this, "filter", v => ((FileLines)v).GetFilter(),
-            v => ((FileLines)v).SetFilter());
+         manager.RegisterProperty(this, "filter", v => ((FileLines)v).GetFilter(), v => ((FileLines)v).SetFilter());
       }
 
       public Value If()
@@ -61,22 +52,31 @@ namespace Orange.Library.Values
                assistant.LoopParameters();
                Func<string, bool> func = l => true;
                if (filter.IsNotEmpty())
+               {
                   func = l => l.IndexOf(filter, StringComparison.Ordinal) > -1;
+               }
                else if (lambda != null)
+               {
                   func = l => lambda.Evaluate(new Arguments(l)).IsTrue;
+               }
+
                using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
                using (var reader = new StreamReader(stream))
                {
                   string line;
                   var index = 0;
                   while ((line = reader.ReadLine()) != null)
+                  {
                      if (func(line))
                      {
                         assistant.SetLoopParameters(line, index++);
                         block.Evaluate();
                         var signal = ParameterAssistant.Signal();
                         if (signal == ParameterAssistant.SignalType.Breaking)
+                        {
                            break;
+                        }
+
                         switch (signal)
                         {
                            case ParameterAssistant.SignalType.Continuing:
@@ -85,9 +85,12 @@ namespace Orange.Library.Values
                               return null;
                         }
                      }
+                  }
                }
+
                return null;
             }
+
             return null;
          }
       }

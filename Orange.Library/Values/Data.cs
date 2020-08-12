@@ -1,8 +1,8 @@
-﻿using Orange.Library.Managers;
+﻿using Core.Arrays;
+using Core.Collections;
+using Core.Enumerables;
+using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Arrays;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
 
 namespace Orange.Library.Values
 {
@@ -21,7 +21,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return $"type {name} = {constructors.KeyArray().Listify(" | ")}"; }
+         get { return $"type {name} = {constructors.KeyArray().Stringify(" | ")}"; }
          set { }
       }
 

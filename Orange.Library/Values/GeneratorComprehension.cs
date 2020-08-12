@@ -19,8 +19,10 @@ namespace Orange.Library.Values
 				RegionManager.Regions.Current.CopyAllVariablesTo(this.region);
 			}
 			else
-				this.region = region;
-		}
+         {
+            this.region = region;
+         }
+      }
 
 		public GeneratorComprehension(GeneratorComprehension comprehension)
 		{
@@ -28,8 +30,10 @@ namespace Orange.Library.Values
 			generator = comprehension.generator;
 			region = comprehension.region;
 			if (comprehension.innerComprehension != null)
-				innerComprehension = comprehension.innerComprehension;
-		}
+         {
+            innerComprehension = comprehension.innerComprehension;
+         }
+      }
 
 		public Generator Generator
 		{
@@ -102,31 +106,44 @@ namespace Orange.Library.Values
 			{
 				popper.Push();
 				if (generator == null)
-					return new Nil();
-				if (ifBlock != null)
+            {
+               return new Nil();
+            }
+
+            if (ifBlock != null)
 				{
 					if (innerComprehension == null)
 					{
 						var value = generator.Next();
 						if (value.IsNil)
-							return value;
-						region.SetParameter(generator.ParameterName, value);
+                  {
+                     return value;
+                  }
+
+                  region.SetParameter(generator.ParameterName, value);
 						if (ifBlock.Evaluate().IsTrue)
 						{
 							value = block.Evaluate();
 							if (!value.IsNil)
-								return value;
-						}
+                     {
+                        return value;
+                     }
+                  }
 					}
 					else
 					{
 						var value = generator.Next();
 						if (value.IsNil)
-							return value;
-						region.SetParameter(generator.ParameterName, value);
+                  {
+                     return value;
+                  }
+
+                  region.SetParameter(generator.ParameterName, value);
 						if (ifBlock.Evaluate().IsTrue)
-							return innerComprehension.Next(index);
-					}
+                  {
+                     return innerComprehension.Next(index);
+                  }
+               }
 				}
 				else
 				{
@@ -134,8 +151,11 @@ namespace Orange.Library.Values
 					{
 						var value = generator.Next();
 						if (value.IsNil)
-							return value;
-						region.SetParameter(generator.ParameterName, value);
+                  {
+                     return value;
+                  }
+
+                  region.SetParameter(generator.ParameterName, value);
 						value = block.Evaluate();
 						return value;
 					}
@@ -143,8 +163,11 @@ namespace Orange.Library.Values
 					{
 						var value = generator.Next();
 						if (value.IsNil)
-							return value;
-						region.SetParameter(generator.ParameterName, value);
+                  {
+                     return value;
+                  }
+
+                  region.SetParameter(generator.ParameterName, value);
 						return innerComprehension.Next(index);
 					}
 				}
@@ -159,8 +182,10 @@ namespace Orange.Library.Values
 		void pushDownInnerComprehension(GeneratorComprehension comprehension)
 		{
 			if (innerComprehension != null)
-				innerComprehension.pushDownInnerComprehension(comprehension);
-			else
+         {
+            innerComprehension.pushDownInnerComprehension(comprehension);
+         }
+         else
 			{
 				innerComprehension = comprehension;
 				innerComprehension.block = block;
@@ -188,10 +213,14 @@ namespace Orange.Library.Values
 		void setIf(Block block)
 		{
 			if (innerComprehension == null)
-				ifBlock = block;
-			else
-				innerComprehension.setIf(block);
-		}
+         {
+            ifBlock = block;
+         }
+         else
+         {
+            innerComprehension.setIf(block);
+         }
+      }
 
 		public Value Reset()
 		{
@@ -216,8 +245,11 @@ namespace Orange.Library.Values
 				{
 					var value = Next(i);
 					if (value.IsNil)
-						break;
-					array.Add(value);
+               {
+                  break;
+               }
+
+               array.Add(value);
 				}
 				return array;
 			}

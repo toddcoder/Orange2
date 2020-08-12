@@ -39,7 +39,10 @@ namespace Orange.Library.Values
          this.stop = stop;
          this.increment = increment;
          if (this.start > this.stop)
+         {
             this.increment = -Math.Abs(this.increment);
+         }
+
          lastIndex = -1;
       }
 

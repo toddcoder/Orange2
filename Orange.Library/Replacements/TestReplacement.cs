@@ -1,8 +1,8 @@
-﻿using Standard.Types.Maybe;
-using Standard.Types.Strings;
+﻿using Core.Monads;
+using Core.Strings;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Replacements
 {

@@ -44,7 +44,9 @@ namespace Orange.Library.Values
 
          var block = Arguments.Executable;
          if (!block.CanExecute)
+         {
             return this;
+         }
 
          RegionManager.Regions.Push("farray-for");
 
@@ -67,7 +69,9 @@ namespace Orange.Library.Values
 
          var block = Arguments.Executable;
          if (!block.CanExecute)
+         {
             return null;
+         }
 
          RegionManager.Regions.Push("farray-select");
 
@@ -79,7 +83,9 @@ namespace Orange.Library.Values
             RegionManager.Regions.SetLocal(indexVar, i);
             var result = block.Evaluate();
             if (result != null)
+            {
                newArray.Add(result.AssignmentValue().Text);
+            }
          }
 
          RegionManager.Regions.Pop("farray-select");
@@ -100,7 +106,9 @@ namespace Orange.Library.Values
                RegionManager.Regions.SetLocal(valueVar, values[i]);
                RegionManager.Regions.SetLocal(indexVar, i);
                if (block.Evaluate().IsTrue)
+               {
                   result.Add(values[i]);
+               }
             }
             return new FArray(result.ToArray());
          }

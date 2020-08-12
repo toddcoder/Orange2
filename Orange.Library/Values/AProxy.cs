@@ -16,7 +16,9 @@ namespace Orange.Library.Values
 
          foreach (var item in sourceObject.Region.Variables
             .Where(item => item.Value.Type != ValueType.InvokableReference && item.Key != "super"))
+         {
             targetObject.Region[item.Key] = item.Value;
+         }
       }
 
       public override int Compare(Value value) => 0;

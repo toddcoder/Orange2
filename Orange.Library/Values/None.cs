@@ -50,13 +50,18 @@ namespace Orange.Library.Values
       {
          var value = Arguments[0];
          if (!value.IsEmpty)
+         {
             return value;
+         }
 
          using (var assistant = new ParameterAssistant(Arguments))
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return NullValue;
+            }
+
             return block.Evaluate();
          }
       }

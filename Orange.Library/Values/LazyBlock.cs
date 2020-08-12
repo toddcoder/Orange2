@@ -17,7 +17,10 @@ namespace Orange.Library.Values
       Value getValue()
       {
          if (value.IsNil)
+         {
             value = block.Evaluate();
+         }
+
          return value;
       }
 

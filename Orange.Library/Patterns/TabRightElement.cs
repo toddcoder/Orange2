@@ -16,9 +16,11 @@
 			var inputLength = input.Length;
 			position = inputLength - position;
 			if (position == -1 || position >= inputLength)
-				return false;
+         {
+            return false;
+         }
 
-			index = Runtime.State.Position;
+         index = Runtime.State.Position;
 			length = position - index;
 			return length >= 0;
 		}

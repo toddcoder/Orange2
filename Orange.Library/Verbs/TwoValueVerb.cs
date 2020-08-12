@@ -15,15 +15,26 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var y = stack.Pop(true, Location);
          if (y is Block yBlock && yBlock.Expression)
+         {
             y = yBlock.Evaluate();
+         }
+
          var x = stack.Pop(true, Location);
          if (x is Block xBlock && xBlock.Expression)
+         {
             x = xBlock.Evaluate();
+         }
+
          var result = Exception(x, y);
          if (result != null)
+         {
             return result;
+         }
+
          if (!(x is Object) && (x.IsArray || y.IsArray) && UseArrayVersion)
+         {
             return evaluateArray(x, y);
+         }
 
          return evaluate(x, y);
       }
@@ -32,15 +43,22 @@ namespace Orange.Library.Verbs
 
       Value evaluate(Value x, Value y)
       {
-         if (y.Type == Value.ValueType.Complex && x.Type != Value.ValueType.Complex)
-            x = new Complex(x.Number);
-         if (y.Type == Value.ValueType.Big && x.Type != Value.ValueType.Big)
-            x = new Big(x.Number);
+         switch (y.Type)
+         {
+            case Value.ValueType.Complex when x.Type != Value.ValueType.Complex:
+               x = new Complex(x.Number);
+               break;
+            case Value.ValueType.Big when x.Type != Value.ValueType.Big:
+               x = new Big(x.Number);
+               break;
+         }
+
          if (x.Type == Value.ValueType.Case && y.Type != Value.ValueType.Case)
          {
             var _case = (Case)x;
             y = new Case(_case.Value, y, false, _case.Required, _case.Condition);
          }
+
          switch (x.Type)
          {
             case Value.ValueType.Date:
@@ -59,7 +77,9 @@ namespace Orange.Library.Verbs
       Value evaluateArray(Value x, Value y)
       {
          if (y is KeyedValue)
+         {
             return SendMessage(x, Message, y);
+         }
 
          Array yArray;
          var list = new List<Value>();

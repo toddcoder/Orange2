@@ -55,7 +55,9 @@ namespace Orange.Library.Values
       public Value Record()
       {
          if (closed)
+         {
             return new Nil();
+         }
 
          var line = reader.ReadLine();
          return line ?? (Value)new Nil();
@@ -64,13 +66,18 @@ namespace Orange.Library.Values
       public Value Field()
       {
          if (closed)
+         {
             return new Nil();
+         }
 
          if (readLine == null || readIndex >= readLine.Length)
          {
             var line = reader.ReadLine();
             if (line == null)
+            {
                return new Nil();
+            }
+
             readLine = Runtime.State.FieldPattern.Split(line);
             readIndex = -1;
          }

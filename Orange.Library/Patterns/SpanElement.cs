@@ -28,10 +28,16 @@ namespace Orange.Library.Patterns
 		{
 			var comparison = SetUpSearchText(text, State.IgnoreCase, ref needle);
 			if (State.IgnoreCase)
-				needle = needle.ToLower();
-			if (needleChars == null)
-				needleChars = needle.ToCharArray();
-			index = State.Position;
+         {
+            needle = needle.ToLower();
+         }
+
+         if (needleChars == null)
+         {
+            needleChars = needle.ToCharArray();
+         }
+
+         index = State.Position;
 			return Find(input, comparison, index, needle, Not, ref index, ref length);
 		}
 

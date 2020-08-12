@@ -13,8 +13,11 @@ namespace Orange.Library.Verbs
 		{
 			var value = State.Stack.Pop(true, LOCATION);
 			if (value.Type == ValueType.Object)
-				return SendMessage(value, "neg");
-			return -value.Number;
+         {
+            return SendMessage(value, "neg");
+         }
+
+         return -value.Number;
 		}
 
 		public override VerbPrecedenceType Precedence => VerbPrecedenceType.ChangeSign;

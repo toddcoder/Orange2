@@ -81,11 +81,10 @@ namespace Orange.Library.Verbs
             {
                case Push push:
                {
-                  var parameterName = push.Variable();
-                  if (parameterName.IsSome && parameters.GetParameters()
-                     .Any(p => p.Name == parameterName.Value || p.PlaceholderName == parameterName.Value))
+                  if (push.Variable().If(out var parameterName) && parameters.GetParameters()
+                     .Any(p => p.Name == parameterName || p.PlaceholderName == parameterName))
                   {
-                     var value = Regions[parameterName.Value];
+                     var value = Regions[parameterName];
                      verbs[i] = new Push(value);
                      continue;
                   }
@@ -137,8 +136,7 @@ namespace Orange.Library.Verbs
          {
             if (verbs[i] is Push push)
             {
-               var variableName = push.Variable();
-               if (variableName.IsSome && variableName.Value == name)
+               if (push.Variable().If(out var variable) && variable == name)
                {
                   verbs[i] = valuePush;
                   continue;

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.StatementParser;
@@ -9,10 +9,7 @@ namespace Orange.Library.Parsers
 {
    public class StaticParser : Parser
    {
-      const string LOCATION = "Static parser";
-
-      public StaticParser()
-         : base($"^ /(|tabs| 'meta' /b) /(' '+ {REGEX_VARIABLE})?") { }
+      public StaticParser() : base($"^ /(|tabs| 'meta' /b) /(' '+ {REGEX_VARIABLE})?") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -23,7 +20,10 @@ namespace Orange.Library.Parsers
          {
             overridePosition = index;
             if (className == "")
+            {
                className = CompilerState.LastClassName;
+            }
+
             return new CreateStaticBlock(className, block);
          }
 

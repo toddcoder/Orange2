@@ -43,7 +43,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.IteratorParameter();
             assistant.SetIteratorParameter(cargo);
@@ -51,13 +53,19 @@ namespace Orange.Library.Values
 
             var signal = Signal();
             if (signal != SignalType.None)
+            {
                return this;
+            }
 
             if (result.IsNil)
+            {
                return this;
+            }
 
             if (result is Some)
+            {
                return result;
+            }
 
             return new Some(result);
          }
@@ -69,7 +77,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.IteratorParameter();
             assistant.SetIteratorParameter(cargo);

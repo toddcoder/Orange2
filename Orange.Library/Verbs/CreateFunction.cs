@@ -14,21 +14,21 @@ namespace Orange.Library.Verbs
       Lambda lambda;
       bool multiCapable;
       VisibilityType visibility;
-      bool _override;
+      bool overriding;
       Block condition;
       bool autoInvoke;
       bool memoize;
       bool global;
       string result;
 
-      public CreateFunction(string functionName, Lambda lambda, bool multiCapable, VisibilityType visibility,
-         bool _override, Block condition, bool autoInvoke = false, bool memoize = false, bool global = false)
+      public CreateFunction(string functionName, Lambda lambda, bool multiCapable, VisibilityType visibility, bool overriding, Block condition,
+         bool autoInvoke = false, bool memoize = false, bool global = false)
       {
          this.functionName = functionName;
          this.lambda = lambda;
          this.multiCapable = multiCapable;
          this.visibility = visibility;
-         this._override = _override;
+         this.overriding = overriding;
          this.condition = condition;
          this.autoInvoke = autoInvoke;
          this.memoize = memoize;
@@ -36,8 +36,7 @@ namespace Orange.Library.Verbs
          result = "";
       }
 
-      public CreateFunction()
-         : this("", null, false, Public, false, null) { }
+      public CreateFunction() : this("", null, false, Public, false, null) { }
 
       public override Value Evaluate()
       {
@@ -50,14 +49,14 @@ namespace Orange.Library.Verbs
             {
                var value = Regions[functionName];
 
-               //isAReference = value.As<InvokeableReference>().Assign(out reference);
-               if (value is InvokableReference invokeableReference)
+               if (value is InvokableReference invokableReference)
                {
                   isAReference = true;
-                  var invokeable = invokeableReference.Invokable;
-                  RejectNull(invokeable, "Create function", "Not an invokeable");
-                  value = (Value)invokeable;
+                  var invokable = invokableReference.Invokable;
+                  RejectNull(invokable, "Create function", "Not an invokable");
+                  value = (Value)invokable;
                }
+
                if (!(value is MultiLambda multi))
                {
                   var lambdaItem = (Lambda)value;
@@ -70,28 +69,42 @@ namespace Orange.Library.Verbs
             else
             {
                multiLambda = lambda.Expand ? new ExpansibleLambda(functionName, memoize) : new MultiLambda(functionName, memoize);
-               Regions.CreateVariable(functionName, global, visibility, _override);
+               Regions.CreateVariable(functionName, global, visibility, overriding);
             }
+
             if (multiLambda is null)
+            {
                return null;
+            }
 
             var item = new MultiLambdaItem(lambda, false, condition);
             multiLambda.Add(item);
             if (isAReference)
+            {
                reference.Invokable = multiLambda;
+            }
             else
+            {
                Regions[functionName] = multiLambda;
+            }
+
             if (lambda.Where != null)
+            {
                multiLambda.Where = lambda.Where;
+            }
+
             MarkAsXMethod(functionName, lambda);
             lambda.Message = functionName;
             result = representation();
             return null;
          }
 
-         if (_override)
+         if (overriding)
+         {
             Regions.UnsetReadOnly(functionName);
-         Regions.CreateVariable(functionName, global, visibility, _override);
+         }
+
+         Regions.CreateVariable(functionName, global, visibility, overriding);
          var assignedValue = autoInvoke ? (Value)new AutoInvoker(lambda) : lambda;
          Regions[functionName] = assignedValue;
          Regions.SetReadOnly(functionName);
@@ -122,6 +135,6 @@ namespace Orange.Library.Verbs
 
       public int Index { get; set; }
 
-      public bool Override => _override;
+      public bool Overriding => overriding;
    }
 }

@@ -3,21 +3,21 @@ using Orange.Library.Values;
 
 namespace Orange.Library.Verbs
 {
-	public class ConvertToArray : Verb
-	{
-		public override Value Evaluate()
-		{
-			var value = Runtime.State.Stack.Pop(true, "Convert to array");
-			if (value.Type == Value.ValueType.Sequence)
-				return Runtime.SendMessage(value, "arr");
-			return value.IsArray ? Runtime.SendMessage(value, "flat") : new Array
-			{
-				value
-			};
-		}
+   public class ConvertToArray : Verb
+   {
+      public override Value Evaluate()
+      {
+         var value = Runtime.State.Stack.Pop(true, "Convert to array");
+         if (value.Type == Value.ValueType.Sequence)
+         {
+            return Runtime.SendMessage(value, "arr");
+         }
 
-		public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
+         return value.IsArray ? Runtime.SendMessage(value, "flat") : new Array { value };
+      }
 
-	   public override string ToString() => "@";
-	}
+      public override ExpressionManager.VerbPrecedenceType Precedence => ExpressionManager.VerbPrecedenceType.Apply;
+
+      public override string ToString() => "@";
+   }
 }

@@ -15,9 +15,13 @@ namespace Orange.Library.Values
       public Rational(Value value)
       {
          if (value is Rational rational)
+         {
             setValues(rational.numerator, rational.numerator);
+         }
          else
+         {
             setValues((int)value.Number, 1);
+         }
       }
 
       void setValues(int anNumerator, int aDenominator)

@@ -7,127 +7,111 @@ using Array = Orange.Library.Values.Array;
 
 namespace Orange.Library
 {
-	public class ParallelZip : Value, ISequenceSource
-	{
-		const string LOCATION = "Parallel zip";
+   public class ParallelZip : Value, ISequenceSource
+   {
+      const string LOCATION = "Parallel zip";
 
-		Array arrayOfArrays;
-		int index;
-		int maxLength;
+      Array arrayOfArrays;
+      int index;
+      int maxLength;
 
-		public ParallelZip(Array arrayOfArrays)
-		{
-			this.arrayOfArrays = arrayOfArrays;
-			index = -1;
-			maxLength = -1;
-			foreach (var value in this.arrayOfArrays.Select(item => item.Value))
-			{
-				Assert(value.IsArray, LOCATION, $"Item {value} in array of arrays not an array");
-				var array = (Array)value.SourceArray;
-				maxLength = Max(maxLength, array.Length);
-			}
-		}
+      public ParallelZip(Array arrayOfArrays)
+      {
+         this.arrayOfArrays = arrayOfArrays;
+         index = -1;
+         maxLength = -1;
+         foreach (var value in this.arrayOfArrays.Select(item => item.Value))
+         {
+            Assert(value.IsArray, LOCATION, $"Item {value} in array of arrays not an array");
+            var array = (Array)value.SourceArray;
+            maxLength = Max(maxLength, array.Length);
+         }
+      }
 
-		public Value Next()
-		{
-			if (++index >= maxLength)
-				return new Nil();
-			var newArray = new Array();
-			foreach (var array in arrayOfArrays.Select(item => (Array)item.Value))
-				newArray.Add(array[index]);
-			return newArray;
-		}
+      public Value Next()
+      {
+         if (++index >= maxLength)
+         {
+            return new Nil();
+         }
 
-		public ISequenceSource Copy() => new ParallelZip((Array)arrayOfArrays.Clone());
+         var newArray = new Array();
+         foreach (var array in arrayOfArrays.Select(item => (Array)item.Value))
+         {
+            newArray.Add(array[index]);
+         }
 
-	   public Value Reset()
-		{
-			index = -1;
-			return this;
-		}
+         return newArray;
+      }
 
-		public int Limit => MAX_ARRAY;
+      public ISequenceSource Copy() => new ParallelZip((Array)arrayOfArrays.Clone());
 
-	   public Array Array => Array.ArrayFromSequence(this);
+      public Value Reset()
+      {
+         index = -1;
+         return this;
+      }
 
-	   public override int Compare(Value value) => 0;
+      public int Limit => MAX_ARRAY;
 
-	   public override string Text
-		{
-			get
-			{
-				return "";
-			}
-			set
-			{
-			}
-		}
+      public Array Array => Array.ArrayFromSequence(this);
 
-		public override double Number
-		{
-			get
-			{
-				return 0;
-			}
-			set
-			{
-			}
-		}
+      public override int Compare(Value value) => 0;
 
-		public override ValueType Type => ValueType.ParallelZip;
+      public override string Text
+      {
+         get => "";
+         set { }
+      }
 
-	   public override bool IsTrue => arrayOfArrays.Length > 0;
+      public override double Number
+      {
+         get => 0;
+         set { }
+      }
 
-	   public override Value Clone() => (Value)Copy();
+      public override ValueType Type => ValueType.ParallelZip;
 
-	   protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "map", v => ((ParallelZip)v).Map());
-			manager.RegisterMessage(this, "if", v => ((ParallelZip)v).If());
-			manager.RegisterMessage(this, "unless", v => ((ParallelZip)v).Unless());
-			manager.RegisterMessage(this, "take", v => ((ParallelZip)v).Take());
-			manager.RegisterMessage(this, "next", v => ((ParallelZip)v).Next());
-			manager.RegisterMessage(this, "reset", v => ((ParallelZip)v).Reset());
-		}
+      public override bool IsTrue => arrayOfArrays.Length > 0;
 
-		public Value Map()
-		{
-			var sequence = new Sequence(this)
-			{
-				Arguments = Arguments.Clone()
-			};
-			return sequence.Map();
-		}
+      public override Value Clone() => (Value)Copy();
 
-		public Value If()
-		{
-			var sequence = new Sequence(this)
-			{
-				Arguments = Arguments.Clone()
-			};
-			return sequence.If();
-		}
+      protected override void registerMessages(MessageManager manager)
+      {
+         manager.RegisterMessage(this, "map", v => ((ParallelZip)v).Map());
+         manager.RegisterMessage(this, "if", v => ((ParallelZip)v).If());
+         manager.RegisterMessage(this, "unless", v => ((ParallelZip)v).Unless());
+         manager.RegisterMessage(this, "take", v => ((ParallelZip)v).Take());
+         manager.RegisterMessage(this, "next", v => ((ParallelZip)v).Next());
+         manager.RegisterMessage(this, "reset", v => ((ParallelZip)v).Reset());
+      }
 
-		public Value Unless()
-		{
-			var sequence = new Sequence(this)
-			{
-				Arguments = Arguments.Clone()
-			};
-			return sequence.Unless();
-		}
+      public Value Map()
+      {
+         var sequence = new Sequence(this) { Arguments = Arguments.Clone() };
+         return sequence.Map();
+      }
 
-		public Value Take()
-		{
-			var sequence = new Sequence(this)
-			{
-				Arguments = Arguments.Clone()
-			};
-			return sequence.Take();
-		}
+      public Value If()
+      {
+         var sequence = new Sequence(this) { Arguments = Arguments.Clone() };
+         return sequence.If();
+      }
 
-		public override string ToString() => "parallel zip";
+      public Value Unless()
+      {
+         var sequence = new Sequence(this) { Arguments = Arguments.Clone() };
+         return sequence.Unless();
+      }
 
-	   public override Value AlternateValue(string message) => Array;
-	}
+      public Value Take()
+      {
+         var sequence = new Sequence(this) { Arguments = Arguments.Clone() };
+         return sequence.Take();
+      }
+
+      public override string ToString() => "parallel zip";
+
+      public override Value AlternateValue(string message) => Array;
+   }
 }

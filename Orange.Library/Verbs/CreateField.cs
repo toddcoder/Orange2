@@ -35,9 +35,13 @@ namespace Orange.Library.Verbs
          var current = Regions.Current;
          Reject(current.Exists(fieldName), "Create field", $"{fieldName} already exists");
          if (readOnly)
+         {
             current.CreateReadOnlyVariable(fieldName, visibility: visibility);
+         }
          else
+         {
             current.CreateVariable(fieldName, visibility: visibility);
+         }
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;

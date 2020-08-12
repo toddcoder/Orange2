@@ -16,14 +16,18 @@ namespace Orange.Library.Verbs
             return messageArguments.SendMessage(value);
          }
 
-         if (value is IInvokable invokeable)
-            return invokeable.Invoke(arguments);
-
-         if (value is InvokableReference reference)
-            return reference.Invoke(arguments);
-
-         var result = SendMessage(value, "invoke", arguments);
-         return result;
+         switch (value)
+         {
+            case IInvokable invokable:
+               return invokable.Invoke(arguments);
+            case InvokableReference reference:
+               return reference.Invoke(arguments);
+            default:
+            {
+               var result = SendMessage(value, "invoke", arguments);
+               return result;
+            }
+         }
       }
 
       Arguments arguments;

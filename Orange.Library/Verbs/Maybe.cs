@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
@@ -9,18 +9,18 @@ namespace Orange.Library.Verbs
       string fieldName;
       Block expression;
       Block ifTrue;
-      IMaybe<Block> ifFalse;
-      IMaybe<Block> guardBlock;
+      IMaybe<Block> anyIfFalse;
+      IMaybe<Block> anyGuardBlock;
       string result;
       string typeName;
 
-      public Maybe(string fieldName, Block expression, Block ifTrue, IMaybe<Block> ifFalse, IMaybe<Block> guardBlock)
+      public Maybe(string fieldName, Block expression, Block ifTrue, IMaybe<Block> anyIfFalse, IMaybe<Block> anyGuardBlock)
       {
          this.fieldName = fieldName;
          this.expression = expression;
          this.ifTrue = ifTrue;
-         this.ifFalse = ifFalse;
-         this.guardBlock = guardBlock;
+         this.anyIfFalse = anyIfFalse;
+         this.anyGuardBlock = anyGuardBlock;
          result = "";
          typeName = "";
       }
@@ -29,49 +29,39 @@ namespace Orange.Library.Verbs
       {
          var evaluated = expression.Evaluate();
          Value returned;
-         if (evaluated is None)
+         switch (evaluated)
          {
-            if (guardBlock.IsSome)
-            {
+            case None _ when anyGuardBlock.HasValue:
                returned = ifTrue.Evaluate();
                result = ifTrue.ToString();
                typeName = returned.Type.ToString();
-               return returned;
-            }
 
-            if (ifFalse.IsSome)
-            {
-               returned = ifFalse.Value.Evaluate();
-               result = ifFalse.ToString();
+               return returned;
+            case None _ when anyIfFalse.If(out var ifFalse):
+               returned = ifFalse.Evaluate();
+               result = anyIfFalse.ToString();
                typeName = returned.Type.ToString();
+
                return returned;
-            }
-
-            return null;
-         }
-
-         //var maybe = evaluated.As<Some>();
-         if (evaluated is Some)
-         {
-            if (ifFalse.IsSome)
-            {
-               returned = ifFalse.Value.Evaluate();
+            case None _:
+               return null;
+            case Some _ when anyIfFalse.If(out var ifFalse):
+               returned = ifFalse.Evaluate();
                result = returned.ToString();
                typeName = returned.Type.ToString();
-               return returned;
-            }
 
-            return null;
+               return returned;
+            case Some _:
+               return null;
          }
 
-         //var value = maybe.Value();
-         if (guardBlock.IsSome)
+         if (anyGuardBlock.If(out var guardBlock))
          {
-            //Regions.Current.SetParameter(fieldName, value);
-            if (guardBlock.Value.IsTrue)
+            if (guardBlock.IsTrue)
             {
-               result = guardBlock.Value.ToString();
-               typeName = guardBlock.Value.Type.ToString();
+               result = guardBlock.ToString();
+               typeName = guardBlock.Type.ToString();
+
                return null;
             }
 
@@ -84,17 +74,17 @@ namespace Orange.Library.Verbs
          using (var popper = new RegionPopper(new Region(), "maybe"))
          {
             popper.Push();
-            //Regions.Current.SetParameter(fieldName, value);
             returned = ifTrue.Evaluate();
             result = ifTrue.ToString();
             typeName = returned.Type.ToString();
          }
+
          return returned;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString() => $"maybe {fieldName} = {expression} ({ifTrue}){ifFalse.FlatMap(f => $" ({f})", () => "")}";
+      public override string ToString() => $"maybe {fieldName} = {expression} ({ifTrue}){anyIfFalse.Map(f => $" ({f})").DefaultTo(() => "")}";
 
       public string Result => result;
 

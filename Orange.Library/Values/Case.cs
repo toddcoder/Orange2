@@ -1,8 +1,8 @@
 ﻿using System;
+using Core.Collections;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 
@@ -31,13 +31,13 @@ namespace Orange.Library.Values
          this.condition = condition;
       }
 
-      public Case(Case _case, Value comparisand, bool required, Block condition)
+      public Case(Case @case, Value comparisand, bool required, Block condition)
       {
-         value = _case.value;
+         value = @case.value;
          this.comparisand = comparisand;
-         matched = _case.matched;
-         result = _case.result;
-         mapped = _case.mapped;
+         matched = @case.matched;
+         result = @case.result;
+         mapped = @case.mapped;
          this.required = required;
          this.condition = condition;
       }
@@ -62,7 +62,10 @@ namespace Orange.Library.Values
       {
          var newCase = new Case(value.Clone(), comparisand.Clone(), matched, required, (Block)condition.Clone());
          if (If != null)
+         {
             newCase.If = (Block)If.Clone();
+         }
+
          return newCase;
       }
 
@@ -75,9 +78,15 @@ namespace Orange.Library.Values
       static bool returnMatched(bool result, bool required, Block condition)
       {
          if (result && condition != null && !condition.Evaluate().IsTrue)
+         {
             result = false;
+         }
+
          if (required)
+         {
             Assert(result, LOCATION, "Requirement failed");
+         }
+
          return result;
       }
 
@@ -85,11 +94,13 @@ namespace Orange.Library.Values
          string bindingName = "", bool assigning = false)
       {
          if (usePopper)
+         {
             using (var popper = new RegionPopper(region, "case match"))
             {
                popper.Push();
                return Match(left, right, required, condition, bindingName, assigning);
             }
+         }
 
          return Match(left, right, required, condition, bindingName, assigning);
       }
@@ -97,44 +108,59 @@ namespace Orange.Library.Values
       public static bool Match(Value left, Value right, bool required, Block condition, string bindingName = "", bool assigning = false)
       {
          if (left is IMatch matching)
-            return returnMatched(matching.Match(right), required, condition);
-
-         if (right is BoundValue boundValue)
          {
-            var fieldName = boundValue.Name;
-            var realResult = Match(left, boundValue.InnerValue, required, condition, fieldName);
-            if (realResult && !(boundValue.InnerValue is Class))
-               Regions.SetBinding(fieldName, left, assigning);
-            return realResult;
+            return returnMatched(matching.Match(right), required, condition);
          }
 
-         if (right is Block block)
-            right = block.Evaluate();
+         switch (right)
+         {
+            case BoundValue boundValue:
+            {
+               var fieldName = boundValue.Name;
+               var realResult = Match(left, boundValue.InnerValue, required, condition, fieldName);
+               if (realResult && !(boundValue.InnerValue is Class))
+               {
+                  Regions.SetBinding(fieldName, left, assigning);
+               }
+
+               return realResult;
+            }
+            case Block block:
+               right = block.Evaluate();
+               break;
+         }
 
          if (left is Some leftSome)
          {
-            (var someMatched, var cargoName, var cargo) = leftSome.Match(right);
+            var (someMatched, cargoName, cargo) = leftSome.Match(right);
             if (someMatched && cargoName != "_")
+            {
                Regions.SetBinding(cargoName, cargo, assigning);
+            }
+
             return returnMatched(someMatched, required, condition);
          }
 
          if (left.Type == ValueType.None && right.Type == ValueType.None)
-            return returnMatched(true, required, condition);
-
-         if (left is Failure leftFailure)
          {
-            (var someMatched, var messageName, var message) = leftFailure.Match(right);
-            if (someMatched && messageName != "_")
-               Regions.SetBinding(messageName, message, assigning);
-            return returnMatched(someMatched, required, condition);
+            return returnMatched(true, required, condition);
          }
 
-         if (left is List leftList)
+         switch (left)
          {
-            if (right is List rightList)
+            case Failure leftFailure:
+            {
+               var (someMatched, messageName, message) = leftFailure.Match(right);
+               if (someMatched && messageName != "_")
+               {
+                  Regions.SetBinding(messageName, message, assigning);
+               }
+
+               return returnMatched(someMatched, required, condition);
+            }
+            case List leftList when right is List rightList:
                return returnMatched(leftList.Match(rightList), required, condition);
-            if (right.IsNil)
+            case List _ when right.IsNil:
                return returnMatched(false, required, condition);
          }
 
@@ -144,7 +170,9 @@ namespace Orange.Library.Values
          {
             matched = matchToLeftObject(left, right, required, condition, out leftWasAnObject, bindingName, assigning);
             if (leftWasAnObject)
+            {
                return returnMatched(matched, required, condition);
+            }
          }
 
          if (right is Object rightObject)
@@ -154,21 +182,32 @@ namespace Orange.Library.Values
             {
                left = rightClass.StaticObject.SendToSelf("match", left);
                if (left?.IsNil ?? true)
+               {
                   return returnMatched(false, required, condition);
+               }
 
                matched = matchToLeftObject(left, right, required, condition, out leftWasAnObject, bindingName, assigning);
                if (leftWasAnObject)
+               {
                   return returnMatched(matched, required, condition);
+               }
             }
          }
 
          if (left is Record leftRecord && right is Record rightRecord)
+         {
             return returnMatched(leftRecord.Match(rightRecord, required), required, condition);
+         }
 
          if (right is AutoInvoker autoInvoker)
+         {
             right = autoInvoker.Resolve();
+         }
+
          if (left.IsNil || right.IsNil)
+         {
             return returnMatched(false, required, condition);
+         }
 
          if (right is Alternation alternation)
          {
@@ -177,19 +216,28 @@ namespace Orange.Library.Values
             {
                var value = alternation.Dequeue();
                if (value.IsNil)
+               {
                   return returnMatched(false, required, condition);
+               }
 
                var result = Match(left, value, required, condition);
                if (result)
+               {
                   return returnMatched(true, required, condition);
+               }
             }
          }
 
          if (left.ID == right.ID)
+         {
             return returnMatched(true, required, condition);
+         }
+
          if (left.Type == ValueType.String && right.Type == ValueType.String)
+         {
             return returnMatched(string.Compare(left.Text, right.Text, StringComparison.Ordinal) == 0, required,
                condition);
+         }
 
          switch (right.Type)
          {
@@ -209,7 +257,9 @@ namespace Orange.Library.Values
          {
             var rightArray = (Array)right.SourceArray;
             if (left is Generator generator)
+            {
                return returnMatched(generator.Match(rightArray, required, assigning), required, condition);
+            }
 
             if (left.IsArray)
             {
@@ -251,14 +301,16 @@ namespace Orange.Library.Values
                return returnMatched(set.Contains(left), required, condition);
          }
 
-         if (right is Unto unto)
-            return returnMatched(unto.CompareTo(left), required, condition);
-
-         if (right is Regex regex)
-            return returnMatched(regex.Match(left.Text).IsTrue, required, condition);
-
-         return returnMatched(right is Pattern pattern ? pattern.MatchAndBind(left.Text) : Runtime.Compare(left, right) == 0, required,
-            condition);
+         switch (right)
+         {
+            case Unto unto:
+               return returnMatched(unto.CompareTo(left), required, condition);
+            case Regex regex:
+               return returnMatched(regex.Match(left.Text).IsTrue, required, condition);
+            default:
+               return returnMatched(right is Pattern pattern ? pattern.MatchAndBind(left.Text) : Runtime.Compare(left, right) == 0, required,
+                  condition);
+         }
       }
 
       static bool matchToLeftObject(Value left, Value right, bool required, Block condition, out bool leftWasAnObject,
@@ -268,32 +320,32 @@ namespace Orange.Library.Values
          if (left is Object leftObject)
          {
             leftWasAnObject = true;
-            if (right is Object rightObject)
+            switch (right)
             {
-               if (leftObject.RespondsNoDefault("cmp") && rightObject.RespondsNoDefault("cmp"))
+               case Object rightObject when leftObject.RespondsNoDefault("cmp") && rightObject.RespondsNoDefault("cmp"):
                   return returnMatched(leftObject.SendToSelf("cmp", right) == 0, required, condition);
-
-               return MatchObjects(leftObject, rightObject, required, assigning);
-            }
-
-            if (right is Class rightClass)
-            {
-               if (rightClass.RespondsTo("match"))
+               case Object rightObject:
+                  return MatchObjects(leftObject, rightObject, required, assigning);
+               case Class rightClass when rightClass.RespondsTo("match"):
                {
                   var response = rightClass.StaticObject.SendToSelf("match", left);
                   if (response == null || response.IsNil || response.Type == ValueType.None || response.Type != ValueType.Some)
+                  {
                      return returnMatched(false, required, condition);
+                  }
 
                   if (bindingName.IsNotEmpty())
+                  {
                      Regions.SetBinding(bindingName, ((Some)response).Value(), assigning);
+                  }
+
                   return returnMatched(true, required, condition);
                }
-
-               return returnMatched(leftObject.Class.IsChildOf(rightClass), required, condition);
+               case Class rightClass:
+                  return returnMatched(leftObject.Class.IsChildOf(rightClass), required, condition);
+               case Trait trait:
+                  return returnMatched(leftObject.Class.ImplementsTrait(trait), required, condition);
             }
-
-            if (right is Trait trait)
-               return returnMatched(leftObject.Class.ImplementsTrait(trait), required, condition);
          }
 
          return false;
@@ -308,35 +360,45 @@ namespace Orange.Library.Values
             DefaultValue = ""
          };
          var repeating = false;
-         int comparison;
          while (true)
          {
-            comparison = obj1.Compare(obj2, chains, new MessagePath(), bindings, ref repeating);
+            var comparison = obj1.Compare(obj2, chains, new MessagePath(), bindings, ref repeating);
             if (comparison == 0)
             {
-               foreach (var item in chains)
-                  Regions.SetBinding(item.Key, item.Value.Invoke(obj1).Resolve(), assigning);
-               foreach (var item in bindings)
-                  Regions.SetBinding(item.Key, item.Value.Resolve(), assigning);
+               foreach (var (key, messagePath) in chains)
+               {
+                  Regions.SetBinding(key, messagePath.Invoke(obj1).Resolve(), assigning);
+               }
 
-               return returnMatched(comparison == 0, required, null);
+               foreach (var (key, binding) in bindings)
+               {
+                  Regions.SetBinding(key, binding.Resolve(), assigning);
+               }
+
+               return returnMatched(true, required, null);
             }
 
             if (!repeating)
+            {
                break;
+            }
          }
 
-         return comparison == 0;
+         return false;
       }
 
       public Value Then()
       {
          if (matched)
+         {
             return this;
+         }
 
          var block = Arguments.Executable;
          if (!block.CanExecute)
+         {
             return this;
+         }
 
          result = new Nil();
          mapped = true;
@@ -347,13 +409,19 @@ namespace Orange.Library.Values
          {
             matched = wasMatched;
             if (matched)
+            {
                result = block.Evaluate(region);
+            }
+
             return this;
          }
 
          matched = wasMatched && If.Evaluate(region).IsTrue;
          if (matched)
+         {
             result = block.Evaluate(region);
+         }
+
          return this;
       }
 
@@ -366,7 +434,9 @@ namespace Orange.Library.Values
       Value getValue()
       {
          if (mapped)
+         {
             return matched ? result : new Nil();
+         }
 
          return this;
       }
@@ -398,7 +468,9 @@ namespace Orange.Library.Values
       public override void AssignTo(Variable variable)
       {
          if (Match(value, comparisand, required, condition))
+         {
             variable.Value = value;
+         }
       }
 
       public Value Apply()

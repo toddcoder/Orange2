@@ -1,11 +1,11 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Arrays.ArrayFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Runtime;
-using static Standard.Types.Arrays.ArrayFunctions;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Line
 {
@@ -13,9 +13,8 @@ namespace Orange.Library.Parsers.Line
    {
       ParametersParser parameterParser;
 
-      public LambdaBlockParser()
-         : base($"^ /(' '* '(') /({REGEX_VARIABLE} | '_' | '(' {REGEX_VARIABLE} (/s* ',' /s* {REGEX_VARIABLE})+ ')') " +
-            $"/(/s*) /('->' | '=>') {REGEX_END1}") => parameterParser = new ParametersParser();
+      public LambdaBlockParser() : base($"^ /(' '* '(') /({REGEX_VARIABLE} | '_' | '(' {REGEX_VARIABLE} (/s* ',' /s* {REGEX_VARIABLE})+ ')') " +
+         $"/(/s*) /('->' | '=>') {REGEX_END1}") => parameterParser = new ParametersParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -35,7 +34,9 @@ namespace Orange.Library.Parsers.Line
             index = position + leftLength;
             Color(position, leftLength, Structures);
             if (!parameterParser.Parse(source, index).If(out parameters, out index))
+            {
                return null;
+            }
 
             index = NextPosition;
          }
@@ -58,7 +59,9 @@ namespace Orange.Library.Parsers.Line
                index = freeParser.Position;
             }
             else
+            {
                return null;
+            }
 
             block.Expression = false;
             var lambda = new Lambda(new Region(), block, parameters, false) { Splatting = splatting };

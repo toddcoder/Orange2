@@ -1,12 +1,12 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Core.Strings;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -15,8 +15,7 @@ namespace Orange.Library.Parsers
       FieldListParser fieldListParser;
       FreeParser freeParser;
 
-      public InnerComprehensionParser()
-         : base($"^ |sp| /({REGEX_VARIABLE})")
+      public InnerComprehensionParser() : base($"^ |sp| /({REGEX_VARIABLE})")
       {
          fieldListParser = new FieldListParser();
          freeParser = new FreeParser();
@@ -36,7 +35,9 @@ namespace Orange.Library.Parsers
                if (GetExpression(source, index, stop).If(out var generatorSource, out var j))
                {
                   if (!freeParser.Scan(source, j, stop.Pattern))
+                  {
                      return null;
+                  }
 
                   index = freeParser.Position;
                   var token = freeParser.Tokens[1];

@@ -1,9 +1,9 @@
-﻿using Orange.Library.Parsers.Special;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
+﻿using Core.Monads;
+using Core.Strings;
+using Orange.Library.Parsers.Special;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -22,16 +22,22 @@ namespace Orange.Library.Parsers
             {
                index = freeParser.Position;
                while (index < source.Length)
+               {
                   if (freeParser.Scan(source, index, $"^ /(/s* {REGEX_VARIABLE} /s*) /[',)']"))
                   {
                      index = freeParser.Position;
                      freeParser.Colorize(Variables, Structures);
                      count++;
                      if (freeParser.Tokens[2] == ")")
+                     {
                         break;
+                     }
                   }
                   else
+                  {
                      return none<(ConstructorData, int)>();
+                  }
+               }
             }
 
             var trailing = freeParser.Scan(source, index, "^ /(/s* '|')");
@@ -40,6 +46,7 @@ namespace Orange.Library.Parsers
                freeParser.Colorize(Structures);
                index = freeParser.Position;
             }
+
             return (new ConstructorData(name, count, trailing), index).Some();
          }
 

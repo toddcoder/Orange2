@@ -26,7 +26,10 @@ namespace Orange.Library.Values
          if (matching)
          {
             if (Case.Match(value, stop, false, null))
+            {
                matching = false;
+            }
+
             return 0;
          }
 
@@ -50,7 +53,9 @@ namespace Orange.Library.Values
             }
          }
          else if (Case.Match(value, start, false, null))
+         {
             matching = true;
+         }
 
          return matching;
       }

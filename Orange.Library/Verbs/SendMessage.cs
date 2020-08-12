@@ -36,45 +36,61 @@ namespace Orange.Library.Verbs
          var value = stack.Pop(false, LOCATION);
          arguments.FromSelf = arguments.FromSelf;
          if (value is Variable variable && variable.Name == "super" && variable.Value is Class super)
+         {
             return SendSuperMessage(super, message, arguments);
+         }
 
          if (registerCall)
+         {
             MessagingState.RegisterMessageCall(message);
+         }
+
          value = value.Resolve();
          var responds = MessagingState.RespondsTo(value, message);
          if (optional && !responds)
+         {
             return new Nil();
+         }
 
          if (!optional && !responds)
          {
             message = GetterName(message);
             responds = MessagingState.RespondsTo(value, message);
             if (optional && !responds)
+            {
                return new Nil();
+            }
          }
 
          Assert(optional || responds, LOCATION, () => $"{value} doesn't understand {Unmangle(message)} message");
          var result = MessagingState.SendMessage(value, message, arguments);
          if (result is ObjectVariable objectVariable && objectVariable.Value is Class cls)
+         {
             return SendMessage(cls, "invoke", arguments);
+         }
 
          if (optional)
+         {
             if (result is ObjectVariable innerValue)
             {
-               if (innerValue.Value is Some some)
-                  return some.Value();
-
-               if (innerValue.Value is None)
-                  return None.NoneValue;
-
-               return innerValue.Value;
+               switch (innerValue.Value)
+               {
+                  case Some some:
+                     return some.Value();
+                  case None _:
+                     return None.NoneValue;
+                  default:
+                     return innerValue.Value;
+               }
             }
+         }
 
          if (value is Variable variable1 && inPlace)
          {
             Reject(variable1.Name.StartsWith(VAR_ANONYMOUS), LOCATION, "Can't reassign to an anonymous variable");
             variable1.Value = result;
          }
+
          return result;
       }
 
@@ -90,6 +106,7 @@ namespace Orange.Library.Verbs
             result.Append(arguments.Executable);
             result.Append("}");
          }
+
          return result.ToString();
       }
 

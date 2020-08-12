@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using Core.Enumerables;
 using Orange.Library.Verbs;
-using Standard.Types.Enumerables;
 
 namespace Orange.Library
 {
@@ -21,12 +21,14 @@ namespace Orange.Library
       public bool PendingReady(Verb next)
       {
          if (IsEmpty)
+         {
             return false;
+         }
 
          var peek = Peek();
          return peek.LeftToRight ? peek.Precedence <= next.Precedence : peek.Precedence < next.Precedence;
       }
 
-      public override string ToString() => stack.ToArray().Listify(" ");
+      public override string ToString() => stack.ToArray().Stringify(" ");
    }
 }

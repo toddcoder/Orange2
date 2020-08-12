@@ -47,7 +47,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             return new Some(block.Evaluate());
          }

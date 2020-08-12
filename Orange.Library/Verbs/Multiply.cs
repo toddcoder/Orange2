@@ -14,15 +14,20 @@ namespace Orange.Library.Verbs
          {
             case Value.ValueType.String:
                if (y.IsNumeric())
+               {
                   return SendMessage(x, "repeat", y);
+               }
 
                break;
          }
+
          switch (y.Type)
          {
             case Value.ValueType.String:
                if (x.IsNumeric())
+               {
                   return SendMessage(y, "repeat", x);
+               }
 
                break;
          }

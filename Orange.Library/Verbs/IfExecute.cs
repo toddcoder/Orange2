@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Monads;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Values.Ignore;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Maybe.MaybeFunctions;
 using Array = Orange.Library.Values.Array;
 
 namespace Orange.Library.Verbs
@@ -28,14 +28,13 @@ namespace Orange.Library.Verbs
          IMaybe<Block.BlockGenerator> elseBlockGenerator;
          IfStage ifStage;
 
-         public IfGenerator(IfExecute ifExecute)
-            : base(ifExecute)
+         public IfGenerator(IfExecute ifExecute) : base(ifExecute)
          {
-            var _if = ifExecute._if;
+            var _if = ifExecute.@if;
             condition = _if.Condition;
             resultGenerator = new Block.BlockGenerator(_if.Result);
-            elseIf = when(_if.Next != null, () => new IfGenerator(new IfExecute(_if.Next)));
-            elseBlockGenerator = when(_if.ElseBlock != null, () => new Block.BlockGenerator(_if.ElseBlock));
+            elseIf = maybe(_if.Next != null, () => new IfGenerator(new IfExecute(_if.Next)));
+            elseBlockGenerator = maybe(_if.ElseBlock != null, () => new Block.BlockGenerator(_if.ElseBlock));
          }
 
          public override void Reset()
@@ -43,9 +42,15 @@ namespace Orange.Library.Verbs
             base.Reset();
             resultGenerator.Reset();
             if (elseIf.If(out var g))
+            {
                g.Reset();
+            }
+
             if (elseBlockGenerator.If(out var bg))
+            {
                bg.Reset();
+            }
+
             ifStage = IfStage.Condition;
          }
 
@@ -64,25 +69,39 @@ namespace Orange.Library.Verbs
                         return resultGenerator.Next();
                      }
 
-                     if (elseIf.IsSome)
+                     if (elseIf.If(out var ifGenerator))
                      {
                         ifStage = IfStage.ElseIf;
-                        return elseIf.Value.Next();
+                        return ifGenerator.Next();
                      }
 
-                     if (elseBlockGenerator.IsSome)
+                     if (elseBlockGenerator.If(out var blockGenerator))
                      {
                         ifStage = IfStage.Else;
-                        return elseBlockGenerator.Value.Next();
+                        return blockGenerator.Next();
                      }
 
                      return NilValue;
                   case IfStage.Result:
                      return resultGenerator.Next();
                   case IfStage.ElseIf:
-                     return elseIf.Value.Next();
+                     if (elseIf.If(out ifGenerator))
+                     {
+                        return ifGenerator.Next();
+                     }
+                     else
+                     {
+                        return NilValue;
+                     }
                   case IfStage.Else:
-                     return elseBlockGenerator.Value.Next();
+                     if (elseBlockGenerator.If(out blockGenerator))
+                     {
+                        return blockGenerator.Next();
+                     }
+                     else
+                     {
+                        return NilValue;
+                     }
                   default:
                      return IgnoreValue;
                }
@@ -90,54 +109,58 @@ namespace Orange.Library.Verbs
          }
       }
 
-      Values.If _if;
+      Values.If @if;
       VerbPrecedenceType precedence;
 
-      public IfExecute(Values.If _if, VerbPrecedenceType precedence = VerbPrecedenceType.Statement)
+      public IfExecute(Values.If @if, VerbPrecedenceType precedence = VerbPrecedenceType.Statement)
       {
-         this._if = _if;
+         this.@if = @if;
          this.precedence = precedence;
       }
 
-      public override Value Evaluate() => _if.Invoke();
+      public override Value Evaluate() => @if.Invoke();
 
       public override VerbPrecedenceType Precedence => precedence;
 
-      public override string ToString() => _if.ToString();
+      public override string ToString() => @if.ToString();
 
       public IEnumerable<Block> Blocks
       {
          get
          {
-            yield return _if.Condition;
-            yield return _if.Result;
+            yield return @if.Condition;
+            yield return @if.Result;
 
-            if (_if.ElseBlock != null)
-               yield return _if.ElseBlock;
+            if (@if.ElseBlock != null)
+            {
+               yield return @if.ElseBlock;
+            }
          }
          set
          {
             var blocks = value.ToArray();
-            _if.Condition = blocks[0];
-            _if.Result = blocks[1];
+            @if.Condition = blocks[0];
+            @if.Result = blocks[1];
             if (blocks.Length > 2)
-               _if.ElseBlock = blocks[2];
+            {
+               @if.ElseBlock = blocks[2];
+            }
          }
       }
 
-      public override bool Yielding => _if.IsGeneratorAvailable;
+      public override bool Yielding => @if.IsGeneratorAvailable;
 
       public INSGenerator GetGenerator() => new IfGenerator(this);
 
       public Value Next(int index) => null;
 
-      public bool IsGeneratorAvailable => _if.IsGeneratorAvailable;
+      public bool IsGeneratorAvailable => @if.IsGeneratorAvailable;
 
       public Array ToArray() => Runtime.ToArray(GetGenerator());
 
-      public string Result => ((IStatementResult)_if).Result;
+      public string Result => ((IStatementResult)@if).Result;
 
-      public string TypeName => ((IStatementResult)_if).TypeName;
+      public string TypeName => ((IStatementResult)@if).TypeName;
 
       public int Index { get; set; }
    }

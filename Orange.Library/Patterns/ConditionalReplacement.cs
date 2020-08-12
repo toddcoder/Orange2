@@ -1,5 +1,5 @@
-﻿using Orange.Library.Replacements;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Replacements;
 
 namespace Orange.Library.Patterns
 {
@@ -13,6 +13,6 @@ namespace Orange.Library.Patterns
 
       public long ID { get; set; }
 
-      public override string ToString() => $"@({Index}, {Length})='{Runtime.State.WorkingInput.Sub(Index, Length)}'";
+      public override string ToString() => $"@({Index}, {Length})='{Runtime.State.WorkingInput.Drop(Index).Keep(Length)}'";
    }
 }

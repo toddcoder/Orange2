@@ -7,8 +7,7 @@ namespace Orange.Library.Parsers
 {
    public class LineBlockParser : Parser
    {
-      public LineBlockParser()
-         : base($"^ |sp| /'do' {REGEX_END}") { }
+      public LineBlockParser() : base($"^ |sp| /'do' {REGEX_END}") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -21,15 +20,21 @@ namespace Orange.Library.Parsers
 
          var index = NextPosition;
          while (index < source.Length)
+         {
             if (statementParser.Scan(source, index))
             {
                index = statementParser.Position;
                var verb = statementParser.Verb;
                if (verb != null && !(verb is NullOp))
+               {
                   block.Add(verb);
+               }
             }
             else
+            {
                break;
+            }
+         }
 
          RegressTabs();
 

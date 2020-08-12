@@ -9,14 +9,13 @@ namespace Orange.Library.Parsers
    {
       ExpressionLineParser parser;
 
-      public MultilineFunctionInvokeParser()
-         : base($"^ /(|sp|) /({REGEX_VARIABLE}) /':' /([/r /n]+)") => parser = new ExpressionLineParser();
+      public MultilineFunctionInvokeParser() : base($"^ /(|sp|) /({REGEX_VARIABLE}) /':' /([/r /n]+)") => parser = new ExpressionLineParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
-         var invokeableName = tokens[2];
+         var invokableName = tokens[2];
          Color(position, tokens[1].Length, Whitespaces);
-         Color(invokeableName.Length, Invokeables);
+         Color(invokableName.Length, Invokeables);
          Color(tokens[3].Length, Structures);
          Color(tokens[4].Length, Whitespaces);
 
@@ -24,6 +23,7 @@ namespace Orange.Library.Parsers
          var index = NextPosition;
          var arguments = new Arguments();
          while (index < source.Length)
+         {
             if (parser.Scan(source, index))
             {
                index = parser.Position;
@@ -31,10 +31,13 @@ namespace Orange.Library.Parsers
                arguments.AddBlockArgument(expression);
             }
             else
+            {
                break;
+            }
+         }
 
          RegressTabs();
-         return new FunctionInvoke(invokeableName, arguments);
+         return new FunctionInvoke(invokableName, arguments);
       }
 
       public override string VerboseName => "multiline function invoke";

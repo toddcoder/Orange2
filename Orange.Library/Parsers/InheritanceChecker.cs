@@ -48,7 +48,7 @@ namespace Orange.Library.Parsers
                superSignatures = new Hash<string, Signature>();
                abstractSignatures = new Hash<string, Signature>();
             }
-            overrides = objectBlock.AsAdded.OfType<CreateFunction>().ToHash(cf => cf.FunctionName, cf => cf.Override);
+            overrides = objectBlock.AsAdded.OfType<CreateFunction>().ToHash(cf => cf.FunctionName, cf => cf.Overriding);
             foreach (var name in parameters.GetParameters().Select(parameter => parameter.Name))
             {
                overrides[name] = true;

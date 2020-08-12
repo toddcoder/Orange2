@@ -1,14 +1,14 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Core.Strings;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
 using static System.Activator;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.TwoCharacterOperatorParser;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers.Line
 {
@@ -18,18 +18,20 @@ namespace Orange.Library.Parsers.Line
       {
          var type = Operator(op);
          if (type == null)
+         {
             return none<Block>();
+         }
 
          var verb = (Verb)CreateInstance(type);
          var builder = new CodeBuilder();
          builder.Variable(fieldName);
          builder.Verb(verb);
          builder.Parenthesize(expression);
+
          return builder.Block.Some();
       }
 
-      public AssignToFieldParser()
-         : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /('&')? {REGEX_ASSIGN}") { }
+      public AssignToFieldParser() : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /('&')? {REGEX_ASSIGN}") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -49,11 +51,11 @@ namespace Orange.Library.Parsers.Line
             overridePosition = index;
             if (op.IsNotEmpty())
             {
-               var combined = combineOperation(fieldName, op, expression);
-               if (combined.IsNone)
+               if (!combineOperation(fieldName, op, expression).If(out expression))
+               {
                   return null;
-
-               expression = combined.Value;
+               }
+               else { }
             }
 
             return new AssignToField(fieldName, expression, reference) { Index = position };

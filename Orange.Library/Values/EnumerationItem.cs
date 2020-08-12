@@ -1,5 +1,5 @@
-﻿using Orange.Library.Managers;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Managers;
 
 namespace Orange.Library.Values
 {

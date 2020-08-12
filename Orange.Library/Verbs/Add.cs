@@ -20,11 +20,19 @@ namespace Orange.Library.Verbs
          }
 
          if (x.IsArray && y.Type == ValueType.KeyedValue)
+         {
             return SendMessage(x, Message, y);
+         }
+
          if (x is List && y.Type != ValueType.List)
+         {
             return SendMessage(x, Message, y);
+         }
+
          if (x.Type == ValueType.String && !x.IsNumeric() && y.Type == ValueType.String && !y.IsNumeric())
+         {
             return x.Text + y.Text;
+         }
 
          return null;
       }

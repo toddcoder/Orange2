@@ -41,8 +41,11 @@ namespace Orange.Library.Values
 		public Value Invoke()
 		{
 			if (!Arguments.IsEmpty)
-				message.MessageArguments = Arguments;
-			return message.Invoke(value);
+         {
+            message.MessageArguments = Arguments;
+         }
+
+         return message.Invoke(value);
 		}
 
 		public override string ToString() => value + " : " + message;

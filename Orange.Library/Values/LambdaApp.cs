@@ -26,8 +26,10 @@ namespace Orange.Library.Values
 				var argumentsToUse = result == null ? arguments : new Arguments(result);
 				result = lambda.Evaluate(argumentsToUse, instance, register, setArguments);
 				if (result.IsNil)
-					return result;
-			}
+            {
+               return result;
+            }
+         }
 			return result;
 		}
 	}

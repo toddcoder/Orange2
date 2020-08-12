@@ -30,19 +30,33 @@ namespace Orange.Library.Patterns
 			var stop = -1;
 			var inputLength = input.Length;
 			for (var i = State.Position; i < inputLength; i++)
-				if (IndexOf(needleChars, input[i]) == -1)
-				{
-					if (start == -1)
-						start = i;
-					stop = i;
-				}
-				else
-					break;
-			if (start == -1)
-				return false;
-			if (stop == -1)
-				stop = inputLength - 1;
-			index = start;
+         {
+            if (IndexOf(needleChars, input[i]) == -1)
+            {
+               if (start == -1)
+               {
+                  start = i;
+               }
+
+               stop = i;
+            }
+            else
+            {
+               break;
+            }
+         }
+
+         if (start == -1)
+         {
+            return false;
+         }
+
+         if (stop == -1)
+         {
+            stop = inputLength - 1;
+         }
+
+         index = start;
 			length = stop - start + 1;
 			return true;
 		}
@@ -55,19 +69,33 @@ namespace Orange.Library.Patterns
 			var stop = -1;
 			var inputLength = input.Length;
 			for (var i = State.Position; i < inputLength; i++)
-				if (IndexOf(needleChars, input[i]) == -1)
-				{
-					if (start == -1)
-						start = i;
-					stop = i;
-				}
-				else if (start > -1)
-					break;
-			if (start == -1)
-				return false;
-			if (stop == -1)
-				stop = inputLength - 1;
-			index = start;
+         {
+            if (IndexOf(needleChars, input[i]) == -1)
+            {
+               if (start == -1)
+               {
+                  start = i;
+               }
+
+               stop = i;
+            }
+            else if (start > -1)
+            {
+               break;
+            }
+         }
+
+         if (start == -1)
+         {
+            return false;
+         }
+
+         if (stop == -1)
+         {
+            stop = inputLength - 1;
+         }
+
+         index = start;
 			length = stop - start + 1;
 			return true;
 		}

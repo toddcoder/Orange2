@@ -1,12 +1,12 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Monads;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 using If = Orange.Library.Values.If;
 
 namespace Orange.Library.Parsers
@@ -24,52 +24,59 @@ namespace Orange.Library.Parsers
             _if.ElseBlock = elseParser.Block;
             overriding = elseParser.Position;
          }
+
          var ifExecute = new IfExecute(_if);
          return (ifExecute, overriding);
       }
 
-      public NextParser()
-         : base("^ |tabs| 'next' /b (/s+ /('while' | 'until') /s+)?") { }
+      public NextParser() : base("^ |tabs| 'next' /b (/s+ /('while' | 'until') /s+)?") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          var op = tokens[1].Trim();
 
          Color(position, length, KeyWords);
-         var forward = none<bool>();
-         var condition = none<(Block, int)>();
+         var anyForward = none<bool>();
+         var anyCondition = none<(Block, int)>();
          switch (op)
          {
             case "while":
-               forward = true.Some();
+               anyForward = true.Some();
                break;
             case "until":
-               forward = false.Some();
+               anyForward = false.Some();
                break;
          }
 
          var index = NextPosition;
 
-         if (forward.IsSome)
+         if (anyForward.If(out var forward))
          {
-            condition = GetExpression(source, index, EndOfLineConsuming());
-            if (condition.IsSome)
-               index = condition.Value.Item2;
+            anyCondition = GetExpression(source, index, EndOfLineConsuming());
+            if (anyCondition.If(out _, out var conditionIndex))
+            {
+               index = conditionIndex;
+            }
             else
+            {
                return null;
+            }
          }
 
          if (GetBlock(source, index, true).If(out var block, out var i))
          {
             int overriding;
-            if (forward.IsSome)
+            if (anyForward.If(out forward) && anyCondition.If(out var condition, out _))
             {
-               (var ifVerb, var j) = enclose(forward.Value, condition.Value.Item1, block, source, i);
+               var (ifVerb, j) = enclose(forward, condition, block, source, i);
                overriding = j;
                block = new Block { ifVerb };
             }
             else
+            {
                overriding = i;
+            }
+
             Block = block;
             overridePosition = overriding;
             return new NullOp();

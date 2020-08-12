@@ -17,7 +17,7 @@ namespace Orange.Library
       public override bool Exists(string name) => false;
 
       public override void CreateVariable(string variableName, bool global = false,
-         VisibilityType visibility = VisibilityType.Public, bool _override = false)
+         VisibilityType visibility = VisibilityType.Public, bool overriding = false)
       {
          variables[variableName] = new Nil();
          visibilityTypes[variableName] = visibility;

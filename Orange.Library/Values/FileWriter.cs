@@ -66,8 +66,11 @@ namespace Orange.Library.Values
 	   public Value SetOut()
 		{
 			if (closed)
-				return new Nil();
-			flushed = false;
+         {
+            return new Nil();
+         }
+
+         flushed = false;
 	      buffer.Print(Arguments[0].Text);
 			return this;
 		}
@@ -79,8 +82,11 @@ namespace Orange.Library.Values
 	   public Value SetROut()
 		{
 			if (closed)
-				return new Nil();
-			flushed = false;
+         {
+            return new Nil();
+         }
+
+         flushed = false;
 	      buffer.Print(Arguments[0]);
 			return this;
 		}
@@ -92,8 +98,11 @@ namespace Orange.Library.Values
 	   public Value SetPut()
 		{
 			if (closed)
-				return new Nil();
-			flushed = false;
+         {
+            return new Nil();
+         }
+
+         flushed = false;
 	      buffer.Put(Arguments[0].Text);
 			return this;
 		}
@@ -105,8 +114,11 @@ namespace Orange.Library.Values
 	   public Value SetWrite()
 		{
 			if (closed)
-				return new Nil();
-			flushed = false;
+         {
+            return new Nil();
+         }
+
+         flushed = false;
 	      buffer.Write(Arguments[0].Text);
 			return this;
 		}
@@ -122,8 +134,11 @@ namespace Orange.Library.Values
 		public Value Flush()
 		{
 			if (closed)
-				return new Nil();
-			if (!flushed)
+         {
+            return new Nil();
+         }
+
+         if (!flushed)
 			{
 				writer.Write(buffer.Result());
 				writer.Flush();

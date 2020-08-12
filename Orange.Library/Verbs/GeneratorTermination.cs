@@ -11,18 +11,15 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var right = stack.Pop(true, Location);
          var left = stack.Pop(true, Location);
-         var generator = left.PossibleGenerator();
-         Assert(generator.IsSome, Location, $"{left} is not a generator");
-/*         var lambda = right.As<Lambda>();
-         Assert(lambda.IsSome, Location, $"{right} is not a lambda");*/
+         var generator = Assert(left.PossibleGenerator(), Location, $"{left} is not a generator");
 
          if (right is Lambda lambda)
          {
-            var iterator = new NSIterator(generator.Value);
+            var iterator = new NSIterator(generator);
             return Evaluate(iterator, lambda);
          }
 
-         Throw(Location, $"{right} is not a lamba");
+         Throw(Location, $"{right} is not a lambda");
          return null;
       }
 

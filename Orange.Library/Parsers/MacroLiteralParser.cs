@@ -1,16 +1,15 @@
 ﻿using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class MacroLiteralParser : Parser
    {
-      public MacroLiteralParser()
-         : base("^ ' '* '.' /(['({'])") { }
+      public MacroLiteralParser() : base("^ ' '* '.' /(['({'])") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

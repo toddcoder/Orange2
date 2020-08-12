@@ -13,11 +13,18 @@ namespace Orange.Library.Verbs
             Runtime.State.ExitSignal = true;
             return null;
          }
+
          var value = stack.Pop(true, "Exit");
          if (value.IsNil)
+         {
             return null;
+         }
+
          if (value.IsTrue)
+         {
             Runtime.State.ExitSignal = true;
+         }
+
          return null;
       }
 

@@ -5,8 +5,11 @@
 		public ReturnBlock(Block block)
 		{
 			foreach (var verb in block.AsAdded)
-				Add(verb);
-			AutoRegister = block.AutoRegister;
+         {
+            Add(verb);
+         }
+
+         AutoRegister = block.AutoRegister;
 		}
 
 		public override Value Evaluate()

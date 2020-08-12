@@ -25,7 +25,9 @@ namespace Orange.Library.Values
          public override void Visit(Value value)
          {
             if (value.Type == ValueType.Ignore || value.IsNil)
+            {
                index--;
+            }
          }
       }
 

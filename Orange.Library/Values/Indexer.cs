@@ -37,9 +37,13 @@ namespace Orange.Library.Values
          set
          {
             if (isInteger)
+            {
                array[getIndexes()] = value;
+            }
             else
+            {
                array[getKeys()] = value;
+            }
          }
       }
 
@@ -61,6 +65,7 @@ namespace Orange.Library.Values
          var keyArray = keyBlock.ToActualArguments();
          var keyValues = new List<string>();
          foreach (var value in keyArray.Values)
+         {
             switch (value.Type)
             {
                case ValueType.Array:
@@ -70,6 +75,7 @@ namespace Orange.Library.Values
                   keyValues.Add(value.Text);
                   break;
             }
+         }
 
          return keyValues.ToArray();
       }
@@ -123,7 +129,9 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var insertKeys = getKeys();
          foreach (var key in insertKeys)
+         {
             array.Insert(key, value);
+         }
 
          return array;
       }
@@ -133,7 +141,9 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var insertIndexes = getIndexes();
          foreach (var index in insertIndexes)
+         {
             array.Insert(index, value);
+         }
 
          return array;
       }
@@ -152,7 +162,9 @@ namespace Orange.Library.Values
             {
                value = Arguments[0];
                foreach (var key in getKeys())
+               {
                   array[key] = value.Clone();
+               }
 
                return array;
             }
@@ -165,7 +177,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == ParameterAssistant.SignalType.Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -176,7 +190,9 @@ namespace Orange.Library.Values
                }
 
                if (value != null)
+               {
                   array[key] = value;
+               }
             }
 
             return array;
@@ -190,13 +206,17 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var result = new Array();
          foreach (var key in getKeys())
+         {
             if (array.ContainsKey(key))
+            {
                result[key] = array[key];
+            }
             else
             {
                array[key] = value;
                result[key] = value;
             }
+         }
 
          return result.Length == 1 ? result[0] : result;
       }
@@ -206,13 +226,17 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var result = new Array();
          foreach (var index in getIndexes())
+         {
             if (array.ContainsIndex(index))
+            {
                result[index] = array[index];
+            }
             else
             {
                array[index] = value;
                result[index] = value;
             }
+         }
 
          return result.Length == 1 ? result[0] : result;
       }
@@ -223,7 +247,9 @@ namespace Orange.Library.Values
       {
          var keysToDelete = getKeys();
          foreach (var key in keysToDelete)
+         {
             array.Remove(key);
+         }
 
          return array;
       }
@@ -232,7 +258,9 @@ namespace Orange.Library.Values
       {
          var indexesToDelete = getIndexes();
          foreach (var index in indexesToDelete)
+         {
             array.Remove(index);
+         }
 
          return array;
       }
@@ -247,7 +275,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.ArrayParameters();
 
@@ -261,7 +291,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == ParameterAssistant.SignalType.Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -272,19 +304,29 @@ namespace Orange.Library.Values
                }
 
                if (value.Type == ValueType.Nil)
+               {
                   continue;
+               }
 
                if (value is KeyedValue keyedValue)
+               {
                   changes[keyedValue.Key] = keyedValue.Value;
+               }
                else
+               {
                   changes[key] = value;
+               }
             }
 
             if (changes.Length == 0)
+            {
                return this;
+            }
 
             foreach (var item in changes)
+            {
                array[item.Key] = item.Value;
+            }
 
             return this;
          }
@@ -296,7 +338,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.ArrayParameters();
 
@@ -310,7 +354,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == ParameterAssistant.SignalType.Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -321,19 +367,29 @@ namespace Orange.Library.Values
                }
 
                if (value.Type == ValueType.Nil)
+               {
                   continue;
+               }
 
                if (value is KeyedValue keyedValue)
+               {
                   changes[keyedValue.Key] = keyedValue.Value;
+               }
                else
+               {
                   changes[key] = value;
+               }
             }
 
             if (changes.Length == 0)
+            {
                return this;
+            }
 
             foreach (var item in changes)
+            {
                array[item.Key] = item.Value;
+            }
 
             return this;
          }

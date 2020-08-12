@@ -40,7 +40,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return this;
+            }
 
             assistant.ArrayParameters();
 
@@ -54,7 +56,9 @@ namespace Orange.Library.Values
                value = block.Evaluate();
                var signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -65,19 +69,29 @@ namespace Orange.Library.Values
                }
 
                if (value.Type == ValueType.Nil)
+               {
                   continue;
+               }
 
                if (value is KeyedValue keyedValue)
+               {
                   changes[keyedValue.Key] = keyedValue.Value;
+               }
                else
+               {
                   changes[key] = value;
+               }
             }
 
             if (changes.Length == 0)
+            {
                return this;
+            }
 
             foreach (var item in changes)
+            {
                array[item.Key] = item.Value;
+            }
 
             return this;
          }
@@ -88,7 +102,9 @@ namespace Orange.Library.Values
          var indexesToDelete = getIndicators();
          Sort(indexesToDelete, (x, y) => y.CompareTo(x));
          foreach (var index in indexesToDelete)
+         {
             array.Remove(index);
+         }
 
          return array;
       }
@@ -109,7 +125,9 @@ namespace Orange.Library.Values
                   value = block.Evaluate();
                   var signal = Signal();
                   if (signal == Breaking)
+                  {
                      break;
+                  }
 
                   switch (signal)
                   {
@@ -120,7 +138,9 @@ namespace Orange.Library.Values
                   }
 
                   if (value != null)
+                  {
                      array[index] = value;
+                  }
                }
 
                return array;
@@ -128,7 +148,9 @@ namespace Orange.Library.Values
 
             value = Arguments[0];
             foreach (var index in getIndicators())
+            {
                array[index] = value.Clone();
+            }
 
             return array;
          }
@@ -140,7 +162,9 @@ namespace Orange.Library.Values
          var insertIndexes = getIndicators();
          Sort(insertIndexes, (x, y) => y.CompareTo(x));
          foreach (var index in insertIndexes)
+         {
             array.Insert(index, value);
+         }
 
          return array;
       }
@@ -171,7 +195,9 @@ namespace Orange.Library.Values
             case 1:
                var key = keys[0];
                if (array.ContainsIndex(key))
+               {
                   return array[key];
+               }
 
                get = defaultValue.Value();
                array[key] = get;
@@ -179,14 +205,18 @@ namespace Orange.Library.Values
             default:
                var newArray = new Array();
                foreach (var keyToFind in keys)
+               {
                   if (array.ContainsIndex(keyToFind))
+                  {
                      newArray.Add(array[keyToFind]);
+                  }
                   else
                   {
                      get = defaultValue.Value();
                      array[keyToFind] = get;
                      newArray.Add(get);
                   }
+               }
 
                return newArray;
          }
@@ -197,13 +227,17 @@ namespace Orange.Library.Values
          var value = Arguments[0];
          var result = new Array();
          foreach (var index in getIndicators())
+         {
             if (array.ContainsIndex(index))
+            {
                result[index] = array[index];
+            }
             else
             {
                array[index] = value;
                result[index] = value;
             }
+         }
 
          return result.Length == 1 ? result[0] : result;
       }
@@ -213,11 +247,15 @@ namespace Orange.Library.Values
          var target = array.Copy();
          var source = Arguments.AsArray();
          if (source == null)
+         {
             return this;
+         }
 
          var sourceIndex = 0;
          foreach (var index in getIndicators())
+         {
             target[index] = source[sourceIndex++];
+         }
 
          return target;
       }

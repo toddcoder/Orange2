@@ -1,6 +1,6 @@
 ﻿using System;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Strings;
 
 namespace Orange.Library.Values
 {
@@ -59,27 +59,31 @@ namespace Orange.Library.Values
 
       void adjust()
       {
-         /*			if (!success)
-						{
-							if (more)
-							{
-								position = 0;
-								length = 0;
-								more = false;
-							}
-							return;
-						}*/
          if (position < 0)
+         {
             position = 0;
+         }
+
          var textLength = text.Length;
          if (position >= textLength)
+         {
             position = textLength - 1;
+         }
+
          if (length < 0)
+         {
             length = 0;
+         }
+
          if (length > textLength)
+         {
             length = textLength;
+         }
+
          if (position + length > textLength)
+         {
             length = textLength - position;
+         }
       }
 
       void setAbsolutePosition(int newPosition)
@@ -106,7 +110,7 @@ namespace Orange.Library.Values
          adjust();
       }
 
-      string textAtPosition() => text.Substring(position);
+      string textAtPosition() => text.ToString().Drop(position);
 
       int startPosition() => position + length;
 
@@ -132,21 +136,37 @@ namespace Orange.Library.Values
       public Value To()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          var value = Arguments[0];
          var count = (int)Arguments[1].Number;
          if (count == 0)
+         {
             count = 1;
+         }
+
          Action action;
          var pattern = value as Pattern;
          if (pattern != null)
+         {
             action = () => toPattern(pattern);
+         }
          else if (value.IsNumeric())
+         {
             action = () => toNumber((int)value.Number);
+         }
          else
+         {
             action = () => toString(value.Text);
+         }
+
          for (var i = 0; i < count; i++)
+         {
             action();
+         }
+
          return this;
       }
 
@@ -166,7 +186,10 @@ namespace Orange.Library.Values
          var newPosition = textAtPosition().IndexOf(pattern, StringComparison.Ordinal);
          var found = newPosition > -1;
          if (found)
+         {
             setRelativePosition(newPosition);
+         }
+
          setStatus(found);
       }
 
@@ -186,19 +209,33 @@ namespace Orange.Library.Values
       public Value Match()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          var value = Arguments[0];
          var count = (int)Arguments[1].Number;
          if (count == 0)
+         {
             count = 1;
+         }
+
          Action action;
          var pattern = value as Pattern;
          if (pattern != null)
+         {
             action = () => matchPattern(pattern);
+         }
          else
+         {
             action = () => matchString(value.Text);
+         }
+
          for (var i = 0; i < count; i++)
+         {
             action();
+         }
+
          return this;
       }
 
@@ -228,21 +265,37 @@ namespace Orange.Library.Values
       public Value Open()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          var value = Arguments[0];
          var count = (int)Arguments[1].Number;
          if (count == 0)
+         {
             count = 1;
+         }
+
          Action action;
          var pattern = value as Pattern;
          if (pattern != null)
+         {
             action = () => openPattern(pattern);
+         }
          else if (value.IsNumeric())
+         {
             action = () => openNumber((int)value.Number);
+         }
          else
+         {
             action = () => openString(value.Text);
+         }
+
          for (var i = 0; i < count; i++)
+         {
             action();
+         }
+
          return this;
       }
 
@@ -250,7 +303,10 @@ namespace Orange.Library.Values
       {
          var found = pattern.IsMatch(textAtPosition());
          if (found)
+         {
             setAbsoluteLength(pattern.Index);
+         }
+
          setStatus(found);
       }
 
@@ -259,7 +315,10 @@ namespace Orange.Library.Values
          var newPosition = textAtPosition().IndexOf(pattern, StringComparison.Ordinal);
          var found = newPosition > -1;
          if (found)
+         {
             setAbsoluteLength(newPosition);
+         }
+
          setStatus(found);
       }
 
@@ -278,10 +337,16 @@ namespace Orange.Library.Values
       public Value Right()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          var count = (int)Arguments[0].Number;
          if (count == 0)
+         {
             count = 1;
+         }
+
          for (var i = 0; i < count; i++)
          {
             position += length;
@@ -294,10 +359,16 @@ namespace Orange.Library.Values
       public Value Left()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          var count = (int)Arguments[0].Number;
          if (count == 0)
+         {
             count = 1;
+         }
+
          for (var i = 0; i < count; i++)
          {
             position -= length;
@@ -320,21 +391,37 @@ namespace Orange.Library.Values
       public Value After()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          var value = Arguments[0];
          var count = (int)Arguments[1].Number;
          if (count == 0)
+         {
             count = 1;
+         }
+
          Action action;
          var pattern = value as Pattern;
          if (pattern != null)
+         {
             action = () => afterPattern(pattern);
+         }
          else if (value.IsNumeric())
+         {
             action = () => toNumber((int)value.Number);
+         }
          else
+         {
             action = () => afterString(value.Text);
+         }
+
          for (var i = 0; i < count; i++)
+         {
             action();
+         }
+
          return this;
       }
 
@@ -354,15 +441,21 @@ namespace Orange.Library.Values
          var newPosition = textAtPosition().IndexOf(pattern, StringComparison.Ordinal);
          var found = newPosition > -1;
          if (found)
+         {
             setRelativePosition(newPosition + pattern.Length);
+         }
+
          setStatus(found);
       }
 
       void setStatus(bool found)
       {
          if (found)
+         {
             status = StatusType.Success;
+         }
          else
+         {
             switch (status)
             {
                case StatusType.Success:
@@ -375,12 +468,16 @@ namespace Orange.Library.Values
                   length = 0;
                   break;
             }
+         }
       }
 
       public Value Rest()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          openNumber(text.Length - position);
          return this;
       }
@@ -388,7 +485,10 @@ namespace Orange.Library.Values
       public Value Any()
       {
          if (status == StatusType.Fail)
+         {
             return this;
+         }
+
          Value value = Arguments[0].Text;
          var needle = Runtime.Expand(value.Text).ToCharArray();
          var textLength = text.Length;
@@ -436,8 +536,14 @@ namespace Orange.Library.Values
                ch = '0';
                break;
          }
-         return length == 0 ? $"{text[0, position]}|{text.Substring(position)}:{ch}" :
-            $"{text[0, position]}[{text[position, length]}]{text.Substring(position + length)}:{ch}";
+
+         var fullText = text.ToString();
+         var s1 = fullText.Keep(position);
+         var s2 = fullText.Drop(position);
+         var s3 = fullText.Drop(position).Keep(length);
+         var s4 = fullText.Drop(position + length);
+
+         return length == 0 ? $"{s1}|{s2}:{ch}" : $"{s1}[{s3}]{s4}:{ch}";
       }
    }
 }

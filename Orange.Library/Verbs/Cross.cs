@@ -14,13 +14,11 @@ namespace Orange.Library.Verbs
          var right = stack.Pop(true, LOCATION);
          var left = stack.Pop(true, LOCATION);
 
-         var leftGenerator = left.PossibleGenerator();
-         var rightGenerator = right.PossibleGenerator();
-         Assert(leftGenerator.IsSome, LOCATION, $"{left} is not a generator");
-         Assert(rightGenerator.IsSome, LOCATION, $"{right} is not a generator");
+         var leftGenerator = Assert(left.PossibleGenerator(), LOCATION, $"{left} is not a generator");
+         var rightGenerator = Assert(right.PossibleGenerator(), LOCATION, $"{right} is not a generator");
 
-         var leftIterator = new NSIterator(leftGenerator.Value);
-         var rightIterator = new NSIterator(rightGenerator.Value);
+         var leftIterator = new NSIterator(leftGenerator);
+         var rightIterator = new NSIterator(rightGenerator);
          var outerArray = new Array();
 
          var outerValue = leftIterator.Next();
@@ -30,12 +28,14 @@ namespace Orange.Library.Verbs
             var innerValue = rightIterator.Next();
             for (var j = 0; !innerValue.IsNil && j < MAX_ARRAY; j++)
             {
-               var innerArray = new Array {outerValue, innerValue};
+               var innerArray = new Array { outerValue, innerValue };
                outerArray.Add(modifyInnerArray(innerArray));
                innerValue = rightIterator.Next();
             }
+
             outerValue = leftIterator.Next();
          }
+
          return outerArray;
       }
 

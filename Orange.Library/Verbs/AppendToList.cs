@@ -17,7 +17,9 @@ namespace Orange.Library.Verbs
          if (stack.IsEmpty)
          {
             if (y.Type == ValueType.Nil)
+            {
                return y;
+            }
 
             list = new InternalList();
             list.Add(y);
@@ -26,7 +28,9 @@ namespace Orange.Library.Verbs
 
          var x = stack.Pop(true, LOCATION);
          if (y.Type == ValueType.Nil)
+         {
             return x;
+         }
 
          list = x as InternalList;
          if (list != null)

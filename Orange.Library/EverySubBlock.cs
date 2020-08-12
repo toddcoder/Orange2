@@ -21,51 +21,60 @@ namespace Orange.Library
          foreach (var verb in block.AsAdded)
          {
             Block newBlock;
-            if (verb is Push push && push.Value is Block sourceBlock)
+            switch (verb)
             {
-               newBlock = PushBlock(sourceBlock);
-               if (newBlock != null)
+               case Push push when push.Value is Block sourceBlock:
                {
-                  builder.Value(newBlock);
-                  continue;
-               }
-            }
-
-            if (verb is CreateLambda createLambda)
-            {
-               var lambdaBlock = createLambda.Block;
-               (var closureBlock, var parameters, var splatting) = ClosureBlock(lambdaBlock);
-               if (closureBlock != null)
-               {
-                  builder.BeginCreateLambda();
-                  builder.Parameters(parameters);
-                  builder.Inline(closureBlock);
-                  builder.EndCreateLambda(splatting);
-                  continue;
-               }
-            }
-
-            if (verb is Invoke invoke)
-            {
-               var arguments = invoke.Arguments;
-               var blocks = arguments.Blocks;
-               var anyChanged = false;
-               foreach (var innerBlock in blocks)
-               {
-                  newBlock = ArgumentsBlocks(innerBlock);
-                  if (newBlock == null)
+                  newBlock = PushBlock(sourceBlock);
+                  if (newBlock != null)
+                  {
+                     builder.Value(newBlock);
                      continue;
+                  }
 
-                  anyChanged = true;
-                  builder.Argument(newBlock);
+                  break;
                }
+               case CreateLambda createLambda:
+               {
+                  var lambdaBlock = createLambda.Block;
+                  var (closureBlock, parameters, splatting) = ClosureBlock(lambdaBlock);
+                  if (closureBlock != null)
+                  {
+                     builder.BeginCreateLambda();
+                     builder.Parameters(parameters);
+                     builder.Inline(closureBlock);
+                     builder.EndCreateLambda(splatting);
+                     continue;
+                  }
 
-               if (!anyChanged)
+                  break;
+               }
+               case Invoke invoke:
+               {
+                  var arguments = invoke.Arguments;
+                  var blocks = arguments.Blocks;
+                  var anyChanged = false;
+                  foreach (var innerBlock in blocks)
+                  {
+                     newBlock = ArgumentsBlocks(innerBlock);
+                     if (newBlock == null)
+                     {
+                        continue;
+                     }
+
+                     anyChanged = true;
+                     builder.Argument(newBlock);
+                  }
+
+                  if (!anyChanged)
+                  {
+                     continue;
+                  }
+
+                  var newArguments = builder.Arguments;
+                  builder.Invoke(newArguments);
                   continue;
-
-               var newArguments = builder.Arguments;
-               builder.Invoke(newArguments);
-               continue;
+               }
             }
 
             builder.Verb(verb);

@@ -14,16 +14,23 @@ namespace Orange.Library.Verbs
          if (stack.IsEmpty)
          {
             if (y.Type == Value.ValueType.Nil)
+            {
                return y;
+            }
 
             return y.Type == Value.ValueType.ArrayBuilder ? y : new Array { y };
          }
 
          var x = stack.Pop(true, LOCATION);
          if (y.Type == Value.ValueType.Nil)
+         {
             return x;
+         }
+
          if (x.Type == Value.ValueType.Nil)
+         {
             return y;
+         }
 
          if (x is InternalList list)
          {

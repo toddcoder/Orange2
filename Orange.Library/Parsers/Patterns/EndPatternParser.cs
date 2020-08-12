@@ -14,8 +14,7 @@ namespace Orange.Library.Parsers.Patterns
       ReplacementParser replacementParser;
       ConditionalParser conditionalParser;
 
-      public EndPatternParser(bool ignoreReplacement)
-         : base($"^ /s* {REGEX_END_PATTERN}")
+      public EndPatternParser(bool ignoreReplacement) : base($"^ /s* {REGEX_END_PATTERN}")
       {
          this.ignoreReplacement = ignoreReplacement;
          replacementParser = new ReplacementParser();
@@ -25,7 +24,9 @@ namespace Orange.Library.Parsers.Patterns
       {
          Color(position, length, Structures);
          if (ignoreReplacement)
+         {
             return new NullOp();
+         }
 
          var index = NextPosition;
          if (replacementParser.Scan(source, index))
@@ -33,28 +34,22 @@ namespace Orange.Library.Parsers.Patterns
             Replacement = replacementParser.Replacement;
             index = replacementParser.Result.Position;
          }
+
          conditionalParser = new ConditionalParser();
          if (replacementParser.Scan(source, index))
          {
             Conditional = conditionalParser.Conditional;
             index = conditionalParser.Result.Position;
          }
+
          overridePosition = index;
          return new NullOp();
       }
 
       public override string VerboseName => "end of pattern";
 
-      public IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public IReplacement Replacement { get; set; }
 
-      public Conditional Conditional
-      {
-         get;
-         set;
-      }
+      public Conditional Conditional { get; set; }
    }
 }

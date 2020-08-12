@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -32,10 +32,17 @@ namespace Orange.Library.Verbs
          State.Stack.Push(value);
          var evaluated = actions.Evaluate();
          if (fieldName.IsNotEmpty())
+         {
             if (Regions.FieldExists(fieldName))
+            {
                Regions[fieldName] = evaluated.AssignmentValue();
+            }
             else
+            {
                current.CreateAndSet(fieldName, evaluated.AssignmentValue());
+            }
+         }
+
          result = value.ToString();
          typeName = value.Type.ToString();
          State.UnregisterBlock();

@@ -25,7 +25,7 @@ using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Values.Nil;
 using Core.RegularExpressions;
-using static Core.Monads.MonadExtensions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Values
 {
@@ -1160,7 +1160,7 @@ namespace Orange.Library.Values
 
       public Value Evaluate()
       {
-         if (GetBlock(getText(), 0, true).If(out var block, out var x))
+         if (GetBlock(getText(), 0, true).If(out var block, out _))
          {
             Regions.Push("evaluate()");
             MessagingState.TemplateMode = true;
@@ -1182,12 +1182,12 @@ namespace Orange.Library.Values
             to = to.Repeat(from.Length);
          }
 
-         var mapping = new AutoHash<string, string>(k => k);
+         var mapping = new AutoHash<char, char>(k => k);
 
          var length = Math.Min(to.Length, from.Length);
          for (var i = 0; i < length; i++)
          {
-            mapping[from[i].ToString()] = to[i].ToString();
+            mapping[from[i]] = to[i];
          }
 
          if (ignore)
@@ -1195,9 +1195,9 @@ namespace Orange.Library.Values
             var result = new StringBuilder();
             for (var i = 0; i < getText().Length; i++)
             {
-               var letter = getText().Substring(i, 1);
+               var letter = getText()[i];
                var mapped = mapping[letter];
-               if (!(from.Has(letter) && !to.Has(mapped)))
+               if (!(from.Has(letter.ToString()) && !to.Has(mapped.ToString())))
                {
                   result.Append(mapped);
                }
@@ -1468,7 +1468,7 @@ namespace Orange.Library.Values
             return "";
          }
 
-         return char.ToUpper(str.Take(1)[0]) + str.Skip(1).ToLower();
+         return char.ToUpper(str.Keep(1)[0]) + str.Drop(1).ToLower();
       }
 
       public Value To(string stop)
@@ -1706,14 +1706,15 @@ namespace Orange.Library.Values
             var after = matcher[i, 2];
             var index = matcher.GetMatch(i).Index;
             var value = new Word(word, index, i, before, after);
-            if (lastWord.IsNone)
+
+            if (lastWord.If(out var previousWord))
             {
-               value.SetPrevious(null);
+               value.SetPrevious(previousWord);
+               previousWord.SetNext(value);
             }
             else
             {
-               value.SetPrevious(lastWord.Value);
-               lastWord.Value.SetNext(value);
+               value.SetPrevious(null);
             }
 
             array.Add(value);
@@ -1741,7 +1742,7 @@ namespace Orange.Library.Values
             Slicer slicer = str;
             var search = STRING_ACCENTS.Substring(i, 2);
             var replacement = STRING_ACCENTS.Substring(i + 2, 1);
-            while (index != -1 && start < slicer.Length)
+            while (start < slicer.Length)
             {
                index = slicer.ToString().IndexOf(search, start, Ordinal);
                slicer.Reset();
@@ -1906,10 +1907,10 @@ namespace Orange.Library.Values
       public Value Head()
       {
          var str = getText();
-         return str.Take(str.Length - 1);
+         return str.Keep(str.Length - 1);
       }
 
-      public Value Tail() => getText().Skip(1);
+      public Value Tail() => getText().Drop(1);
 
       public Value SplitMap()
       {
@@ -2023,7 +2024,7 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Skip() => getText().Skip(Arguments[0].Int);
+      public Value Skip() => getText().Drop(Arguments[0].Int);
 
       public Value SkipWhile()
       {
@@ -2111,7 +2112,7 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Take() => getText().Take(Arguments[0].Int);
+      public Value Take() => getText().Keep(Arguments[0].Int);
 
       public Value TakeWhile()
       {
@@ -2442,10 +2443,9 @@ namespace Orange.Library.Values
                break;
             }
 
-            var generator = value.PossibleIndexGenerator();
-            if (generator.IsSome)
+            if (value.PossibleIndexGenerator().If(out var generator))
             {
-               var iterator = new NSIteratorByLength(generator.Value, length);
+               var iterator = new NSIteratorByLength(generator, length);
                list.AddRange(iterator.Select(v => v.Int));
             }
             else
@@ -2482,11 +2482,11 @@ namespace Orange.Library.Values
                case 0:
                   return "";
                case 1:
-                  return getText().Skip(WrapIndex(indexes[0], str.Length, true)).Take(1);
+                  return getText().Drop(WrapIndex(indexes[0], str.Length, true)).Keep(1);
             }
 
             var builder = new StringBuilder();
-            foreach (var chr in indexes.Select(i => WrapIndex(i, str.Length, true)).Select(i => str.Skip(i).Take(1)))
+            foreach (var chr in indexes.Select(i => WrapIndex(i, str.Length, true)).Select(i => str.Drop(i).Keep(1)))
             {
                builder.Append(chr);
             }

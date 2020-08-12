@@ -1,11 +1,11 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -13,8 +13,7 @@ namespace Orange.Library.Parsers
    {
       FreeParser parser;
 
-      public LoopRangeParser()
-         : base($"^ /(|sp|) /'(' /('loop' /s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)") => parser = new FreeParser();
+      public LoopRangeParser() : base($"^ /(|sp|) /'(' /('loop' /s+) /({REGEX_VARIABLE}) /(/s* '=' /s*)") => parser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -27,6 +26,7 @@ namespace Orange.Library.Parsers
 
          var index = NextPosition;
          if (GetExpression(source, index, LoopWhile()).If(out var init, out index))
+         {
             if (parser.Scan(source, index, "^ /(' '*) /('while' | 'until') /b"))
             {
                var direction = parser.Tokens[2];
@@ -40,13 +40,15 @@ namespace Orange.Library.Parsers
                      GetExpression(source, index, CloseParenthesis()).If(out var yielding, out index))
                   {
                      overridePosition = index;
-                     var someYielding = when(yielding.Count > 0, () => yielding);
+                     var someYielding = maybe(yielding.Count > 0, () => yielding);
                      var value = new LoopRange(variable, init, positive, condition, increment, someYielding);
                      result.Value = value;
+
                      return value.PushedVerb;
                   }
                }
             }
+         }
 
          return null;
       }

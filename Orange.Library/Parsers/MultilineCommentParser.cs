@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Exceptions;
+﻿using Core.Exceptions;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers
@@ -11,7 +11,7 @@ namespace Orange.Library.Parsers
          Outside,
          SingleString,
          DoubleString,
-         AnticipatingInterploatedString,
+         AnticipatingInterpolatedString,
          DoubleInterpolatedString,
          SingleInterpolatedString,
          Comment,
@@ -19,8 +19,7 @@ namespace Orange.Library.Parsers
          AnticipatingComment
       }
 
-      public MultilineCommentParser()
-         : base("^ /s* '//*'") { }
+      public MultilineCommentParser() : base("^ /s* '//*'") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -41,7 +40,7 @@ namespace Orange.Library.Parsers
                         parseState = ParseStateType.DoubleString;
                         break;
                      case '$':
-                        parseState = ParseStateType.AnticipatingInterploatedString;
+                        parseState = ParseStateType.AnticipatingInterpolatedString;
                         break;
                      case '/':
                         parseState = ParseStateType.AnticipatingComment;
@@ -57,9 +56,14 @@ namespace Orange.Library.Parsers
                   {
                      case '\'':
                         if (escape)
+                        {
                            escape = false;
+                        }
                         else
+                        {
                            parseState = ParseStateType.Outside;
+                        }
+
                         break;
                      case '`':
                         escape = true;
@@ -75,9 +79,14 @@ namespace Orange.Library.Parsers
                   {
                      case '"':
                         if (escape)
+                        {
                            escape = false;
+                        }
                         else
+                        {
                            parseState = ParseStateType.Outside;
+                        }
+
                         break;
                      case '`':
                         escape = true;
@@ -88,7 +97,7 @@ namespace Orange.Library.Parsers
                   }
 
                   break;
-               case ParseStateType.AnticipatingInterploatedString:
+               case ParseStateType.AnticipatingInterpolatedString:
                   switch (chr)
                   {
                      case '"':
@@ -98,7 +107,10 @@ namespace Orange.Library.Parsers
                            parseState = ParseStateType.Outside;
                         }
                         else
+                        {
                            parseState = ParseStateType.DoubleInterpolatedString;
+                        }
+
                         break;
                      case '\'':
                         if (escape)
@@ -107,7 +119,10 @@ namespace Orange.Library.Parsers
                            parseState = ParseStateType.Outside;
                         }
                         else
+                        {
                            parseState = ParseStateType.SingleInterpolatedString;
+                        }
+
                         break;
                      default:
                         parseState = ParseStateType.Outside;
@@ -121,9 +136,14 @@ namespace Orange.Library.Parsers
                   {
                      case '\'':
                         if (escape)
+                        {
                            escape = false;
+                        }
                         else
+                        {
                            parseState = ParseStateType.Outside;
+                        }
+
                         break;
                      case '`':
                         escape = true;
@@ -139,9 +159,14 @@ namespace Orange.Library.Parsers
                   {
                      case '"':
                         if (escape)
+                        {
                            escape = false;
+                        }
                         else
+                        {
                            parseState = ParseStateType.Outside;
+                        }
+
                         break;
                      case '`':
                         escape = true;

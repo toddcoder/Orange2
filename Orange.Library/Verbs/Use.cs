@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Collections;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -19,15 +20,20 @@ namespace Orange.Library.Verbs
          if (value is Object obj)
          {
             var region = obj.Region.Public();
-            foreach (var item in region.AllVariables())
+            foreach (var (key, value1) in region.AllVariables())
             {
-               if (!Regions.VariableExists(item.Key))
-                  Regions.CreateVariable(item.Key);
-               Regions[item.Key] = item.Value;
+               if (!Regions.VariableExists(key))
+               {
+                  Regions.CreateVariable(key);
+               }
+
+               Regions[key] = value1;
             }
          }
          else
+         {
             Throw(LOCATION, $"{value} isn't an object");
+         }
 
          return null;
       }

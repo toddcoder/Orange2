@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Core.Monads;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -26,8 +25,7 @@ namespace Orange.Library.Verbs
          State.RegisterBlock(definition, region);
          var parser = new ParameterListParser();
          var parsed = parser.Parse(definition);
-         List<Parameter> parameterList;
-         Assert(parsed.Assign(out parameterList), "Allow In", "Invalid parameter list");
+         Assert(parsed.Assign(out var parameterList), "Allow In", "Invalid parameter list");
          foreach (var parameter in parameterList)
          {
             var value = parameter.DefaultValue.Evaluate();

@@ -4,10 +4,7 @@ namespace Orange.Library.Parsers
 {
    public abstract class NullParser : Parser
    {
-      protected NullParser()
-         : base("")
-      {
-      }
+      protected NullParser() : base("") { }
 
       public override string VerboseName => "null";
 
@@ -19,7 +16,10 @@ namespace Orange.Library.Parsers
          this.position = position;
          var verb = Parse();
          if (verb == null)
+         {
             return false;
+         }
+
          result.Verb = verb;
          result.Position = overridePosition ?? position + length;
          return true;

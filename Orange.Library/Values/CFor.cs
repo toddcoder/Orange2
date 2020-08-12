@@ -78,7 +78,9 @@ namespace Orange.Library.Values
          {
             var block = incrementAssistant.Block();
             if (block == null)
+            {
                return new Nil();
+            }
 
             incrementAssistant.IteratorParameter();
             incrementAssistant.SetIteratorParameter(current);
@@ -87,9 +89,14 @@ namespace Orange.Library.Values
             whileAssistant.SetIteratorParameter(current);
             block = whileAssistant.Block();
             if (block == null)
+            {
                return new Nil();
+            }
+
             if (block.Evaluate().IsTrue)
+            {
                return current;
+            }
          }
 
          return new Nil();
@@ -128,7 +135,9 @@ namespace Orange.Library.Values
                block.Evaluate();
                var signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {

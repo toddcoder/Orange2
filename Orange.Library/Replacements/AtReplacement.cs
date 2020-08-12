@@ -1,9 +1,9 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Replacements
 {
@@ -44,7 +44,9 @@ namespace Orange.Library.Replacements
             SendMessage(variable, "push", at);
          }
          else
+         {
             Regions[variableName] = at;
+         }
       }
 
       public override string ToString() => $"={variableName}";

@@ -4,31 +4,34 @@ using static Orange.Library.Values.Value;
 
 namespace Orange.Library.Verbs
 {
-	public class AddAssign : OperatorAssign
-	{
-		public override Value Execute(Variable variable, Value value) => variable.Number + value.Number;
+   public class AddAssign : OperatorAssign
+   {
+      public override Value Execute(Variable variable, Value value) => variable.Number + value.Number;
 
-	   public override Value Exception(Variable variable, Value value)
-		{
-			var x = variable.Value;
-			if (x.Type == ValueType.Object)
-				return null;
+      public override Value Exception(Variable variable, Value value)
+      {
+         var x = variable.Value;
+         if (x.Type == ValueType.Object)
+         {
+            return null;
+         }
 
-			if (!x.IsNumeric() && !value.IsNumeric())
-			{
-				var result = x.Text + value.Text;
-				variable.Value = result;
-				return variable;
-			}
-			return null;
-		}
+         if (!x.IsNumeric() && !value.IsNumeric())
+         {
+            var result = x.Text + value.Text;
+            variable.Value = result;
+            return variable;
+         }
 
-		public override string Location => "Add assign";
+         return null;
+      }
 
-	   public override string Message => "add";
+      public override string Location => "Add assign";
 
-	   public override string ToString() => "+=";
+      public override string Message => "add";
 
-	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
-	}
+      public override string ToString() => "+=";
+
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
+   }
 }

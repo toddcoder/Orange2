@@ -5,17 +5,17 @@ namespace Orange.Library.Values
    public class MapIf : Value
    {
       Arguments map;
-      Arguments _if;
+      Arguments @if;
 
-      public MapIf(Arguments map, Arguments _if)
+      public MapIf(Arguments map, Arguments @if)
       {
          this.map = map;
-         this._if = _if;
+         this.@if = @if;
       }
 
       public Arguments Map => map;
 
-      public Arguments If => _if;
+      public Arguments If => @if;
 
       public override int Compare(Value value) => 0;
 
@@ -27,10 +27,10 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      public override Value Clone() => new MapIf(map.Clone(), _if.Clone());
+      public override Value Clone() => new MapIf(map.Clone(), @if.Clone());
 
       protected override void registerMessages(MessageManager manager) { }
 
-      public override string ToString() => $"{map} -? {_if}";
+      public override string ToString() => $"{map} -? {@if}";
    }
 }

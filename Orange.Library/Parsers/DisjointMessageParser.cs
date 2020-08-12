@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers
@@ -10,8 +10,7 @@ namespace Orange.Library.Parsers
 
       public DisjointMessageParser()
          : base("^ |sp| /('skip' | 'take' | 'split' | 'zip' | 'not' | 'any' | 'all' | 'one' | 'none' | 'is' | 'if' |" +
-            " 'map') ' '+ /('while' | 'until' | 'do' | 'in' | 'of' | 'not' | 'if') /b")
-      { }
+            " 'map') ' '+ /('while' | 'until' | 'do' | 'in' | 'of' | 'not' | 'if') /b") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -72,7 +71,9 @@ namespace Orange.Library.Parsers
                   self = true;
                }
                else
+               {
                   return null;
+               }
 
                break;
             case "is":
@@ -85,13 +86,21 @@ namespace Orange.Library.Parsers
                return null;
             case "if":
                if (word2 == "not")
+               {
                   message = joinWords(word1, word2);
+               }
+
                break;
             case "map":
                if (word2 == "if")
+               {
                   message = joinWords(word1, word2);
+               }
                else
+               {
                   return null;
+               }
+
                break;
          }
 

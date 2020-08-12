@@ -20,13 +20,17 @@ namespace Orange.Library.Verbs
          actions.AutoRegister = false;
          State.RegisterBlock(actions);
          State.Stack.Push(value);
-         if (value is Object obj)
+         switch (value)
          {
-            Regions.SetLocal("self", obj);
-            Regions.SetLocal("class", obj.Class);
+            case Object obj:
+               Regions.SetLocal("self", obj);
+               Regions.SetLocal("class", obj.Class);
+               break;
+            default:
+               Regions.SetLocal("value", VAR_VALUE);
+               break;
          }
-         else
-            Regions.SetLocal("value", VAR_VALUE);
+
          var result = actions.Evaluate();
          State.UnregisterBlock();
          return result;

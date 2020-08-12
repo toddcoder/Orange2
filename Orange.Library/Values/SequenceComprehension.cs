@@ -24,7 +24,10 @@ namespace Orange.Library.Values
             RegionManager.Regions.Current.CopyAllVariablesTo(this.region);
          }
          else
+         {
             this.region = region;
+         }
+
          index = -1;
          arrayValue = null;
          sequence = null;
@@ -46,7 +49,10 @@ namespace Orange.Library.Values
          parameters = comprehension.Parameters;
          region = comprehension.Region;
          if (comprehension.InnerComprehension != null)
+         {
             innerComprehension = new SequenceComprehension(comprehension.InnerComprehension);
+         }
+
          index = -1;
          arrayValue = null;
          sequence = null;
@@ -105,20 +111,30 @@ namespace Orange.Library.Values
       Value getNext()
       {
          if (arrayBlock == null)
+         {
             return new Nil();
+         }
 
          if (arrayValue == null)
          {
             arrayValue = arrayBlock.Evaluate();
             if (arrayValue == null || arrayValue.IsNil)
+            {
                return new Nil();
+            }
 
             sequence = arrayValue as ISequenceSource;
             if (sequence == null)
+            {
                if (arrayValue.IsArray)
+               {
                   arrayValue = arrayValue.SourceArray;
+               }
                else
+               {
                   return new Nil();
+               }
+            }
          }
 
          if (sequence != null)
@@ -138,7 +154,9 @@ namespace Orange.Library.Values
          {
             popper.Push();
             if (arrayBlock == null)
+            {
                return new Nil();
+            }
 
             assistant.ArrayParameters();
             if (ifBlock != null)
@@ -147,25 +165,33 @@ namespace Orange.Library.Values
                {
                   var value = getNext();
                   if (value.IsNil)
+                  {
                      return value;
+                  }
 
                   assistant.SetParameterValues(value, index.ToString(), index);
                   if (ifBlock.Evaluate().IsTrue)
                   {
                      value = block.Evaluate();
                      if (!value.IsNil)
+                     {
                         return value;
+                     }
                   }
                }
                else
                {
                   var value = getNext();
                   if (value.IsNil)
+                  {
                      return value;
+                  }
 
                   assistant.SetParameterValues(value, index.ToString(), index);
                   if (ifBlock.Evaluate().IsTrue)
+                  {
                      return innerComprehension.Next();
+                  }
                }
             }
             else
@@ -174,7 +200,9 @@ namespace Orange.Library.Values
                {
                   var value = getNext();
                   if (value.IsNil)
+                  {
                      return value;
+                  }
 
                   assistant.SetParameterValues(value, index.ToString(), index);
                   value = block.Evaluate();
@@ -184,7 +212,9 @@ namespace Orange.Library.Values
                {
                   var value = getNext();
                   if (value.IsNil)
+                  {
                      return value;
+                  }
 
                   assistant.SetParameterValues(value, index.ToString(), index);
                   return innerComprehension.Next();
@@ -198,7 +228,9 @@ namespace Orange.Library.Values
       void pushDownInnerComprehension(SequenceComprehension comprehension)
       {
          if (innerComprehension != null)
+         {
             innerComprehension.pushDownInnerComprehension(comprehension);
+         }
          else
          {
             innerComprehension = comprehension;
@@ -227,9 +259,13 @@ namespace Orange.Library.Values
       void setIf(Block block)
       {
          if (innerComprehension == null)
+         {
             ifBlock = block;
+         }
          else
+         {
             innerComprehension.setIf(block);
+         }
       }
 
       public ISequenceSource Copy() => (ISequenceSource)Clone();

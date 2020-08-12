@@ -1,10 +1,10 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -20,8 +20,8 @@ namespace Orange.Library.Parsers
          Color(position, tokens[1].Length, Structures);
          Color(tokens[2].Length, KeyWords);
          var index = NextPosition;
-         var head = none<NSInnerComprehension>();
-         var current = none<NSInnerComprehension>();
+         var anyHead = none<NSInnerComprehension>();
+         var anyCurrent = none<NSInnerComprehension>();
 
          while (index < source.Length)
          {
@@ -29,26 +29,41 @@ namespace Orange.Library.Parsers
             {
                index = innerComprehensionParser.Position;
                var comprehension = ((NSInnerComprehension)innerComprehensionParser.Value).Some();
-               if (head.IsSome)
-                  current.Value.NextComprehension = comprehension;
+               if (anyHead.HasValue)
+               {
+                  if (anyCurrent.If(out var current))
+                  {
+                     current.NextComprehension = comprehension;
+                  }
+               }
                else
-                  head = comprehension;
-               current = comprehension;
+               {
+                  anyHead = comprehension;
+               }
+
+               anyCurrent = comprehension;
             }
             else
+            {
                return null;
+            }
 
             if (!innerComprehensionParser.Last)
+            {
                continue;
+            }
 
-            if (head.IsNone)
+            if (!anyHead.HasValue)
+            {
                return null;
+            }
 
-            if (GetExpression(source, index, CloseParenthesis()).If(out var block, out var i))
+            if (GetExpression(source, index, CloseParenthesis()).If(out var block, out var i) && anyHead.If(out var head))
             {
                overridePosition = i;
-               var value = new NSOuterComprehension(head.Value, block);
+               var value = new NSOuterComprehension(head, block);
                result.Value = value;
+
                return value.PushedVerb;
             }
          }

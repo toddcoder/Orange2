@@ -1,12 +1,12 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Arrays.ArrayFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Runtime;
-using static Standard.Types.Arrays.ArrayFunctions;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -14,9 +14,8 @@ namespace Orange.Library.Parsers
    {
       ParametersParser parameterParser;
 
-      public LambdaParser()
-         : base($"^ /(' '* '(') /({REGEX_VARIABLE} | '_' | '(' {REGEX_VARIABLE} (/s* ',' /s* {REGEX_VARIABLE})+ ')')? " +
-              "/(/s*) /('->' | '=>')") => parameterParser = new ParametersParser();
+      public LambdaParser() : base($"^ /(' '* '(') /({REGEX_VARIABLE} | '_' | '(' {REGEX_VARIABLE} (/s* ',' /s* {REGEX_VARIABLE})+ ')')? " +
+         "/(/s*) /('->' | '=>')") => parameterParser = new ParametersParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -36,7 +35,10 @@ namespace Orange.Library.Parsers
             index = position + leftLength;
             Color(position, leftLength, Structures);
             if (!parameterParser.Parse(source, index).If(out parameters, out index))
+            {
                return null;
+            }
+
             index = NextPosition;
          }
          else
@@ -44,6 +46,7 @@ namespace Orange.Library.Parsers
             Color(param.Length, Variables);
             parameters = new Parameters(array(new Parameter(param)));
          }
+
          Color(position + tokens[1].Length + tokens[2].Length, tokens[3].Length, Whitespaces);
          Color(type.Length, Structures);
          parameters.Splatting = type == "=>";

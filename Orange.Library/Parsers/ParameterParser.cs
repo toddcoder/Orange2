@@ -1,13 +1,13 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Monads;
+using Core.Strings;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -29,7 +29,10 @@ namespace Orange.Library.Parsers
             index = freeParser.NextPosition;
             Block defaultValue = null;
             if (tokens[6].IsNotEmpty() && GetExpression(source, index, PassAlong("[',;)']", false)).If(out defaultValue, out var newIndex))
+            {
                index = newIndex;
+            }
+
             return (new Parameter(parameterName, defaultValue, visibility, readOnly, lazy), index).Some();
          }
 

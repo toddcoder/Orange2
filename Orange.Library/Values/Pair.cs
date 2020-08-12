@@ -42,9 +42,14 @@ namespace Orange.Library.Values
       public Value For()
       {
          if (left is Pattern leftPattern)
+         {
             return doPatternFor(leftPattern, right, Arguments);
+         }
+
          if (right is Pattern rightPattern)
+         {
             return doPatternFor(rightPattern, left, Arguments);
+         }
 
          return this;
       }

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Values.Value;
@@ -27,16 +27,19 @@ namespace Orange.Library.Verbs
          this.sourceVariableName = sourceVariableName;
       }
 
-      public SpecialAssignment()
-         : this("", "") { }
+      public SpecialAssignment() : this("", "") { }
 
       public override Value Evaluate()
       {
          if (sourceVariableName != null)
+         {
             value = Regions[sourceVariableName];
+         }
+
          Regions.CreateVariable(variableName);
          var variable = new Variable(variableName);
          value.AssignTo(variable);
+
          return null;
       }
 

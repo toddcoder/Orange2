@@ -39,7 +39,9 @@ namespace Orange.Library.Values
       {
          var value = RegionManager.Regions[dataName];
          if (value is Data data)
+         {
             return SendMessage(data, name, Arguments);
+         }
 
          Throw("Constructor proxy", $"{value} isn't a data");
          return null;

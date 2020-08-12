@@ -15,7 +15,9 @@ namespace Orange.Library.Verbs
          var right = increment(stack);
          var left = stack.Pop(true, LOCATION);
          if (left is NSIntRange intRange && right.Type == ValueType.Number)
+         {
             return new NSIntRange(intRange, right.Int);
+         }
 
          Throw(LOCATION, "Value isn't a range");
          return null;

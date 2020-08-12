@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -31,11 +31,12 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         var generator = source.Evaluate().PossibleGenerator();
-         Assert(generator.IsSome, LOCATION, "Generator required");
-         var array = (Array)generator.Value.Array();
+         var generator = Assert(source.Evaluate().PossibleGenerator(), LOCATION, "Generator required");
+         var array = (Array)generator.Array();
          if (array.Length == 0)
+         {
             return null;
+         }
 
          using (var popper = new RegionPopper(new Region(), "each"))
          {
@@ -60,7 +61,9 @@ namespace Orange.Library.Verbs
             evaluateFirst(array[0]);
 
             for (var i = 1; i < lastIndex; i++)
+            {
                evaluateMiddle(array[i], i);
+            }
 
             evaluateLast(array[lastIndex], lastIndex);
 
@@ -74,9 +77,13 @@ namespace Orange.Library.Verbs
          parameters.SetValues(element, 0);
          block.Evaluate();
          if (first.If(out var b))
+         {
             b.Evaluate();
+         }
          else
+         {
             middle.Evaluate();
+         }
       }
 
       void evaluateMiddle(Value element, int index)
@@ -91,9 +98,13 @@ namespace Orange.Library.Verbs
          parameters.SetValues(element, index);
          block.Evaluate();
          if (last.If(out var b))
+         {
             b.Evaluate();
+         }
          else
+         {
             middle.Evaluate();
+         }
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;

@@ -81,7 +81,7 @@ namespace Orange.Library.Values
       public void Initialize(ObjectBuildingRegion buildingRegion, bool isObj, string clsName, bool lockedDown)
       {
          region = buildingRegion.NewRegion(this, isObj);
-         region.SetReadOnly("id", id, @override: true);
+         region.SetReadOnly("id", id, overriding: true);
          visibilityTypes = buildingRegion.VisibilityTypes;
          isObject = isObj;
          className = clsName;
@@ -422,7 +422,7 @@ namespace Orange.Library.Values
             .Where(i => i.Value != Private && i.Value != Temporary && !isBuiltIn(i.Key) && !other.ContainsMessage(i.Key))
             .Select(item => item.Key))
          {
-            other.CreateVariable(variableName, visibility: visibilityTypes[variableName], @override: true);
+            other.CreateVariable(variableName, visibility: visibilityTypes[variableName], overriding: true);
             if (region.IsReadOnly(variableName))
             {
                other.SetReadOnly(variableName);

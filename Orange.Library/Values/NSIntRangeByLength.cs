@@ -7,7 +7,9 @@ namespace Orange.Library.Values
       public static INSGenerator ReplaceGeneratorSource(INSGenerator originalGenerator, int length)
       {
          if (originalGenerator.GeneratorSource is IRangeEndpoints nsIntRange)
+         {
             return new NSGenerator(new NSIntRangeByLength(nsIntRange, length));
+         }
 
          return originalGenerator;
       }
@@ -55,7 +57,9 @@ namespace Orange.Library.Values
          var endPointStart = wrap(rangeEndpoints.Start(length), length);
          var endPointStop = wrap(rangeEndpoints.Stop(length), length);
          if (endPointStop <= endPointStart && !inclusive)
+         {
             empty = true;
+         }
          else
          {
             start = endPointStart;
@@ -67,7 +71,10 @@ namespace Orange.Library.Values
       public override Value Next(int index)
       {
          if (empty)
+         {
             return NilValue;
+         }
+
          var value = base.Next(index);
          return value.Int < length ? value : NilValue;
       }

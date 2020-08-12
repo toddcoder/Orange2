@@ -1,9 +1,9 @@
 ﻿using System.IO;
 using System.Linq;
+using Core.Collections;
+using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Collections;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object.VisibilityType;
@@ -29,7 +29,7 @@ namespace Orange.Library.Values
       string superName;
       Object staticObject;
       Parameters mergedParameters;
-      Hash<string, string> invokeables;
+      Hash<string, string> invokables;
       string[] traitNames;
       Hash<string, Trait> traits;
       Parameters superParameters;
@@ -46,7 +46,7 @@ namespace Orange.Library.Values
          name = "base";
          staticObject = null;
          mergedParameters = null;
-         invokeables = new AutoHash<string, string> { Default = DefaultType.Value, DefaultValue = "" };
+         invokables = new AutoHash<string, string> { Default = DefaultType.Value, DefaultValue = "" };
          this.traitNames = traitNames;
          traits = null;
          this.superParameters = superParameters;
@@ -54,11 +54,9 @@ namespace Orange.Library.Values
          this.lockedDown = lockedDown;
       }
 
-      public Class(Parameters parameters, Block objectBlock)
-         : this(parameters, objectBlock, new Block(), "", new string[0], null, false) { }
+      public Class(Parameters parameters, Block objectBlock) : this(parameters, objectBlock, new Block(), "", new string[0], null, false) { }
 
-      public Class()
-         : this(new Parameters(), new Block(), new Block(), "", new string[0], null, false) { }
+      public Class() : this(new Parameters(), new Block(), new Block(), "", new string[0], null, false) { }
 
       public Hash<string, Trait> Traits => traits;
 
@@ -86,8 +84,11 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      public override Value Clone() => new Class((Parameters)parameters.Clone(), (Block)objectBlock.Clone(), (Block)classBlock?.Clone(),
-         superName, traitNames, (Parameters)parameters?.Clone(), lockedDown);
+      public override Value Clone()
+      {
+         return new Class((Parameters)parameters.Clone(), (Block)objectBlock.Clone(), (Block)classBlock?.Clone(), superName, traitNames,
+            (Parameters)parameters?.Clone(), lockedDown);
+      }
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -98,11 +99,13 @@ namespace Orange.Library.Values
 
       public Value Invoke() => NewObject(Arguments);
 
-      public Object NewObject(Arguments arguments, bool isObject = true, bool allowAbstracts = false,
-         Block defaultBlock = null)
+      public Object NewObject(Arguments arguments, bool isObject = true, bool allowAbstracts = false, Block defaultBlock = null)
       {
          if (traits == null)
+         {
             retrieveTraits();
+         }
+
          ObjectBuildingRegion region;
          var superUsed = superName.IsNotEmpty();
          if (superUsed)
@@ -115,37 +118,46 @@ namespace Orange.Library.Values
                var superObject = superClass.NewObject(arguments, allowAbstracts: true);
                superObject.CopyAllNonPrivateTo(region);
                superClass.UnmergeParameters();
-               region.CreateVariable("super", @override: true);
+               region.CreateVariable("super", overriding: true);
                region["super"] = superClass;
             }
             else
+            {
                Throw(LOCATION, $"{superName} isn't a class");
+            }
          }
          else
          {
             region = new ObjectBuildingRegion(name) { ID = id, IsObject = isObject };
-            region.CreateVariable("super", @override: true);
+            region.CreateVariable("super", overriding: true);
             region["super"] = new Class(new Parameters(), new Block(), null, "", new string[0], null, false);
          }
+
          if (staticObject != null)
          {
-            region.CreateVariable("class", @override: true);
+            region.CreateVariable("class", overriding: true);
             region["class"] = staticObject;
          }
-         region.CreateVariable(MESSAGE_BUILDER, @override: true);
+
+         region.CreateVariable(MESSAGE_BUILDER, overriding: true);
          region[MESSAGE_BUILDER] = name;
          if (!allowAbstracts)
+         {
             implementTraits(region);
+         }
+
          var parametersToCopy = new Hash<string, Value>();
          var visibilitiesToCopy = new AutoHash<string, Object.VisibilityType> { Default = DefaultType.Value, DefaultValue = Public };
-         var readOnlies = new Hash<string, bool>();
+         var readOnlyVariables = new Hash<string, bool>();
          if (!superUsed)
          {
             var parametersToUse = mergedParameters ?? parameters;
             var values = parametersToUse.GetArguments(arguments);
             foreach (var parameterValue in values)
+            {
                region.SetParameter(parameterValue.Name, parameterValue.Value, parameterValue.Visibility,
                   allowNil: true);
+            }
 
             for (var i = 0; i < parametersToUse.Length; i++)
             {
@@ -153,7 +165,7 @@ namespace Orange.Library.Values
                var value = region[variableName];
                parametersToCopy[variableName] = value;
                visibilitiesToCopy[variableName] = parametersToUse[i].Visibility;
-               readOnlies[variableName] = parametersToUse[i].ReadOnly;
+               readOnlyVariables[variableName] = parametersToUse[i].ReadOnly;
             }
          }
 
@@ -164,13 +176,15 @@ namespace Orange.Library.Values
             region.CreateVariable("self", visibility: Protected);
             region["self"] = obj;
          }
+
          State.RegisterBlock(objectBlock, region);
-         foreach (var item in parametersToCopy)
+         foreach (var (key, value) in parametersToCopy)
          {
-            var key = item.Key;
-            region.SetLocal(key, item.Value, visibilitiesToCopy[key], true);
-            if (readOnlies[key])
+            region.SetLocal(key, value, visibilitiesToCopy[key], true);
+            if (readOnlyVariables[key])
+            {
                region.SetReadOnly(key);
+            }
          }
 
          if (defaultBlock != null)
@@ -179,21 +193,28 @@ namespace Orange.Library.Values
             region.CreateVariable("init", visibility: Temporary);
             region["init"] = defaultBlock;
          }
+
          objectBlock.Evaluate();
          if (commonBlock != null)
          {
             commonBlock.AutoRegister = false;
             commonBlock.Evaluate();
          }
+
          State.UnregisterBlock();
          if (!allowAbstracts)
          {
             region.DetectAbstracts();
             region.DetectToDos();
          }
-         foreach (var item in region.Variables)
-            if (item.Value is InvokableReference reference)
-               invokeables[item.Key] = reference.VariableName;
+
+         foreach (var (key, value) in region.Variables)
+         {
+            if (value is InvokableReference reference)
+            {
+               invokables[key] = reference.VariableName;
+            }
+         }
 
          obj.Initialize(region, isObject, name, lockedDown);
          return obj;
@@ -209,7 +230,9 @@ namespace Orange.Library.Values
       public void CreateStaticObject()
       {
          if (classBlock == null || staticObject != null)
+         {
             return;
+         }
 
          var _class = new Class(new Parameters(), classBlock, null, "", new string[0], null, false)
          {
@@ -217,17 +240,23 @@ namespace Orange.Library.Values
          };
          staticObject = _class.NewObject(new Arguments(), false);
          if (superName.IsNotEmpty() && Regions[superName] is Class superClass)
+         {
             superClass.StaticObject?.CopyAllNonPrivateTo(staticObject);
+         }
 
          if (!staticObject.Region.ContainsMessage("init_common"))
+         {
             return;
+         }
 
          var reference = staticObject.Invokable("init_common");
-         var invokeable = reference.Invokable;
-         if (invokeable == null)
+         var invokable = reference.Invokable;
+         if (invokable == null)
+         {
             return;
+         }
 
-         var closure = (Lambda)invokeable;
+         var closure = (Lambda)invokable;
          commonBlock = closure.Block;
       }
 
@@ -238,43 +267,53 @@ namespace Orange.Library.Values
          {
             var value = Regions[traitName];
             if (value is Trait trait)
+            {
                traits[traitName] = trait;
+            }
             else
+            {
                Throw("Object builder", $"{traitName} is not a trait");
+            }
          }
       }
 
       void checkTraits(Region region)
       {
-         foreach (var item in traits)
+         foreach (var (traitName, trait) in traits)
          {
-            var traitName = item.Key;
-            var trait = item.Value;
-            foreach (var member in trait.Members)
-               if (member.Value is Signature signature)
-                  if (region.ContainsMessage(member.Key))
+            foreach (var (messageName, member) in trait.Members)
+            {
+               if (member is Signature signature)
+               {
+                  if (region.ContainsMessage(messageName))
                   {
-                     var value = region[member.Key];
+                     var value = region[messageName];
                      if (value is InvokableReference reference)
+                     {
                         Assert(reference.MatchesSignature(signature), LOCATION, $"Trait {traitName}.{signature.Name} has not been implemented");
+                     }
                   }
                   else
-                     Assert(signature.Optional, LOCATION, $"{traitName}.{member.Key} isn't implemented");
+                  {
+                     Assert(signature.Optional, LOCATION, $"{traitName}.{messageName} isn't implemented");
+                  }
+               }
+            }
          }
       }
 
       void implementTraits(Region region)
       {
-         foreach (var item in traits)
+         foreach (var (_, trait) in traits)
          {
-            var trait = item.Value;
-            foreach (var member in trait.Members.Where(member => !(member.Value is Signature)))
+            foreach (var (variableName, value) in trait.Members.Where(member => !(member.Value is Signature)))
             {
-               var variableName = member.Key;
-               region.CreateVariable(variableName, @override: true);
-               region[variableName] = member.Value;
+               region.CreateVariable(variableName, overriding: true);
+               region[variableName] = value;
                if (variableName.StartsWith("$"))
+               {
                   region.VisibilityTypes[variableName] = Protected;
+               }
             }
          }
       }
@@ -289,7 +328,9 @@ namespace Orange.Library.Values
       {
          handled = false;
          if (staticObject == null)
+         {
             return null;
+         }
 
          handled = true;
          if (staticObject.Region.IsInitializer(messageName))
@@ -298,9 +339,9 @@ namespace Orange.Library.Values
             var oldBlock = objectBlock;
             if (staticObject.Region[messageName] is InvokableReference reference)
             {
-               var invokeable = reference.Invokable;
-               RejectNull(invokeable, LOCATION, $"Invokeable {messageName} not found");
-               if (invokeable is Lambda lambda)
+               var invokable = reference.Invokable;
+               RejectNull(invokable, LOCATION, $"Invokable {messageName} not found");
+               if (invokable is Lambda lambda)
                {
                   parameters = lambda.Parameters;
                   objectBlock = lambda.Block;
@@ -354,15 +395,22 @@ namespace Orange.Library.Values
             {
                var visibleValues = staticObject.VisibleValues;
                if (visibleValues.IsNotEmpty())
+               {
                   writer.Write(" ");
+               }
+
                writer.Write(visibleValues);
             }
+
             writer.Write(")");
             return writer.ToString();
          }
       }
 
-      public InvokableReference InvokableReference(string message, bool isObject) => new InvokableReference(Object.InvokableName(name, isObject, message));
+      public InvokableReference InvokableReference(string message, bool isObject)
+      {
+         return new InvokableReference(Object.InvokableName(name, isObject, message));
+      }
 
       public Value Required()
       {
@@ -373,9 +421,14 @@ namespace Orange.Library.Values
       public bool IsChildOf(Class possibleParent)
       {
          if (id == possibleParent.id)
+         {
             return true;
+         }
+
          if (superName.IsEmpty() || superName == "base")
+         {
             return false;
+         }
 
          var superBuilder = (Class)Regions[superName];
          return superBuilder != null && superBuilder.IsChildOf(possibleParent);
@@ -383,7 +436,7 @@ namespace Orange.Library.Values
 
       public bool ImplementsTrait(Object obj)
       {
-         return obj.AllPublicInvokables.Count != 0 && invokeables.All(item => obj.RespondsTo(item.Key));
+         return obj.AllPublicInvokables.Count != 0 && invokables.All(item => obj.RespondsTo(item.Key));
       }
 
       public bool ImplementsTrait(Trait trait) => traits.ContainsValue(trait);

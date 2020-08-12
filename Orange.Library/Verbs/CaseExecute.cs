@@ -29,13 +29,21 @@ namespace Orange.Library.Verbs
       {
          var left = State.Stack.Pop(true, "Case");
          if (left.IsNil)
+         {
             return left;
+         }
+
          var right = comparisand.Evaluate();
          Case _case;
          if (left is Case c)
+         {
             _case = new Case(c, right, false, condition);
+         }
          else
+         {
             _case = new Case(left, right, false, required, condition);
+         }
+
          var arguments = GuaranteedExecutable(result);
          return SendMessage(_case, "then", arguments);
       }

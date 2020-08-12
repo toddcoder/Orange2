@@ -7,33 +7,37 @@ using static Orange.Library.Verbs.Verb.AffinityType;
 
 namespace Orange.Library.Verbs
 {
-	public class PreIncrement : Verb
-	{
-		const string LOCATION = "Preincrement";
+   public class PreIncrement : Verb
+   {
+      const string LOCATION = "Preincrement";
 
-		public static Value GetSuccessor(Value value) => MessagingState.SendMessage(value, "succ", new Arguments());
+      public static Value GetSuccessor(Value value) => MessagingState.SendMessage(value, "succ", new Arguments());
 
-	   public override Value Evaluate()
-		{
-			var value = State.Stack.Pop(false, LOCATION);
-			if (value.IsVariable)
-			{
-				var variable = (Variable)value;
-				value = variable.Value;
-				var successor = GetSuccessor(value);
-				if (value.Type != ValueType.Object)
-					variable.Value = successor;
-				return variable;
-			}
-			return GetSuccessor(value);
-		}
+      public override Value Evaluate()
+      {
+         var value = State.Stack.Pop(false, LOCATION);
+         if (value.IsVariable)
+         {
+            var variable = (Variable)value;
+            value = variable.Value;
+            var successor = GetSuccessor(value);
+            if (value.Type != ValueType.Object)
+            {
+               variable.Value = successor;
+            }
 
-		public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
+            return variable;
+         }
 
-	   public override string ToString() => "++";
+         return GetSuccessor(value);
+      }
 
-	   public override AffinityType Affinity => Prefix;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.PreIncrement;
 
-	   public override int OperandCount => 1;
-	}
+      public override string ToString() => "++";
+
+      public override AffinityType Affinity => Prefix;
+
+      public override int OperandCount => 1;
+   }
 }

@@ -18,11 +18,16 @@ namespace Orange.Library.Verbs
             if (result.IsTrue)
             {
                if (found)
+               {
                   return false;
+               }
+
                found = true;
             }
+
             value = iterator.Next();
          }
+
          return found;
       }
 

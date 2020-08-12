@@ -17,8 +17,7 @@ namespace Orange.Library.Values
          index = 0;
       }
 
-      public GeneratorList(IEnumerable<INSGenerator> generators)
-         : this()
+      public GeneratorList(IEnumerable<INSGenerator> generators) : this()
       {
          this.generators.AddRange(generators);
       }
@@ -82,6 +81,7 @@ namespace Orange.Library.Values
             generator.Region = Region;
             generator.Reset();
          }
+
          index = 0;
          more = true;
       }
@@ -93,6 +93,7 @@ namespace Orange.Library.Values
             more = false;
             return NilValue;
          }
+
          for (var i = 0; i < MAX_LOOP && index < generators.Count; i++)
          {
             var generator = generators[index];
@@ -161,9 +162,11 @@ namespace Orange.Library.Values
 
       public Value Concatenate()
       {
-         var generator = Arguments[0].PossibleGenerator();
-         if (generator.IsSome)
-            Add(generator.Value);
+         if (Arguments[0].PossibleGenerator().If(out var generator))
+         {
+            Add(generator);
+         }
+
          return this;
       }
 

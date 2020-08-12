@@ -88,7 +88,9 @@ namespace Orange.Library.Values
       {
          var baseValue = Arguments[0];
          if (baseValue.IsEmpty)
+         {
             return Log10(value);
+         }
 
          var baseNumber = baseValue.Number;
          return CSComplex.Log(value, baseNumber);

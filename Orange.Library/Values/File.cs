@@ -1,7 +1,6 @@
-﻿using System.IO;
+﻿using Core.Computers;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Computer;
-using Standard.Types.Strings;
 using static System.StringComparison;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
@@ -16,8 +15,7 @@ namespace Orange.Library.Values
       {
          File file;
 
-         public FileLineGenerator(INSGeneratorSource generatorSource)
-            : base(generatorSource) => file = (File)generatorSource;
+         public FileLineGenerator(INSGeneratorSource generatorSource) : base(generatorSource) => file = (File)generatorSource;
 
          public override void Reset()
          {
@@ -29,7 +27,10 @@ namespace Orange.Library.Values
          {
             var line = base.Next();
             if (line.IsNil)
+            {
                file.Reader?.Dispose();
+            }
+
             return line;
          }
       }
@@ -45,13 +46,13 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return fileName.Text; }
+         get => fileName.Text;
          set { }
       }
 
       public override double Number
       {
-         get { return Text.ToDouble(); }
+         get => Text.ToDouble();
          set { }
       }
 
@@ -84,14 +85,18 @@ namespace Orange.Library.Values
       public Value For()
       {
          using (var assistant = new ParameterAssistant(Arguments))
+         {
             return filter == null ? standardLoop(assistant) : filteredLoop(assistant);
+         }
       }
 
       Value standardLoop(ParameterAssistant assistant)
       {
          var block = assistant.Block();
          if (block == null)
+         {
             return this;
+         }
 
          assistant.LoopParameters();
          using (var fileNameReader = fileName.Reader())
@@ -104,7 +109,9 @@ namespace Orange.Library.Values
                block.Evaluate();
                var signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -123,7 +130,9 @@ namespace Orange.Library.Values
       {
          var block = assistant.Block();
          if (block == null)
+         {
             return this;
+         }
 
          assistant.LoopParameters();
          using (var fileNameReader = fileName.Reader())
@@ -134,10 +143,15 @@ namespace Orange.Library.Values
             {
                assistant.SetLoopParameters(line, index++);
                if (filter.IsTrue)
+               {
                   block.Evaluate();
+               }
+
                var signal = Signal();
                if (signal == Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -154,7 +168,7 @@ namespace Orange.Library.Values
 
       public override string ToString() => fileName.ToString();
 
-      public StreamReader Reader { get; set; }
+      public FileNameMappedReader Reader { get; set; }
 
       public INSGenerator GetGenerator() => new FileLineGenerator(this);
 

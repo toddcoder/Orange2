@@ -36,8 +36,11 @@ namespace Orange.Library.Patterns
 			if (string.Compare(text, 0, input, start, textLength, ignoreCase) == 0)
 			{
 				if (not)
-					return false;
-				index = start;
+            {
+               return false;
+            }
+
+            index = start;
 				length = textLength;
 				return true;
 			}
@@ -57,15 +60,23 @@ namespace Orange.Library.Patterns
 	   public override bool EvaluateFirst(string input)
 		{
 			if (Not)
-				return Evaluate(input);
+         {
+            return Evaluate(input);
+         }
 
-			var comparison = State.IgnoreCase ? OrdinalIgnoreCase : Ordinal;
+         var comparison = State.IgnoreCase ? OrdinalIgnoreCase : Ordinal;
 			if (State.Position >= input.Length)
-				return false;
-			var foundIndex = input.IndexOf(text, State.Position, comparison);
+         {
+            return false;
+         }
+
+         var foundIndex = input.IndexOf(text, State.Position, comparison);
 			if (foundIndex == -1)
-				return false;
-			index = foundIndex;
+         {
+            return false;
+         }
+
+         index = foundIndex;
 			length = text.Length;
 			return true;
 		}

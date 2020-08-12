@@ -1,7 +1,7 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Monads;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Values.Object.VisibilityType;
 
@@ -11,8 +11,7 @@ namespace Orange.Library.Parsers
    {
       FunctionBodyParser functionBodyParser;
 
-      public InitBlockParser()
-         : base("^ /(|tabs| 'init') /b") => functionBodyParser = new FunctionBodyParser();
+      public InitBlockParser() : base("^ /(|tabs| 'init') /b") => functionBodyParser = new FunctionBodyParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -27,6 +26,7 @@ namespace Orange.Library.Parsers
                   false, Protected, false, null)
             };
             AddStaticBlock(staticBlock);
+
             return new NullOp();
          }
 

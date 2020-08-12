@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.RegularExpressions;
+﻿using Core.RegularExpressions;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
@@ -13,9 +13,7 @@ namespace Orange.Library.Parsers
       public static bool IsDefinedKeyword(string word) => word.IsMatch(REGEX_KEYWORDS);
 
       public DefineParser()
-         : base($"^ /(|sp|) /('public' | 'private' | 'temp' | 'locked')? /(/s*) /('var' | 'val') /(/s+) /({REGEX_VARIABLE})")
-      {
-      }
+         : base($"^ /(|sp|) /('public' | 'private' | 'temp' | 'locked')? /(/s*) /('var' | 'val') /(/s+) /({REGEX_VARIABLE})") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -29,6 +27,7 @@ namespace Orange.Library.Parsers
          Color(tokens[4].Length, KeyWords);
          Color(tokens[5].Length, Whitespaces);
          Color(variableName.Length, Variables);
+
          return new Define(variableName, visibilityType, readOnly);
       }
 

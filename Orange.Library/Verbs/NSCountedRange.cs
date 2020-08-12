@@ -20,7 +20,10 @@ namespace Orange.Library.Verbs
             right = left.Int - right.Int - 1;
          }
          else
+         {
             right = left.Int + right.Int - 1;
+         }
+
          return GetGenerator(left, right, true);
       }
 

@@ -60,9 +60,12 @@ namespace Orange.Library.Values
          State.UnregisterBlock();
          var array = result as Array;
          if (array == null)
+         {
             return "";
+         }
 
          foreach (var item in array)
+         {
             switch (item.Value.Type)
             {
                case ValueType.Block:
@@ -73,6 +76,7 @@ namespace Orange.Library.Values
                default:
                   return item.Value;
             }
+         }
 
          return "";
       }
@@ -80,46 +84,63 @@ namespace Orange.Library.Values
       public Value When()
       {
          if (found)
+         {
             return new Nil();
+         }
 
          var matched = Arguments[0];
          var block = Arguments[1];
          if (matched.IsArray)
+         {
             matched = matched.SourceArray;
+         }
+
          switch (matched.Type)
          {
             case ValueType.Array:
                var array = (Array)matched;
                if (array.ContainsValue(value))
+               {
                   return evaluate(block);
+               }
 
                break;
             case ValueType.Pattern:
                var pattern = (Pattern)matched;
                if (pattern.IsMatch(value.Text))
+               {
                   return evaluate(block);
+               }
 
                break;
             case ValueType.Lambda:
                var closure = (Lambda)matched;
                if (closure.Evaluate(new Arguments(value)).IsTrue)
+               {
                   return evaluate(block);
+               }
 
                break;
             case ValueType.Block:
                var matchBlock = (Block)matched;
                if (matchBlock.Evaluate().IsTrue)
+               {
                   return evaluate(block);
+               }
 
                break;
             case ValueType.Boolean:
                if (matched.IsTrue)
+               {
                   return evaluate(block);
+               }
 
                break;
             default:
                if (matched.Compare(value) == 0)
+               {
                   return evaluate(block);
+               }
 
                break;
          }

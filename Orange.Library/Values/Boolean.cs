@@ -42,14 +42,20 @@ namespace Orange.Library.Values
       public Value Else()
       {
          if (Arguments.Executable.CanExecute && booleanValue)
+         {
             Arguments.Executable.Evaluate();
+         }
+
          return null;
       }
 
       public Value ElseIf()
       {
          if (!booleanValue)
+         {
             return false;
+         }
+
          if (Arguments.Executable.CanExecute && Arguments[0].IsTrue)
          {
             Arguments.Executable.Evaluate();

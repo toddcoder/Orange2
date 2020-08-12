@@ -11,9 +11,8 @@ namespace Orange.Library.Verbs
       public override Value Evaluate()
       {
          var value = State.Stack.Pop(true, LOCATION);
-         var generator = value.PossibleGenerator();
-         Assert(generator.IsSome, LOCATION, $"{value} isn't a generator source");
-         return (Value)generator.Value;
+         var generator = Assert(value.PossibleGenerator(), LOCATION, $"{value} isn't a generator source");
+         return (Value)generator;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.ChangeSign;

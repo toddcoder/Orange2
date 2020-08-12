@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Strings;
 
 namespace Orange.Library.Values
 {
@@ -11,7 +11,10 @@ namespace Orange.Library.Values
       public AssemblyValue(string description)
       {
          if (description.IsEmpty())
+         {
             description = "mscorlib";
+         }
+
          assembly = Assembly.Load(description);
       }
 
@@ -21,24 +24,14 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return assembly.FullName;
-         }
-         set
-         {
-         }
+         get => assembly.FullName;
+         set { }
       }
 
       public override double Number
       {
-         get
-         {
-            return 0;
-         }
-         set
-         {
-         }
+         get => 0;
+         set { }
       }
 
       public override ValueType Type => ValueType.Assembly;

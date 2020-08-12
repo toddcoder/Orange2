@@ -1,17 +1,16 @@
-﻿using Orange.Library.Patterns;
+﻿using Core.Exceptions;
+using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Exceptions;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Patterns
 {
    public class SpanElementParser : Parser, IElementParser
    {
-      public SpanElementParser()
-         : base("/(^ /s*) /(['+-']1%2) /(['($' quote])") { }
+      public SpanElementParser() : base("/(^ /s*) /(['+-']1%2) /(['($' quote])") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -34,13 +33,20 @@ namespace Orange.Library.Parsers.Patterns
                if (GetExpression(source, initialPosition, CloseParenthesis()).If(out var text, out initialPosition))
                {
                   if (not)
+                  {
                      Element = mode ? (Element)new BreakBlockElement(text) : new MBreakBlockElement(text);
+                  }
                   else
+                  {
                      Element = mode ? (Element)new SpanBlockElement(text) : new MSpanBlockElement(text);
+                  }
+
                   overridePosition = initialPosition;
                }
                else
+               {
                   return null;
+               }
 
                break;
             case "'":
@@ -52,12 +58,18 @@ namespace Orange.Library.Parsers.Patterns
                   var value = parser.Result.Value;
                   var stringText = value.Text;
                   if (not)
+                  {
                      Element = mode ? new BreakElement(stringText) : new MBreakElement(stringText);
+                  }
                   else
+                  {
                      Element = mode ? new SpanElement(stringText) : new MSpanElement(stringText);
+                  }
                }
                else
+               {
                   throw "String open".Throws();
+               }
 
                overridePosition = parser.Result.Position;
                break;

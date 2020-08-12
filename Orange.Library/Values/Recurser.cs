@@ -38,8 +38,11 @@ namespace Orange.Library.Values
 		{
 			var values = Arguments.Values;
 			for (var i = 0; i < values.Length; i++)
-				RegionManager.Regions.SetLocal(Arguments.VariableName(i), values[i]);
-			return null;
+         {
+            RegionManager.Regions.SetLocal(Arguments.VariableName(i), values[i]);
+         }
+
+         return null;
 		}
 	}
 }

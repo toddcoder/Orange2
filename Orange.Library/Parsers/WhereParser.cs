@@ -20,6 +20,7 @@ namespace Orange.Library.Parsers
          var builder = new CodeBuilder();
          var stage = WhereStageType.Left;
          foreach (var verb in sourceBlock.AsAdded)
+         {
             switch (stage)
             {
                case WhereStageType.Left:
@@ -56,7 +57,9 @@ namespace Orange.Library.Parsers
                      stage = WhereStageType.Right;
                   }
                   else
+                  {
                      return null;
+                  }
 
                   break;
                case WhereStageType.Right:
@@ -67,9 +70,13 @@ namespace Orange.Library.Parsers
                      stage = WhereStageType.Left;
                   }
                   else
+                  {
                      builder.Verb(verb);
+                  }
+
                   break;
             }
+         }
 
          switch (stage)
          {
@@ -89,15 +96,16 @@ namespace Orange.Library.Parsers
          Color(position, tokens[1].Length, KeyWords);
          Color(tokens[2].Length, Structures);
          var index = position + length;
-         return GetExpression(source, index, Stop.CloseParenthesis()).FlatMap(t =>
+         return GetExpression(source, index, Stop.CloseParenthesis()).Map(t =>
          {
-            (var b, var i) = t;
+            var (b, i) = t;
             var block = WhereFilter(b);
             RejectNull(block, VerboseName, "Where filter malformed");
             overridePosition = i;
             result.Value = block;
+
             return new Where(block);
-         }, () => null);
+         }).DefaultTo(() => null);
       }
 
       public override string VerboseName => "where";

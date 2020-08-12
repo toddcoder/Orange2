@@ -17,10 +17,15 @@ namespace Orange.Library.Verbs
          {
             var possibleArray = variable.Value;
             if (!possibleArray.IsArray)
+            {
                variable.Value = possibleArray.IsEmpty ? new Array() : new Array { possibleArray };
+            }
          }
          else
+         {
             value = value.Resolve();
+         }
+
          return SendMessage(value, "index", arguments);
       }
 

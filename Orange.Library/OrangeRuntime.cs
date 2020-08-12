@@ -1,7 +1,7 @@
 ﻿using System.Linq;
+using Core.Computers;
+using Core.Strings;
 using Orange.Library.Values;
-using Standard.Computer;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 
@@ -17,7 +17,6 @@ namespace Orange.Library
       public OrangeRuntime(Block block, string text = "", IFileCache fileCache = null, IConsole console = null)
       {
          this.block = block;
-         //this.block.Statement += (sender, e) => Statement?.Invoke(this, e);
          Block.ClearResults();
          this.text = text;
          this.fileCache = fileCache;
@@ -43,6 +42,7 @@ namespace Orange.Library
             LastValue = "";
             LastType = "";
          }
+
          var buffer = State.PrintBuffer;
          Regions.Dispose();
          return buffer.IsNotEmpty() ? buffer : "";

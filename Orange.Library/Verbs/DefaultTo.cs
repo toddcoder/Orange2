@@ -7,12 +7,15 @@ namespace Orange.Library.Verbs
    {
       public override Value Evaluate(Value x, Value y)
       {
-         if (x is Some some)
-            return some.Value();
-         if (x is None)
-            return y;
-
-         return x.IsEmpty ? y : x;
+         switch (x)
+         {
+            case Some some:
+               return some.Value();
+            case None _:
+               return y;
+            default:
+               return x.IsEmpty ? y : x;
+         }
       }
 
       public override string Location => "Default to";

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Enumerables;
+﻿using Core.Enumerables;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 
 namespace Orange.Library.Verbs
@@ -27,7 +27,7 @@ namespace Orange.Library.Verbs
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString() => block.AsAdded.Listify(" ");
+      public override string ToString() => block.AsAdded.Stringify(" ");
 
       public string Result => result;
 

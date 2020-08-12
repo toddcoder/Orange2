@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Enumerables;
 using Orange.Library.Verbs;
-using Standard.Types.Enumerables;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Parameters;
 
@@ -16,33 +16,35 @@ namespace Orange.Library.Values
             foreach (var parameter in parameters.GetParameters().Where(p => (p.Comparisand?.Count ?? 0) != 0))
             {
                var comparisandAsAdded = parameter.Comparisand.AsAdded[0];
-               if (comparisandAsAdded is FunctionInvoke functionInvoke)
+               switch (comparisandAsAdded)
                {
-                  parameter.PlaceholderName = functionInvoke.Arguments.Blocks
-                     .Where(b => b.Count > 0)
-                     .Select(b => b[0])
-                     .Where(v => v is Push)
-                     .Cast<Push>()
-                     .Where(p => p.Value is Placeholder)
-                     .Select(p => p.Value)
-                     .Select(v => v.Text)
-                     .Listify(",");
-                  continue;
-               }
+                  case FunctionInvoke functionInvoke:
+                     parameter.PlaceholderName = functionInvoke.Arguments.Blocks
+                        .Where(b => b.Count > 0)
+                        .Select(b => b[0])
+                        .Where(v => v is Push)
+                        .Cast<Push>()
+                        .Where(p => p.Value is Placeholder)
+                        .Select(p => p.Value)
+                        .Select(v => v.Text)
+                        .Stringify(",");
+                     continue;
+                  case Push push:
+                     switch (push.Value)
+                     {
+                        case Placeholder placeholder:
+                           parameter.PlaceholderName = placeholder.Text;
+                           break;
+                        case Array array:
+                           parameter.PlaceholderName = array.Values.Where(v => v is Placeholder).Select(v => v.Text).Stringify(",");
+                           break;
+                        case List list:
+                           parameter.PlaceholderName = list.ComparisonValues().Where(v => v is Placeholder).Select(v => v.Text).Stringify(":");
+                           break;
+                     }
 
-               if (comparisandAsAdded is Push push)
-                  switch (push.Value)
-                  {
-                     case Placeholder placeholder:
-                        parameter.PlaceholderName = placeholder.Text;
-                        break;
-                     case Array array:
-                        parameter.PlaceholderName = array.Values.Where(v => v is Placeholder).Select(v => v.Text).Listify(",");
-                        break;
-                     case List list:
-                        parameter.PlaceholderName = list.ComparisonValues().Where(v => v is Placeholder).Select(v => v.Text).Listify(":");
-                        break;
-                  }
+                     break;
+               }
             }
          }
 
@@ -72,8 +74,7 @@ namespace Orange.Library.Values
 
       List<ExpansibleItem> expansibleItems;
 
-      public ExpansibleLambda(string functionName, bool memoize)
-         : base(functionName, memoize) => expansibleItems = new List<ExpansibleItem>();
+      public ExpansibleLambda(string functionName, bool memoize) : base(functionName, memoize) => expansibleItems = new List<ExpansibleItem>();
 
       public override void Add(MultiLambdaItem item) => expansibleItems.Add(new ExpansibleItem(item));
 
@@ -86,6 +87,7 @@ namespace Orange.Library.Values
          {
             popper.Push();
             for (var i = 0; i < MAX_RECURSION; i++)
+            {
                foreach (var item in expansibleItems)
                {
                   var parameters = item.Parameters;
@@ -96,26 +98,39 @@ namespace Orange.Library.Values
                   {
                      ExecuteWhere(this);
                      if (parameters.Condition != null && !parameters.Condition.Evaluate().IsTrue)
+                     {
                         continue;
+                     }
+
                      if (item.Condition != null && !item.Condition.Evaluate().IsTrue)
+                     {
                         continue;
+                     }
 
                      if (current.IsEmpty)
+                     {
                         current.Add(item.Verbs);
+                     }
                      else
+                     {
                         current.ReplacePlaceholderInvokeWithBody(item.Verbs);
+                     }
+
                      current.ReplaceParameters(parameters);
                      current.ReplaceArrayParameters(parameters);
                      current.ReplaceListParameters(parameters);
                      if (!current.ReplaceInvocationWithPlaceholder(functionName, ref arguments))
+                     {
                         return current.Block;
+                     }
                   }
                }
+            }
 
             return new Nil();
          }
       }
 
-      public override string ToString() => expansibleItems.Listify();
+      public override string ToString() => expansibleItems.Stringify();
    }
 }

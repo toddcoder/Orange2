@@ -16,8 +16,10 @@ namespace Orange.Library.Patterns
 		public override void Initialize()
 		{
 			if (length == -1)
-				length = State.Input.Length - State.Position;
-		}
+         {
+            length = State.Input.Length - State.Position;
+         }
+      }
 
 		public override string ToString() => "**";
 
@@ -26,8 +28,11 @@ namespace Orange.Library.Patterns
 			get
 			{
 				if (length == 0)
-					return alternate;
-				return new MArbElement(length - 1)
+            {
+               return alternate;
+            }
+
+            return new MArbElement(length - 1)
 				{
 					Next = next,
 					Replacement = Replacement,

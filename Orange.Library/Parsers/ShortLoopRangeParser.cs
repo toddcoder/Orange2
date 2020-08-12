@@ -1,12 +1,12 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using Block = Orange.Library.Values.Block;
 using static Orange.Library.Parsers.ShortLambdaParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -14,8 +14,7 @@ namespace Orange.Library.Parsers
    {
       FreeParser freeParser;
 
-      public ShortLoopRangeParser()
-         : base("^ /(|sp|) /('(' /s* '<-' /s*)") => freeParser = new FreeParser();
+      public ShortLoopRangeParser() : base("^ /(|sp|) /('(' /s* '<-' /s*)") => freeParser = new FreeParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -35,7 +34,9 @@ namespace Orange.Library.Parsers
                index = freeParser.Position;
                var pIncrement = GetExpression(source, index, Comma());
                if (!pIncrement.If(out increment, out index))
+               {
                   return null;
+               }
 
                if (freeParser.Scan(source, index, "^ |sp| ')'"))
                {
@@ -43,7 +44,9 @@ namespace Orange.Library.Parsers
                   index = freeParser.Position;
                }
                else
+               {
                   return null;
+               }
             }
             else
             {
@@ -58,12 +61,15 @@ namespace Orange.Library.Parsers
                   increment = builder.Block;
                }
                else
+               {
                   return null;
+               }
             }
 
             overridePosition = index;
             var value = new LoopRange(variable, init, true, condition, increment, none<Block>());
             result.Value = value;
+
             return value.PushedVerb;
          }
 

@@ -14,7 +14,10 @@ namespace Orange.Library.Parsers
          get
          {
             if (asStatement)
+            {
                yield return new SetterParser();
+            }
+
             yield return new SendMessageParser(true);
             yield return new PostIncrementDecrementParser();
             yield return new OpenEndRangeParser();

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Globalization;
 using System.Reflection;
+using Core.Numbers;
 using Orange.Library.Invocations;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Numbers;
 
 namespace Orange.Library.Values
 {
@@ -31,8 +31,8 @@ namespace Orange.Library.Values
       {
          get
          {
-            var convertable = obj as IConvertible;
-            return convertable?.ToDouble(NumberFormatInfo.CurrentInfo) ?? 0;
+            var convertible = obj as IConvertible;
+            return convertible?.ToDouble(NumberFormatInfo.CurrentInfo) ?? 0;
          }
          set { }
       }
@@ -51,6 +51,7 @@ namespace Orange.Library.Values
       {
          var memberInfos = type.GetMember(messageName);
          foreach (var info in memberInfos)
+         {
             switch (info.MemberType)
             {
                case MemberTypes.Field:
@@ -67,6 +68,7 @@ namespace Orange.Library.Values
                   bindingFlags[BindingFlags.Instance] = true;
                   return type.InvokeMember(messageName, bindingFlags, null, obj, args).GetValue();
             }
+         }
 
          handled = false;
          return null;

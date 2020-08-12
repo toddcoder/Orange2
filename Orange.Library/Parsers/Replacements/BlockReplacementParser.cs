@@ -9,8 +9,7 @@ namespace Orange.Library.Parsers.Replacements
    {
       LambdaParser blockParser;
 
-      public BlockReplacementParser()
-         : base("^ /(/s*) '('") => blockParser = new LambdaParser();
+      public BlockReplacementParser() : base("^ /(/s*) '('") => blockParser = new LambdaParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -32,16 +31,20 @@ namespace Orange.Library.Parsers.Replacements
                block = (Block)blockParser.Value;
                parameters = new NullParameters();
             }
+
             index = blockParser.Result.Position;
          }
          else
+         {
             return null;
+         }
 
          if (index < source.Length && source.Substring(index, 1) == ".")
          {
             index++;
             returnValue = false;
          }
+
          overridePosition = index;
          Replacement = new BlockReplacement(block, parameters, returnValue);
          return new NullOp();

@@ -1,10 +1,10 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -12,9 +12,10 @@ namespace Orange.Library.Parsers
    {
       FunctionBodyParser functionBodyParser;
 
-      public OperatorParser()
-         : base("^ /(|tabs|) /('nofix' | 'prefix' | 'suffix' | 'infix') /(/s+) /(['a-z'] ['a-z0-9']* '?'?) /(/s* '(')") =>
+      public OperatorParser() : base("^ /(|tabs|) /('nofix' | 'prefix' | 'suffix' | 'infix') /(/s+) /(['a-z'] ['a-z0-9']* '?'?) /(/s* '(')")
+      {
          functionBodyParser = new FunctionBodyParser();
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -56,6 +57,7 @@ namespace Orange.Library.Parsers
 
             var userDefinedOperator = new UserDefinedOperator(affinity, pre, lambda);
             CompilerState.RegisterOperator(name, userDefinedOperator);
+
             return new NullOp();
          }
 

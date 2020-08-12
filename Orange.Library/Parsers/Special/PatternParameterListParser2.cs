@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using Standard.Types.Maybe;
+using Core.Monads;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.ComparisandParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
 using static Orange.Library.Values.Parameter;
-using static Standard.Types.Maybe.MaybeFunctions;
 using Parameter = Orange.Library.Values.Parameter;
 
 namespace Orange.Library.Parsers.Special
@@ -18,7 +18,9 @@ namespace Orange.Library.Parsers.Special
       public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
          if (freeParser.Scan(source, index, "^ /s* ']'"))
+         {
             return none<(List<Parameter>, int)>();
+         }
 
          var bindingIndex = 0;
          while (index < source.Length)

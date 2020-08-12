@@ -23,9 +23,14 @@ namespace Orange.Library.Verbs
       {
          var i = expression.Evaluate().Int;
          if (relative)
+         {
             State.IndentBy(factor * i);
+         }
          else
+         {
             State.Indent(i);
+         }
+
          result = $"indentation is {State.Indentation().Replace("\t", "`t")}";
          return null;
       }

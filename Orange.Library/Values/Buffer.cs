@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using System.Text;
+using Core.Arrays;
+using Core.Enumerables;
+using Core.Numbers;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Arrays;
-using Standard.Types.Enumerables;
-using Standard.Types.Numbers;
-using Standard.Types.Strings;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
@@ -78,7 +78,7 @@ namespace Orange.Library.Values
                buffer.Append(asString);
                return asString;
             default:
-               var text = values.Select(ValueAsString).Listify(State.FieldSeparator.Text);
+               var text = values.Select(ValueAsString).Stringify(State.FieldSeparator.Text);
                buffer.Append(text);
                return text;
          }
@@ -98,7 +98,7 @@ namespace Orange.Library.Values
                buffer.AppendLine(asString);
                return asString;
             default:
-               var text = values.Select(ValueAsString).Listify(State.FieldSeparator.Text);
+               var text = values.Select(ValueAsString).Stringify(State.FieldSeparator.Text);
                buffer.AppendLine(text);
                return text;
          }
@@ -108,9 +108,11 @@ namespace Orange.Library.Values
       {
          var values = Arguments.Values;
          foreach (var value in values)
+         {
             Put(ValueAsString(value));
+         }
 
-         return values.Listify(State.FieldSeparator.Text);
+         return values.Stringify(State.FieldSeparator.Text);
       }
 
       public Value Peek()
@@ -122,7 +124,10 @@ namespace Orange.Library.Values
       public void Print(string text)
       {
          if (buffer.Length != 0)
+         {
             buffer.Append(State.RecordSeparator.Text);
+         }
+
          buffer.Append(text);
          putting = false;
       }
@@ -130,7 +135,10 @@ namespace Orange.Library.Values
       public void Put(string text)
       {
          if (putting)
+         {
             buffer.Append(State.FieldSeparator.Text);
+         }
+
          buffer.Append(text);
          putting = true;
       }
@@ -153,9 +161,11 @@ namespace Orange.Library.Values
             var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
             var list = iterator.ToList();
             if (list.Count == 0)
+            {
                return "";
+            }
 
-            return list.Select(getItem).Listify();
+            return list.Select(getItem).Stringify();
          }
       }
 
@@ -167,18 +177,24 @@ namespace Orange.Library.Values
             Regions.Current.SetParameter("$", buffer.Length);
 
             var popped = Arguments.Values.Pop();
-            if (popped.IsNone)
+            if (popped.If(out var poppedValue))
+            {
+               var value = poppedValue.element.AssignmentValue();
+               var values = poppedValue.array;
+
+               var arguments = new Array(values);
+               var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
+               var list = iterator.ToList();
+               var text = value.Text;
+               foreach (var index in list)
+               {
+                  setItem(index, text);
+               }
+            }
+            else
+            {
                return this;
-
-            var value = popped.Value.element.AssignmentValue();
-            var values = popped.Value.array;
-
-            var arguments = new Array(values);
-            var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
-            var list = iterator.ToList();
-            var text = value.Text;
-            foreach (var index in list)
-               setItem(index, text);
+            }
          }
 
          return this;
@@ -188,7 +204,9 @@ namespace Orange.Library.Values
       {
          var i = index.Int;
          if (i.Between(0).Until(buffer.Length))
+         {
             return buffer[i].ToString();
+         }
 
          return "";
       }
@@ -198,7 +216,9 @@ namespace Orange.Library.Values
          var i = index.Int;
          var k = 0;
          for (var j = i; k < value.Length && j < buffer.Length; j++, k++)
+         {
             buffer[j] = value[k];
+         }
       }
 
       public override string ToString() => Text;

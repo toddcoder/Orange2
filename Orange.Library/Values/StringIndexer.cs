@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Core.Collections;
+using Core.Monads;
+using Core.Strings;
 using Orange.Library.Managers;
-using Standard.Types.Collections;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
 using static System.Math;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -18,8 +18,7 @@ namespace Orange.Library.Values
       String text;
       Block indexesBlock;
 
-      public StringIndexer(String text, Block indexesBlock)
-         : base(VAR_ANONYMOUS + CompilerState.ObjectID())
+      public StringIndexer(String text, Block indexesBlock) : base(VAR_ANONYMOUS + CompilerState.ObjectID())
       {
          this.text = text;
          this.indexesBlock = indexesBlock;
@@ -35,11 +34,18 @@ namespace Orange.Library.Values
             {
                var correctedIndex = index;
                if (correctedIndex < 0)
+               {
                   correctedIndex = WrapIndex(correctedIndex, length, true);
+               }
+
                if (correctedIndex >= length)
+               {
                   result.Append("");
+               }
                else
+               {
                   result.Append(text.Text[correctedIndex]);
+               }
             }
 
             return result.ToString();
@@ -48,14 +54,19 @@ namespace Orange.Library.Values
          {
             var indexes = getIndexes();
             if (indexes.Length == 0)
+            {
                return;
+            }
 
             Slicer slicer = text.Text;
             if (indexes.Length == 1)
             {
                var correctedIndex = indexes[0];
                if (correctedIndex < 0)
+               {
                   correctedIndex = WrapIndex(correctedIndex, slicer.Length, true);
+               }
+
                slicer[correctedIndex, 1] = value.Text;
             }
             else if (inRange())
@@ -68,13 +79,19 @@ namespace Orange.Library.Values
             {
                var valueText = value.Text;
                if (valueText.Length <= 1)
+               {
                   foreach (var index in indexes)
+                  {
                      slicer[index, 1] = valueText;
+                  }
+               }
                else
                {
                   var minLength = Math.Min(slicer.Length, indexes.Length);
                   for (var i = 0; i < minLength; i++)
-                     slicer[i, 1] = valueText.Skip(i).Take(1);
+                  {
+                     slicer[i, 1] = valueText.Drop(i).Keep(1);
+                  }
                }
             }
 
@@ -84,13 +101,22 @@ namespace Orange.Library.Values
 
       bool inRange()
       {
-         var offset = none<int>();
+         var anyOffset = none<int>();
          var indexes = getIndexes();
          for (var i = 0; i < indexes.Length; i++)
-            if (offset.IsNone)
-               offset = (indexes[i] - i).Some();
-            else if (indexes[i] - offset.Value != i)
-               return false;
+         {
+            if (anyOffset.If(out var offset))
+            {
+               if (indexes[i] - offset != i)
+               {
+                  return false;
+               }
+            }
+            else
+            {
+               anyOffset = (indexes[i] - i).Some();
+            }
+         }
 
          return true;
       }
@@ -110,36 +136,53 @@ namespace Orange.Library.Values
          setLength();
          var result = indexesBlock.Evaluate();
          if (result == null)
+         {
             return new int[0];
+         }
 
-         //var range = result.As<IRange>();
          if (result is IRange range)
          {
             var length = text.Text.Length;
             var start = (int)range.Start.Number;
             if (start < 0)
+            {
                start = WrapIndex(start, length, true);
+            }
+
             var stop = (int)range.Stop.Number;
             if (stop < 0)
+            {
                stop = WrapIndex(stop, length, true);
+            }
+
             var increment = Abs((int)range.Increment.Number);
             var array = new List<int>();
             if (start <= stop)
+            {
                for (var i = start; i <= stop; i += increment)
                {
                   var value = i;
                   if (value < 0)
+                  {
                      value = WrapIndex(value, length, true);
+                  }
+
                   array.Add(value);
                }
+            }
             else
+            {
                for (var i = start; i >= stop; i -= increment)
                {
                   var value = i;
                   if (value < 0)
+                  {
                      value = WrapIndex(value, length, true);
+                  }
+
                   array.Add(value);
                }
+            }
 
             return array.ToArray();
          }
@@ -173,7 +216,10 @@ namespace Orange.Library.Values
          {
             var correctedIndex = index;
             if (correctedIndex < 0)
+            {
                correctedIndex = WrapIndex(correctedIndex, text.Text.Length, true);
+            }
+
             slicer[correctedIndex, 1] = "";
          }
 
@@ -189,7 +235,9 @@ namespace Orange.Library.Values
          {
             var block = assistant.Block();
             if (block == null)
+            {
                return null;
+            }
 
             RegionManager.Regions.Push("string-indexer");
 
@@ -199,11 +247,13 @@ namespace Orange.Library.Values
             foreach (var index in indexes)
             {
                var correctedIndex = WrapIndex(index, text.Text.Length, true);
-               assistant.SetParameterValues(text.Text.Skip(index).Take(1), index.ToString(), correctedIndex);
+               assistant.SetParameterValues(text.Text.Drop(index).Keep(1), index.ToString(), correctedIndex);
                var result = block.Evaluate();
                var signal = ParameterAssistant.Signal();
                if (signal == ParameterAssistant.SignalType.Breaking)
+               {
                   break;
+               }
 
                switch (signal)
                {
@@ -214,12 +264,16 @@ namespace Orange.Library.Values
                }
 
                if (result != null)
+               {
                   changes[correctedIndex] = result.Text;
+               }
             }
 
             Slicer slicer = text.Text;
-            foreach (var item in changes)
-               slicer[item.Key] = item.Value;
+            foreach (var (key, value) in changes)
+            {
+               slicer[key] = value[0];
+            }
 
             text.Text = slicer.ToString();
 

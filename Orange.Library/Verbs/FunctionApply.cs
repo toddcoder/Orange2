@@ -14,16 +14,16 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var y = stack.Pop(true, LOCATION);
          var x = stack.Pop(true, LOCATION);
-         if (x is Lambda lambda1 && y is Lambda lambda2)
-            return new FunctionApplication(lambda1, lambda2);
-
-         if (x is FunctionApplication application && y is Lambda lambda3)
+         switch (x)
          {
-            application.Add(lambda3);
-            return application;
+            case Lambda lambda1 when y is Lambda lambda2:
+               return new FunctionApplication(lambda1, lambda2);
+            case FunctionApplication application when y is Lambda lambda3:
+               application.Add(lambda3);
+               return application;
+            default:
+               return NilValue;
          }
-
-         return NilValue;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.SendMessage;

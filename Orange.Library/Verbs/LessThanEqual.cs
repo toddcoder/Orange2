@@ -21,7 +21,9 @@ namespace Orange.Library.Verbs
          }
 
          if (x.Type == ValueType.Set && y.Type == ValueType.Set)
+         {
             return SendMessage(x, "isPropSubset", y);
+         }
 
          switch (x.Type)
          {
@@ -29,12 +31,12 @@ namespace Orange.Library.Verbs
                var ternary = (Ternary)x;
                return ternary.IsTrue && ternary.Value.Compare(y) <= 0;
             default:
-               ternary = new Ternary
-               {
-                  Truth = Compare(x, y) <= 0
-               };
+               ternary = new Ternary { Truth = Compare(x, y) <= 0 };
                if (ternary.IsTrue)
+               {
                   ternary.Value = y.Resolve();
+               }
+
                return ternary;
          }
       }

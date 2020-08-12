@@ -5,12 +5,16 @@
       public override bool Evaluate(string input)
       {
          if (input.Length == 0)
+         {
             return false;
+         }
 
          if (Runtime.State.Position >= input.Length)
          {
             if (Runtime.State.Multi)
+            {
                return false;
+            }
 
             index = Runtime.State.Position;
             length = 0;
@@ -23,7 +27,9 @@
          if (at == -1)
          {
             if (Runtime.State.Multi)
+            {
                return false;
+            }
 
             index = Runtime.State.Position;
             length = input.Length - Runtime.State.Position;

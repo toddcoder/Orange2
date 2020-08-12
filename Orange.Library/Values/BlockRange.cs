@@ -91,10 +91,16 @@ namespace Orange.Library.Values
 		{
 			var result = new Array();
 			while (!startBlock.Evaluate().IsTrue)
-				result.Add(false);
-			while (!stopBlock.Evaluate().IsTrue)
-				result.Add(true);
-			return result;
+         {
+            result.Add(false);
+         }
+
+         while (!stopBlock.Evaluate().IsTrue)
+         {
+            result.Add(true);
+         }
+
+         return result;
 		}
 
 		public override string ToString() => "{" + startBlock + ".." + stopBlock + "}";

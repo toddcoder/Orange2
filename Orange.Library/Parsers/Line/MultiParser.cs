@@ -1,17 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Monads;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers.Line
 {
    public abstract class MultiParser : Parser
    {
-      public MultiParser()
-         : base("")
-      {
-      }
+      public MultiParser() : base("") { }
 
       public override bool Scan(string source, int position)
       {
@@ -30,8 +27,10 @@ namespace Orange.Library.Parsers.Line
                result.Position = overridePosition ?? parser.Position;
                return true;
             }
+
             return false;
          }
+
          return false;
       }
 
@@ -39,17 +38,10 @@ namespace Orange.Library.Parsers.Line
 
       public override string VerboseName => "multi";
 
-      public abstract IEnumerable<Parser> Parsers
-      {
-         get;
-      }
+      public abstract IEnumerable<Parser> Parsers { get; }
 
       public virtual bool Continue(Parser parser, string source) => true;
 
-      public IMaybe<Parser> Parser
-      {
-         get;
-         set;
-      }
+      public IMaybe<Parser> Parser { get; set; }
    }
 }

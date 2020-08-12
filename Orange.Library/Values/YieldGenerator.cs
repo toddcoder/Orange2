@@ -27,12 +27,16 @@ namespace Orange.Library.Values
                }
             }
             else if (verb is Yield)
+            {
                yielding = true;
+            }
          }
 
          innerBlock = builder.Block;
          if (innerBlock.Count > 0)
+         {
             lambdas.Add(Lambda.FromBlock(innerBlock));
+         }
 
          return lambdas.ToArray();
       }
@@ -66,7 +70,9 @@ namespace Orange.Library.Values
       public Value Next(int index)
       {
          if (index >= lambdas.Length)
+         {
             return new Nil();
+         }
 
          return lambdas[index].Evaluate();
       }

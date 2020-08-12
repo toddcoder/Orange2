@@ -21,7 +21,10 @@ namespace Orange.Library.Values
       public override Value Next()
       {
          if (discharged)
+         {
             return NilValue;
+         }
+
          discharged = true;
          return value;
       }

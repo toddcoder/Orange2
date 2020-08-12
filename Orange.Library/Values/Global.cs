@@ -31,8 +31,11 @@ namespace Orange.Library.Values
 			{
 				var region = stack.Pop();
 				if (!region.ContainsMessage(messageName))
-					continue;
-				handled = true;
+            {
+               continue;
+            }
+
+            handled = true;
 				return region[messageName];
 			}
 			handled = false;
@@ -46,8 +49,10 @@ namespace Orange.Library.Values
 			{
 				var region = stack.Pop();
 				if (region.ContainsMessage(messageName))
-					return true;
-			}
+            {
+               return true;
+            }
+         }
 			return false;
 		}
 	}

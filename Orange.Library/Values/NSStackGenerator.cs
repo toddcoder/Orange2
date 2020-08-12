@@ -16,7 +16,9 @@ namespace Orange.Library.Values
 
          var iterator = new NSIterator(new NSGenerator(generatorSource));
          foreach (var value in iterator)
+         {
             stack.Push(value);
+         }
       }
 
       public override Value Next() => stack.Count == 0 ? NilValue : stack.Pop();

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
@@ -8,8 +8,7 @@ namespace Orange.Library.Parsers
 {
    public class WhenUnlessParser : Parser
    {
-      public WhenUnlessParser()
-         : base("^ /(' '*) /('when' | 'unless') /(' '*)") { }
+      public WhenUnlessParser() : base("^ /(' '*) /('when' | 'unless') /(' '*)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

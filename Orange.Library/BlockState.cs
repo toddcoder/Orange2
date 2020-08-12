@@ -2,42 +2,37 @@
 
 namespace Orange.Library
 {
-	public class BlockState
-	{
-		Block block;
-		VerbStack verbStack;
-		ValueStack valueStack;
-		int index;
+   public class BlockState
+   {
+      Block block;
+      VerbStack verbStack;
+      ValueStack valueStack;
+      int index;
 
-		public BlockState(Block block)
-		{
-			this.block = block;
-			if (this.block.AutoRegister)
-				Runtime.State.RegisterBlock(this.block, this.block.ResolveVariables);
-			verbStack = Runtime.State.Expressions.Current;
-			valueStack = Runtime.State.Stack;
-			Stringify = null;
-			index = -1;
-		}
+      public BlockState(Block block)
+      {
+         this.block = block;
+         if (this.block.AutoRegister)
+         {
+            Runtime.State.RegisterBlock(this.block, this.block.ResolveVariables);
+         }
 
-		public VerbStack VerbStack => verbStack;
+         verbStack = Runtime.State.Expressions.Current;
+         valueStack = Runtime.State.Stack;
+         Stringify = null;
+         index = -1;
+      }
 
-	   public ValueStack ValueStack => valueStack;
+      public VerbStack VerbStack => verbStack;
 
-	   public IStringify Stringify
-		{
-			get;
-			set;
-		}
+      public ValueStack ValueStack => valueStack;
 
-		public int Index => index;
+      public IStringify Stringify { get; set; }
 
-	   public bool Next() => index++ < block.Count;
+      public int Index => index;
 
-	   public Value ReturnValue
-		{
-			get;
-			set;
-		}
-	}
+      public bool Next() => index++ < block.Count;
+
+      public Value ReturnValue { get; set; }
+   }
 }

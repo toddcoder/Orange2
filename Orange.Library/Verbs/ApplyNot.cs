@@ -14,7 +14,10 @@ namespace Orange.Library.Verbs
          var target = stack.Pop(true, LOCATION);
          var subject = stack.Pop(false, LOCATION);
          if (subject is PatternResult result)
+         {
             subject = result.Value;
+         }
+
          var arguments = new Arguments();
          if (subject.IsVariable)
          {
@@ -27,6 +30,7 @@ namespace Orange.Library.Verbs
             arguments.ApplyVariable = null;
             arguments.ApplyValue = subject;
          }
+
          return MessageManager.MessagingState.SendMessage(target, "applyNot", arguments);
       }
 

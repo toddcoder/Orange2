@@ -20,8 +20,11 @@ namespace Orange.Library.Verbs
 				value = variable.Value;
 				var predecessor = GetPredecessor(value);
 				if (value.Type != ValueType.Object)
-					variable.Value = predecessor;
-				return value;
+            {
+               variable.Value = predecessor;
+            }
+
+            return value;
 			}
 			return GetPredecessor(value);
 		}

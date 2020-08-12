@@ -1,7 +1,7 @@
-﻿using Orange.Library.Managers;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Managers;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -27,13 +27,13 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      static IInvokable cloneInvokeable(IInvokable value) => (IInvokable)((Value)value)?.Clone();
+      static IInvokable cloneInvokable(IInvokable value) => (IInvokable)((Value)value)?.Clone();
 
       public override Value Clone() => new ContractInvokable
       {
-         Main = cloneInvokeable(Main),
-         Require = cloneInvokeable(Require),
-         Ensure = cloneInvokeable(Ensure),
+         Main = cloneInvokable(Main),
+         Require = cloneInvokable(Require),
+         Ensure = cloneInvokable(Ensure),
          Name = Name
       };
 
@@ -47,7 +47,8 @@ namespace Orange.Library.Values
             result = Require.Invoke(arguments);
             Assert(result.IsTrue, LOCATION, $"Require for {Name} failed");
          }
-         RejectNull(Main, LOCATION, $"Main invokeable for {Name} not created");
+
+         RejectNull(Main, LOCATION, $"Main invokable for {Name} not created");
          result = Main.Invoke(arguments);
          if (Ensure != null)
          {
@@ -55,6 +56,7 @@ namespace Orange.Library.Values
             var ensureResult = Ensure.Invoke(ensureArguments);
             Assert(ensureResult.IsTrue, LOCATION, $"Ensure for {Name} failed");
          }
+
          return result;
       }
 

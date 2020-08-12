@@ -13,7 +13,7 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var y = stack.Pop(true, LOCATION);
          var x = stack.Pop(false, LOCATION);
-         return x is Variable v ? (y is Block b ? new Generator(v.Name, b) : y) : x;
+         return x is Variable v ? y is Block b ? new Generator(v.Name, b) : y : x;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 
@@ -7,8 +7,7 @@ namespace Orange.Library.Parsers
 {
    public class YieldParser : Parser
    {
-      public YieldParser()
-         : base("^ /(|tabs| 'yield') /b") { }
+      public YieldParser() : base("^ /(|tabs| 'yield') /b") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

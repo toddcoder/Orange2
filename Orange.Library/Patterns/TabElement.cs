@@ -18,11 +18,16 @@ namespace Orange.Library.Patterns
 		   var position = (int)(at.Evaluate()?.Number ?? -1);
 			var inputLength = input.Length;
 			if (right)
-				position = inputLength - position;
-			if (position == -1 || position >= inputLength)
-				return false;
+         {
+            position = inputLength - position;
+         }
 
-			index = Runtime.State.Position;
+         if (position == -1 || position >= inputLength)
+         {
+            return false;
+         }
+
+         index = Runtime.State.Position;
 			length = position - index;
 			return length >= 0;
 		}

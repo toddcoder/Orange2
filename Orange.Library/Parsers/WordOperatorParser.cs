@@ -1,6 +1,6 @@
 ﻿using System;
+using Core.Collections;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
 using static System.Activator;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
@@ -26,8 +26,6 @@ namespace Orange.Library.Parsers
          ["take"] = typeof(Take),
          ["for"] = typeof(For),
          ["if"] = typeof(If),
-         //["plus"] = typeof(CountedRange),
-         //["on"] = typeof(PushIndexerRange),
          ["zip"] = typeof(Zip),
          ["as"] = typeof(As),
          ["is"] = typeof(Is),
@@ -54,7 +52,6 @@ namespace Orange.Library.Parsers
          ["join"] = typeof(Join),
          ["min"] = typeof(Min),
          ["max"] = typeof(Max),
-         //["do"] = typeof(Do),
          ["all"] = typeof(All),
          ["any"] = typeof(AnyVerb),
          ["one"] = typeof(One),
@@ -64,19 +61,21 @@ namespace Orange.Library.Parsers
          ["divrem"] = typeof(DivRem)
       };
 
-      public WordOperatorParser()
-         : base("^ /s+ {a-z} /b") { }
+      public WordOperatorParser() : base("^ /s+ {a-z} /b") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          var message = tokens[0].Trim();
          var type = operators[message];
          if (type == null)
-            return null; // new SimpleMessage(message, false, true);
+         {
+            return null;
+         }
 
          Color(position, length, KeyWords);
          var verb = (Verb)CreateInstance(type);
          verb.IsOperator = true;
+
          return verb;
       }
 

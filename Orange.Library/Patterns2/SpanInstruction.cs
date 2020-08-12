@@ -21,8 +21,11 @@
 		{
 			var index = charSet.IndexOf(state.CurrentInput, state.IgnoreCase);
 			if (index > -1)
-				state.Position += index;
-			state.InstructionIndex++;
+         {
+            state.Position += index;
+         }
+
+         state.InstructionIndex++;
 			return true;
 		}
 	}

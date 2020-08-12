@@ -17,8 +17,7 @@ namespace Orange.Library.Parsers
       bool resultElement;
       bool subPattern;
 
-      public PatternParser(bool resultElement = false, bool subPattern = false)
-         : base((subPattern ? "^ /(/s*)" : "^ /(' '*)") + REGEX_BEGIN_PATTERN)
+      public PatternParser(bool resultElement = false, bool subPattern = false) : base((subPattern ? "^ /(/s*)" : "^ /(' '*)") + REGEX_BEGIN_PATTERN)
       {
          IgnoreReplacement = false;
          this.resultElement = resultElement;
@@ -110,7 +109,9 @@ namespace Orange.Library.Parsers
                }
 
                if (!(parser is IElementParser elementParser))
+               {
                   continue;
+               }
 
                var element = elementParser.Element;
 
@@ -139,7 +140,10 @@ namespace Orange.Library.Parsers
                }
 
                if (conditionalParser.Scan(source, index))
+               {
                   index = conditionalParser.Result.Position;
+               }
+
                element.Conditional = conditionalParser.Conditional;
 
                if (isOptional)
@@ -149,7 +153,9 @@ namespace Orange.Library.Parsers
                }
 
                if (element.AutoOptional)
+               {
                   element.Alternate = new StringElement("");
+               }
 
                if (isAlternate)
                {
@@ -159,11 +165,17 @@ namespace Orange.Library.Parsers
                else
                {
                   if (head == null)
+                  {
                      head = element;
+                  }
                   else
+                  {
                      currentElement.AppendNext(element);
+                  }
+
                   currentElement = element;
                }
+
                scanning = true;
                found = true;
                break;
@@ -173,7 +185,9 @@ namespace Orange.Library.Parsers
          Assert(found, "Pattern parser", $"Didn't understand pattern '{source.Substring(index)}'");
 
          if (head == null)
+         {
             head = new FailElement();
+         }
 
          var newPattern = new Pattern(head)
          {

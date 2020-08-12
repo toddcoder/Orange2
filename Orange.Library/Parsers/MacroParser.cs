@@ -1,8 +1,8 @@
 ﻿using Orange.Library.Parsers.Special;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
@@ -10,8 +10,7 @@ namespace Orange.Library.Parsers
    {
       FunctionBodyParser bodyParser;
 
-      public MacroParser()
-         : base($"^ /(/s* 'macro' /s+) /({REGEX_VARIABLE}) /('(')") => bodyParser = new FunctionBodyParser();
+      public MacroParser() : base($"^ /(/s* 'macro' /s+) /({REGEX_VARIABLE}) /('(')") => bodyParser = new FunctionBodyParser();
 
       public override Verb CreateVerb(string[] tokens)
       {

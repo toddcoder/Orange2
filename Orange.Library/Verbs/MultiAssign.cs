@@ -1,35 +1,36 @@
 ﻿using System;
 using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
 using Orange.Library.Values;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
+using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 using Array = Orange.Library.Values.Array;
 using String = Orange.Library.Values.String;
-using static Standard.Types.Lambdas.LambdaFunctions;
 
 namespace Orange.Library.Verbs
 {
    public class MultiAssign : Verb, IStatement
    {
-      static Array FromFields(INSGenerator generator, Parameters parameters, bool readOnly, bool setting,
-         bool _override, Func<Value, Value> map)
+      static Array FromFields(INSGenerator generator, Parameters parameters, bool readOnly, bool setting, bool overriding, Func<Value, Value> map)
       {
          var iterator = new NSIterator(generator);
          var array = new Array();
          var start = 0;
-         var actuals = parameters.GetParameters();
-         var length = actuals.Length;
+         var actualParameters = parameters.GetParameters();
+         var length = actualParameters.Length;
          var assignments = new Hash<string, Value>();
          var assignedParameters = new Hash<string, Parameter>();
          for (var i = start; i < length; i++)
          {
             start = i;
-            var parameter = actuals[i];
+            var parameter = actualParameters[i];
             var value = iterator.Next();
             if (value.IsNil)
+            {
                break;
+            }
 
             assignments[parameter.Name] = value;
             assignedParameters[parameter.Name] = parameter;
@@ -43,7 +44,9 @@ namespace Orange.Library.Verbs
             {
                var value = iterator.Next();
                if (value.IsNil)
+               {
                   break;
+               }
 
                innerArray.Add(value);
             }
@@ -57,31 +60,33 @@ namespace Orange.Library.Verbs
             }
          }
 
-         // ReSharper disable once LoopCanBePartlyConvertedToQuery
-         foreach (var item in assignments)
-            if (assignedParameters.If(item.Key, out var parameter))
-               parameter.Assign(item.Value, readOnly, setting, _override);
+         foreach (var (key, value) in assignments)
+         {
+            if (assignedParameters.If(key, out var parameter))
+            {
+               parameter.Assign(value, readOnly, setting, overriding);
+            }
+         }
 
          return array;
       }
 
-      public static Array Splat(Value value, Parameters parameters, bool readOnly, bool setting, bool _override)
+      public static Array Splat(Value value, Parameters parameters, bool readOnly, bool setting, bool overriding)
       {
-         var transformation = func<Value, Value>(v => v is Array array ? (array.Length == 1 ? array[0] : array) : v);
+         var transformation = func<Value, Value>(v => v is Array array ? array.Length == 1 ? array[0] : array : v);
          switch (value.Type)
          {
             case Value.ValueType.String:
                value = ((String)value).Fields();
-               transformation = func<Value, Value>(v => ((Array)v).Values.Select(v1 => v1.Text).Listify(" "));
+               transformation = func<Value, Value>(v => ((Array)v).Values.Select(v1 => v1.Text).Stringify(" "));
                break;
             case Value.ValueType.Tuple:
                value = ((OTuple)value).ToArray();
                break;
          }
 
-         var generator = value.PossibleGenerator();
-         Assert(generator.IsSome, "MultiAssign", "Value must be generator or generator source");
-         return FromFields(generator.Value, parameters, readOnly, setting, _override, transformation);
+         var generator = Assert(value.PossibleGenerator(), "MultiAssign", "Value must be generator or generator source");
+         return FromFields(generator, parameters, readOnly, setting, overriding, transformation);
       }
 
       Parameters parameters;

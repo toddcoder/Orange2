@@ -42,7 +42,9 @@ namespace Orange.Library.Verbs
                SetLambda = builder.Lambda();
             }
             else
+            {
                SetLambda = null;
+            }
          }
       }
 
@@ -60,12 +62,12 @@ namespace Orange.Library.Verbs
          var creator = new AutoPropertyCreator(propertyName, readOnly);
          creator.Create();
          var ns = RegionManager.Regions.Current;
-         ns.CreateVariable(creator.BackingName, visibility: Object.VisibilityType.Protected, @override: true);
-         ns.CreateVariable(creator.GetterName, @override: true);
+         ns.CreateVariable(creator.BackingName, visibility: Object.VisibilityType.Protected, overriding: true);
+         ns.CreateVariable(creator.GetterName, overriding: true);
          ns[creator.GetterName] = creator.GetLambda;
          if (!readOnly)
          {
-            ns.CreateVariable(creator.SetterName, @override: true);
+            ns.CreateVariable(creator.SetterName, overriding: true);
             ns[creator.SetterName] = creator.SetLambda;
          }
          return new Variable(creator.BackingName);

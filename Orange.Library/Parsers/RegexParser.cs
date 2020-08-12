@@ -19,8 +19,7 @@ namespace Orange.Library.Parsers
          Variable
       }
 
-      public RegexParser()
-         : base(@"^ ' '* '\'") { }
+      public RegexParser() : base(@"^ ' '* '\'") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -84,9 +83,14 @@ namespace Orange.Library.Parsers
                               break;
                            default:
                               if (char.IsNumber(ch))
+                              {
                                  color = Numbers;
+                              }
                               else if (char.IsLetter(ch))
+                              {
                                  color = Variables;
+                              }
+
                               break;
                         }
 

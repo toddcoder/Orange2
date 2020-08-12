@@ -1,15 +1,14 @@
 ﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class PrintParser : Parser
    {
-      public PrintParser()
-         : base("^ |tabs| /('println' /b | 'print' /b | 'put' /b | 'manifln' /b | 'manif' /b) |sp|") { }
+      public PrintParser() : base("^ |tabs| /('println' /b | 'print' /b | 'put' /b | 'manifln' /b | 'manif' /b) |sp|") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

@@ -1,5 +1,5 @@
-﻿using Orange.Library.Managers;
-using Standard.Computer;
+﻿using Core.Computers;
+using Orange.Library.Managers;
 using static System.StringComparison;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.NewOrangeCompiler;
@@ -15,20 +15,19 @@ namespace Orange.Library.Values
 
       public Symbol(string text) => this.text = text;
 
-      public Symbol()
-         : this("") { }
+      public Symbol() : this("") { }
 
       public override int Compare(Value value) => string.Compare(text, value.Text, Ordinal);
 
       public override string Text
       {
-         get { return text; }
+         get => text;
          set { }
       }
 
       public override double Number
       {
-         get { return 0; }
+         get => 0;
          set { }
       }
 
@@ -61,6 +60,7 @@ namespace Orange.Library.Values
          State.RegisterBlock(block, region);
          block.Evaluate();
          State.UnregisterBlock();
+
          return new Module(region);
       }
 
@@ -79,7 +79,9 @@ namespace Orange.Library.Values
          }
 
          if (value.Compare(compare) == 0)
+         {
             return false;
+         }
 
          Regions[text] = compare;
          return true;
@@ -104,13 +106,18 @@ namespace Orange.Library.Values
          if (compare.Type == ValueType.Number)
          {
             if (compare.Number > value.Number)
+            {
                Regions[text] = compare.Number;
+            }
          }
          else
          {
             if (string.Compare(compare.Text, value.Text, Ordinal) > 0)
+            {
                Regions[text] = compare;
+            }
          }
+
          return Regions[text];
       }
 
@@ -127,13 +134,18 @@ namespace Orange.Library.Values
          if (compare.Type == ValueType.Number)
          {
             if (compare.Number < value.Number)
+            {
                Regions[text] = compare.Number;
+            }
          }
          else
          {
             if (string.Compare(value.Text, compare.Text, Ordinal) < 0)
+            {
                Regions[text] = compare;
+            }
          }
+
          return Regions[text];
       }
 

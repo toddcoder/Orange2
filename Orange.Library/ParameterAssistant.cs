@@ -38,19 +38,25 @@ namespace Orange.Library
 
          multi = arguments.Parameters.Multi;
          if (!multi)
+         {
             return;
+         }
 
          Assert(arguments.Parameters.Length > 0, LOCATION, "You must have at least one parameter");
          comparisand = arguments.Parameters[0].Comparisand.Evaluate();
       }
 
-      public ParameterAssistant(ParameterBlock parameterBlock, bool useUpperLevel = false)
-         : this(new Arguments(parameterBlock), useUpperLevel) => splatting = parameterBlock.Splatting;
+      public ParameterAssistant(ParameterBlock parameterBlock, bool useUpperLevel = false) : this(new Arguments(parameterBlock), useUpperLevel)
+      {
+         splatting = parameterBlock.Splatting;
+      }
 
       public Block Block(bool returnBlock = true)
       {
          if (arguments.Executable == null || !arguments.Executable.CanExecute)
+         {
             return null;
+         }
 
          var block = returnBlock ? new ReturnBlock(arguments.Executable) : arguments.Executable;
          return block.CanExecute ? block : null;
@@ -65,7 +71,9 @@ namespace Orange.Library
       public void ArrayParameters()
       {
          if (splatting)
+         {
             return;
+         }
 
          names.ValueVariable = arguments.VariableName(0, names.ValueVariable);
          names.KeyVariable = arguments.VariableName(1, names.KeyVariable);
@@ -76,7 +84,9 @@ namespace Orange.Library
       void getUnpackedVariables()
       {
          for (var i = 3; i < arguments.Parameters.Length; i++)
+         {
             unpackedVariables.Add(arguments.Parameters[i].Name);
+         }
       }
 
       public void LoopParameters()
@@ -120,9 +130,13 @@ namespace Orange.Library
       public void IteratorParameter(Parameters parameters)
       {
          if (parameters == null || parameters.Length == 0)
+         {
             IteratorParameter();
+         }
          else
+         {
             names.IterVariable = parameters.VariableName(0, names.IterVariable);
+         }
       }
 
       public void ReplacementParameters()
@@ -146,13 +160,20 @@ namespace Orange.Library
       void setUnpacked(Value value)
       {
          if (names.UnpackedVariables.Count == 0 && unpackedVariables.Count == 0)
+         {
             return;
+         }
 
          var array = value.IsArray ? (Array)value.SourceArray : new Array(State.FieldPattern.Split(value.Text));
          if (names.UnpackedVariables.Count > 0)
+         {
             Assign.FromFieldsLocal(array, names.UnpackedVariables.ToArray());
+         }
+
          if (unpackedVariables.Count > 0)
+         {
             Assign.FromFieldsLocal(array, unpackedVariables.ToArray());
+         }
       }
 
       void caseMatch(Value value)
@@ -169,7 +190,9 @@ namespace Orange.Library
             Assign.FromFieldsLocal(source, arguments.Parameters);
          }
          else if (multi)
+         {
             caseMatch(item.Value);
+         }
          else
          {
             Regions.SetLocal(names.ValueVariable, item.Value);
@@ -188,7 +211,9 @@ namespace Orange.Library
             Assign.FromFieldsLocal(source, arguments.Parameters);
          }
          else if (multi)
+         {
             caseMatch(value);
+         }
          else
          {
             Regions.SetLocal(names.ValueVariable, value);
@@ -220,7 +245,7 @@ namespace Orange.Library
 
       public static void SetMultipleParameters(Parameters parameters, Array array)
       {
-         Assign.FromFieldsLocal(array, parameters, true);
+         Assign.FromFieldsLocal(array, parameters);
       }
 
       public void SetBreakOnParameters(Array array, string key, int index)
@@ -287,7 +312,9 @@ namespace Orange.Library
       {
          var lateBlock = State.LateBlock;
          if (lateBlock == null || !lateBlock.CanExecute)
+         {
             return;
+         }
 
          lateBlock.Evaluate();
          State.LateBlock = null;

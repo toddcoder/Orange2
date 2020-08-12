@@ -4,6 +4,7 @@ using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Patterns
 {
@@ -22,6 +23,7 @@ namespace Orange.Library.Parsers.Patterns
             {
                Element = new AtBlockElement(at);
                overridePosition = index;
+
                return new NullOp();
             }
 
@@ -31,6 +33,7 @@ namespace Orange.Library.Parsers.Patterns
          Color(atSource.Length, Numbers);
          var i = atSource.ToInt();
          Element = new AtElement(i);
+
          return new NullOp();
       }
 

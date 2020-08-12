@@ -1,5 +1,5 @@
-﻿using Orange.Library.Values;
-using Standard.Types.Enumerables;
+﻿using Core.Enumerables;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Values.Object;
 using static Orange.Library.Verbs.CreateField;
@@ -24,15 +24,18 @@ namespace Orange.Library.Verbs
       public override Value Evaluate()
       {
          foreach (var fieldName in fieldNames)
+         {
             CreateFieldInCurrentRegion(fieldName, readOnly, visibility);
+         }
+
          return null;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString() => $"{type} {fieldNames.Listify()}";
+      public override string ToString() => $"{type} {fieldNames.Stringify()}";
 
-      public string Result => fieldNames.Listify();
+      public string Result => fieldNames.Stringify();
 
       public string TypeName => "";
 

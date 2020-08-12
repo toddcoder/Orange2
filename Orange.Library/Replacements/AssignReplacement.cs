@@ -1,8 +1,8 @@
-﻿using Standard.Types.Maybe;
+﻿using Core.Monads;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Replacements
 {
@@ -40,14 +40,20 @@ namespace Orange.Library.Replacements
       {
          var input = State.WorkingInput;
          if (Immediate)
+         {
             Regions.Current.SetParameter(variableName, input);
+         }
          else if (bind)
+         {
             State.BindToPattern(variableName, input);
+         }
          else
          {
             var current = Regions?.GrandParent() ?? Regions.Current;
             if (IsSpecialVariable(variableName))
+            {
                Regions[variableName] = input;
+            }
             else
             {
                current.CreateVariableIfNonexistent(variableName);

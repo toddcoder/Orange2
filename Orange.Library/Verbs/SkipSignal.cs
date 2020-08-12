@@ -4,30 +4,37 @@ using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class SkipSignal : Verb, IEnd
-	{
-		public override Value Evaluate()
-		{
-			var stack = State.Stack;
-			if (stack.IsEmpty)
-			{
-				State.SkipSignal = true;
-				return null;
-			}
-			var value = stack.Pop(true, "Skip");
-			if (value.IsNil)
-				return null;
-			if (value.IsTrue)
-				State.SkipSignal = true;
-			return null;
-		}
+   public class SkipSignal : Verb, IEnd
+   {
+      public override Value Evaluate()
+      {
+         var stack = State.Stack;
+         if (stack.IsEmpty)
+         {
+            State.SkipSignal = true;
+            return null;
+         }
 
-		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
+         var value = stack.Pop(true, "Skip");
+         if (value.IsNil)
+         {
+            return null;
+         }
 
-	   public override string ToString() => "skip";
+         if (value.IsTrue)
+         {
+            State.SkipSignal = true;
+         }
 
-	   public bool IsEnd => true;
+         return null;
+      }
 
-	   public bool EvaluateFirst => true;
-	}
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
+
+      public override string ToString() => "skip";
+
+      public bool IsEnd => true;
+
+      public bool EvaluateFirst => true;
+   }
 }

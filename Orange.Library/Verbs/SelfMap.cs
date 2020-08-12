@@ -13,7 +13,10 @@ namespace Orange.Library.Verbs
          var source = Runtime.State.Stack.Pop(true, LOCATION, false);
          var target = Runtime.State.Stack.Pop(false, LOCATION);
          if (!target.IsIndexer)
+         {
             target = target.Resolve();
+         }
+
          var arguments = Arguments.GuaranteedExecutable(source);
          return MessageManager.MessagingState.SendMessage(target, MESSAGE_NAME, arguments);
       }

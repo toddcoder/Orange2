@@ -397,7 +397,7 @@ namespace Orange.Library
 
       static Value[] flattenValue(Value value, int length)
       {
-         return value.PossibleIndexGenerator().FlatMap(g => new NSIteratorByLength(g, length).ToArray(), () => array(value));
+         return value.PossibleIndexGenerator().Map(g => new NSIteratorByLength(g, length).ToArray()).DefaultTo(() => array(value));
       }
 
       public Value[] GetValues(int length)

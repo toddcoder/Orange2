@@ -1,14 +1,13 @@
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class ParenthesizedExpressionParser : Parser
    {
-      public ParenthesizedExpressionParser()
-         : base("^ ' '* '('") { }
+      public ParenthesizedExpressionParser() : base("^ ' '* '('") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

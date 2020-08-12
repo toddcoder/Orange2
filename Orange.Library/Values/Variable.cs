@@ -65,10 +65,16 @@ namespace Orange.Library.Values
 			get
 			{
 				if (State == null)
-					return ValueType.Nil;
-				if (Regions.VariableExists(Name))
-					return Value.Type;
-				return ValueType.Nil;
+            {
+               return ValueType.Nil;
+            }
+
+            if (Regions.VariableExists(Name))
+            {
+               return Value.Type;
+            }
+
+            return ValueType.Nil;
 			}
 		}
 
@@ -107,8 +113,11 @@ namespace Orange.Library.Values
 				return false;
 			}
 			if (value.Compare(compare) == 0)
-				return false;
-			Value = compare;
+         {
+            return false;
+         }
+
+         Value = compare;
 			return true;
 		}
 
@@ -120,10 +129,15 @@ namespace Orange.Library.Values
 				var test = (Block)Arguments[0];
 				var increment = (Block)Arguments[1];
 				if (Value.IsEmpty)
-					Value = 0;
-				for (; test.IsTrue && Value.Number < MAX_LOOP; increment.Evaluate())
-					block.Evaluate();
-			}
+            {
+               Value = 0;
+            }
+
+            for (; test.IsTrue && Value.Number < MAX_LOOP; increment.Evaluate())
+            {
+               block.Evaluate();
+            }
+         }
 			return this;
 		}
 
@@ -131,8 +145,11 @@ namespace Orange.Library.Values
 		{
 			var value = Arguments[0];
 			if (Regions.VariableExists(Name) && !Value.IsEmpty)
-				return Value;
-			Value = value;
+         {
+            return Value;
+         }
+
+         Value = value;
 			return value;
 		}
 
@@ -154,13 +171,17 @@ namespace Orange.Library.Values
 			if (compare.Type == ValueType.Number)
 			{
 				if (compare.Number > value.Number)
-					Value = compare.Number;
-			}
+            {
+               Value = compare.Number;
+            }
+         }
 			else
 			{
 				if (string.Compare(compare.Text, value.Text, StringComparison.Ordinal) > 0)
-					Value = compare;
-			}
+            {
+               Value = compare;
+            }
+         }
 			return Value;
 		}
 
@@ -176,13 +197,17 @@ namespace Orange.Library.Values
 			if (compare.Type == ValueType.Number)
 			{
 				if (compare.Number < value.Number)
-					Value = compare.Number;
-			}
+            {
+               Value = compare.Number;
+            }
+         }
 			else
 			{
 				if (string.Compare(compare.Text, value.Text, StringComparison.Ordinal) < 0)
-					Value = compare;
-			}
+            {
+               Value = compare;
+            }
+         }
 			return Value;
 		}
 
@@ -201,8 +226,11 @@ namespace Orange.Library.Values
 				case "unshift":
 				case "shift":
 					if (Value.IsEmpty)
-						Value = new Array();
-					break;
+               {
+                  Value = new Array();
+               }
+
+               break;
 			}
 			return Value;
 		}

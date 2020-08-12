@@ -12,17 +12,22 @@ namespace Orange.Library.Verbs
          var y = stack.Pop(true, Location);
          var x = stack.Pop(true, Location);
          if (x.ID == y.ID)
+         {
             return true;
+         }
 
          if (x is Object obj)
          {
-            if (y is Class cls)
-               return obj.Class.IsChildOf(cls);
-
-            if (y is Trait trait)
-               return obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait);
-
-            Throw(Location, $"{x} isn't an object");
+            switch (y)
+            {
+               case Class cls:
+                  return obj.Class.IsChildOf(cls);
+               case Trait trait:
+                  return obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait);
+               default:
+                  Throw(Location, $"{x} isn't an object");
+                  break;
+            }
          }
 
          return false;

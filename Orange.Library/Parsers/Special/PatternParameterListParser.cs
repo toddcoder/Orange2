@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Monads;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
-using Standard.Types.Strings;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
 using Array = Orange.Library.Values.Array;
 using If = Orange.Library.Verbs.If;
 
@@ -35,7 +35,7 @@ namespace Orange.Library.Parsers.Special
 
       public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
-         return GetExpression(source, index, stop).Map(t => when(Parse(t.Item1), () => (list, t.Item2)));
+         return GetExpression(source, index, stop).Map(t => maybe(Parse(t.Item1), () => (list, t.Item2)));
       }
 
       public bool Parse(Block block)
@@ -49,6 +49,7 @@ namespace Orange.Library.Parsers.Special
          {
             bindingName = "";
             list.Add(getParameter(0, new Any(), ref bindingName));
+
             return true;
          }
 
@@ -94,7 +95,9 @@ namespace Orange.Library.Parsers.Special
                      var sublist = innerParser.List;
                      var builder = new CodeBuilder();
                      foreach (var parameter in sublist)
+                     {
                         builder.Argument(parameter.Comparisand);
+                     }
 
                      builder.FunctionInvoke(functionName);
                      list.Add(getParameter(list.Count, builder.Block, ref bindingName));
@@ -117,7 +120,9 @@ namespace Orange.Library.Parsers.Special
                      var sublist = innerParser.List;
                      var builder = new CodeBuilder();
                      foreach (var parameter in sublist)
+                     {
                         builder.Argument(parameter.Comparisand);
+                     }
 
                      builder.Variable(variableName);
                      builder.SendMessage(sendMessage.Message, builder.Arguments);
@@ -135,7 +140,9 @@ namespace Orange.Library.Parsers.Special
                      var sublist = innerParser.List;
                      var builder = new CodeBuilder();
                      foreach (var parameter in sublist)
+                     {
                         builder.Argument(parameter.Comparisand);
+                     }
 
                      builder.SendMessageToClass(sendMessageToClass.Message, builder.Arguments);
                      list.Add(getParameter(list.Count, builder.Block, ref bindingName));
@@ -155,14 +162,17 @@ namespace Orange.Library.Parsers.Special
                   condition = new Block();
                   break;
                case ToList toList:
-                  var newlist = ReplacePlaceholdersInList(toList.Block);
-                  list.Add(getParameter(list.Count, newlist, ref bindingName));
+                  var newList = ReplacePlaceholdersInList(toList.Block);
+                  list.Add(getParameter(list.Count, newList, ref bindingName));
                   break;
             }
          }
 
          if (condition != null)
+         {
             condition.AutoRegister = false;
+         }
+
          return true;
       }
 
@@ -182,6 +192,7 @@ namespace Orange.Library.Parsers.Special
       {
          var name = bindingName.IsNotEmpty() ? bindingName : "$" + index;
          bindingName = "";
+
          return new Parameter(name, comparisand: block, defaultValue: CodeBuilder.PushValue(new Nil()));
       }
 
@@ -208,6 +219,7 @@ namespace Orange.Library.Parsers.Special
                var name = variable.Name;
                value = name == "_" ? (Value)new Any() : new Placeholder(name);
             }
+
             array.Add(value);
          }
 
@@ -237,6 +249,7 @@ namespace Orange.Library.Parsers.Special
                var name = variable.Name;
                value = name == "_" ? (Value)new Any() : new Placeholder(name);
             }
+
             list = list.Add(value);
          }
 
@@ -248,7 +261,10 @@ namespace Orange.Library.Parsers.Special
          var lastIndex = parameters.Count - 1;
          var parameter = parameters[lastIndex];
          if (!parameter.Name.IsMatch("^ '$' /d+ $"))
+         {
             bindingName = parameter.Name;
+         }
+
          parameters.RemoveAt(lastIndex);
       }
 

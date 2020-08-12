@@ -10,10 +10,10 @@ namespace Orange.Library.Verbs
 
       public override Value Exception(Value x, Value y)
       {
-         /*         if (x.ProvidesGenerator)
-                     return SendMessage(x, y.IsNumeric() ? "skip" : "skipUntil", Arguments.FromValue(y));*/
          if (x.IsArray && y.Type == Value.ValueType.String)
+         {
             return SendMessage(x, Message, y);
+         }
 
          return null;
       }

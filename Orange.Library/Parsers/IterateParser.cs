@@ -1,11 +1,11 @@
-﻿using Orange.Library.Values;
+﻿using Core.Monads;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.StatementParser;
 using static Orange.Library.Parsers.Stop;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -14,8 +14,7 @@ namespace Orange.Library.Parsers
       FieldListParser parser;
       FreeParser freeParser;
 
-      public IterateParser()
-         : base("^ /(|tabs| 'iterate') /b")
+      public IterateParser() : base("^ /(|tabs| 'iterate') /b")
       {
          parser = new FieldListParser();
          freeParser = new FreeParser();
@@ -34,30 +33,36 @@ namespace Orange.Library.Parsers
                if (GetExpression(source, index, EndOfLineConsuming()).If(out var expression, out var i))
                {
                   index = i;
-                  var block = GetBlock(source, index, true);
-                  if (block.IsSome)
+                  var anyBlock = GetBlock(source, index, true);
+                  if (anyBlock.If(out var block, out index))
                   {
-                     index = block.Value.Item2;
-
                      var firstParser = new FirstParser();
-                     var first = when(firstParser.Scan(source, index), () => firstParser.Block);
-                     if (first.IsSome)
+                     var anyFirst = maybe(firstParser.Scan(source, index), () => firstParser.Block);
+                     if (anyFirst.HasValue)
+                     {
                         index = firstParser.Position;
+                     }
 
                      var middleParser = new MiddleParser();
-                     var middle = when(middleParser.Scan(source, index), () => middleParser.Block);
-                     if (middle.IsSome)
+                     var anyMiddle = maybe(middleParser.Scan(source, index), () => middleParser.Block);
+                     if (anyMiddle.If(out var middle))
+                     {
                         index = middleParser.Position;
+                     }
                      else
+                     {
                         return null;
+                     }
 
                      var lastParser = new LastParser();
-                     var last = when(lastParser.Scan(source, index), () => lastParser.Block);
-                     if (last.IsSome)
+                     var anyLast = maybe(lastParser.Scan(source, index), () => lastParser.Block);
+                     if (anyLast.HasValue)
+                     {
                         index = lastParser.Position;
+                     }
 
                      overridePosition = index;
-                     return new Iterate(parameters, expression, first, middle.Value, last, block.Value.Item1) { Index = position };
+                     return new Iterate(parameters, expression, anyFirst, middle, anyLast, block) { Index = position };
                   }
                }
             }

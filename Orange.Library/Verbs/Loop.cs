@@ -1,9 +1,9 @@
 ﻿using Orange.Library.Values;
+using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Runtime;
-using static Standard.Types.Lambdas.LambdaFunctions;
 
 namespace Orange.Library.Verbs
 {
@@ -47,14 +47,18 @@ namespace Orange.Library.Verbs
             popper.Push();
 
             for (initialization.Evaluate(); continuing() && index++ < MAX_LOOP; increment.Evaluate())
+            {
                using (var innerPopper = new RegionPopper(new Region(), "c-for-body"))
                {
                   innerPopper.Push();
                   body.Evaluate();
                   var signal = Signal();
                   if (signal == Breaking || signal == ReturningNull)
+                  {
                      break;
+                  }
                }
+            }
 
             result = index == 1 ? "1 loop" : $"{index} loops";
             return index;

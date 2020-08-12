@@ -1,17 +1,16 @@
 ﻿using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.StatementParser;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class ModuleParser : Parser
    {
-      public ModuleParser()
-         : base($"^ /(|tabs| 'module' /s+) /({REGEX_VARIABLE})") { }
+      public ModuleParser() : base($"^ /(|tabs| 'module' /s+) /({REGEX_VARIABLE})") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

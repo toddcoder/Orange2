@@ -1,14 +1,11 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
 
 namespace Orange.Library.Parsers
 {
    public abstract class NonVerbParser<T> : Parser
    {
-      public NonVerbParser()
-         : base("")
-      {
-      }
+      public NonVerbParser() : base("") { }
 
       public override Verb CreateVerb(string[] tokens) => null;
 
@@ -20,19 +17,17 @@ namespace Orange.Library.Parsers
       {
          this.source = source;
          this.position = position;
-         var parsed = Parse();
-         if (parsed.IsNone)
-            return false;
-         result.Verb = new NullOp();
-         result.Position = overridePosition ?? position + length;
-         Parsed = parsed.Value;
-         return true;
+         if (Parse().If(out var parsed))
+         {
+            result.Verb = new NullOp();
+            result.Position = overridePosition ?? position + length;
+            Parsed = parsed;
+            return true;
+         }
+
+         return false;
       }
 
-      public T Parsed
-      {
-         get;
-         set;
-      }
+      public T Parsed { get; set; }
    }
 }

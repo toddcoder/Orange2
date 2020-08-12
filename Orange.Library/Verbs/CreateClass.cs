@@ -7,8 +7,7 @@ namespace Orange.Library.Verbs
 {
    public class CreateClass : Verb, IStatement
    {
-      public static void Create(string className, Class cls, IEnumerable<CreateFunction> helperFunctions = null,
-         Block helperBlock = null)
+      public static void Create(string className, Class cls, IEnumerable<CreateFunction> helperFunctions = null, Block helperBlock = null)
       {
          cls.Name = className;
          var current = Regions.Current;
@@ -16,8 +15,12 @@ namespace Orange.Library.Verbs
          current[className] = cls;
          cls.CreateStaticObject();
          if (helperFunctions != null)
+         {
             foreach (var help in helperFunctions)
+            {
                help.Evaluate();
+            }
+         }
 
          helperBlock?.Evaluate();
       }

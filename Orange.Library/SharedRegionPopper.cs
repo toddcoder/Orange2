@@ -6,16 +6,20 @@ namespace Orange.Library
    {
       protected Region sharedRegion;
 
-      public SharedRegionPopper(Region region, Region sharedRegion, string name)
-         : base(region, name) => this.sharedRegion = sharedRegion;
+      public SharedRegionPopper(Region region, Region sharedRegion, string name) : base(region, name) => this.sharedRegion = sharedRegion;
 
-      public SharedRegionPopper(Region region, ISharedRegion sharedRegionHost, string name)
-         : base(region, name) => sharedRegion = sharedRegionHost.SharedRegion;
+      public SharedRegionPopper(Region region, ISharedRegion sharedRegionHost, string name) : base(region, name)
+      {
+         sharedRegion = sharedRegionHost.SharedRegion;
+      }
 
       public override void Push()
       {
          if (sharedRegion != null)
+         {
             Regions.Push(sharedRegion, $"shared-{name}");
+         }
+
          base.Push();
       }
 
@@ -23,7 +27,9 @@ namespace Orange.Library
       {
          base.Pop();
          if (sharedRegion != null)
+         {
             Regions.Pop($"shared-{name}");
+         }
       }
    }
 }

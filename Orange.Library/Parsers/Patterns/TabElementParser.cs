@@ -1,17 +1,16 @@
-﻿using Orange.Library.Patterns;
+﻿using Core.Strings;
+using Orange.Library.Patterns;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Stop;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Patterns
 {
    public class TabElementParser : Parser, IElementParser
    {
-      public TabElementParser()
-         : base("/(^ /s* ['<>']) /('(' | /d+)") { }
+      public TabElementParser() : base("/(^ /s* ['<>']) /('(' | /d+)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -35,7 +34,9 @@ namespace Orange.Library.Parsers.Patterns
                overridePosition = index;
             }
             else
+            {
                return null;
+            }
          }
 
          return new NullOp();

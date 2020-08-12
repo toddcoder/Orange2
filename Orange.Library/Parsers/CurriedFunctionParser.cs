@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
+using Core.Monads;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Standard.Types.Maybe.MaybeFunctions;
+using static Core.Monads.MonadFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -18,8 +18,8 @@ namespace Orange.Library.Parsers
       FreeParser freeParser;
       FunctionBodyParser functionBodyParser;
 
-      public CurriedFunctionParser(string functionName, Parameters firstParameters, Object.VisibilityType visibility, bool overriding)
-         : base("^ /(|sp| '(')")
+      public CurriedFunctionParser(string functionName, Parameters firstParameters, Object.VisibilityType visibility, bool overriding) :
+         base("^ /(|sp| '(')")
       {
          this.functionName = functionName;
          this.firstParameters = firstParameters;
@@ -37,9 +37,9 @@ namespace Orange.Library.Parsers
          var stack = new Stack<Parameters>();
          stack.Push(firstParameters);
          while (index < source.Length)
-            if (parametersParser.Parse(source, index).If(out var result1))
+         {
+            if (parametersParser.Parse(source, index).If(out var parameters, out var i))
             {
-               (var parameters, var i) = result1;
                index = i;
                stack.Push(parameters);
                if (freeParser.Scan(source, index, pattern))
@@ -51,19 +51,22 @@ namespace Orange.Library.Parsers
 
                break;
             }
+         }
 
-         if (index < source.Length && functionBodyParser.Parse(source, index).If(out var result2))
+         if (index < source.Length && functionBodyParser.Parse(source, index).If(out var block, out var j))
          {
-            (var block, var j) = result2;
-            var lambda = none<Lambda>();
+            var anyLambda = none<Lambda>();
             while (stack.Count > 0)
             {
                var parameters = stack.Pop();
-               lambda = lambda.FlatMap(l => getLambda(parameters, l), () => new Lambda(new Region(), block, parameters, false)).Some();
+               anyLambda = anyLambda.Map(l => getLambda(parameters, l)).DefaultTo(() => new Lambda(new Region(), block, parameters, false)).Some();
             }
 
-            overridePosition = j;
-            return new CreateFunction(functionName, lambda.Value, false, visibility, overriding, null) { Index = position };
+            if (anyLambda.If(out var lambda))
+            {
+               overridePosition = j;
+               return new CreateFunction(functionName, lambda, false, visibility, overriding, null) { Index = position };
+            }
          }
 
          return null;

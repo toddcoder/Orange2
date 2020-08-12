@@ -24,8 +24,10 @@
 				}
 				graph.Value = value;
 				if (parent != null)
-					parent[Name] = graph;
-			}
+            {
+               parent[Name] = graph;
+            }
+         }
 		}
 
 		public override string ContainerType => ValueType.GraphVariable.ToString();

@@ -5,46 +5,59 @@ using static Orange.Library.Values.Value;
 
 namespace Orange.Library.Verbs
 {
-	public class MultiplyAssign : OperatorAssign
-	{
-		public override Value Execute(Variable variable, Value value) => variable.Number * value.Number;
+   public class MultiplyAssign : OperatorAssign
+   {
+      public override Value Execute(Variable variable, Value value) => variable.Number * value.Number;
 
-	   public override Value Exception(Variable variable, Value value)
-		{
-			var x = variable.Value;
-			Value result = null;
-			switch (x.Type)
-			{
-				case ValueType.String:
-					if (value.IsNumeric())
-						result = SendMessage(x, "repeat", value);
-					else
-						return null;
-					break;
-			}
+      public override Value Exception(Variable variable, Value value)
+      {
+         var x = variable.Value;
+         Value result = null;
+         switch (x.Type)
+         {
+            case ValueType.String:
+               if (value.IsNumeric())
+               {
+                  result = SendMessage(x, "repeat", value);
+               }
+               else
+               {
+                  return null;
+               }
 
-			switch (value.Type)
-			{
-				case ValueType.String:
-					if (x.IsNumeric())
-						result = SendMessage(value, "repeat", x);
-					else
-						return null;
-					break;
-			}
+               break;
+         }
 
-			if (result == null)
-				return null;
-			variable.Value = result;
-			return variable;
-		}
+         switch (value.Type)
+         {
+            case ValueType.String:
+               if (x.IsNumeric())
+               {
+                  result = SendMessage(value, "repeat", x);
+               }
+               else
+               {
+                  return null;
+               }
 
-		public override string Location => "Multiply assign";
+               break;
+         }
 
-	   public override string Message => "mult";
+         if (result == null)
+         {
+            return null;
+         }
 
-	   public override string ToString() => "*=";
+         variable.Value = result;
+         return variable;
+      }
 
-	   public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
-	}
+      public override string Location => "Multiply assign";
+
+      public override string Message => "mult";
+
+      public override string ToString() => "*=";
+
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
+   }
 }

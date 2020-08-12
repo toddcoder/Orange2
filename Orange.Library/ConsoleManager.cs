@@ -13,24 +13,21 @@ namespace Orange.Library
          startedPrinting = false;
       }
 
-      public IConsole UIConsole
-      {
-         get;
-         set;
-      }
+      public IConsole UIConsole { get; set; }
 
-      public string LastOutput
-      {
-         get;
-         set;
-      } = "";
+      public string LastOutput { get; set; } = "";
 
       public void Print(string text)
       {
          if (startedPrinting)
+         {
             UIConsole?.Print(State.RecordSeparator.Text);
+         }
          else
+         {
             startedPrinting = true;
+         }
+
          UIConsole?.Print(text);
          putting = false;
          LastOutput = text;
@@ -39,11 +36,17 @@ namespace Orange.Library
       public void Put(string text)
       {
          if (putting)
+         {
             UIConsole?.Print(State.FieldSeparator.Text);
+         }
+
          UIConsole?.Print(text);
          putting = true;
          if (!startedPrinting)
+         {
             startedPrinting = true;
+         }
+
          LastOutput = text;
       }
 
@@ -51,7 +54,10 @@ namespace Orange.Library
       {
          UIConsole?.Print(text);
          if (!startedPrinting)
+         {
             startedPrinting = true;
+         }
+
          LastOutput = text;
       }
 

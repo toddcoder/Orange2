@@ -1,6 +1,6 @@
 ﻿using System;
+using Core.Collections;
 using Orange.Library.Verbs;
-using Standard.Types.Collections;
 using static System.Activator;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using Format = Orange.Library.Verbs.Format;
@@ -83,19 +83,22 @@ namespace Orange.Library.Parsers
          ["!~"] = typeof(IsNotMatch)
       };
 
-      public TwoCharacterOperatorParser()
-         : base($"^ /(|sp|) /({REGEX_PUNCTUATION} 2)") { }
+      public TwoCharacterOperatorParser() : base($"^ /(|sp|) /({REGEX_PUNCTUATION} 2)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
          var type = operators[tokens[2]];
          if (type == null)
+         {
             return null;
+         }
 
          Color(position, tokens[1].Length, Whitespaces);
          Color(tokens[2].Length, Operators);
+
          var verb = (Verb)CreateInstance(type);
          verb.IsOperator = true;
+
          return verb;
       }
 

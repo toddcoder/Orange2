@@ -416,16 +416,16 @@ namespace Orange.Library.Values
                case 0:
                   break;
                case 1:
-                  current.SetParameter(names[0], value, @override: true);
+                  current.SetParameter(names[0], value, overriding: true);
                   break;
                case 2:
-                  current.SetParameter(names[0], value, @override: true);
-                  current.SetParameter(names[1], key, @override: true);
+                  current.SetParameter(names[0], value, overriding: true);
+                  current.SetParameter(names[1], key, overriding: true);
                   break;
                case 3:
-                  current.SetParameter(names[0], value, @override: true);
-                  current.SetParameter(names[1], key, @override: true);
-                  current.SetParameter(names[2], index, @override: true);
+                  current.SetParameter(names[0], value, overriding: true);
+                  current.SetParameter(names[1], key, overriding: true);
+                  current.SetParameter(names[2], index, overriding: true);
                   break;
             }
          }
@@ -436,11 +436,11 @@ namespace Orange.Library.Values
                case 0:
                   break;
                case 1:
-                  current.SetParameter(names[0], value, @override: true);
+                  current.SetParameter(names[0], value, overriding: true);
                   break;
                case 2:
-                  current.SetParameter(names[0], value, @override: true);
-                  current.SetParameter(names[1], index, @override: true);
+                  current.SetParameter(names[0], value, overriding: true);
+                  current.SetParameter(names[1], index, overriding: true);
                   break;
             }
          }

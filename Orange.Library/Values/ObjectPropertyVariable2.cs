@@ -46,22 +46,30 @@ namespace Orange.Library.Values
             var valueArguments = new Arguments(value);
 
             if (Before != null)
+            {
                obj.Invoke(Before, valueArguments);
+            }
 
             obj.Invoke(Setter, valueArguments);
 
             if (!eitherEnding)
+            {
                return;
+            }
 
             var valuesArguments = new Arguments();
             valuesArguments.AddArgument(oldValue);
             valuesArguments.AddArgument(value);
 
             if (hasAfter)
+            {
                obj.Invoke(After, valuesArguments);
+            }
 
             if (!hasInvariant)
+            {
                return;
+            }
 
             var result = obj.Invoke(Invariant, valuesArguments);
             Assert(result.IsTrue, LOCATION, $"Invariant for {Name} failed");

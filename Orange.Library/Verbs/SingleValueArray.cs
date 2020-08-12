@@ -11,10 +11,16 @@ namespace Orange.Library.Verbs
       {
          var value = State.Stack.Pop(true, "Single value array");
          if (value.Type == ValueType.Array)
+         {
             return value;
-         var possibleGenerator = value.PossibleIndexGenerator();
-         if (possibleGenerator.IsSome)
-            return possibleGenerator.Value.Array();
+         }
+
+         var anyGenerator = value.PossibleIndexGenerator();
+         if (anyGenerator.If(out var generator))
+         {
+            return generator.Array();
+         }
+
          var array = new Array { value };
          return array;
       }

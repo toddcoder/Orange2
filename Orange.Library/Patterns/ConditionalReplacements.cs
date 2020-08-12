@@ -1,10 +1,10 @@
 ﻿using System.Linq;
+using Core.Collections;
+using Core.Enumerables;
+using Core.Numbers;
+using Core.Strings;
 using Orange.Library.Replacements;
 using Orange.Library.Values;
-using Standard.Types.Collections;
-using Standard.Types.Enumerables;
-using Standard.Types.Strings;
-using Standard.Types.Numbers;
 using static Orange.Library.Compiler;
 using static Orange.Library.Runtime;
 
@@ -18,7 +18,7 @@ namespace Orange.Library.Patterns
 
       public void Add(int index, int length, IReplacement replacement)
       {
-         var id = replacement.FixedID.FlatMap(i => i, () => CompilerState.ObjectID());
+         var id = replacement.FixedID.DefaultTo(() => CompilerState.ObjectID());
          var conditionalReplacement = new ConditionalReplacement
          {
             Index = index, Length = length, Replacement = replacement, ID = id
@@ -50,7 +50,9 @@ namespace Orange.Library.Patterns
             State.RestoreWorkingInput();
 
             if (text == null)
+            {
                continue;
+            }
 
             var oldLength = slicer.Length;
             slicer[replacement.Index, replacement.Length] = text;
@@ -62,7 +64,7 @@ namespace Orange.Library.Patterns
          State.Position += offset;
       }
 
-      public override string ToString() => replacements.Select(i => i.Value.ToString()).Listify(" ");
+      public override string ToString() => replacements.Select(i => i.Value.ToString()).Stringify(" ");
 
       public void Clear() => replacements.Clear();
    }

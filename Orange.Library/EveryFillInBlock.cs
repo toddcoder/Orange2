@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Core.RegularExpressions;
+using Core.Strings;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 
@@ -63,17 +65,16 @@ namespace Orange.Library
          {
             if (verb is Push push)
             {
-               var variableName = push.Variable();
-               if (variableName.IsSome)
+               if (push.Variable().If(out var variable))
                {
-                  if (variableName.Value == "_")
+                  if (variable == "_")
                   {
                      createVariable(parameterList, builder);
                      AddParameter?.Invoke(parameterList[parameterList.Count - 1]);
                      continue;
                   }
 
-                  if (matcher.IsMatch(variableName.Value, REGEX_FILL_IN))
+                  if (matcher.IsMatch(variable, REGEX_FILL_IN))
                   {
                      var index = matcher[0, 1].ToInt();
                      createVariable(parameterList, builder, index);

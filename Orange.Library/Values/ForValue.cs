@@ -1,7 +1,7 @@
-﻿using Orange.Library.Managers;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Managers;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Values.Nil;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -38,9 +38,12 @@ namespace Orange.Library.Values
 
       public Value Next(int index)
       {
-         if (generator.IsNone)
+         if (!generator.HasValue)
+         {
             generator = value.Evaluate().IfCast<IGenerator>();
-         return generator.FlatMap(generator => generator.Next(index), () => NilValue);
+         }
+
+         return generator.Map(generator => generator.Next(index)).DefaultTo(() => NilValue);
       }
 
       public void End() { }

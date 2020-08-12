@@ -32,9 +32,11 @@ namespace Orange.Library.Verbs
 		public override Value Evaluate()
 		{
 			if (affinity == 0)
-				return lambda.Invoke(new Arguments());
+         {
+            return lambda.Invoke(new Arguments());
+         }
 
-			var stack = Runtime.State.Stack;
+         var stack = Runtime.State.Stack;
 			if (affinity == 1)
 			{
 				var value = stack.Pop(true, LOCATION);

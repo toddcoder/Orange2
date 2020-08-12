@@ -24,7 +24,10 @@ namespace Orange.Library.Values
       public void Add(Value value)
       {
          if (value is Lambda lambda)
+         {
             closures.Add(lambda);
+         }
+
          var newBlock = new Block { new Push(value) };
          var block = value as Block ?? newBlock;
          closures.Add(new Lambda(RegionManager.Regions.Current.Clone(), block, new NullParameters(), true));

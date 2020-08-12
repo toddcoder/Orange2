@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Strings;
+﻿using Core.Strings;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 
@@ -14,7 +14,9 @@ namespace Orange.Library.Parsers
       public override Verb CreateVerb(string[] tokens)
       {
          if (!InClassDefinition)
+         {
             return null;
+         }
 
          Color(position, tokens[1].Length, KeyWords);
          var delegateMessage = tokens[2];
@@ -27,7 +29,10 @@ namespace Orange.Library.Parsers
          Color(dot.Length, Structures);
          Color(targetMessage.Length, Messaging);
          if (target.IsEmpty() && dot == ".")
+         {
             target = "self";
+         }
+
          return new CreateDelegate(delegateMessage, target, targetMessage);
       }
 

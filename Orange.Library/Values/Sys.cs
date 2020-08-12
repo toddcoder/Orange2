@@ -1,10 +1,10 @@
-﻿using Orange.Library.Managers;
+﻿using Core.Collections;
+using Orange.Library.Managers;
 using Orange.Library.Messages;
-using Standard.Types.Collections;
 using static System.Guid;
+using static Core.Strings.StringFunctions;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
-using static Standard.Types.Strings.StringFunctions;
 
 namespace Orange.Library.Values
 {
@@ -43,7 +43,10 @@ namespace Orange.Library.Values
       public Value Context()
       {
          if (Arguments.Executable.CanExecute)
+         {
             Arguments.Executable.Evaluate();
+         }
+
          return null;
       }
 
@@ -51,7 +54,7 @@ namespace Orange.Library.Values
 
       public static Value Take() => State.Take();
 
-      public static Value UID() => UniqueID();
+      public static Value UID() => uniqueID();
 
       public static Value GUID() => NewGuid().ToString();
 
@@ -78,10 +81,10 @@ namespace Orange.Library.Values
 
       public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
       {
-         if (Regions.VariableExists(messageName) && Regions[messageName] is IInvokable invokeable)
+         if (Regions.VariableExists(messageName) && Regions[messageName] is IInvokable invokable)
          {
             handled = true;
-            return invokeable.Invoke(arguments);
+            return invokable.Invoke(arguments);
          }
 
          handled = false;

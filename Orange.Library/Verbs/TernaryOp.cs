@@ -23,7 +23,10 @@ namespace Orange.Library.Verbs
                   Truth = value.Compare(special) >= 0
                };
                if (ternary.IsTrue)
+               {
                   ternary.Value = value.Resolve();
+               }
+
                return ternary;
          }
       }

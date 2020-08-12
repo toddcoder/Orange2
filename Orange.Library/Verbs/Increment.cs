@@ -7,31 +7,35 @@ using static Orange.Library.Verbs.Verb.AffinityType;
 
 namespace Orange.Library.Verbs
 {
-	public class Increment : Verb
-	{
-		const string LOCATION = "Increment";
+   public class Increment : Verb
+   {
+      const string LOCATION = "Increment";
 
-		public override Value Evaluate()
-		{
-			var value = State.Stack.Pop(false, LOCATION);
-			if (value.IsVariable)
-			{
-				var variable = (Variable)value;
-				value = variable.Value;
-				var successor = GetSuccessor(value);
-				if (value.Type != ValueType.Object)
-					variable.Value = successor;
-				return value;
-			}
-			return GetSuccessor(value);
-		}
+      public override Value Evaluate()
+      {
+         var value = State.Stack.Pop(false, LOCATION);
+         if (value.IsVariable)
+         {
+            var variable = (Variable)value;
+            value = variable.Value;
+            var successor = GetSuccessor(value);
+            if (value.Type != ValueType.Object)
+            {
+               variable.Value = successor;
+            }
 
-		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
+            return value;
+         }
 
-	   public override string ToString() => "++";
+         return GetSuccessor(value);
+      }
 
-	   public override AffinityType Affinity => Postfix;
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
 
-	   public override int OperandCount => 1;
-	}
+      public override string ToString() => "++";
+
+      public override AffinityType Affinity => Postfix;
+
+      public override int OperandCount => 1;
+   }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using Core.Enumerables;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
 using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
@@ -41,9 +41,10 @@ namespace Orange.Library.Values
             result = functions[i].Evaluate(newArguments);
             newArguments = new Arguments(result);
          }
+
          return result;
       }
 
-      public override string ToString() => functions.Listify(" . ");
+      public override string ToString() => functions.Stringify(" . ");
    }
 }

@@ -204,9 +204,14 @@ namespace Orange.Library.Values
       public Value Take()
       {
          if (Arguments[0].IsEmpty)
+         {
             items.Add(new TakeBlockItem(new ParameterBlock(Arguments.Parameters, Arguments.Executable, Arguments.Splatting)));
+         }
          else
+         {
             items.Add(new TakeItem((int)Arguments[0].Number));
+         }
+
          return this;
       }
 
@@ -220,7 +225,9 @@ namespace Orange.Library.Values
             {
                var value = source.Next();
                if (value.Type == ValueType.Nil)
+               {
                   return value;
+               }
 
                var skip = false;
                foreach (var item in items)
@@ -233,7 +240,9 @@ namespace Orange.Library.Values
                   };
                   value = item.Process(iterItem, index);
                   if (value == null && item.IsBreaking)
+                  {
                      return new Nil();
+                  }
 
                   if (value == null || value.Type == ValueType.Nil || item.Signal == SignalType.Continuing)
                   {
@@ -242,11 +251,15 @@ namespace Orange.Library.Values
                   }
 
                   if (item.Signal == SignalType.Breaking)
+                  {
                      return new Nil();
+                  }
                }
 
                if (!skip)
+               {
                   return value;
+               }
             }
 
             return new Nil();
@@ -278,7 +291,9 @@ namespace Orange.Library.Values
                var itemIndex = i++;
                var value = source.Next();
                if (value.Type == ValueType.Nil)
+               {
                   return array;
+               }
 
                var skip = false;
                foreach (var item in items)
@@ -291,7 +306,9 @@ namespace Orange.Library.Values
                   };
                   value = item.Process(iterItem, array.Length);
                   if (value == null && item.IsBreaking)
+                  {
                      return array;
+                  }
 
                   if (value == null || value.Type == ValueType.Nil || item.Signal == SignalType.Continuing)
                   {
@@ -300,11 +317,15 @@ namespace Orange.Library.Values
                   }
 
                   if (item.Signal == SignalType.Breaking)
+                  {
                      return array;
+                  }
                }
 
                if (!skip)
+               {
                   array.Add(value);
+               }
             }
 
             return array;

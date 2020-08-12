@@ -14,7 +14,9 @@ namespace Orange.Library.Verbs
       {
          var array = new Array();
          for (var i = 0; i < count; i++)
+         {
             array.Add(source);
+         }
 
          return array;
       }
@@ -26,7 +28,9 @@ namespace Orange.Library.Verbs
          var outerCount = countSource[0].Int;
          var innerCount = countSource[1].Int;
          for (var i = 0; i < outerCount; i++)
+         {
             array.Add(fromValue(source, innerCount));
+         }
 
          return array;
       }
@@ -41,7 +45,7 @@ namespace Orange.Library.Verbs
 
       static Array getArray(Value x, Value y)
       {
-         return y.PossibleGenerator().FlatMap(generator => fromValue(x, generator), () => fromValue(x, y.Int));
+         return y.PossibleGenerator().Map(generator => fromValue(x, generator)).DefaultTo(() => fromValue(x, y.Int));
       }
 
       static Array getArray(Lambda lambda, Value seed)

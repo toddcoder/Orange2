@@ -1,5 +1,5 @@
-﻿using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+﻿using Core.Monads;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.ExpressionParser;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 
@@ -7,8 +7,7 @@ namespace Orange.Library.Parsers
 {
    public class WhileParser : Parser
    {
-      public WhileParser()
-         : base("^ /(|tabs| 'while' | 'until') /b") { }
+      public WhileParser() : base("^ /(|tabs| 'while' | 'until') /b") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

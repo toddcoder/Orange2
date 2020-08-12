@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
+using Core.Monads;
+using Core.RegularExpressions;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Parsers
 {
@@ -28,16 +28,22 @@ namespace Orange.Library.Parsers
                index = newIndex;
                list.Add(parameter);
             }
+
             if (freeParser.Scan(source, index, Pattern))
             {
                index = freeParser.Position;
                freeParser.ColorAll(Structures);
                var structure = freeParser.Tokens[1];
                if (structure.IsMatch(EndOfParameter))
+               {
                   return (list, index).Some();
+               }
 
                if (structure == ";")
+               {
                   Currying = true;
+               }
+
                continue;
             }
 

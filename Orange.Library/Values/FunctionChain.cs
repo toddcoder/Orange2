@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Enumerables;
 using Orange.Library.Managers;
-using Standard.Types.Enumerables;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
@@ -14,8 +14,7 @@ namespace Orange.Library.Values
 
       public FunctionChain() => functions = new List<Lambda>();
 
-      public FunctionChain(IEnumerable<Lambda> lambdas)
-         : this() => functions.AddRange(lambdas);
+      public FunctionChain(IEnumerable<Lambda> lambdas) : this() => functions.AddRange(lambdas);
 
       public override int Compare(Value value) => 0;
 
@@ -40,9 +39,14 @@ namespace Orange.Library.Values
       public Value ShiftRight()
       {
          if (Arguments[0] is Lambda lambda)
+         {
             functions.Add(lambda);
+         }
          else
+         {
             Throw(LOCATION, "Right hand value must be a lambda");
+         }
+
          return this;
       }
 
@@ -58,6 +62,6 @@ namespace Orange.Library.Values
          return result;
       }
 
-      public override string ToString() => functions.Listify(" >> ");
+      public override string ToString() => functions.Stringify(" >> ");
    }
 }

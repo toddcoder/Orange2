@@ -9,7 +9,10 @@
       public override bool Evaluate(string input)
       {
          if (position < 0)
+         {
             position = input.Length - -position + 1;
+         }
+
          index = Runtime.State.Position;
          length = 0;
          return position == index;

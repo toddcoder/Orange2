@@ -1,13 +1,13 @@
 ﻿using System.Linq;
+using Core.Arrays;
+using Core.RegularExpressions;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using Standard.Types.Arrays;
-using Standard.Types.Maybe;
-using Standard.Types.RegularExpressions;
+using static Core.Arrays.ArrayFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Standard.Types.Arrays.ArrayFunctions;
 using static Orange.Library.Parsers.StatementParser;
+using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers.Line
 {
@@ -45,8 +45,10 @@ namespace Orange.Library.Parsers.Line
          }
          else
          {
-            if (!parameterParser.Parse(source, parameterStart).If(out var parameterList, out var _))
+            if (!parameterParser.Parse(source, parameterStart).If(out var parameterList, out _))
+            {
                return null;
+            }
 
             parameters = new Parameters(parameterList);
          }
@@ -61,6 +63,7 @@ namespace Orange.Library.Parsers.Line
             var lambda = new Lambda(new Region(), block, parameters, false) { Splatting = true };
             result.Value = lambda;
             overridePosition = index;
+
             return new CreateLambda(parameters, block, parameters.Splatting);
          }
 

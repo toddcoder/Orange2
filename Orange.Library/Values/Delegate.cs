@@ -1,8 +1,8 @@
-﻿using Orange.Library.Managers;
-using Standard.Types.Maybe;
-using Standard.Types.Strings;
+﻿using Core.Monads;
+using Core.Strings;
+using Orange.Library.Managers;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -42,10 +42,12 @@ namespace Orange.Library.Values
          if (target.IsEmpty())
          {
             var value = RegionManager.Regions[targetMessage];
-            if (value is IInvokable invokeable)
-               return invokeable.Invoke(arguments);
+            if (value is IInvokable invokable)
+            {
+               return invokable.Invoke(arguments);
+            }
 
-            Throw(LOCATION, $"{targetMessage} isn't an invokeable");
+            Throw(LOCATION, $"{targetMessage} isn't an invokable");
             return null;
          }
 
@@ -64,24 +66,34 @@ namespace Orange.Library.Values
          if (target.IsEmpty())
          {
             if (RegionManager.Regions.VariableExists("self"))
+            {
                if (RegionManager.Regions["self"] is Object obj)
                {
-                  if (obj.Region[targetMessage] is InvokableReference invokeableReference)
-                     return invokeableReference.MatchesSignature(signature);
+                  if (obj.Region[targetMessage] is InvokableReference invokableReference)
+                  {
+                     return invokableReference.MatchesSignature(signature);
+                  }
                }
                else
+               {
                   Throw(LOCATION, "Self not an object");
+               }
+            }
 
             if (RegionManager.Regions[targetMessage] is InvokableReference reference)
+            {
                return reference.MatchesSignature(signature);
+            }
 
-            Throw(LOCATION, $"{targetMessage} isn't invokeable");
+            Throw(LOCATION, $"{targetMessage} isn't invokable");
          }
 
-         if (RegionManager.Regions[target] is IInvokable invokeable)
-            return invokeable.Matches(signature);
+         if (RegionManager.Regions[target] is IInvokable invokable)
+         {
+            return invokable.Matches(signature);
+         }
 
-         Throw(LOCATION, $"{targetMessage} isn't an invokeable");
+         Throw(LOCATION, $"{targetMessage} isn't an invokable");
          return false;
       }
 

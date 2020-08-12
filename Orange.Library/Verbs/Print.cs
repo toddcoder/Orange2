@@ -46,21 +46,26 @@ namespace Orange.Library.Verbs
                result = text;
                break;
             case PrintType.Put:
-               var generator = value.PossibleIndexGenerator();
-               if (generator.IsSome)
+               var anyGenerator = value.PossibleIndexGenerator();
+               if (anyGenerator.If(out var generator))
                {
-                  var iterator = new NSIterator(generator.Value);
+                  var iterator = new NSIterator(generator);
                   var builder = new StringBuilder();
                   while (true)
                   {
                      var next = iterator.Next();
                      if (next.IsNil)
+                     {
                         break;
+                     }
 
                      text = ValueAsString(next);
                      State.ConsoleManager.Put(text);
                      if (builder.Length != 0)
+                     {
                         builder.Append(" ");
+                     }
+
                      builder.Append(text);
                   }
 
@@ -77,9 +82,13 @@ namespace Orange.Library.Verbs
          }
 
          if (endLine)
+         {
             State.ConsoleManager.ConsolePrintln(text);
+         }
          else
+         {
             State.ConsoleManager.ConsolePrint(text);
+         }
 
          return null;
       }

@@ -13,13 +13,18 @@ namespace Orange.Library.Patterns
 	   bool find(string input, int start)
 		{
 			if (count == 0)
-				return false;
+         {
+            return false;
+         }
 
-			if (input.Length == 0)
+         if (input.Length == 0)
 			{
 				if (State.Multi)
-					return false;
-				index = State.Position;
+            {
+               return false;
+            }
+
+            index = State.Position;
 				length = 0;
 				return true;
 			}
@@ -31,8 +36,10 @@ namespace Orange.Library.Patterns
 			{
 				at = pattern.Find(input, at + segment, out segment);
 				if (at == -1)
-					return false;
-			}
+            {
+               return false;
+            }
+         }
 			index = State.Position;
 			length = at - index + segment;
 			return true;

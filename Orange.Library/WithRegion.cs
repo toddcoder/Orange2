@@ -13,16 +13,13 @@ namespace Orange.Library
 
       public override Value this[string name]
       {
-         get
-         {
-            if (ContainsMessage(name))
-               return SendMessage(obj, name);
-            return null;
-         }
+         get => ContainsMessage(name) ? SendMessage(obj, name) : null;
          set
          {
             if (ContainsMessage(name))
+            {
                SendMessage(obj, name, value);
+            }
          }
       }
 

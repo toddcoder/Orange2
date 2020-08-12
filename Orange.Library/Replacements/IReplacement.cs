@@ -1,39 +1,21 @@
-﻿using Standard.Types.Maybe;
+﻿using Core.Monads;
 
 namespace Orange.Library.Replacements
 {
-	public interface IReplacement
-	{
-		string Text
-		{
-			get;
-		}
+   public interface IReplacement
+   {
+      string Text { get; }
 
-		bool Immediate
-		{
-			get;
-			set;
-		}
+      bool Immediate { get; set; }
 
-		long ID
-		{
-			get;
-		}
+      long ID { get; }
 
-		void Evaluate();
+      void Evaluate();
 
-		IReplacement Clone();
+      IReplacement Clone();
 
-		Arguments Arguments
-		{
-			get;
-			set;
-		}
+      Arguments Arguments { get; set; }
 
-	   IMaybe<long> FixedID
-	   {
-	      get;
-	      set;
-	   }
-	}
+      IMaybe<long> FixedID { get; set; }
+   }
 }

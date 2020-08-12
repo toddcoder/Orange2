@@ -1,6 +1,6 @@
-﻿using Orange.Library.Conditionals;
+﻿using Core.Monads;
+using Orange.Library.Conditionals;
 using Orange.Library.Replacements;
-using Standard.Types.Maybe;
 using static Orange.Library.Compiler;
 
 namespace Orange.Library.Patterns
@@ -56,24 +56,38 @@ namespace Orange.Library.Patterns
       public virtual void AppendNext(Element element)
       {
          if (element == null)
+         {
             return;
+         }
 
          if (lastNext == null)
+         {
             next = element;
+         }
          else
+         {
             lastNext.next = element;
+         }
+
          lastNext = element;
       }
 
       public virtual void AppendAlternate(Element element)
       {
          if (element == null)
+         {
             return;
+         }
 
          if (lastAlternate == null)
+         {
             alternate = element;
+         }
          else
+         {
             lastAlternate.alternate = element;
+         }
+
          lastAlternate = element;
       }
 
@@ -118,7 +132,9 @@ namespace Orange.Library.Patterns
       {
          replacement = value;
          if (replacement?.FixedID.IsNone == true)
+         {
             replacement.FixedID = CompilerState.ObjectID().Some();
+         }
       }
    }
 }

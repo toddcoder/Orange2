@@ -1,9 +1,9 @@
 ﻿using System.IO;
+using Core.Monads;
 using Orange.Library.Managers;
 using Orange.Library.Verbs;
-using Standard.Types.Maybe;
+using static Core.Monads.MonadFunctions;
 using static Orange.Library.Values.Null;
-using static Standard.Types.Maybe.MaybeFunctions;
 
 namespace Orange.Library.Values
 {
@@ -43,7 +43,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return ""; }
+         get => "";
          set { }
       }
 
@@ -74,6 +74,7 @@ namespace Orange.Library.Values
          statementResult.TypeName = "";
 
          for (var current = this; current != null; current = current.Next)
+         {
             if (current.condition.IsTrue)
             {
                Location = current.condition.ToString();
@@ -82,6 +83,7 @@ namespace Orange.Library.Values
                statementResult.TypeName = currentResult.Type.ToString();
                return currentResult;
             }
+         }
 
          if (elseBlock != null)
          {
@@ -101,11 +103,13 @@ namespace Orange.Library.Values
       public bool Build(out Block execute, out Block returnSignal)
       {
          for (var current = this; current != null; current = current.Next)
+         {
             if (current.condition.Evaluate().IsTrue)
             {
                evaluateResultBlock(current.result, out execute, out returnSignal);
                return true;
             }
+         }
 
          if (elseBlock != null)
          {
@@ -140,9 +144,13 @@ namespace Orange.Library.Values
 
          builder.RemoveLastEnd();
          if (execute)
+         {
             executeBlock = builder.Block;
+         }
          else
+         {
             returnBlock = builder.Block;
+         }
       }
 
       public Value Else()
@@ -157,9 +165,15 @@ namespace Orange.Library.Values
          {
             writer.Write($"if {condition} [{result}]");
             if (elseBlock != null)
+            {
                writer.Write($" else [{elseBlock}]");
+            }
+
             if (next != null)
+            {
                writer.Write($"else{next}");
+            }
+
             return writer.ToString();
          }
       }
@@ -178,8 +192,7 @@ namespace Orange.Library.Values
 
       public string TypeName { get; set; }
 
-      public bool IsGeneratorAvailable => result.Yielding || (next?.IsGeneratorAvailable ?? false) ||
-         (elseBlock?.Yielding ?? false);
+      public bool IsGeneratorAvailable => result.Yielding || (next?.IsGeneratorAvailable ?? false) || (elseBlock?.Yielding ?? false);
 
       public string Location { get; set; } = "";
 

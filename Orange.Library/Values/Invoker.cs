@@ -40,7 +40,9 @@ namespace Orange.Library.Values
                var arguments = Arguments.Clone();
                var target = arguments.Shift();
                if (target is DotNet targetObj)
+               {
                   obj = invocation.Invoke(targetObj.Object, arguments.Values);
+               }
                else
                {
                   Throw(LOCATION, "Didn't return .NET object");

@@ -1,6 +1,6 @@
 ﻿using System;
 using Orange.Library.Managers;
-using Standard.Types.Strings;
+using static Core.Strings.StringFunctions;
 
 namespace Orange.Library.Values
 {
@@ -32,6 +32,6 @@ namespace Orange.Library.Values
 
       public static Value GUID() => new String(Guid.NewGuid().ToString());
 
-      public static Value UniqueID() => StringFunctions.UniqueID();
+      public static Value UniqueID() => uniqueID();
    }
 }

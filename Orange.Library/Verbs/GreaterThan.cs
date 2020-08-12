@@ -18,9 +18,14 @@ namespace Orange.Library.Verbs
       public override Value Exception(Value x, Value y)
       {
          if (x is VerbBinding verbBinding)
+         {
             return verbBinding.Evaluate(y);
+         }
+
          if (x.Type == ValueType.Set && y.Type == ValueType.Set)
+         {
             return SendMessage(x, "isSuperset", y);
+         }
 
          return null;
       }

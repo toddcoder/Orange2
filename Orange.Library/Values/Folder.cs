@@ -1,6 +1,6 @@
 ﻿using System.Linq;
+using Core.Computers;
 using Orange.Library.Managers;
-using Standard.Computer;
 using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
@@ -26,7 +26,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return folderName.FullPath; }
+         get => folderName.FullPath;
          set { }
       }
 
@@ -53,9 +53,15 @@ namespace Orange.Library.Values
       public Value Next(int index)
       {
          if (index == 0)
+         {
             fileNames = folderName.Files.ToArray();
+         }
+
          if (index < fileNames.Length)
+         {
             return new File(fileNames[index]);
+         }
+
          return NilValue;
       }
 
