@@ -78,7 +78,7 @@ namespace Orange.Library.Values
                buffer.Append(asString);
                return asString;
             default:
-               var text = values.Select(ValueAsString).Stringify(State.FieldSeparator.Text);
+               var text = values.Select(ValueAsString).ToString(State.FieldSeparator.Text);
                buffer.Append(text);
                return text;
          }
@@ -98,7 +98,7 @@ namespace Orange.Library.Values
                buffer.AppendLine(asString);
                return asString;
             default:
-               var text = values.Select(ValueAsString).Stringify(State.FieldSeparator.Text);
+               var text = values.Select(ValueAsString).ToString(State.FieldSeparator.Text);
                buffer.AppendLine(text);
                return text;
          }
@@ -112,7 +112,7 @@ namespace Orange.Library.Values
             Put(ValueAsString(value));
          }
 
-         return values.Stringify(State.FieldSeparator.Text);
+         return values.ToString(State.FieldSeparator.Text);
       }
 
       public Value Peek()
@@ -160,12 +160,7 @@ namespace Orange.Library.Values
             var arguments = new Array(Arguments.GetValues(buffer.Length));
             var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
             var list = iterator.ToList();
-            if (list.Count == 0)
-            {
-               return "";
-            }
-
-            return list.Select(getItem).Stringify();
+            return list.Count == 0 ? "" : list.Select(getItem).ToString(", ");
          }
       }
 

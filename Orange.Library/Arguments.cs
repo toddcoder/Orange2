@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Core.Arrays;
+using Core.Assertions;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static Core.Arrays.ArrayFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Runtime;
+using static Orange.Library.RuntimeExtensions;
 using static Orange.Library.Values.Block;
 using static Orange.Library.Values.Null;
 
@@ -20,15 +22,14 @@ namespace Orange.Library
          {
             case OTuple tuple:
             {
-               Assert(tuple.Length > 1, LOCATION, "Tuple must have at least two values");
+               tuple.Values.Must().HaveLengthOf(2).OrThrow(LOCATION, () => "Tuple must have at least two values");
                var innerValue = tuple[0];
                if (tuple[1] is Lambda innerLambda)
                {
                   return new Arguments(innerValue, innerLambda.Block, innerLambda.Parameters);
                }
 
-               Throw(LOCATION, "Second value must be a lambda");
-               break;
+               throw throwsWithLocation(LOCATION, () => "Second value must be a lambda");
             }
             case MessagePath chain:
             {
@@ -81,13 +82,13 @@ namespace Orange.Library
       public static Arguments PipelineSource(Value value) =>
          GuaranteedExecutable(value is Pattern pattern ? IfPattern(pattern) : value);
 
-      static bool messageArguments(Block block) => block.AsAdded.OfType<AppendToMessage>().Any();
+      protected static bool messageArguments(Block block) => block.AsAdded.OfType<AppendToMessage>().Any();
 
-      const string LOCATION = "Arguments";
+      protected const string LOCATION = "Arguments";
 
-      Block arguments;
-      Parameters parameters;
-      Block block;
+      protected Block arguments;
+      protected Parameters parameters;
+      protected Block block;
 
       public Arguments(Block arguments, Block block = null, Parameters parameters = null)
       {
@@ -100,7 +101,9 @@ namespace Orange.Library
       }
 
       public Arguments(Value argument, Block block = null, Parameters parameters = null)
-         : this(blockFromValue(argument), block, parameters) { }
+         : this(blockFromValue(argument), block, parameters)
+      {
+      }
 
       public Arguments(ParameterBlock parameterBlock)
       {
@@ -122,7 +125,7 @@ namespace Orange.Library
          MessageArguments = false;
       }
 
-      static Block blockFromValue(Value value) => value is Block block ? block : PushValue(value);
+      protected static Block blockFromValue(Value value) => value is Block block ? block : PushValue(value);
 
       public Arguments(Value value)
       {
@@ -145,7 +148,9 @@ namespace Orange.Library
       }
 
       public Arguments(INSGenerator generator, Block block = null, Parameters parameters = null)
-         : this(ToArray(generator).Values, block, parameters) { }
+         : this(ToArray(generator).Values, block, parameters)
+      {
+      }
 
       public void AddArgument(Value value)
       {
@@ -196,8 +201,8 @@ namespace Orange.Library
       public Value Shift()
       {
          var values = Values;
-         RejectNull(values, LOCATION, "Arguments not resolved");
-         Reject(values.Length == 0, LOCATION, "Need at least one argument");
+         values.Must().Not.BeNull().OrThrow(LOCATION, () => "Arguments not resolved");
+         values.Must().Not.BeEmpty().OrThrow(LOCATION, () => "Need at least one argument");
          var result = values[0];
          var newArguments = new Block();
          var skip = true;
@@ -220,7 +225,7 @@ namespace Orange.Library
       public void Unshift(Value value)
       {
          var values = Values;
-         RejectNull(values, LOCATION, "Arguments not resolved");
+         values.Must().Not.BeNull().OrThrow(LOCATION, () => "Arguments not resolved");
          var newArguments = new Block { new Push(value), new AppendToArray() };
          foreach (var verb in arguments.AsAdded)
          {
@@ -384,7 +389,7 @@ namespace Orange.Library
 
       public Value[] Values => Blocks.Select(b => b.Evaluate()).ToArray();
 
-      static Value[] flattenValues(IEnumerable<Value> values, int length)
+      protected static Value[] flattenValues(IEnumerable<Value> values, int length)
       {
          var list = new List<Value>();
          foreach (var flattened in values.Select(value => flattenValue(value, length)))
@@ -395,7 +400,7 @@ namespace Orange.Library
          return list.ToArray();
       }
 
-      static Value[] flattenValue(Value value, int length)
+      protected static Value[] flattenValue(Value value, int length)
       {
          return value.PossibleIndexGenerator().Map(g => new NSIteratorByLength(g, length).ToArray()).DefaultTo(() => array(value));
       }
@@ -411,7 +416,7 @@ namespace Orange.Library
          return flattenValues(Values, length);
       }
 
-      void blockFromValues(Value[] values)
+      protected void blockFromValues(Value[] values)
       {
          var builder = new CodeBuilder();
          builder.BeginArray();

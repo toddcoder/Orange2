@@ -59,7 +59,9 @@ namespace Orange.Library.Parsers
          var index = 0;
 
          foreach (var block in blocks)
+         {
             builder.Case(new Double(index++).Pushed, block);
+         }
 
          builder.Push();
          builder.ReturnNil();

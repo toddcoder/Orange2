@@ -8,7 +8,7 @@ namespace Orange.Library.Parsers
 {
    public class WithParser : Parser
    {
-      VerbPrecedenceType precedence;
+      protected VerbPrecedenceType precedence;
 
       public WithParser(string pattern = "^ /(|tabs| 'with') /b", VerbPrecedenceType precedence = VerbPrecedenceType.Statement) : base(pattern)
       {

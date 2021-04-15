@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using Core.Assertions;
 using Core.Strings;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using static Core.Assertions.AssertionFunctions;
+using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
@@ -91,11 +94,24 @@ namespace Orange.Library.Parsers
                break;
          }
 
-         Reject(LockedDown && type == "set", VerboseName, "Setters not allowed in views");
-         Reject(!InClassDefinition && visibilityName.IsNotEmpty(), VerboseName,
-            $"Visibility specifier {visibility} not allowed allowed outside of class definition");
-         Reject(!InClassDefinition && !isDef, VerboseName, $"{type} specifier not allowed outside of a class definition");
-         Reject(InClassDefinition && xMethod, VerboseName, "xfunc not allowed inside class definitions");
+         var throwFunc = func<string, string>(message => withLocation(VerboseName, message));
+
+         if (lockedDown)
+         {
+            type.Must().Not.Equal("set").OrThrow(() => throwFunc("Setters not allowed in views"));
+         }
+
+         if (InClassDefinition)
+         {
+            xMethod.Must().Not.BeTrue().OrThrow(() => throwFunc("xfunc not allowed inside class definitions"));
+         }
+         else
+         {
+            visibilityName.Must().BeEmpty()
+               .OrThrow(() => throwFunc($"Visibility specifier {visibility} not allowed allowed outside of class definition"));
+            isDef.Must().BeTrue().OrThrow(() => throwFunc($"{type} specifier not allowed outside of a class definition"));
+         }
+
          Color(position, whitespaces.Length, Whitespaces);
          Color(tokens2Length, KeyWords);
          Color(tokens3Length, KeyWords);
@@ -153,7 +169,7 @@ namespace Orange.Library.Parsers
             parameters = new Parameters(parameterList);
          }
 
-         RejectNull(parameters, VerboseName, "Parameters malformed");
+         assert(() => (object)parameters).Must().Not.BeNull().OrThrow(() => withLocation(VerboseName, "Parameters malformed"));
          var currying = parametersParser.Currying;
 
          functionBodyParser.ExtractCondition = parametersType == ParametersType.Pattern;

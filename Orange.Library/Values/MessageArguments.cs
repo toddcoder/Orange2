@@ -53,7 +53,7 @@ namespace Orange.Library.Values
 
       Message getMessage()
       {
-         var messageName = messages.Select(m => m + "_").Stringify("");
+         var messageName = messages.Select(m => m + "_").ToString("");
          var arguments = new Arguments(values.ToArray());
          return new Message(messageName, arguments);
       }
@@ -80,7 +80,7 @@ namespace Orange.Library.Values
          return Runtime.SendMessage(value, "invoke", message.MessageArguments);
       }
 
-      public override string ToString() => messages.Select((m, i) => $"{m}:{values[i]}").Stringify(" ");
+      public override string ToString() => messages.Select((m, i) => $"{m}:{values[i]}").ToString(" ");
 
       public Value SendMessage(Value value)
       {

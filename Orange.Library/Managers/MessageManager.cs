@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
 using Core.Computers;
+using Core.Exceptions;
 using Core.ObjectGraphs;
 using Core.RegularExpressions;
 using Core.Strings;
 using Orange.Library.Messages;
 using Orange.Library.Values;
+using static Core.Assertions.AssertionFunctions;
 using Array = Orange.Library.Values.Array;
 using Message = Orange.Library.Messages.Message;
 using static Orange.Library.Managers.RegionManager;
@@ -76,7 +79,8 @@ namespace Orange.Library.Managers
 
       public Value SendMessage(Value value, string messageName, Arguments arguments)
       {
-         RejectNull(value, LOCATION, MSG_NO_MESSAGE_RECIPIENT);
+         assert(() => (object)value).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, MSG_NO_MESSAGE_RECIPIENT));
+
          RegisterMessageCall(messageName);
          value.RegisterMessages();
          return Send(value, messageName, arguments);
@@ -90,8 +94,9 @@ namespace Orange.Library.Managers
 
       public Value Send(Value value, string messageName, Arguments arguments, bool reregister = false)
       {
-         RejectNull(value, LOCATION, MSG_NO_MESSAGE_RECIPIENT);
-         RejectNull(arguments, LOCATION, "No arguments passed in message");
+         assert(() => (object)value).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, MSG_NO_MESSAGE_RECIPIENT));
+         assert(() => (object)arguments).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, "No arguments passed in message"));
+
          Variable variable;
          if (value.IsVariable)
          {
@@ -159,15 +164,16 @@ namespace Orange.Library.Managers
             return Send(alternate, messageName, arguments);
          }
 
-         Throw(LOCATION, $"Didn't understand message {Unmangle(messageName)} sent to <{value}>({value.Type}) " +
-            $"with arguments {arguments}");
-         return null;
+         throw withLocation(LOCATION, $"Didn't understand message {Unmangle(messageName)} sent to <{value}>({value.Type}) " +
+            $"with arguments {arguments}").Throws();
       }
 
       public static Value SendSuperMessage(Class super, string messageName, Arguments arguments)
       {
          var reference = State.GetInvokable(Object.InvokableName(super.Name, true, messageName));
-         RejectNull(reference, LOCATION, $"reference for super.{Unmangle(messageName)} couldn't be found");
+         ((object)reference).Must().Not.BeNull()
+            .OrThrow(() => withLocation(LOCATION, $"reference for super.{Unmangle(messageName)} couldn't be found"));
+
          using (var popper = new RegionPopper(new Region(), "super"))
          {
             if (super.SuperName.IsNotEmpty())

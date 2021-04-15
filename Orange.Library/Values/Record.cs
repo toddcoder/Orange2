@@ -136,7 +136,7 @@ namespace Orange.Library.Values
 
       public Value Length() => members.Count;
 
-      public override string ToString() => $"(rec {members.Select(i => $"{i.Key} = {i.Value}").Stringify()})";
+      public override string ToString() => $"(rec {members.Select(i => $"{i.Key} = {i.Value}").ToString(", ")})";
 
       public bool Match(Record comparisand, bool required)
       {

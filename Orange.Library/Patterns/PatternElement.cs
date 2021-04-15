@@ -7,7 +7,7 @@ namespace Orange.Library.Patterns
 {
    public class PatternElement : Element
    {
-      Pattern pattern;
+      protected Pattern pattern;
 
       public PatternElement(Pattern pattern)
       {

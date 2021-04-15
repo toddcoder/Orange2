@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
+using Core.Exceptions;
+using Core.Monads;
 using Core.RegularExpressions;
 using Orange.Library.Values;
 using static Orange.Library.Managers.RegionManager;
@@ -42,13 +45,13 @@ namespace Orange.Library
                return;
             }
 
-            Assert(variables.ContainsKey(name), LOCATION, $"Variable {name} undefined");
+            variables.Must().HaveValueAt(name).OrThrow(() => withLocation(LOCATION, $"Variable {name} undefined"));
             switch (value)
             {
                case IInvokable invokable:
                   if (variables[name] is Abstract anAbstract)
                   {
-                     Assert(invokable.Matches(anAbstract.Signature), LOCATION, $"Signature for {name} doesn't match");
+                     invokable.Matches(anAbstract.Signature).Must().BeTrue().OrThrow(withLocation(LOCATION, $"Signature for {name} doesn't match"));
                   }
 
                   getContractInvokable(name, invokable);
@@ -70,9 +73,9 @@ namespace Orange.Library
 
       void setAuto(string name)
       {
-         if (name.Matches($"^ '__$get_' /({REGEX_VARIABLE})").If(out var m))
+         if (name.Matcher($"^ '__$get_' /({REGEX_VARIABLE})").If(out var matcher))
          {
-            SetVariable(m.FirstGroup, new InternalGetter(name));
+            SetVariable(matcher.FirstGroup, new InternalGetter(name));
          }
       }
 
@@ -88,7 +91,8 @@ namespace Orange.Library
             return;
          }
 
-         Assert(variables.ContainsKey(plainName), LOCATION, $"Invokable {plainName} must be defined before any of its contract terms");
+         variables.Must().HaveValueAt(plainName)
+            .OrThrow(() => withLocation(LOCATION, $"Invokable {plainName} must be defined before any of its contract terms"));
          var mainValue = variables[plainName];
 
          if (mainValue is InvokableReference mainReference)
@@ -112,7 +116,7 @@ namespace Orange.Library
          }
          else
          {
-            Throw(LOCATION, $"{plainName} must be an invokable");
+            throw withLocation(LOCATION, $"{plainName} must be an invokable").Throws();
          }
       }
 
@@ -128,9 +132,14 @@ namespace Orange.Library
             return;
          }
 
-         var setterName = VAR_MANGLE + "set_" + plainName;
-         Assert(variables.ContainsKey(setterName) || variables.ContainsKey(plainName), LOCATION,
-            $"Field {plainName} for invariant must be defined first");
+         var setterName = $"{VAR_MANGLE}set_{plainName}";
+
+         variables.Must().HaveKeyOf(setterName)
+            .OrFailure()
+            .Or(() =>
+               variables.Must().HaveKeyOf(plainName)
+                  .OrFailure(() => withLocation(LOCATION, $"Field {plainName} for invariant must be defined first")))
+            .ThrowIfFailed();
          invariants[plainName] = invokable;
       }
 
@@ -178,17 +187,19 @@ namespace Orange.Library
 
       public void DetectAbstracts()
       {
-         foreach (var item in Variables)
+         foreach (var (key, value) in Variables)
          {
-            Reject(item.Value.Type == Value.ValueType.Abstract, LOCATION, $"Abstract {item.Key} hasn't been redefined");
+            value.Type.Must().Not.Equal(Value.ValueType.Abstract)
+               .OrFailure(() => withLocation(LOCATION, $"Abstract {key} hasn't been redefined"));
          }
       }
 
       public void DetectToDos()
       {
-         foreach (var item in Variables)
+         foreach (var (key, value) in Variables)
          {
-            Reject(item.Value.Type == Value.ValueType.ToDo, LOCATION, $"ToDo {item.Key} hasn't been implemented");
+            value.Type.Must().Not.Equal(Value.ValueType.ToDo)
+               .OrFailure(() => withLocation(LOCATION, $"ToDo {key} hasn't been implemented"));
          }
       }
 

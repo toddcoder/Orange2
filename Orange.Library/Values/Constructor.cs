@@ -23,7 +23,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get => $"{name}" + (values.Length == 0 ? "" : $"({values.Select(v => v.Text).Stringify()})");
+         get => $"{name}" + (values.Length == 0 ? "" : $"({values.Select(v => v.Text).ToString(", ")})");
          set { }
       }
 

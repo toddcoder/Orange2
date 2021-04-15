@@ -126,7 +126,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get => values.Select(v => v.Text).Stringify(" ");
+         get => values.Select(v => v.Text).ToString(" ");
          set { }
       }
 
@@ -204,7 +204,7 @@ namespace Orange.Library.Values
 
       Value returnValue(Value value, int index) => indexToMessage.FlatMap(index, message => new BoundValue(message, value), value);
 
-      public override string ToString() => $"({values.Select(returnValue).Stringify("; ")})";
+      public override string ToString() => $"({values.Select(returnValue).ToString("; ")})";
 
       public Value ToArray() => new Array(values);
 

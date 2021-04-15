@@ -21,12 +21,12 @@ namespace Orange.Library.Parsers
          return maybe(parser.Scan(source, index), () => (parser.Lambda.Block, parser.Position));
       }
 
-      Stop stop;
-      FillInValueParser valueParser;
-      InfixOperatorParser operatorParser;
-      SendMessageParser sendMessageParser;
-      FreeParser freeParser;
-      int maxIndex;
+      protected Stop stop;
+      protected FillInValueParser valueParser;
+      protected InfixOperatorParser operatorParser;
+      protected SendMessageParser sendMessageParser;
+      protected FreeParser freeParser;
+      protected int maxIndex;
 
       public ShortLambdaParser(string prefix, Stop stop = null) : base($"^ /(' '*) /'{prefix}'")
       {
@@ -37,7 +37,7 @@ namespace Orange.Library.Parsers
          this.stop = stop ?? CloseParenthesis();
       }
 
-      IMaybe<int> getTerm(Block block, int index)
+      protected IMaybe<int> getTerm(Block block, int index)
       {
          if (valueParser.Scan(source, index) && isNotWordOperator(valueParser.Value))
          {
@@ -63,9 +63,9 @@ namespace Orange.Library.Parsers
          return index.Some();
       }
 
-      static bool isNotWordOperator(Value value) => !(value is Variable v) || !IsWordOperator(v.Name);
+      protected static bool isNotWordOperator(Value value) => !(value is Variable v) || !IsWordOperator(v.Name);
 
-      void addPossibleParameter(Value value)
+      protected void addPossibleParameter(Value value)
       {
          if (value is Variable variable)
          {
@@ -73,9 +73,9 @@ namespace Orange.Library.Parsers
          }
       }
 
-      void addPossibleParameter(string name)
+      protected void addPossibleParameter(string name)
       {
-         if (name.Matches("^ '__$' /(/d+)").If(out var matcher))
+         if (name.Matcher("^ '__$' /(/d+)").If(out var matcher))
          {
             var index = matcher.FirstGroup.ToInt();
             if (index > maxIndex)
@@ -85,7 +85,7 @@ namespace Orange.Library.Parsers
          }
       }
 
-      Verb returnLambda(Block block, int index)
+      protected Verb returnLambda(Block block, int index)
       {
          var list = new List<Parameter>();
          for (var i = 0; i <= maxIndex; i++)
@@ -103,7 +103,7 @@ namespace Orange.Library.Parsers
          return new CreateLambda(parameters, block, false);
       }
 
-      IMaybe<int> isStopping(int index)
+      protected IMaybe<int> isStopping(int index)
       {
          if (freeParser.Scan(source, index, stop.Pattern))
          {

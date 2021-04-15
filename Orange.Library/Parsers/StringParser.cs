@@ -8,7 +8,7 @@ namespace Orange.Library.Parsers
 {
    public class StringParser : Parser
    {
-      enum QuotePositionType
+      protected enum QuotePositionType
       {
          First,
          Escaped,
@@ -16,7 +16,9 @@ namespace Orange.Library.Parsers
          Unicode
       }
 
-      public StringParser() : base("^ |sp| /([quote])") { }
+      public StringParser() : base("^ |sp| /([quote])")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {

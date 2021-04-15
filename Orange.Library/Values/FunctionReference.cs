@@ -39,7 +39,7 @@ namespace Orange.Library.Values
 
       public override string ToString()
       {
-         return $"{functionName}({lambda.Parameters.GetParameters().Select(p => p.Name).Stringify()})";
+         return $"{functionName}({lambda.Parameters.GetParameters().Select(p => p.Name).ToString(", ")})";
       }
 
       public Block Where

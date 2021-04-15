@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Monads;
 using Core.Numbers;
 using Core.Strings;
@@ -10,7 +11,6 @@ using Orange.Library.Verbs;
 using static Core.Monads.MonadFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Parsers
 {
@@ -71,7 +71,7 @@ namespace Orange.Library.Parsers
 
          if (compileAll)
          {
-            Assert(index >= source.Length, "Compilation", $"Didn't understand {source.Drop(index)}");
+            index.Must().BeGreaterThanOrEqual(source.Length).OrThrow("Compilation", () => $"Didn't understand {source.Drop(index)}");
          }
 
          if (advanceTabs)
@@ -126,11 +126,11 @@ namespace Orange.Library.Parsers
          }
 
          var oneOrMultipleBlock = GetBlock(source, index, true);
-         Assert(oneOrMultipleBlock.IsSome, "Statement parser", "Couldn't determine block");
+         oneOrMultipleBlock.Must().HaveValue().OrThrow();
          return oneOrMultipleBlock;
       }
 
-      EndOfLineParser endOfLineParser;
+      protected EndOfLineParser endOfLineParser;
 
       public StatementParser() => endOfLineParser = new EndOfLineParser();
 

@@ -19,7 +19,7 @@ namespace Orange.Library
 
          verbStack = Runtime.State.Expressions.Current;
          valueStack = Runtime.State.Stack;
-         Stringify = null;
+         String = null;
          index = -1;
       }
 
@@ -27,7 +27,7 @@ namespace Orange.Library
 
       public ValueStack ValueStack => valueStack;
 
-      public IStringify Stringify { get; set; }
+      public IStringify String { get; set; }
 
       public int Index => index;
 

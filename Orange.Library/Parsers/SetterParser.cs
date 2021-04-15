@@ -11,7 +11,7 @@ namespace Orange.Library.Parsers
 {
    public class SetterParser : Parser
    {
-      static IMaybe<Block> combineOperation(string message, string op, Block expression)
+      protected static IMaybe<Block> combineOperation(string message, string op, Block expression)
       {
          var type = Operator(op);
          if (type == null)
@@ -27,7 +27,9 @@ namespace Orange.Library.Parsers
          return builder.Block.Some();
       }
 
-      public SetterParser() : base($" ^ /(|sp| '.') /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}") { }
+      public SetterParser() : base($" ^ /(|sp| '.') /({REGEX_VARIABLE}) /(|sp|) {REGEX_ASSIGN}")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {

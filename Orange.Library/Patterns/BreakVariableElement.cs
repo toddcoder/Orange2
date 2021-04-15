@@ -5,65 +5,66 @@ using static Orange.Library.Runtime;
 
 namespace Orange.Library.Patterns
 {
-	public class BreakVariableElement : Element
-	{
-		string variableName;
-		bool positionAlreadyUpdated;
-		Depth depth;
+   public class BreakVariableElement : Element
+   {
+      protected string variableName;
+      protected bool positionAlreadyUpdated;
+      protected Depth depth;
 
-		public BreakVariableElement(string variableName)
-		{
-			this.variableName = variableName;
-			depth = new Depth(MAX_VAR_DEPTH, "Variable element");
-		}
+      public BreakVariableElement(string variableName)
+      {
+         this.variableName = variableName;
+         depth = new Depth(MAX_VAR_DEPTH, "Variable element");
+      }
 
-		public BreakVariableElement()
-			: this("")
-		{
-		}
+      public BreakVariableElement() : this("")
+      {
+      }
 
-		public override bool PositionAlreadyUpdated => positionAlreadyUpdated;
+      public override bool PositionAlreadyUpdated => positionAlreadyUpdated;
 
-	   bool evaluate(Func<Pattern, bool> scanFunc)
-		{
-			positionAlreadyUpdated = false;
-			index = -1;
-			length = 0;
+      protected bool evaluate(Func<Pattern, bool> scanFunc)
+      {
+         positionAlreadyUpdated = false;
+         index = -1;
+         length = 0;
 
-			var value = RegionManager.Regions[variableName];
-	      replacement = replacement?.Clone();
-	      switch (value.Type)
-			{
-				case Value.ValueType.Pattern:
-					var pattern = (Pattern)value;
-					var anchored = State.Anchored;
-					State.Anchored = true;
-					pattern.OwnerNext = next;
-			      pattern.OwnerReplacement = pattern.Replacement?.Clone();
-					pattern.SubPattern = true;
-					depth.Retain();
-					var inputLength = State.Input.Length;
-					index = State.Position;
-					length = 0;
-					while (index < inputLength && !scanFunc(pattern))
-					{
-						State.Position++;
-						positionAlreadyUpdated = true;
-					}
-					depth.Reset();
-					State.Anchored = anchored;
-					length = State.Position - index;
-					return State.Position < inputLength;
-			}
-			return false;
-		}
+         var value = RegionManager.Regions[variableName];
+         replacement = replacement?.Clone();
+         switch (value.Type)
+         {
+            case Value.ValueType.Pattern:
+               var pattern = (Pattern)value;
+               var anchored = State.Anchored;
+               State.Anchored = true;
+               pattern.OwnerNext = next;
+               pattern.OwnerReplacement = pattern.Replacement?.Clone();
+               pattern.SubPattern = true;
+               depth.Retain();
+               var inputLength = State.Input.Length;
+               index = State.Position;
+               length = 0;
+               while (index < inputLength && !scanFunc(pattern))
+               {
+                  State.Position++;
+                  positionAlreadyUpdated = true;
+               }
 
-		public override bool Evaluate(string input) => evaluate(p => p.Scan(input));
+               depth.Reset();
+               State.Anchored = anchored;
+               length = State.Position - index;
+               return State.Position < inputLength;
+         }
 
-	   public override bool EvaluateFirst(string input) => evaluate(p => p.Scan(input));
+         return false;
+      }
 
-	   public override string ToString() => variableName;
+      public override bool Evaluate(string input) => evaluate(p => p.Scan(input));
 
-	   public override Element Clone() => clone(new BreakVariableElement(variableName));
-	}
+      public override bool EvaluateFirst(string input) => evaluate(p => p.Scan(input));
+
+      public override string ToString() => variableName;
+
+      public override Element Clone() => clone(new BreakVariableElement(variableName));
+   }
 }

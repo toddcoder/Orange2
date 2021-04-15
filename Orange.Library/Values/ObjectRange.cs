@@ -61,7 +61,7 @@ namespace Orange.Library.Values
          get
          {
             var array = (Array)AlternateValue("");
-            return array.Values.Select(v => SendMessage(v, "str")).Stringify(State.FieldSeparator.Text);
+            return array.Values.Select(v => SendMessage(v, "str")).ToString(State.FieldSeparator.Text);
          }
          set { }
       }

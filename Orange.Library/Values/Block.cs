@@ -676,7 +676,7 @@ namespace Orange.Library.Values
          return result;
       }
 
-      public override string ToString() => $"[{builder.AsAdded.Stringify("; ")}]";
+      public override string ToString() => $"[{builder.AsAdded.ToString("; ")}]";
 
       public virtual bool CanExecute => true;
 
@@ -761,7 +761,7 @@ namespace Orange.Library.Values
 
       public List<Verb> Verbs => builder.Verbs;
 
-      public Value Internal() => Verbs.Stringify(" ");
+      public Value Internal() => Verbs.ToString(" ");
 
       public bool Stem { get; set; }
 

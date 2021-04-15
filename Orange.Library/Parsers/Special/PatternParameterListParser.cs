@@ -15,9 +15,9 @@ namespace Orange.Library.Parsers.Special
 {
    public class PatternParameterListParser : SpecialParser<List<Parameter>>, IReturnsParameterList
    {
-      Stop stop;
-      List<Parameter> list;
-      Block condition;
+      protected Stop stop;
+      protected List<Parameter> list;
+      protected Block condition;
 
       public PatternParameterListParser()
       {
@@ -182,13 +182,13 @@ namespace Orange.Library.Parsers.Special
 
       public Block Condition => condition;
 
-      static Parameter getParameter(int index, Value comparisand, ref string bindingName)
+      protected static Parameter getParameter(int index, Value comparisand, ref string bindingName)
       {
          var block = CodeBuilder.PushValue(comparisand);
          return getParameter(index, block, ref bindingName);
       }
 
-      static Parameter getParameter(int index, Block block, ref string bindingName)
+      protected static Parameter getParameter(int index, Block block, ref string bindingName)
       {
          var name = bindingName.IsNotEmpty() ? bindingName : "$" + index;
          bindingName = "";
@@ -256,7 +256,7 @@ namespace Orange.Library.Parsers.Special
          return list;
       }
 
-      static void removeLastParameter(List<Parameter> parameters, ref string bindingName)
+      protected static void removeLastParameter(List<Parameter> parameters, ref string bindingName)
       {
          var lastIndex = parameters.Count - 1;
          var parameter = parameters[lastIndex];

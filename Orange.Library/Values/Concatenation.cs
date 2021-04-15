@@ -33,6 +33,6 @@ namespace Orange.Library.Values
 
       public Value this[int index] => index < 0 || index >= values.Count ? "" : values[index];
 
-      public override string ToString() => values.Stringify(" && ");
+      public override string ToString() => values.ToString(" && ");
    }
 }

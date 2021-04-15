@@ -8,7 +8,7 @@ namespace Orange.Library.Parsers.Special
 {
    public class OneLineBlockParser : SpecialParser<Block>
    {
-      bool addEnd;
+      protected bool addEnd;
 
       public OneLineBlockParser(bool addEnd) => this.addEnd = addEnd;
 

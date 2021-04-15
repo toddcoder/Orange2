@@ -4,26 +4,26 @@ using static Orange.Library.Parsers.IDEColor.EntityType;
 
 namespace Orange.Library.Parsers
 {
-	public class ReplacementLiteralParser : Parser
-	{
-		ReplacementParser parser;
+   public class ReplacementLiteralParser : Parser
+   {
+      protected ReplacementParser parser;
 
-		public ReplacementLiteralParser()
-			: base("^ /s* '&'") => parser = new ReplacementParser();
+      public ReplacementLiteralParser() : base("^ /s* '&'") => parser = new ReplacementParser();
 
-	   public override Verb CreateVerb(string[] tokens)
-		{
-			Color(position, length, Structures);
-			var index = position + length;
-			if (parser.Scan(source, index))
-			{
-				Result.Value = new ReplacementLiteral(parser.Replacement);
-				overridePosition = parser.Result.Position;
-				return new Push(Result.Value);
-			}
-			return null;
-		}
+      public override Verb CreateVerb(string[] tokens)
+      {
+         Color(position, length, Structures);
+         var index = position + length;
+         if (parser.Scan(source, index))
+         {
+            Result.Value = new ReplacementLiteral(parser.Replacement);
+            overridePosition = parser.Result.Position;
+            return new Push(Result.Value);
+         }
 
-		public override string VerboseName => "replacement literal";
-	}
+         return null;
+      }
+
+      public override string VerboseName => "replacement literal";
+   }
 }

@@ -78,7 +78,7 @@ namespace Orange.Library.Verbs
          {
             case Value.ValueType.String:
                value = ((String)value).Fields();
-               transformation = func<Value, Value>(v => ((Array)v).Values.Select(v1 => v1.Text).Stringify(" "));
+               transformation = func<Value, Value>(v => ((Array)v).Values.Select(v1 => v1.Text).ToString(" "));
                break;
             case Value.ValueType.Tuple:
                value = ((OTuple)value).ToArray();

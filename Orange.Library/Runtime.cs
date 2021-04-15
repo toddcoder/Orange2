@@ -16,6 +16,7 @@ using Orange.Library.Patterns;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static System.String;
+using static Core.Assertions.AssertionFunctions;
 using static Core.Monads.MonadFunctions;
 using static Orange.Library.Debugging.Debugger;
 using static Orange.Library.Managers.RegionManager;
@@ -27,13 +28,13 @@ namespace Orange.Library
 {
    public class Runtime
    {
-      public const int MAX_VAR_DEPTH = 256;
+      public const int MAX_VAR_DEPTH = 0x100;
       public const int MAX_BLOCK_DEPTH = MAX_VAR_DEPTH;
-      public const int MAX_LOOP = 2048;
-      public const int MAX_PATTERN_INPUT_LENGTH = 4048;
-      public const int MAX_ARRAY = 2048;
-      public const int MAX_RECURSION = 2048;
-      public const int MAX_TAIL_CALL = 8192;
+      public const int MAX_LOOP = 0x800;
+      public const int MAX_PATTERN_INPUT_LENGTH = 0xFD0;
+      public const int MAX_ARRAY = 0x800;
+      public const int MAX_RECURSION = 0x800;
+      public const int MAX_TAIL_CALL = 0x2000;
 
       public const string VAR_PATTERN_INPUT = "$_";
       public const string VAR_AT = "$at";
@@ -45,28 +46,21 @@ namespace Orange.Library
       public const string VAR_X = "$xVar";
       public const string VAR_Y = "$yVar";
       public const string VAR_PADDER = "$padder";
-      public const string VAR_WATCH = "$watch";
       public const string VAR_ARRAY = "$array";
       public const string VAR_AUTO_ASSIGN = "$auto-assign";
       public const string VAR_XMETHOD = "$xm_{0}";
       public const string VAR_MANGLE = "__$";
       public const string VAR_ACCUM = VAR_MANGLE + "accum";
 
-      public const string VAL_REGION = "__$region";
       public const string VAL_BLOCK_RANGE_SET = "__set";
       public const string VAL_MATCH_VALUE = "__match";
 
       public const string REGEX_VARIABLE = "['A-Za-z_$'] (['A-Za-z_0-9']*)";
-      //public const string REGEX_VARIABLE = "['A-Za-z_'] (['A-Za-z_0-9']*)";
-      public const string REGEX_VARIABLE1 = "['A-Za-z_$'";
-      public const string REGEX_BEGIN_PATTERN = "'{'"; //"'“'";
-      public const string REGEX_END_PATTERN = "'}'"; //"'”'";
-      public const string REGEX_PARAMETER = "'|' /('*')? (> ('?'" + REGEX_VARIABLE + ") | '|')";
+      public const string REGEX_BEGIN_PATTERN = "'{'";
+      public const string REGEX_END_PATTERN = "'}'";
       public const string REGEX_SEND_MESSAGE = "/(/s*) /('::'? | '&') /(" + REGEX_VARIABLE + ") /('(' | '{:(')?";
-      public const string REGEX_ATTRIBUTE_MESSAGE = "^ '__$' /('set' | 'get' | 'bef' | 'aft' | 'req' | 'ens' | 'inv') '_' -(> 'item' /b) /(.+) $";
       public const string REGEX_END = "/((^ /r/n) | (^ /r) | (^ /n))";
       public const string REGEX_END1 = "/((/r/n) | (/r) | (/n))";
-      public const string REGEX_EXP_END = "[',:)]}']";
       public const string REGEX_ASSIGN = "/(' '*) /('**' | '*' | '+' | '-' | '//' | '~' | '%' | '??')? /('=' /s*)";
 
       public const string STRING_SPACES = " \r\n\t";
@@ -90,9 +84,8 @@ namespace Orange.Library
       public const string STRING_ACCENTS = "A`ÀA'ÁA^ÂA~ÃA:ÄA.ÅAEÆC,ÇE`ÈE'ÉE^ÊE:ËI`ÌI'ÍI^ÎI:ÏD-ÐN~ÑO`ÒO'ÓO^ÔO~ÕO:ÖO/" +
          "ØU`ÙU'ÚU^ÛU:ÜY'Ýa`àa'áa^âa~ãa:äa.åaeæc,çe`èe'ée^êe:ëi`ìi'íi^îi:ïn~ño`òo'óo^ôo~õo:öo/øu`ùu'úu^ûu:üy'ýy:ÿ";
 
-      public const string STRING_BEGIN_PATTERN = "{"; //"“";
-      public const string STRING_END_PATTERN = "}"; //"”";
-      public const string STRING_TRUE = "True";
+      public const string STRING_BEGIN_PATTERN = "{";
+      public const string STRING_END_PATTERN = "}";
 
       public const string MESSAGE_BUILDER = "className";
 
@@ -100,7 +93,8 @@ namespace Orange.Library
 
       public static int WrapIndex(int index, int length, bool wrap)
       {
-         Assert(length > -1, LOCATION, "Length can't be negative");
+         length.Must().BeGreaterThan(-1).OrThrow(LOCATION, () => "Length can't be negative");
+
          if (length == 0)
          {
             return 0;
@@ -111,7 +105,7 @@ namespace Orange.Library
             return wrapNegativeIndex(index, length);
          }
 
-         return wrap ? index >= length ? length % Math.Abs(index) : index : index;
+         return wrap ? index >= length ? length % index : index : index;
       }
 
       static int wrapNegativeIndex(int index, int length)
@@ -263,18 +257,16 @@ namespace Orange.Library
          return input;
       }
 
+      [Obsolete("Use extension")]
+      public static string withLocation(string location, string message) => CanAssert ? message : $"at {location}: {message}";
+
+      [Obsolete("Use Core assertions")]
       public static void Assert(bool test, string location, string message)
       {
-         if (CanAssert)
-         {
-            test.Must().BeTrue().OrThrow(message);
-         }
-         else
-         {
-            test.Must().BeTrue().OrThrow($"at {location}: {message}");
-         }
+         test.Must().BeTrue().OrThrow(CanAssert ? message : $"at {location}: {message}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static void Assert(bool test, string location, Func<string> message)
       {
          if (CanAssert)
@@ -287,78 +279,43 @@ namespace Orange.Library
          }
       }
 
+      [Obsolete("Use Core assertions")]
       public static T Assert<T>(IMaybe<T> maybe, string location, string message)
       {
-         if (CanAssert)
-         {
-            return maybe.Must().HaveValue().Force(message);
-         }
-         else
-         {
-            return maybe.Must().HaveValue().Force($"at {location}: {message}");
-         }
+         return maybe.Must().HaveValue().Force(CanAssert ? message : $"at {location}: {message}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static T Assert<T>(IMaybe<T> maybe, string location, Func<string> message)
       {
-         if (CanAssert)
-         {
-            return maybe.Must().HaveValue().Force(message);
-         }
-         else
-         {
-            return maybe.Must().HaveValue().Force($"at {location}: {message()}");
-         }
+         return CanAssert ? maybe.Must().HaveValue().Force(message) : maybe.Must().HaveValue().Force($"at {location}: {message()}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static T Assert<T>(IResult<T> maybe, string location, string message)
       {
-         if (CanAssert)
-         {
-            return maybe.Must().BeSuccessful().Force(message);
-         }
-         else
-         {
-            return maybe.Must().BeSuccessful().Force($"at {location}: {message}");
-         }
+         return maybe.Must().BeSuccessful().Force(CanAssert ? message : $"at {location}: {message}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static T Assert<T>(IResult<T> maybe, string location, Func<string> message)
       {
-         if (CanAssert)
-         {
-            return maybe.Must().BeSuccessful().Force(message);
-         }
-         else
-         {
-            return maybe.Must().BeSuccessful().Force($"at {location}: {message()}");
-         }
+         return CanAssert ? maybe.Must().BeSuccessful().Force(message) : maybe.Must().BeSuccessful().Force($"at {location}: {message()}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static void Reject(bool test, string location, string message)
       {
-         if (CanAssert)
-         {
-            test.Must().Not.BeTrue().OrThrow(message);
-         }
-         else
-         {
-            test.Must().Not.BeTrue().OrThrow($"at {location}: {message}");
-         }
+         test.Must().Not.BeTrue().OrThrow(CanAssert ? message : $"at {location}: {message}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static void RejectNull(object obj, string location, string message)
       {
-         if (CanAssert)
-         {
-            obj.Must().Not.BeNull().OrThrow(message);
-         }
-         else
-         {
-            obj.Must().Not.BeNull().OrThrow($"at {location}: {message}");
-         }
+         obj.Must().Not.BeNull().OrThrow(CanAssert ? message : $"at {location}: {message}");
       }
 
+      [Obsolete("Use Core assertions")]
       public static void Throw(string location, string message) => throw $"at {location}: {message}".Throws();
 
       public static Value ConvertStringToNumber(Value source)
@@ -506,7 +463,7 @@ namespace Orange.Library
          {
             var operatorText = value.Text;
             var type = TwoCharacterOperatorParser.Operator(operatorText);
-            RejectNull(type, LOCATION, $"Didn't understand verb {operatorText}");
+            type.Must().Not.BeNull().OrThrow(LOCATION, () => $"Didn't understand verb {operatorText}");
             var instance = (Verb)Activator.CreateInstance(type);
             verb = regularizeVerb(instance);
          }
@@ -992,11 +949,7 @@ namespace Orange.Library
       public IInvokable GetInvokable(string name)
       {
          var invokable = invokables[name];
-         if (invokable == null)
-         {
-            Throw(LOCATION, $"Invokable reference {name} not found");
-            return null;
-         }
+         asObject(() => invokable).Must().Not.BeNull().OrThrow(LOCATION, () => $"Invokable reference {name} not found");
 
          return invokable;
       }
@@ -1105,7 +1058,7 @@ namespace Orange.Library
 
       public static string Unmangle(string name)
       {
-         return name.Matches("^ '__$' /(/w+) '_' /(/w+)").Map(m => $"{m.FirstGroup} {m.SecondGroup}").DefaultTo(() => name);
+         return name.Matcher("^ '__$' /(/w+) '_' /(/w+)").Map(m => $"{m.FirstGroup} {m.SecondGroup}").DefaultTo(() => name);
       }
 
       public static bool IsPrefixed(string name, out string type, out string plainName)

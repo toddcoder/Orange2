@@ -80,6 +80,6 @@ namespace Orange.Library.Values
 
       public Parameters Parameters => parameters;
 
-      public IStringify Stringify => stringify;
+      public IStringify String => stringify;
    }
 }

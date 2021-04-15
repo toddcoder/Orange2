@@ -41,7 +41,7 @@ namespace Orange.Library.Values
       string getText()
       {
          var value = block.Evaluate();
-         return value.IsArray ? ((Array)value.SourceArray).Values.Select(v => v.Text).Stringify("") : value.Text;
+         return value.IsArray ? ((Array)value.SourceArray).Values.Select(v => v.Text).ToString("") : value.Text;
       }
 
       public override string ToString() => $"${{{block}}}";

@@ -33,9 +33,9 @@ namespace Orange.Library.Verbs
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString() => $"{type} {fieldNames.Stringify()}";
+      public override string ToString() => $"{type} {fieldNames.ToString(", ")}";
 
-      public string Result => fieldNames.Stringify();
+      public string Result => fieldNames.ToString(", ");
 
       public string TypeName => "";
 

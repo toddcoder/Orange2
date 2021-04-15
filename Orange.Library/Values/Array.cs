@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Core.Arrays;
+using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
 using Core.Monads;
@@ -765,7 +766,7 @@ namespace Orange.Library.Values
 
       void basicAdd(Value value)
       {
-         Reject(value.Type == ValueType.System, LOCATION, "System variable can't be added!");
+         value.Type.Must().Not.Equal(ValueType.System).OrThrow(LOCATION, () => "System variable can't be added!");
          string key;
          if (value is KeyedValue hashKey)
          {
@@ -810,7 +811,7 @@ namespace Orange.Library.Values
             return new None();
          }
 
-         Reject(array.Count == 0, LOCATION, "Can't pop, array empty");
+         array.Must().Not.BeEmpty().OrThrow(LOCATION, () => "Can't pop, array empty");
          var index = -1;
          var indexValue = Arguments?[0];
          if (!indexValue?.IsEmpty == true)
@@ -894,7 +895,7 @@ namespace Orange.Library.Values
             return new None();
          }
 
-         Assert(array.Count > 0, LOCATION, "Array is empty");
+         array.Must().HaveCountOf(0).OrThrow(LOCATION, () => "Array is empty");
 
          var index = 0;
          var indexValue = Arguments?[0];
@@ -2038,9 +2039,9 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Unfield() => array.ValueArray().Stringify(State.FieldSeparator.Text);
+      public Value Unfield() => array.ValueArray().ToString(State.FieldSeparator.Text);
 
-      public Value Unrecord() => array.ValueArray().Stringify(State.RecordSeparator.Text);
+      public Value Unrecord() => array.ValueArray().ToString(State.RecordSeparator.Text);
 
       public Value Splice()
       {
@@ -2340,7 +2341,7 @@ namespace Orange.Library.Values
          if (Arguments.Executable.CanExecute)
          {
             var other = Arguments.AsArray();
-            RejectNull(other, LOCATION, "First parameter of join must be an array");
+            other.Must().Not.BeNull().OrThrow(LOCATION, () => "First parameter of join must be an array");
             var var1 = Arguments.VariableName(0, VAR_X);
             var var2 = Arguments.VariableName(1, VAR_Y);
             var newArray = new Array();
@@ -2360,7 +2361,7 @@ namespace Orange.Library.Values
          }
 
          var connector = Arguments[0].Text;
-         return array.ValueArray().Select(v => v.Text).Stringify(connector);
+         return array.ValueArray().Select(v => v.Text).ToString(connector);
       }
 
       public Array Join(Array other)
@@ -2614,7 +2615,7 @@ namespace Orange.Library.Values
          }
       }
 
-      public Value Listify() => Values.Select(v => v.Text).Stringify(Arguments[0].Text);
+      public Value Listify() => Values.Select(v => v.Text).ToString(Arguments[0].Text);
 
       public Value Fill()
       {
@@ -3396,7 +3397,7 @@ namespace Orange.Library.Values
       public override string ToString()
       {
          return "(" + Keys.Select(key => IsAutoAssignedKey(key) ? array[key].ToString() : $"{key.Quotify("`\"")} => {array[key]}")
-            .Stringify() + ")";
+            .ToString(", ") + ")";
       }
 
       public INSGenerator GetGenerator() => new NSGenerator(this);
@@ -3418,7 +3419,7 @@ namespace Orange.Library.Values
       public Value JSON()
       {
          return "[" + Keys.Select(key => IsAutoAssignedKey(key) ? array[key].ToString() : $"{key.Quotify("`\"")} : {array[key]}")
-            .Stringify() + "]";
+            .ToString(", ") + "]";
       }
 
       static Value evaluateSortBlock(KeyValueBase item, ParameterAssistant assistant, Block block)
@@ -3582,7 +3583,7 @@ namespace Orange.Library.Values
                {
                   assistant.SetParameterValues(value, values[i]);
                   value = block.Evaluate();
-                  RejectNull(value, LOCATION, "Reduction block must return a value");
+                  value.Must().Not.BeNull().OrThrow(LOCATION, () => "Reduction block must return a value");
                   result.Add(value);
                }
 
@@ -3616,7 +3617,7 @@ namespace Orange.Library.Values
                {
                   assistant.SetParameterValues(values[i], value);
                   value = block.Evaluate();
-                  RejectNull(value, LOCATION, "Reduction block must return a value");
+                  value.Must().Not.BeNull().OrThrow(LOCATION, () => "Reduction block must return a value");
                   result.Add(value);
                }
 
@@ -4060,8 +4061,9 @@ namespace Orange.Library.Values
 
       public Value On()
       {
-         RejectNull(Message1, LOCATION, ".break message not sent");
-         Assert(Message1.MessageName == "break", LOCATION, "previous message not .break");
+         Message1.Must().Not.BeNull().OrThrow(LOCATION, () => ".break message not sent");
+         Message1.MessageName.Must().Equal("break").OrThrow(LOCATION, () => "previous message not .break");
+
          using (var breakAssistant = new ParameterAssistant(Message1.MessageArguments))
          {
             var breakBlock = breakAssistant.Block();
@@ -4418,7 +4420,7 @@ namespace Orange.Library.Values
          {
             if (item.Value.IsArray)
             {
-               var newItem = ((Array)item.Value.SourceArray).Values.Stringify(connector);
+               var newItem = ((Array)item.Value.SourceArray).Values.ToString(connector);
                newArray.Add(newItem);
             }
             else
@@ -4430,7 +4432,7 @@ namespace Orange.Library.Values
          return newArray;
       }
 
-      public Value AsText() => Values.Select(v => v.Text).Stringify("");
+      public Value AsText() => Values.Select(v => v.Text).ToString("");
 
       public Value When()
       {
@@ -4568,7 +4570,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      public Value GetText() => Values.Select(v => v.Text).Stringify("");
+      public Value GetText() => Values.Select(v => v.Text).ToString("");
 
       public virtual Value ShiftUntil() => shiftUntil(Arguments);
 
@@ -5163,7 +5165,7 @@ namespace Orange.Library.Values
          using (var assistant = new ParameterAssistant(Arguments))
          {
             var block = assistant.Block();
-            RejectNull(block, LOCATION, "No block found for cross");
+            block.Must().Not.BeNull().OrThrow(LOCATION, () => "No block found for cross");
             var newArray = new Array();
             var function = rightAssociate ? func<Array, Value>(a => new NSGenerator(a).FoldR()) : func<Array, Value>(a => new NSGenerator(a).FoldL());
             foreach (var item in sourceArray)
@@ -5204,9 +5206,9 @@ namespace Orange.Library.Values
 
       public Value Fold()
       {
-         Assert(Length > 1, LOCATION, "Must have at least two elements for folding");
+         Length.Must().BeGreaterThan(1).OrThrow(LOCATION, () => "Must have at least two elements for folding");
          var source = Arguments[0].Text;
-         Assert(source.Length > 0, LOCATION, "Can't use an empty string in folding");
+         source.Must().Not.BeEmpty().OrThrow(LOCATION, () => "Can't use an empty string in folding");
          var cumulative = false;
          var returnBlock = false;
          while (source.IsMatch("^ ['bc']"))
@@ -5228,7 +5230,7 @@ namespace Orange.Library.Values
          }
 
          var verbType = TwoCharacterOperatorParser.Operator(source);
-         RejectNull(verbType, LOCATION, $"Didn't understand '{source}'");
+         verbType.Must().Not.BeNull().OrThrow(LOCATION, () => $"Didn't understand '{source}'");
          var verb = (Verb)Activator.CreateInstance(verbType);
          var builder = new CodeBuilder();
          if (cumulative)

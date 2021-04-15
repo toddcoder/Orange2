@@ -10,7 +10,7 @@ namespace Orange.Library.Parsers
 {
    public class SignatureParser : Parser, ITraitName
    {
-      FreeParser freeParser;
+      protected FreeParser freeParser;
 
       public SignatureParser(bool tabs) : base($"^ /(|{(tabs ? "tabs" : "sp")}|) /(('req' | 'optional') /s+) /(('func' | 'get' | 'set' |" +
          $" 'before' | 'after' | 'require' | 'ensure' | 'invariant') /s+) /({REGEX_VARIABLE}) /(['(:'])")

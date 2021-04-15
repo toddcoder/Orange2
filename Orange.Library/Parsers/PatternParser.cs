@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Orange.Library.Parsers.Conditionals;
 using Orange.Library.Parsers.Patterns;
 using Orange.Library.Patterns;
@@ -182,7 +183,7 @@ namespace Orange.Library.Parsers
             }
          }
 
-         Assert(found, "Pattern parser", $"Didn't understand pattern '{source.Substring(index)}'");
+         found.Must().BeTrue().OrThrow(() => withLocation("Pattern parser", $"Didn't understand pattern '{source.Substring(index)}'"));
 
          if (head == null)
          {

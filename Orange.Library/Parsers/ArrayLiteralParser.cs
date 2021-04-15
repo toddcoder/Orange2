@@ -27,11 +27,11 @@ namespace Orange.Library.Parsers
             }
             else
             {
-               var destringifier = new Destringifier(values);
-               var items = destringifier.Parse().Split("/s+");
+               var destringifier = DelimitedText.BothQuotes();
+               var items = destringifier.Destringify(values).Split("/s+");
                for (var i = 0; i < items.Length; i++)
                {
-                  items[i] = destringifier.Restring(items[i], false);
+                  items[i] = destringifier.Restringify(items[i], RestringifyQuotes.None);
                }
 
                array = new Array(items);

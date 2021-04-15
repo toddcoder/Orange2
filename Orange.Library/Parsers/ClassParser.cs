@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Core.Exceptions;
 using Core.Monads;
 using Core.Strings;
 using Orange.Library.Parsers.Special;
@@ -144,7 +145,7 @@ namespace Orange.Library.Parsers
          var checker = new InheritanceChecker(className, objectBlock, parameters, superClass, isAbstract, traits);
          if (checker.Passes().IfNot(out var exception))
          {
-            Throw(LOCATION, exception.Message);
+            throw withLocation(LOCATION, exception.Message).Throws();
          }
 
          var cls = new Class(parameters, objectBlock, GetStaticBlock(), superClass, traits, superParameters, type == "view");

@@ -462,7 +462,7 @@ namespace Orange.Library.Values
 
       public bool More => more;
 
-      public override string ToString() => $"{generator} {modifiers.Stringify(" ")}";
+      public override string ToString() => $"{generator} {modifiers.ToString(" ")}";
 
       public override Value AlternateValue(string message) => GeneratorToArray(this);
 

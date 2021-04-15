@@ -38,7 +38,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get => fields.ValueArray().Stringify(State.FieldSeparator.Text);
+         get => fields.ValueArray().ToString(State.FieldSeparator.Text);
          set { }
       }
 
@@ -119,7 +119,7 @@ namespace Orange.Library.Values
 
       public void Add(string key, Value value) => fields[key] = value;
 
-      public override string ToString() => fields.Select(i => $"{i.Key} := {i.Value}").Stringify();
+      public override string ToString() => fields.Select(i => $"{i.Key} := {i.Value}").ToString(", ");
 
       public Value Array()
       {

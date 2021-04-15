@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Core.Assertions;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant.SignalType;
 using static Orange.Library.Runtime;
@@ -11,7 +13,7 @@ namespace Orange.Library
 {
    public class ParameterAssistant : IDisposable
    {
-      const string LOCATION = "Parameter assistant";
+      protected const string LOCATION = "Parameter assistant";
 
       public enum SignalType
       {
@@ -21,16 +23,16 @@ namespace Orange.Library
          ReturningNull
       }
 
-      Arguments arguments;
-      DefaultParameterNames names;
-      List<string> unpackedVariables;
-      bool splatting;
-      bool multi;
-      Value comparisand;
+      protected Arguments arguments;
+      protected DefaultParameterNames names;
+      protected List<string> unpackedVariables;
+      protected bool splatting;
+      protected bool multi;
+      protected Value comparisand;
 
       public ParameterAssistant(Arguments arguments, bool useUpperLevel = false)
       {
-         RejectNull(arguments, LOCATION, "Arguments not passed");
+         asObject(() => arguments).Must().Not.BeNull().OrThrow(LOCATION, () => "Arguments not passed");
          this.arguments = arguments;
          names = useUpperLevel ? State.PushUpperLevelParameterNames() : State.PushDefaultParameterNames();
          unpackedVariables = new List<string>();
@@ -42,7 +44,7 @@ namespace Orange.Library
             return;
          }
 
-         Assert(arguments.Parameters.Length > 0, LOCATION, "You must have at least one parameter");
+         arguments.Parameters.Length.Must().BeGreaterThan(0).OrThrow(LOCATION, () => "You must have at least one parameter");
          comparisand = arguments.Parameters[0].Comparisand.Evaluate();
       }
 
@@ -81,7 +83,7 @@ namespace Orange.Library
          getUnpackedVariables();
       }
 
-      void getUnpackedVariables()
+      protected void getUnpackedVariables()
       {
          for (var i = 3; i < arguments.Parameters.Length; i++)
          {
@@ -157,7 +159,7 @@ namespace Orange.Library
          names.WriterVariable = arguments.VariableName(0, names.WriterVariable);
       }
 
-      void setUnpacked(Value value)
+      protected void setUnpacked(Value value)
       {
          if (names.UnpackedVariables.Count == 0 && unpackedVariables.Count == 0)
          {
@@ -176,9 +178,9 @@ namespace Orange.Library
          }
       }
 
-      void caseMatch(Value value)
+      protected void caseMatch(Value value)
       {
-         Assert(Case.Match(value, comparisand, Regions.Current, false, false, null), LOCATION, "Comparison must match");
+         Case.Match(value, comparisand, Regions.Current, false, false, null).Must().BeTrue().OrThrow(LOCATION, () => "Comparison must match");
       }
 
       public void SetParameterValues(Array.IterItem item)

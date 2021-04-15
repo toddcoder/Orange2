@@ -89,7 +89,7 @@ namespace OrangePlayground
 
       void markText(string pattern, Color backColor)
       {
-         if (textBox.Text.Matches(pattern).If(out var matcher))
+         if (textBox.Text.Matcher(pattern).If(out var matcher))
          {
             for (var i = 0; i < matcher.MatchCount; i++)
             {

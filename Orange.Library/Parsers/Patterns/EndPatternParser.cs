@@ -10,9 +10,9 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class EndPatternParser : Parser, IReplacementParser
    {
-      bool ignoreReplacement;
-      ReplacementParser replacementParser;
-      ConditionalParser conditionalParser;
+      protected bool ignoreReplacement;
+      protected ReplacementParser replacementParser;
+      protected ConditionalParser conditionalParser;
 
       public EndPatternParser(bool ignoreReplacement) : base($"^ /s* {REGEX_END_PATTERN}")
       {

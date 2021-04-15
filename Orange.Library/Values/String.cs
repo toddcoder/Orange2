@@ -401,7 +401,7 @@ namespace Orange.Library.Values
          }
 
          var result = records[0];
-         text = records.Where((record, i) => i > 0).Stringify(State.RecordSeparator.text);
+         text = records.Where((record, i) => i > 0).ToString(State.RecordSeparator.text);
          return result;
       }
 
@@ -749,7 +749,7 @@ namespace Orange.Library.Values
                }
             }
 
-            return result.Stringify(State.RecordSeparator.Text);
+            return result.ToString(State.RecordSeparator.Text);
          }
 
          return "";
@@ -1004,7 +1004,7 @@ namespace Orange.Library.Values
       {
          var count = Arguments[0].Int;
          var spaces = " ".Repeat(count);
-         return State.FieldPattern.Split(getText()).Stringify(spaces);
+         return State.FieldPattern.Split(getText()).ToString(spaces);
       }
 
       public Value DeleteField()
@@ -1028,7 +1028,7 @@ namespace Orange.Library.Values
             result.Add(fields[i]);
          }
 
-         return result.Stringify(State.FieldSeparator.text);
+         return result.ToString(State.FieldSeparator.text);
       }
 
       public Value Delete()

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Core.Assertions;
 using Core.Collections;
 using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
@@ -11,10 +12,10 @@ namespace Orange.Library.Parsers
 {
    public class TraitParser : Parser
    {
-      TraitBodyParser bodyParser;
-      DoesParser doesParser;
-      EndOfLineParser endOfLineParser;
-      List<string> traits;
+      protected TraitBodyParser bodyParser;
+      protected DoesParser doesParser;
+      protected EndOfLineParser endOfLineParser;
+      protected List<string> traits;
 
       public TraitParser() : base($"^ /('trait' /s+) /({REGEX_VARIABLE})")
       {
@@ -45,7 +46,7 @@ namespace Orange.Library.Parsers
          InClassDefinition = true;
          foreach (var traitName in traits)
          {
-            var trait = Assert(CompilerState.Trait(traitName), LOCATION, $"Trait {traitName} isn't defined");
+            var trait = CompilerState.Trait(traitName).Must().HaveValue().Force(LOCATION, () => $"Trait {traitName} isn't defined");
             foreach (var (key, value) in trait.Members)
             {
                members[key] = value;

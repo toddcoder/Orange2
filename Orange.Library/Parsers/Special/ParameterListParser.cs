@@ -13,7 +13,7 @@ namespace Orange.Library.Parsers.Special
 {
    public class ParameterListParser : SpecialParser<List<Parameter>>, IReturnsParameterList
    {
-      enum ParsingStage
+      protected enum ParsingStage
       {
          Modifiers,
          Variable,
@@ -21,7 +21,7 @@ namespace Orange.Library.Parsers.Special
          Comparisand
       }
 
-      enum VerbType
+      protected enum VerbType
       {
          Verb,
          Comma,
@@ -34,15 +34,15 @@ namespace Orange.Library.Parsers.Special
          Block
       }
 
-      Stop stop;
-      List<Parameter> list;
-      Value value;
-      string variableName;
-      VisibilityType visibility;
-      bool readOnly;
-      Block block;
-      bool lazy;
-      ParsingStage stage;
+      protected Stop stop;
+      protected List<Parameter> list;
+      protected Value value;
+      protected string variableName;
+      protected VisibilityType visibility;
+      protected bool readOnly;
+      protected Block block;
+      protected bool lazy;
+      protected ParsingStage stage;
 
       public ParameterListParser(Stop stop)
       {
@@ -186,7 +186,7 @@ namespace Orange.Library.Parsers.Special
          return list.Some();
       }
 
-      VerbType determineVerbType(Verb verb)
+      protected VerbType determineVerbType(Verb verb)
       {
          switch (verb)
          {

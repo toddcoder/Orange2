@@ -1,4 +1,5 @@
-﻿using Core.Monads;
+﻿using Core.Assertions;
+using Core.Monads;
 using Orange.Library.Parsers.Line;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
@@ -70,7 +71,7 @@ namespace Orange.Library.Parsers
 
                if (guardBlock.IsSome)
                {
-                  Assert(ifTrue.LastIsReturn, "Maybe", "return required");
+                  ifTrue.LastIsReturn.Must().BeTrue().OrThrow(() => withLocation("Maybe", "return required"));
                }
 
                overridePosition = currentIndex;

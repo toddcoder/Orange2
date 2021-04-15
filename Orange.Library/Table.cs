@@ -85,7 +85,7 @@ namespace Orange.Library
                fields.Add(paddedItem);
             }
 
-            var renderedRow = leftDivider + fields.Stringify(middleDivider) + rightDivider;
+            var renderedRow = leftDivider + fields.ToString(middleDivider) + rightDivider;
             return renderedRow;
          }
 
@@ -105,11 +105,11 @@ namespace Orange.Library
                headers.Add(paddedItem);
             }
 
-            var renderedHeader = leftDivider + headers.Stringify(middleDivider) + rightDivider;
+            var renderedHeader = leftDivider + headers.ToString(middleDivider) + rightDivider;
             return renderedHeader;
          }
 
-         public string Representation => "| " + columns.Stringify(" | ") + " |...";
+         public string Representation => "| " + columns.ToString(" | ") + " |...";
       }
 
       const string LOCATION = "Table";

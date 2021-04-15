@@ -40,7 +40,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get => messages.Stringify(" ~ ");
+         get => messages.ToString(" ~ ");
          set { }
       }
 
@@ -85,7 +85,7 @@ namespace Orange.Library.Values
          return value;
       }
 
-      public override string ToString() => messages.Select(m => m.MessageName).Stringify(" ~ ");
+      public override string ToString() => messages.Select(m => m.MessageName).ToString(" ~ ");
 
       public void Add(string message) => messages.Add(new Message(message, new Arguments()));
 

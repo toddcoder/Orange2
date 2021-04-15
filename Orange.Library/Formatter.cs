@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Core.Exceptions;
 using Core.RegularExpressions;
 using Core.Strings;
 using static Orange.Library.Runtime;
@@ -20,8 +21,7 @@ namespace Orange.Library
             return new Formatter(specifier, width, places);
          }
 
-         Throw(LOCATION, $"Didn't understand formatter specification {source}");
-         return null;
+         throw withLocation(LOCATION, $"Didn't understand formatter specification {source}").Throws();
       }
 
       string format;

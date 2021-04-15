@@ -20,7 +20,7 @@ namespace Orange.Library
       }
 
       public void Evaluate(IEnumerable<ParameterValue> parameterValues) => key = parameterValues
-         .Select(v => v.Value.ToString()).Stringify("¶");
+         .Select(v => v.Value.ToString()).ToString("¶");
 
       public Value Evaluate(Func<Value> func)
       {

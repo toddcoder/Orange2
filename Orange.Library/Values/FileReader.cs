@@ -6,10 +6,10 @@ namespace Orange.Library.Values
 {
    public class FileReader : Value, IDisposable
    {
-      StreamReader reader;
-      string[] readLine;
-      int readIndex;
-      bool closed;
+      protected StreamReader reader;
+      protected string[] readLine;
+      protected int readIndex;
+      protected bool closed;
 
       public FileReader(StreamReader reader)
       {
@@ -23,20 +23,11 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get
-         {
-            return reader.ReadToEnd();
-         }
-         set
-         {
-         }
+         get { return reader.ReadToEnd(); }
+         set { }
       }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.FileReader;
 

@@ -32,15 +32,20 @@ namespace Orange.Library.Parsers
       {
          var verb = parserResult.Verb;
          if (verb == null || verb is NullOp)
+         {
             return null;
+         }
+
          var leftToRight = verb.LeftToRight;
          var lambda = createLambda(verb);
          if (lambda == null)
+         {
             return null;
+         }
+
          overridePosition = parserResult.Position;
          result.Value = lambda;
          return new Fold(lambda, leftToRight);
-         //return new Push(lambda);
       }
 
       ThreeCharacterOperatorParser threeCharacterOperatorParser;
@@ -49,8 +54,7 @@ namespace Orange.Library.Parsers
       WordOperatorParser wordOperatorParser;
       VariableParser variableParser;
 
-      public DeferredParser()
-         : base("^ /(|sp| '`') -(> ' '+)")
+      public DeferredParser() : base("^ /(|sp| '`') -(> ' '+)")
       {
          threeCharacterOperatorParser = new ThreeCharacterOperatorParser();
          twoCharacterOperatorParser = new TwoCharacterOperatorParser();
@@ -64,13 +68,25 @@ namespace Orange.Library.Parsers
          Color(position, length, EntityType.Operators);
          var index = position + length;
          if (threeCharacterOperatorParser.Scan(source, index))
+         {
             return createLambda(threeCharacterOperatorParser.Result);
+         }
+
          if (twoCharacterOperatorParser.Scan(source, index))
+         {
             return createLambda(twoCharacterOperatorParser.Result);
+         }
+
          if (oneCharacterOperatorParser.Scan(source, index))
+         {
             return createLambda(oneCharacterOperatorParser.Result);
+         }
+
          if (wordOperatorParser.Scan(source, index))
+         {
             return createLambda(wordOperatorParser.Result);
+         }
+
          if (variableParser.Scan(source, index))
          {
             var parserResult = variableParser.Result;
@@ -78,6 +94,7 @@ namespace Orange.Library.Parsers
             result.Value = parserResult.Value;
             return parserResult.Verb;
          }
+
          return null;
       }
 

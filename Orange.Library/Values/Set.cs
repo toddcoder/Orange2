@@ -145,7 +145,7 @@ namespace Orange.Library.Values
 
       public override Value AlternateValue(string message) => new Array(hashSet);
 
-      public override string ToString() => $"({hashSet.Stringify(" ^^ ")})";
+      public override string ToString() => $"({hashSet.ToString(" ^^ ")})";
 
       public bool Equals(Value x, Value y) => x.Compare(y) == 0;
 

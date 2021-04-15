@@ -26,6 +26,6 @@ namespace Orange.Library.Verbs
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 
-      public override string ToString() => $"<{functionName}({verbs.Stringify(" ")})>";
+      public override string ToString() => $"<{functionName}({verbs.ToString(" ")})>";
    }
 }

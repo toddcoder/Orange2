@@ -1,7 +1,9 @@
 ﻿using System;
+using Core.Assertions;
 using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Values;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Runtime;
 using Array = Orange.Library.Values.Array;
 
@@ -9,11 +11,11 @@ namespace Orange.Library.Patterns
 {
    public class FunctionElement : Element
    {
-      const string LOCATION = "Function element";
+      protected const string LOCATION = "Function element";
 
-      string functionName;
-      Arguments arguments;
-      bool positionAlreadyUpdated;
+      protected string functionName;
+      protected Arguments arguments;
+      protected bool positionAlreadyUpdated;
 
       public FunctionElement(string functionName, Arguments arguments)
       {
@@ -21,11 +23,13 @@ namespace Orange.Library.Patterns
          this.arguments = arguments;
       }
 
-      public FunctionElement() : this("", new Arguments()) { }
+      public FunctionElement() : this("", new Arguments())
+      {
+      }
 
       public override bool PositionAlreadyUpdated => positionAlreadyUpdated;
 
-      bool evaluate(Func<Element, bool> func, Func<Pattern, bool> scanFunc)
+      protected bool evaluate(Func<Element, bool> func, Func<Pattern, bool> scanFunc)
       {
          positionAlreadyUpdated = false;
          index = -1;
@@ -33,7 +37,7 @@ namespace Orange.Library.Patterns
 
          var value = RegionManager.Regions[functionName];
          var closure = value as Lambda;
-         RejectNull(closure, LOCATION, $"{functionName} isn't a function");
+         assert(() => (object)closure).Must().Not.BeNull().OrThrow(LOCATION, () => $"{functionName} isn't a function");
          value = closure.Evaluate(arguments);
          string text;
          StringElement element;
@@ -106,9 +110,9 @@ namespace Orange.Library.Patterns
          return false;
       }
 
-      static void pushNamespace(Lambda lambda) => RegionManager.Regions.Push(lambda.Region, "function element");
+      protected static void pushNamespace(Lambda lambda) => RegionManager.Regions.Push(lambda.Region, "function element");
 
-      static void popNamespace() => RegionManager.Regions.Pop("function element");
+      protected static void popNamespace() => RegionManager.Regions.Pop("function element");
 
       public override bool Evaluate(string input) => evaluate(e => e.Evaluate(input), p => p.Scan(input));
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Core.Assertions;
 using Core.Collections;
 using Orange.Library.Patterns;
 using Orange.Library.Values;
@@ -171,7 +172,7 @@ namespace Orange.Library.Managers
       public void Push()
       {
          patternStates.Push(new PatternState());
-         Assert(patternStates.Count <= MAX_BLOCK_DEPTH, LOCATION, "Excessive recursion");
+         patternStates.Count.Must().BeLessThanOrEqual(MAX_BLOCK_DEPTH).OrThrow(() => withLocation(LOCATION, "Excessive recursion"));
       }
 
       public void Pop() => patternStates.Pop();

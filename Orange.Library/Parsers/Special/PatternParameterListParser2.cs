@@ -11,7 +11,7 @@ namespace Orange.Library.Parsers.Special
 {
    public class PatternParameterListParser2 : SpecialParser<List<Parameter>>, IReturnsParameterList
    {
-      List<Parameter> list;
+      protected List<Parameter> list;
 
       public PatternParameterListParser2() => list = new List<Parameter>();
 

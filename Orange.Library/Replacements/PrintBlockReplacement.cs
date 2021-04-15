@@ -1,4 +1,5 @@
-﻿using Core.Monads;
+﻿using Core.Assertions;
+using Core.Monads;
 using Orange.Library.Values;
 using static Core.Monads.MonadFunctions;
 using static Orange.Library.Compiler;
@@ -15,7 +16,7 @@ namespace Orange.Library.Replacements
 
       public PrintBlockReplacement(Lambda lambda)
       {
-         Assert(lambda.Parameters != null && lambda.Parameters.Length > 0, LOCATION, "No parameter provided");
+         lambda.Parameters?.Length.Must().BeGreaterThan(0).OrThrow(LOCATION, () => "No parameter provided");
          this.lambda = lambda;
          id = CompilerState.ObjectID();
       }

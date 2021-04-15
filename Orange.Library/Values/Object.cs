@@ -371,7 +371,7 @@ namespace Orange.Library.Values
                .Select(k => new { key = k, value = region[k] })
                .Where(i => isComparison(i.key, i.value))
                .Select(i => i.value)
-               .Stringify();
+               .ToString(", ");
          }
       }
 

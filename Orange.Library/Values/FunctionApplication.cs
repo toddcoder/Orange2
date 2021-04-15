@@ -45,6 +45,6 @@ namespace Orange.Library.Values
          return result;
       }
 
-      public override string ToString() => functions.Stringify(" . ");
+      public override string ToString() => functions.ToString(" . ");
    }
 }

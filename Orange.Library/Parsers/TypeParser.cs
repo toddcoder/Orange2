@@ -9,7 +9,9 @@ namespace Orange.Library.Parsers
 {
    public class TypeParser : Parser
    {
-      public TypeParser() : base($"^ /(|tabs| 'type' /s+) /({REGEX_VARIABLE}) /(/s* '(')?") { }
+      public TypeParser() : base($"^ /(|tabs| 'type' /s+) /({REGEX_VARIABLE}) /(/s* '(')?")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -72,7 +74,7 @@ namespace Orange.Library.Parsers
 
       public override string VerboseName => "type";
 
-      static Block objectBlock(string name)
+      protected static Block objectBlock(string name)
       {
          var builder = new CodeBuilder();
          builder.Push();

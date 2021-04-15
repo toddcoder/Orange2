@@ -19,8 +19,8 @@ namespace Orange.Library.Parsers
          Color(tokens[2].Length, Structures);
 
          var index = position + length;
-         var matches = source.Drop(index).Matches("^ /s* ')'");
-         if (matches.If(out var matcher))
+         var _matcher = source.Drop(index).Matcher("^ /s* ')'");
+         if (_matcher.If(out var matcher))
          {
             Color(matcher.Length, Structures);
             overridePosition = index + matcher.Length;

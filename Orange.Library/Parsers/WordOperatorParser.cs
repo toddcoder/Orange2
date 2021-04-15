@@ -8,7 +8,7 @@ namespace Orange.Library.Parsers
 {
    public class WordOperatorParser : Parser
    {
-      static Hash<string, Type> operators;
+      protected static Hash<string, Type> operators;
 
       public static bool IsWordOperator(string word) => operators.ContainsKey(word);
 
@@ -61,7 +61,9 @@ namespace Orange.Library.Parsers
          ["divrem"] = typeof(DivRem)
       };
 
-      public WordOperatorParser() : base("^ /s+ {a-z} /b") { }
+      public WordOperatorParser() : base("^ /s+ {a-z} /b")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {

@@ -63,7 +63,7 @@ namespace Orange.Library.Values
             parameter = parameter.Succ();
          }
 
-         return list.Stringify();
+         return list.ToString(", ");
       }
 
       public string UnmangledSignature => $"{Unmangle(name)}({parameters()})";

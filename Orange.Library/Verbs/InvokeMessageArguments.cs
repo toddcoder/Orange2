@@ -28,7 +28,7 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         var message = messages.Select(m => m + "_").Stringify("");
+         var message = messages.Select(m => m + "_").ToString("");
          var arguments = new Arguments(values.Select(v => v.Evaluate()).ToArray());
          var target = State.Stack.Pop(true, "Invoke message arguments");
 

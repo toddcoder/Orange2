@@ -7,10 +7,7 @@ namespace Orange.Library.Parsers.Replacements
 {
    public class AtReplacementParser : Parser, IReplacementParser
    {
-      public AtReplacementParser()
-         : base($"^ /(/s* '@')? /(/s* '=') /({REGEX_VARIABLE})")
-      {
-      }
+      public AtReplacementParser() : base($"^ /(/s* '@')? /(/s* '=') /({REGEX_VARIABLE})") { }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -24,10 +21,6 @@ namespace Orange.Library.Parsers.Replacements
 
       public override string VerboseName => "at replacement";
 
-      public IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public IReplacement Replacement { get; set; }
    }
 }

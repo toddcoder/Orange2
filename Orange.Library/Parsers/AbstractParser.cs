@@ -8,13 +8,14 @@ namespace Orange.Library.Parsers
    {
       SignatureParser signatureParser;
 
-      public AbstractParser()
-         : base("^ /(|tabs|) /('abstract') /(/s+)") => signatureParser = new SignatureParser(false);
+      public AbstractParser() : base("^ /(|tabs|) /('abstract') /(/s+)") => signatureParser = new SignatureParser(false);
 
       public override Verb CreateVerb(string[] tokens)
       {
          if (!InClassDefinition)
+         {
             return null;
+         }
 
          Color(position, length, KeyWords);
          var index = position + length;

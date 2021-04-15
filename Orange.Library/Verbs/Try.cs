@@ -43,6 +43,6 @@ namespace Orange.Library.Verbs
 
       public int Index { get; set; }
 
-      public override string ToString() => $"try {fieldName.Extend($" {fieldName} = ")} {block}";
+      public override string ToString() => $"try {fieldName.Map(() => $"{fieldName} = ")} {block}";
    }
 }

@@ -5,10 +5,7 @@ namespace Orange.Library.Parsers
 {
    public class SpecialPrefixParser : Parser
    {
-      public SpecialPrefixParser()
-         : base("^ /(|sp| ['+~^!']) -(> ' '+)")
-      {
-      }
+      public SpecialPrefixParser() : base("^ /(|sp| ['+~^!']) -(> ' '+)") { }
 
       public override Verb CreateVerb(string[] tokens)
       {

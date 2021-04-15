@@ -29,6 +29,6 @@ namespace Orange.Library
          return peek.LeftToRight ? peek.Precedence <= next.Precedence : peek.Precedence < next.Precedence;
       }
 
-      public override string ToString() => stack.ToArray().Stringify(" ");
+      public override string ToString() => stack.ToArray().ToString(" ");
    }
 }

@@ -258,7 +258,7 @@ namespace Orange.Library.Verbs
                   fieldList.Add(fieldQueue.Dequeue());
                }
 
-               field = fieldList.Stringify(State.FieldSeparator.Text);
+               field = fieldList.ToString(State.FieldSeparator.Text);
             }
 
             Regions.CreateVariableIfNonexistent(variableName);

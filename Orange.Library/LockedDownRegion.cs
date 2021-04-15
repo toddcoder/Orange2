@@ -1,4 +1,5 @@
 ﻿using Core.Collections;
+using Core.Exceptions;
 using Orange.Library.Values;
 
 namespace Orange.Library
@@ -47,7 +48,7 @@ namespace Orange.Library
          }
       }
 
-      static void throwError(string name) => Runtime.Throw(LOCATION, $"{name} is read-only");
+      static void throwError(string name) => throw Runtime.withLocation(LOCATION, $"{name} is read-only").Throws();
 
       public override void SetLocal(string name, Value value, Object.VisibilityType visibility = Object.VisibilityType.Public,
          bool overriding = false, bool allowNil = false, int index = -1)

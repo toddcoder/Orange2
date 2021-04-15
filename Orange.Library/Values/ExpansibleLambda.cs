@@ -27,7 +27,7 @@ namespace Orange.Library.Values
                         .Where(p => p.Value is Placeholder)
                         .Select(p => p.Value)
                         .Select(v => v.Text)
-                        .Stringify(",");
+                        .ToString(",");
                      continue;
                   case Push push:
                      switch (push.Value)
@@ -36,10 +36,10 @@ namespace Orange.Library.Values
                            parameter.PlaceholderName = placeholder.Text;
                            break;
                         case Array array:
-                           parameter.PlaceholderName = array.Values.Where(v => v is Placeholder).Select(v => v.Text).Stringify(",");
+                           parameter.PlaceholderName = array.Values.Where(v => v is Placeholder).Select(v => v.Text).ToString(",");
                            break;
                         case List list:
-                           parameter.PlaceholderName = list.ComparisonValues().Where(v => v is Placeholder).Select(v => v.Text).Stringify(":");
+                           parameter.PlaceholderName = list.ComparisonValues().Where(v => v is Placeholder).Select(v => v.Text).ToString(":");
                            break;
                      }
 
@@ -131,6 +131,6 @@ namespace Orange.Library.Values
          }
       }
 
-      public override string ToString() => expansibleItems.Stringify();
+      public override string ToString() => expansibleItems.ToString(", ");
    }
 }

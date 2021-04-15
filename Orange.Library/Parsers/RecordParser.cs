@@ -12,9 +12,11 @@ namespace Orange.Library.Parsers
 {
    public class RecordParser : Parser
    {
-      class OneLineMemberParser : Parser
+      protected class OneLineMemberParser : Parser
       {
-         public OneLineMemberParser() : base($"^ /(|sp|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
+         public OneLineMemberParser() : base($"^ /(|sp|) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
+         {
+         }
 
          public override Verb CreateVerb(string[] tokens)
          {
@@ -43,9 +45,11 @@ namespace Orange.Library.Parsers
          public Thunk Thunk { get; set; }
       }
 
-      class MultiLineMemberParser : Parser
+      protected class MultiLineMemberParser : Parser
       {
-         public MultiLineMemberParser() : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '=' /s*)") { }
+         public MultiLineMemberParser() : base($"^ /(|tabs|) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
+         {
+         }
 
          public override Verb CreateVerb(string[] tokens)
          {
@@ -73,7 +77,7 @@ namespace Orange.Library.Parsers
          public Thunk Thunk { get; set; }
       }
 
-      FreeParser freeParser;
+      protected FreeParser freeParser;
 
       public RecordParser() : base($"^ /(|sp|) /'('? /'rec' (/(/s+ 'of' /s+) /({REGEX_VARIABLE}))? ") => freeParser = new FreeParser();
 

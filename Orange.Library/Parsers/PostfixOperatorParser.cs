@@ -5,7 +5,7 @@ namespace Orange.Library.Parsers
 {
    public class PostfixOperatorParser : MultiParser
    {
-      bool asStatement;
+      protected bool asStatement;
 
       public PostfixOperatorParser(bool asStatement) => this.asStatement = asStatement;
 

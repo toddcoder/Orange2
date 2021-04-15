@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
+using Core.Assertions;
 using Orange.Library.Managers;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
@@ -14,13 +14,12 @@ namespace Orange.Library.Values
       public Big(string representation)
       {
          BigInteger.TryParse(representation, out value);
-         RejectNull(value, "Big", $"Couldn't convert {representation}L");
+         value.Must().Not.BeNull().OrThrow("Big", () => $"Couldn't convert {representation}L");
       }
 
       public Big(BigInteger value) => this.value = value;
 
-      public Big()
-         : this(0) { }
+      public Big() : this(0) { }
 
       public override int Compare(Value other) => other is Big big ? value.CompareTo(big) : value.CompareTo(other);
 

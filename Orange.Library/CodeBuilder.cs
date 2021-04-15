@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Core.Assertions;
 using Core.Enumerables;
 using Core.Monads;
 using Orange.Library.Parsers;
@@ -16,11 +17,11 @@ namespace Orange.Library
 {
    public class CodeBuilder
    {
-      class LimitChecker
+      protected class LimitChecker
       {
-         int oldIndex;
-         Block block;
-         int blockLength;
+         protected int oldIndex;
+         protected Block block;
+         protected int blockLength;
 
          public LimitChecker(int index, Block block)
          {
@@ -55,7 +56,7 @@ namespace Orange.Library
          public void Revert(out int index) => index = oldIndex;
       }
 
-      const string LOCATION = "Code Builder";
+      protected const string LOCATION = "Code Builder";
 
       public static bool PushVariable(Verb verb, out string name)
       {
@@ -280,11 +281,11 @@ namespace Orange.Library
          return newBlock;
       }
 
-      List<Parameter> parameterList;
-      Block block;
-      Block argumentsBlock;
-      Stack<Block> stack;
-      bool comma;
+      protected List<Parameter> parameterList;
+      protected Block block;
+      protected Block argumentsBlock;
+      protected Stack<Block> stack;
+      protected bool comma;
 
       public CodeBuilder()
       {
@@ -295,8 +296,7 @@ namespace Orange.Library
          comma = false;
       }
 
-      public CodeBuilder(Block block)
-         : this()
+      public CodeBuilder(Block block) : this()
       {
          foreach (var verb in block.AsAdded)
          {
@@ -304,7 +304,7 @@ namespace Orange.Library
          }
       }
 
-      public override string ToString() => block.AsAdded.Stringify(" ");
+      public override string ToString() => block.AsAdded.ToString(" ");
 
       public void Parameter(string name, Value defaultValue = null, VisibilityType visibility = Public,
          bool readOnly = false, bool lazy = false)
@@ -347,7 +347,7 @@ namespace Orange.Library
       public void Operator(string source)
       {
          var type = TwoCharacterOperatorParser.Operator(source);
-         Runtime.RejectNull(type, LOCATION, $"Didn't recognize '{source}'");
+         type.Must().Not.BeNull().OrThrow(LOCATION, () => $"Didn't recognize '{source}'");
          var verb = (Verb)Activator.CreateInstance(type);
          block.Add(verb);
       }
@@ -371,7 +371,7 @@ namespace Orange.Library
          argumentsBlock.Add(new Push(value));
       }
 
-      void prefixArguments()
+      protected void prefixArguments()
       {
          if (argumentsBlock.Count > 0)
          {

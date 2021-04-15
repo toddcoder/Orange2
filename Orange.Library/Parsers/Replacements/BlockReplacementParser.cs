@@ -7,7 +7,7 @@ namespace Orange.Library.Parsers.Replacements
 {
    public class BlockReplacementParser : Parser, IReplacementParser
    {
-      LambdaParser blockParser;
+      protected LambdaParser blockParser;
 
       public BlockReplacementParser() : base("^ /(/s*) '('") => blockParser = new LambdaParser();
 

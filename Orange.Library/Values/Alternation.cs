@@ -49,7 +49,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "reset", v => ((Alternation)v).Reset());
       }
 
-      public override string ToString() => alternations.Select(v => v.ToString()).Stringify(" | ");
+      public override string ToString() => alternations.Select(v => v.ToString()).ToString(" | ");
 
       public void Add(Value value) => alternations.Add(value);
 

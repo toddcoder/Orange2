@@ -13,6 +13,7 @@ using Core.Dates;
 using Core.Enumerables;
 using Core.Monads;
 using Core.Numbers;
+using Core.RegularExpressions;
 using Core.Strings;
 using Core.WinForms.Consoles;
 using Core.WinForms.Documents;
@@ -25,7 +26,6 @@ using static Core.Arrays.ArrayFunctions;
 using static Core.Monads.MonadFunctions;
 using static Newtonsoft.Json.JsonConvert;
 using static Orange.Library.Runtime;
-using static Core.RegularExpressions.RegexExtensions;
 using static Core.WinForms.Documents.Document;
 
 namespace OrangePlayground
@@ -291,7 +291,7 @@ namespace OrangePlayground
                }
 
                var tabSize = getSize(e.Graphics.MeasureString("\t", font));
-               if (line.Matches("^ /(/t1%4)").If(out var matcher))
+               if (line.Matcher("^ /(/t1%4)").If(out var matcher))
                {
                   var x = 8;
                   var charIndex = textEditor.GetFirstCharIndexFromLine(i);
@@ -671,7 +671,7 @@ namespace OrangePlayground
       {
          var startIndex = textEditor.SelectionStart;
          var begin = textEditor.Text.Keep(startIndex);
-         return begin.Matches("/(/w+) $").Map(m => m.FirstGroup);
+         return begin.Matcher("/(/w+) $").Map(m => m.FirstGroup);
       }
 
       IMaybe<string> findWord(string begin)
@@ -682,15 +682,14 @@ namespace OrangePlayground
 
       void matchPass(bool first)
       {
-         var matches = textEditor.Text.Matches("/b 'pass' /b");
-         if (matches.If(out var matcher))
+         if (textEditor.Text.Matcher("/b 'pass' /b").If(out var matcher))
          {
             var (_, index, length) = matcher.GetMatch(first ? 0 : matcher.MatchCount - 1);
             textEditor.Select(index, length);
          }
       }
 
-      string getIndent() => textEditor.CurrentLine().Matches("^ /t*").Map(m => m[0]).DefaultTo(() => "");
+      string getIndent() => textEditor.CurrentLine().Matcher("^ /t*").Map(m => m[0]).DefaultTo(() => "");
 
       void insertTemplate(string template, string replacement)
       {
@@ -761,7 +760,7 @@ namespace OrangePlayground
                var saved = saveSelection();
                for (var i = 0; i < selectedLines.Length; i++)
                {
-                  if (selectedLines[i].Matches("^ /t /@").If(out var matcher))
+                  if (selectedLines[i].Matcher("^ /t /@").If(out var matcher))
                   {
                      lines[i + offset] = matcher.FirstGroup;
                   }

@@ -1,16 +1,16 @@
-﻿using Orange.Library.Parsers.Special;
+﻿using Core.Assertions;
+using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static Orange.Library.Compiler;
 using static Orange.Library.Parsers.IDEColor.EntityType;
-using static Orange.Library.Runtime;
 using static Core.Monads.MonadExtensions;
 
 namespace Orange.Library.Parsers
 {
    public class OperatorParser : Parser
    {
-      FunctionBodyParser functionBodyParser;
+      protected FunctionBodyParser functionBodyParser;
 
       public OperatorParser() : base("^ /(|tabs|) /('nofix' | 'prefix' | 'suffix' | 'infix') /(/s+) /(['a-z'] ['a-z0-9']* '?'?) /(/s* '(')")
       {
@@ -31,7 +31,7 @@ namespace Orange.Library.Parsers
          var index = position + length;
          var parametersParser = new ParametersParser();
          var parsed = parametersParser.Parse(source, index);
-         Assert(parsed.If(out var parameters, out index), "Operator parser", "Parameters malformed");
+         parsed.If(out var parameters, out index).Must().BeTrue().OrThrow("Operator parser", () => "Parameters malformed");
          if (functionBodyParser.Parse(source, index).If(out var block, out var newIndex))
          {
             overridePosition = newIndex;

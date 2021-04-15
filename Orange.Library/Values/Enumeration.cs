@@ -32,7 +32,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get => values.KeyArray().Stringify(State.FieldSeparator.Text);
+         get => values.KeyArray().ToString(State.FieldSeparator.Text);
          set { }
       }
 
@@ -79,7 +79,7 @@ namespace Orange.Library.Values
 
       public override Value SourceArray => AlternateValue("source array");
 
-      public override string ToString() => values.Select(i => $"{i.Key} => {i.Value}").Stringify(State.FieldSeparator.Text);
+      public override string ToString() => values.Select(i => $"{i.Key} => {i.Value}").ToString(State.FieldSeparator.Text);
 
       public override void AssignTo(Variable variable)
       {

@@ -12,7 +12,7 @@ namespace Orange.Library.Parsers
 {
    public class ShortLoopRangeParser : Parser
    {
-      FreeParser freeParser;
+      protected FreeParser freeParser;
 
       public ShortLoopRangeParser() : base("^ /(|sp|) /('(' /s* '<-' /s*)") => freeParser = new FreeParser();
 

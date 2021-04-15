@@ -56,7 +56,7 @@ namespace Orange.Library.Values
          var result = block.Evaluate();
          if (result.IsArray)
          {
-            result = ((Array)result.SourceArray).Values.Select(v => v.Text).Stringify("");
+            result = ((Array)result.SourceArray).Values.Select(v => v.Text).ToString("");
          }
 
          Runtime.State.UnregisterBlock();

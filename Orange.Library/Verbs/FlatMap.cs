@@ -32,7 +32,7 @@ namespace Orange.Library.Verbs
                   arguments = new Arguments(new NullBlock(), stringifyBlock, new NullParameters());
                   return MessagingState.SendMessage(array, MESSAGE_NAME, arguments);
                case Values.Format format:
-                  var formatBlock = new Block { new Push(format.Stringify.String) };
+                  var formatBlock = new Block { new Push(format.String.String) };
                   arguments = new Arguments(new NullBlock(), formatBlock, format.Parameters);
                   return MessagingState.SendMessage(array, MESSAGE_NAME, arguments);
                default:

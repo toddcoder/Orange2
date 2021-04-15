@@ -20,6 +20,6 @@ namespace Orange.Library.Verbs
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Increment;
 
-      public override string ToString() => $":[{options.Stringify(" ")}]";
+      public override string ToString() => $":[{options.ToString(" ")}]";
    }
 }

@@ -55,7 +55,7 @@ namespace Orange.Library.Values
                   targetRows[j] = evaluateRow(sourceRows[j], targetRows[j]);
                }
 
-               result = targetRows.Stringify(connector);
+               result = targetRows.ToString(connector);
             }
 
             return result;
@@ -178,10 +178,10 @@ namespace Orange.Library.Values
          }
 
          var connector = State.RecordSeparator.Text;
-         var result = targetRows.Stringify(connector);
+         var result = targetRows.ToString(connector);
          if (rowsToAdd.Count > 0)
          {
-            var toAppend = rowsToAdd.Stringify(connector);
+            var toAppend = rowsToAdd.ToString(connector);
             if (result.IsNotEmpty())
             {
                result += connector + toAppend;

@@ -164,7 +164,7 @@ namespace Orange.Library.Invocations
             typeAliases[alias] = typeName;
          }
 
-         Assert(typeName.IsNotEmpty(), LOCATION, "Couldn't find type");
+         typeName.Must().Not.BeNullOrEmpty().OrThrow(withLocation(LOCATION, "Couldn't find type"));
          var fullAssemblyName = typeToAssemblies[typeName];
          if (fullAssemblyName != null)
          {
@@ -173,7 +173,7 @@ namespace Orange.Library.Invocations
 
          assembly = assemblies.Find(assemblyName, Assembly.Load);
          type = assembly.GetType(typeName, false, true);
-         RejectNull(type, LOCATION, $"Didn't understand .NET type {typeName}");
+         type.Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, $"Didn't understand .NET type {typeName}"));
          typeToAssemblies[typeName] = assemblyName;
          parameters = parameterSource.Split("/s* ',' /s*");
       }
@@ -190,7 +190,7 @@ namespace Orange.Library.Invocations
          switch (invocationType)
          {
             case InvocationType.Instance:
-               RejectNull(target, LOCATION, "Target object is null");
+               target.Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, "Target object is null"));
                return target.GetType().InvokeMember(member, bindingFlags, null, target, args);
             case InvocationType.Static:
                return type.InvokeMember(member, bindingFlags, null, null, args);

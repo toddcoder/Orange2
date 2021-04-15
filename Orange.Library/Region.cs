@@ -1,9 +1,11 @@
 ﻿using System.Linq;
+using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
 using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Values;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Region.ReadOnlyType;
@@ -104,7 +106,7 @@ namespace Orange.Library
       {
          get
          {
-            Reject(name.IsEmpty(), LOCATION, "Name zero length (getting)");
+            name.Must().Not.BeEmpty().OrThrow(LOCATION, () => "Name zero length (getting)");
             return variables.ContainsKey(name) ? variables[name] : null;
          }
          set
@@ -114,7 +116,8 @@ namespace Orange.Library
                return;
             }
 
-            Assert(variables.ContainsKey(name), LOCATION, $"Field {name} doesn't exist");
+            variables.Must().HaveKeyOf(name).OrThrow(LOCATION, () => $"Field {name} doesn't exist");
+
             SetVariable(name, value);
          }
       }
@@ -122,7 +125,7 @@ namespace Orange.Library
       public virtual void SetVariable(string name, Value value)
       {
          checkDeinitialization(value, name);
-         Reject(readonlys[name] == ReadOnly, LOCATION, $"{name} is read-only");
+         readonlys[name].Must().Not.Equal(ReadOnly).OrThrow(LOCATION, () => $"{name} is read-only");
          variables[name] = value;
          if (readonlys[name] == ReadOnlyNotSet)
          {
@@ -162,8 +165,11 @@ namespace Orange.Library
       protected virtual void setValue(string name, Value value, VisibilityType visibility, bool overriding,
          bool allowNil, int index)
       {
-         RejectNull(value, LOCATION, $"Name {name} not properly set");
-         Reject(readonlys[name] == ReadOnly && !overriding, LOCATION, $"{name} is read only");
+         assert(() => (object)value).Must().Not.BeNull().OrThrow(LOCATION, () => $"Name {name} not properly set");
+         if (!overriding)
+         {
+            readonlys[name].Must().Not.Equal(ReadOnly).OrThrow(LOCATION, () => $"{name} is read only");
+         }
          if (name.IsEmpty() || value.Type == ValueType.Nil && !allowNil)
          {
             return;
@@ -225,7 +231,7 @@ namespace Orange.Library
          return text.Truncate(TRUNCATE_SIZE);
       }
 
-      public override string ToString() => $"{Name}:{Level} contains {VariableNameList.Stringify()}";
+      public override string ToString() => $"{Name}:{Level} contains {VariableNameList.ToString(", ")}";
 
       public Hash<string, Value> AllVariables(Hash<string, Value> passedVariables = null)
       {
@@ -283,7 +289,7 @@ namespace Orange.Library
       public virtual void CreateVariable(string variableName, bool global = false, VisibilityType visibility = VisibilityType.Public,
          bool overriding = false)
       {
-         Assert(canBeSet(variableName, overriding, global), LOCATION, $"{variableName} already exists");
+         canBeSet(variableName, overriding, global).Must().BeTrue().OrThrow(LOCATION, () => $"{variableName} already exists");
          if (global)
          {
             Regions.Global.SetLocal(variableName, NullValue, allowNil: true, visibility: visibility);
@@ -342,7 +348,7 @@ namespace Orange.Library
 
       public bool IsReadOnly(string name)
       {
-         Assert(variables.ContainsKey(name), LOCATION, $"Field {name} doesn't exist");
+         variables.Must().HaveKeyOf(name).OrThrow(LOCATION, () => $"Field {name} doesn't exist");
          return readonlys[name] == ReadOnly;
       }
 

@@ -45,7 +45,7 @@ namespace Orange.Library.Verbs
 
       public override string ToString()
       {
-         return $"(rec{(fieldName.IsEmpty() ? " " : $" of {fieldName}")} " + $"{members.Select(i => $"{i.Key} = {i.Value}").Stringify()}";
+         return $"(rec{(fieldName.IsEmpty() ? " " : $" of {fieldName}")} " + $"{members.Select(i => $"{i.Key} = {i.Value}").ToString(", ")}";
       }
    }
 }

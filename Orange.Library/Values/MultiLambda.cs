@@ -112,7 +112,7 @@ namespace Orange.Library.Values
          return (selectedParameter.Comparisand, selectedParameter.Name);
       }
 
-      public override string ToString() => items.Select(i => i.ToString()).Stringify();
+      public override string ToString() => items.Select(i => i.ToString()).ToString(", ");
 
       protected static bool canInvoke(Parameters parameters, List<ParameterValue> values, bool required)
       {

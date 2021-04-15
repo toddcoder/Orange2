@@ -52,7 +52,7 @@ namespace Orange.Library
          if (children.Count > 0)
          {
             result.Append("(");
-            result.Append(children.Select(i => i.Value.ToString()).Stringify());
+            result.Append(children.Select(i => i.Value.ToString()).ToString(", "));
             result.Append(")");
          }
          else

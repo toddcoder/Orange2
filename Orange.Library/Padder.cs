@@ -131,7 +131,7 @@ namespace Orange.Library
 
       public bool Trim { get; set; }
 
-      public override string ToString() => records().Stringify(RecordSeparator);
+      public override string ToString() => records().ToString(RecordSeparator);
 
       string[] records()
       {
@@ -153,7 +153,7 @@ namespace Orange.Library
                fields.Add(paddedItem);
             }
 
-            var rowText = fields.Stringify(FieldSeparator);
+            var rowText = fields.ToString(FieldSeparator);
             if (Trim)
             {
                rowText = rowText.Trim();

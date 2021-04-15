@@ -11,7 +11,7 @@ namespace Orange.Library.Parsers
    {
       public const string REGEX_PUNCTUATION = @"['+*//%=!<>&|@#~.,\^?;:-']";
 
-      static Hash<string, Type> operators;
+      protected static Hash<string, Type> operators;
 
       public static Type Operator(string name) => operators[name];
 
@@ -83,7 +83,9 @@ namespace Orange.Library.Parsers
          ["!~"] = typeof(IsNotMatch)
       };
 
-      public TwoCharacterOperatorParser() : base($"^ /(|sp|) /({REGEX_PUNCTUATION} 2)") { }
+      public TwoCharacterOperatorParser() : base($"^ /(|sp|) /({REGEX_PUNCTUATION} 2)")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {

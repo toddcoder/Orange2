@@ -27,7 +27,7 @@ namespace Orange.Library.Verbs
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString() => block.AsAdded.Stringify(" ");
+      public override string ToString() => block.AsAdded.ToString(" ");
 
       public string Result => result;
 

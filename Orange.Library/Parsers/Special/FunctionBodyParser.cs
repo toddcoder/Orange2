@@ -49,7 +49,7 @@ namespace Orange.Library.Parsers.Special
          return none<(Block, int)>();
       }
 
-      Block createCondition(Block block)
+      protected Block createCondition(Block block)
       {
          var blockBuilder = new CodeBuilder();
          var conditionBuilder = new CodeBuilder();

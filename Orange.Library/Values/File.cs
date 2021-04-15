@@ -13,7 +13,7 @@ namespace Orange.Library.Values
    {
       public class FileLineGenerator : NSGenerator
       {
-         File file;
+         protected File file;
 
          public FileLineGenerator(INSGeneratorSource generatorSource) : base(generatorSource) => file = (File)generatorSource;
 
@@ -35,8 +35,8 @@ namespace Orange.Library.Values
          }
       }
 
-      FileName fileName;
-      Block filter;
+      protected FileName fileName;
+      protected Block filter;
 
       public File(string fileName) => this.fileName = fileName;
 
@@ -90,7 +90,7 @@ namespace Orange.Library.Values
          }
       }
 
-      Value standardLoop(ParameterAssistant assistant)
+      protected Value standardLoop(ParameterAssistant assistant)
       {
          var block = assistant.Block();
          if (block == null)
@@ -126,7 +126,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      Value filteredLoop(ParameterAssistant assistant)
+      protected Value filteredLoop(ParameterAssistant assistant)
       {
          var block = assistant.Block();
          if (block == null)

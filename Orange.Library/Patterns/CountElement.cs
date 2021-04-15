@@ -3,24 +3,24 @@ using static Orange.Library.Runtime;
 
 namespace Orange.Library.Patterns
 {
-	public class CountElement : Element
-	{
-		int count;
-		Pattern pattern;
+   public class CountElement : Element
+   {
+      protected int count;
+      protected Pattern pattern;
 
-		public CountElement(int count, Pattern pattern)
-		{
-			this.count = count;
-			this.pattern = pattern;
-			this.pattern.SubPattern = true;
-		}
+      public CountElement(int count, Pattern pattern)
+      {
+         this.count = count;
+         this.pattern = pattern;
+         this.pattern.SubPattern = true;
+      }
 
-		public override bool Evaluate(string input)
-		{
-			index = -1;
-			var anchored = State.Anchored;
-			State.Anchored = true;
-		   for (var i = 0; i < count; i++)
+      public override bool Evaluate(string input)
+      {
+         index = -1;
+         var anchored = State.Anchored;
+         State.Anchored = true;
+         for (var i = 0; i < count; i++)
          {
             if (pattern.Scan(input))
             {
@@ -37,14 +37,14 @@ namespace Orange.Library.Patterns
          }
 
          State.Anchored = anchored;
-			length = State.Position - index;
-			return true;
-		}
+         length = State.Position - index;
+         return true;
+      }
 
-		public override bool PositionAlreadyUpdated => true;
+      public override bool PositionAlreadyUpdated => true;
 
-	   public override string ToString() => $"{count}({pattern})";
+      public override string ToString() => $"{count}({pattern})";
 
-	   public override Element Clone() => clone(new CountElement(count, (Pattern)pattern.Clone()));
-	}
+      public override Element Clone() => clone(new CountElement(count, (Pattern)pattern.Clone()));
+   }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
+using Core.Exceptions;
 using Core.Monads;
 using Core.Strings;
 using Orange.Library.Values;
@@ -72,7 +74,7 @@ namespace Orange.Library.Managers
                State.ConsoleManager.ConsolePrint(asString);
                return null;
             default:
-               var text = values.Select(ValueAsString).Stringify("");
+               var text = values.Select(ValueAsString).ToString("");
                State.ConsoleManager.ConsolePrint(text);
                return null;
          }
@@ -89,7 +91,7 @@ namespace Orange.Library.Managers
                State.ConsoleManager.ConsolePrint(asString);
                return null;
             default:
-               var text = values.Select(ValueAsRep).Stringify("");
+               var text = values.Select(ValueAsRep).ToString("");
                State.ConsoleManager.ConsolePrint(text);
                return null;
          }
@@ -107,7 +109,7 @@ namespace Orange.Library.Managers
                State.ConsoleManager.ConsolePrintln(asString);
                return null;
             default:
-               var text = values.Select(ValueAsString).Stringify("");
+               var text = values.Select(ValueAsString).ToString("");
                State.ConsoleManager.ConsolePrintln(text);
                return null;
          }
@@ -125,7 +127,7 @@ namespace Orange.Library.Managers
                State.ConsoleManager.ConsolePrintln(asString);
                return null;
             default:
-               var text = values.Select(ValueAsRep).Stringify("");
+               var text = values.Select(ValueAsRep).ToString("");
                State.ConsoleManager.ConsolePrintln(text);
                return null;
          }
@@ -169,14 +171,13 @@ namespace Orange.Library.Managers
 
       static Value invokeDouble(Value[] values, Func<Double, Value> func)
       {
-         Runtime.Assert(values.Length >= 1, LOCATION, "Native function missing required parameter");
+         values.Must().HaveLengthOf(1).OrThrow(() => withLocation(LOCATION, "Native function missing required parameter"));
          if (values[0] is Double value)
          {
             return func(value);
          }
 
-         Throw(LOCATION, $"{values[0]} isn't a Number");
-         return null;
+         throw withLocation(LOCATION, $"{values[0]} isn't a Number").Throws();
       }
 
       static Value isArray(Value[] values) => values[0].Type == Value.ValueType.Array;
@@ -275,8 +276,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         Throw(LOCATION, $"Field {fieldName} not defined");
-         return false;
+         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
       }
 
       public bool FieldExists(string fieldName)
@@ -316,7 +316,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         Throw(LOCATION, $"Field {fieldName} not defined");
+         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
       }
 
       public void SetOrCreateField(string fieldName, Value value)
@@ -354,7 +354,8 @@ namespace Orange.Library.Managers
 
       public void RemoveField(string fieldName)
       {
-         Reject(specialVariables.Contains(fieldName), LOCATION, $"Special field {fieldName} can't be removed");
+         specialVariables.Contains(fieldName).Must().Not.BeTrue()
+            .OrThrow(() => withLocation(LOCATION, $"Special field {fieldName} can't be removed"));
          for (var i = level; i >= 0; i--)
          {
             var region = regions[i];
@@ -365,7 +366,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         Throw(LOCATION, $"Field {fieldName} not defined");
+         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
       }
 
       public bool FieldIsReadOnly(string fieldName)
@@ -379,8 +380,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         Throw(LOCATION, $"Field {fieldName} not defined");
-         return false;
+         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
       }
 
       static Value getSpecialField(string name)
@@ -568,18 +568,13 @@ namespace Orange.Library.Managers
          {
             WriteLine($"getting {name} in {name}");
 
-            Reject(name.IsEmpty(), LOCATION, "Name zero length (getting)");
+            name.Must().Not.BeEmpty().OrThrow(() => withLocation(LOCATION, "Name zero length (getting)"));
 
-            if (Field(name, out var value))
-            {
-               return value;
-            }
-
-            return null;
+            return Field(name, out var value) ? value : null;
          }
          set
          {
-            Runtime.Assert(name.IsNotEmpty(), LOCATION, "Name zero length (setting)");
+            name.Must().Not.BeEmpty().OrThrow(() => withLocation(LOCATION, "Name zero length (getting)"));
             if (value == null || value.IsNil)
             {
                return;
@@ -603,28 +598,26 @@ namespace Orange.Library.Managers
 
       public void Push(string tag)
       {
-         Runtime.Assert(Count < MAX_VAR_DEPTH, LOCATION, "Regions nested too deeply");
+         Count.Must().BeLessThan(MAX_VAR_DEPTH).OrThrow(() => withLocation(LOCATION, "Regions nested too deeply"));
          var region = new Region
          {
             Tag = tag,
             Level = ++level
          };
          regions[level] = region;
-         //WriteLine($"{"-".Repeat(level)}[{tag}={region.Name}->{regions[level - 1].Name}");
       }
 
       public void Push(Region region, string tag)
       {
-         Runtime.Assert(Count < MAX_VAR_DEPTH, LOCATION, "Regions nested too deeply");
+         Count.Must().BeLessThan(MAX_VAR_DEPTH).OrThrow(() => withLocation(LOCATION, "Regions nested too deeply"));
          region.Tag = tag;
          region.Level = ++level;
          regions[level] = region;
-         //WriteLine($"{"-".Repeat(level)}[{tag}={region.Name}->{regions[level - 1].Name}");
       }
 
       public void Pop(string text)
       {
-         Runtime.Assert(Count > 0, LOCATION, "Regions popped unevenly");
+         Count.Must().BeGreaterThan(0).OrThrow(() => withLocation(LOCATION, "Regions popped unevenly"));
          var region = regions[level--];
          region.Dispose();
          WriteLine($"{"-".Repeat(level)}]{text}");

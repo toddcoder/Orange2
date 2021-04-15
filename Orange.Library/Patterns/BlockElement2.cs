@@ -8,8 +8,8 @@ namespace Orange.Library.Patterns
 {
    public class BlockElement2 : Element
    {
-      Block block;
-      bool positionAlreadyUpdated;
+      protected Block block;
+      protected bool positionAlreadyUpdated;
 
       public BlockElement2(Block block) => this.block = block;
 
@@ -19,7 +19,7 @@ namespace Orange.Library.Patterns
 
       public override bool EvaluateFirst(string input) => evaluate(e => e.EvaluateFirst(input), p => p.Scan(input));
 
-      bool evaluate(Func<Element, bool> func, Func<Pattern, bool> scanFunc)
+      protected bool evaluate(Func<Element, bool> func, Func<Pattern, bool> scanFunc)
       {
          positionAlreadyUpdated = false;
          index = -1;

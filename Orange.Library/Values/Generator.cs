@@ -592,7 +592,7 @@ namespace Orange.Library.Values
          builder.Append($"({parameterName} <- {source})");
          if (items.Count > 0)
          {
-            builder.Append($" {items.Stringify(" ")}");
+            builder.Append($" {items.ToString(" ")}");
          }
 
          return builder.ToString();

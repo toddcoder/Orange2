@@ -1,21 +1,22 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using Orange.Library.Verbs;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Parsers
 {
    public class WhereParser : Parser
    {
-      enum WhereStageType
+      protected enum WhereStageType
       {
          Left,
          Assign,
          Right
       }
 
-      static Block WhereFilter(Block sourceBlock)
+      protected static Block WhereFilter(Block sourceBlock)
       {
          var builder = new CodeBuilder();
          var stage = WhereStageType.Left;
@@ -48,7 +49,7 @@ namespace Orange.Library.Parsers
                         break;
                   }
 
-                  return null;
+                  break;
                case WhereStageType.Assign:
                   if (verb is Assign)
                   {
@@ -88,8 +89,9 @@ namespace Orange.Library.Parsers
          return null;
       }
 
-      public WhereParser()
-         : base("^ /(/s* 'where') /(/s* '(')") { }
+      public WhereParser() : base("^ /(/s* 'where') /(/s* '(')")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -100,7 +102,7 @@ namespace Orange.Library.Parsers
          {
             var (b, i) = t;
             var block = WhereFilter(b);
-            RejectNull(block, VerboseName, "Where filter malformed");
+            assert(() => (object)block).Must().Not.BeNull().OrThrow(VerboseName, () => "Where filter malformed");
             overridePosition = i;
             result.Value = block;
 

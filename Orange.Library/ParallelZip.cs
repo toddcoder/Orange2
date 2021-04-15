@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Core.Assertions;
 using Orange.Library.Managers;
 using Orange.Library.Values;
 using static System.Math;
@@ -9,11 +10,11 @@ namespace Orange.Library
 {
    public class ParallelZip : Value, ISequenceSource
    {
-      const string LOCATION = "Parallel zip";
+      protected const string LOCATION = "Parallel zip";
 
-      Array arrayOfArrays;
-      int index;
-      int maxLength;
+      protected Array arrayOfArrays;
+      protected int index;
+      protected int maxLength;
 
       public ParallelZip(Array arrayOfArrays)
       {
@@ -22,7 +23,7 @@ namespace Orange.Library
          maxLength = -1;
          foreach (var value in this.arrayOfArrays.Select(item => item.Value))
          {
-            Assert(value.IsArray, LOCATION, $"Item {value} in array of arrays not an array");
+            value.IsArray.Must().BeTrue().OrThrow(LOCATION, () => $"Item {value} in array of arrays not an array");
             var array = (Array)value.SourceArray;
             maxLength = Max(maxLength, array.Length);
          }

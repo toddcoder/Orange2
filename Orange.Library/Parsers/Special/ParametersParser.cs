@@ -14,11 +14,11 @@ namespace Orange.Library.Parsers.Special
          Message
       }
 
-      ParametersType type;
+      protected ParametersType type;
 
       public ParametersParser(ParametersType type = ParametersType.Standard) => this.type = type;
 
-      IMaybe<SpecialParser<List<Parameter>>> getParserForType()
+      protected IMaybe<SpecialParser<List<Parameter>>> getParserForType()
       {
          SpecialParser<List<Parameter>> parser;
          switch (type)
@@ -43,7 +43,7 @@ namespace Orange.Library.Parsers.Special
             var returns = (IReturnsParameterList)parser;
             var parameters = new Parameters(list) { Multi = returns.Multi };
             Currying = returns.Currying;
-            return (parameters: parameters, index: i).Some();
+            return (parameters, index: i).Some();
          }
 
          return none<(Parameters, int)>();

@@ -35,7 +35,7 @@ namespace Orange.Library.Verbs
 				{
 					var block = new Block
 					{
-						new Push(format.Stringify.String)
+						new Push(format.String.String)
 					};
 					var arguments = new Arguments(new NullBlock(), block, format.Parameters);
 					return MessageManager.MessagingState.SendMessage(array, MESSAGE_NAME, arguments);

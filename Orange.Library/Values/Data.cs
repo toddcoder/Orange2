@@ -21,7 +21,7 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return $"type {name} = {constructors.KeyArray().Stringify(" | ")}"; }
+         get => $"type {name} = {constructors.KeyArray().ToString(" | ")}";
          set { }
       }
 

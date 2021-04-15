@@ -259,7 +259,7 @@ namespace Orange.Library.Verbs
 
       public IEnumerator<Verb> GetEnumerator() => verbs.GetEnumerator();
 
-      public override string ToString() => verbs.Stringify(" ");
+      public override string ToString() => verbs.ToString(" ");
 
       IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

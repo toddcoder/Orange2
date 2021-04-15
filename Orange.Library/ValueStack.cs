@@ -79,7 +79,7 @@ namespace Orange.Library
 
       static Value stringify(Value value) => value is IStringify s ? s.String : value;
 
-      public override string ToString() => IsEmpty ? "" : stack.Select(v => v.ToString()).Stringify(" ");
+      public override string ToString() => IsEmpty ? "" : stack.Select(v => v.ToString()).ToString(" ");
 
       public void Clear() => stack.Clear();
 

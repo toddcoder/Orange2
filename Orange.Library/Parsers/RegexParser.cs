@@ -7,7 +7,7 @@ namespace Orange.Library.Parsers
 {
    public class RegexParser : Parser
    {
-      enum StatusType
+      protected enum StatusType
       {
          Outside,
          WaitingForSingleQuote,
@@ -19,7 +19,9 @@ namespace Orange.Library.Parsers
          Variable
       }
 
-      public RegexParser() : base(@"^ ' '* '\'") { }
+      public RegexParser() : base(@"^ ' '* '\'")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -40,8 +42,8 @@ namespace Orange.Library.Parsers
                   switch (ch)
                   {
                      case '\\':
-                        var rxPatern = regex.ToString();
-                        result.Value = new Regex(rxPatern, ignoreCaseOption, multilineOption, globalOption);
+                        var regexPattern = regex.ToString();
+                        result.Value = new Regex(regexPattern, ignoreCaseOption, multilineOption, globalOption);
                         Color(1, Structures);
                         overridePosition = i + 1;
                         return new Push(result.Value);
@@ -170,6 +172,7 @@ namespace Orange.Library.Parsers
                   Color(1, Symbols);
                   break;
                case StatusType.VariableBeginning:
+                  var doGotoOutside = false;
                   switch (ch)
                   {
                      case '(':
@@ -177,10 +180,18 @@ namespace Orange.Library.Parsers
                         Color(1, Structures);
                         regex.Append(ch);
                         break;
+                     default:
+                        type = StatusType.Outside;
+                        doGotoOutside = true;
+                        break;
                   }
 
-                  type = StatusType.Outside;
-                  goto case StatusType.Outside;
+                  if (doGotoOutside)
+                  {
+                     goto case StatusType.Outside;
+                  }
+
+                  break;
                case StatusType.Variable:
                   switch (ch)
                   {

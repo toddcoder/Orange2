@@ -11,7 +11,7 @@ namespace Orange.Library.Parsers
 {
    public class SimpleSendMessageParser : Parser
    {
-      BlockOrLambdaParser blockOrLambdaParser;
+      protected BlockOrLambdaParser blockOrLambdaParser;
 
       public SimpleSendMessageParser(BlockOrLambdaParser blockOrLambdaParser) : base($"^ /(/s* '.') /({REGEX_VARIABLE}) /('(')?")
       {

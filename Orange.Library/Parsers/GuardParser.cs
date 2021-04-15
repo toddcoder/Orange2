@@ -1,4 +1,5 @@
-﻿using Orange.Library.Verbs;
+﻿using Core.Assertions;
+using Orange.Library.Verbs;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Runtime;
 using static Orange.Library.Parsers.ExpressionParser;
@@ -16,7 +17,7 @@ namespace Orange.Library.Parsers
 
          if (GetExpressionThenBlock(source, NextPosition).If(out var condition, out var block, out var index))
          {
-            Assert(block.LastIsReturn, "Guard", "return or stop required");
+            block.LastIsReturn.Must().BeTrue().OrThrow(() => withLocation("Guard", "return or stop required"));
             overridePosition = index;
             return new Guard(condition, block) { Index = position };
          }

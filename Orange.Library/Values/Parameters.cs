@@ -214,7 +214,7 @@ namespace Orange.Library.Values
 
       public Value Map() => new Lambda(Regions.Current, Arguments.Executable, this, false);
 
-      public override string ToString() => Pattern?.ToString() ?? parameters.Stringify();
+      public override string ToString() => Pattern?.ToString() ?? parameters.ToString(", ");
 
       public string VariableName(int index, string defaultValue = "") => parameters.Of(index).Map(p => p.Name).DefaultTo(() => defaultValue);
 

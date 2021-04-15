@@ -66,7 +66,7 @@ namespace Orange.Library.Values
                   var range = ranges[i];
                   var startIndex = range.StartIndex;
                   var stopIndex = range.StopIndex;
-                  var subtext = records.RangeOf(startIndex, stopIndex).Stringify(State.RecordSeparator.Text);
+                  var subtext = records.RangeOf(startIndex, stopIndex).ToString(State.RecordSeparator.Text);
                   assistant.SetLoopParameters(subtext, i);
                   var result = block.Evaluate();
                   var signal = ParameterAssistant.Signal();
@@ -107,7 +107,7 @@ namespace Orange.Library.Values
                   newText.Add(records[i]);
                }
 
-               text.Text = newText.Stringify(State.RecordSeparator.Text);
+               text.Text = newText.ToString(State.RecordSeparator.Text);
                return text;
             }
 

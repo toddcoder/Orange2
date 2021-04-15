@@ -25,6 +25,6 @@ namespace Orange.Library.Patterns2
 
       public int IndexOf(string source, bool ignoreCase) => ignoreCase ? source.ToUpper().IndexOfAny(upperChars) : source.IndexOfAny(chars);
 
-      public override string ToString() => chars.Stringify("");
+      public override string ToString() => chars.ToString("");
    }
 }

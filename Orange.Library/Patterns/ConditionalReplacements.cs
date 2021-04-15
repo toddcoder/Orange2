@@ -12,7 +12,7 @@ namespace Orange.Library.Patterns
 {
    public class ConditionalReplacements
    {
-      Hash<long, ConditionalReplacement> replacements;
+      protected Hash<long, ConditionalReplacement> replacements;
 
       public ConditionalReplacements() => replacements = new Hash<long, ConditionalReplacement>();
 
@@ -64,7 +64,7 @@ namespace Orange.Library.Patterns
          State.Position += offset;
       }
 
-      public override string ToString() => replacements.Select(i => i.Value.ToString()).Stringify(" ");
+      public override string ToString() => replacements.Select(i => i.Value.ToString()).ToString(" ");
 
       public void Clear() => replacements.Clear();
    }
