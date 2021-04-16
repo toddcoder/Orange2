@@ -14,12 +14,12 @@ namespace Orange.Library.Parsers
 {
    public class EnumerationValueParser : Parser
    {
-      const string REGEX_CASE = "^ /(|tabs|) /('value') /(/s+) /(" + REGEX_VARIABLE + ") /(/s* ['=(['] /s*)?";
-      const string REGEX_COMMA = "^ /(|sp|) /(',') /(/s+) /(" + REGEX_VARIABLE + ") /(/s* ['=(['] /s*)?";
+      protected const string REGEX_CASE = "^ /(|tabs|) /('value') /(/s+) /(" + REGEX_VARIABLE + ") /(/s* ['=(['] /s*)?";
+      protected const string REGEX_COMMA = "^ /(|sp|) /(',') /(/s+) /(" + REGEX_VARIABLE + ") /(/s* ['=(['] /s*)?";
 
-      IntegerParser integerParser;
-      HexParser hexParser;
-      bool useCase;
+      protected IntegerParser integerParser;
+      protected HexParser hexParser;
+      protected bool useCase;
 
       public EnumerationValueParser(bool useCase = true) : base(useCase ? REGEX_CASE : REGEX_COMMA)
       {
@@ -133,9 +133,9 @@ namespace Orange.Library.Parsers
          return new NullOp();
       }
 
-      static void setArrayValues(CodeBuilder builder, string caseName)
+      protected static void setArrayValues(CodeBuilder builder, string caseName)
       {
-         assert(() => (object)builder).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, "Not called from an enumeration"));
+         assert(() => (object)builder).Must().Not.BeNull().OrThrow(LOCATION, () => "Not called from an enumeration");
 
          var enumerationValue = new Double(EnumerationValue).Pushed;
          var name = new String(caseName).Pushed;

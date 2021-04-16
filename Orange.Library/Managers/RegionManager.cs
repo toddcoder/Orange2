@@ -4,7 +4,6 @@ using System.Linq;
 using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
-using Core.Exceptions;
 using Core.Monads;
 using Core.Strings;
 using Orange.Library.Values;
@@ -29,7 +28,7 @@ namespace Orange.Library.Managers
 
       protected static StringSet specialVariables;
 
-      static RegionManager() => specialVariables = new StringSet
+      static RegionManager() => specialVariables = new StringSet(false)
       {
          "$out",
          "$rout",
@@ -63,7 +62,7 @@ namespace Orange.Library.Managers
 
       public static bool IsSpecialVariable(string variableName) => specialVariables.Contains(variableName);
 
-      static Value print(Value[] values)
+      protected static Value print(Value[] values)
       {
          switch (values.Length)
          {
@@ -80,7 +79,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static Value write(Value[] values)
+      protected static Value write(Value[] values)
       {
          switch (values.Length)
          {
@@ -97,7 +96,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static Value println(Value[] values)
+      protected static Value println(Value[] values)
       {
          switch (values.Length)
          {
@@ -115,7 +114,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static Value writeln(Value[] values)
+      protected static Value writeln(Value[] values)
       {
          switch (values.Length)
          {
@@ -133,7 +132,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static Value put(Value[] values)
+      protected static Value put(Value[] values)
       {
          foreach (var value in values)
          {
@@ -143,7 +142,7 @@ namespace Orange.Library.Managers
          return null;
       }
 
-      static Value peek(Value[] values)
+      protected static Value peek(Value[] values)
       {
          switch (values.Length)
          {
@@ -158,40 +157,38 @@ namespace Orange.Library.Managers
          }
       }
 
-      static Value tabs(Value[] values)
+      protected static Value tabs(Value[] values)
       {
-         switch (values.Length)
+         return values.Length switch
          {
-            case 0:
-               return "\t";
-            default:
-               return "\t".Repeat(values[0].Int);
-         }
+            0 => "\t",
+            _ => "\t".Repeat(values[0].Int)
+         };
       }
 
-      static Value invokeDouble(Value[] values, Func<Double, Value> func)
+      protected static Value invokeDouble(Value[] values, Func<Double, Value> func)
       {
-         values.Must().HaveLengthOf(1).OrThrow(() => withLocation(LOCATION, "Native function missing required parameter"));
+         values.Must().HaveLengthOf(1).OrThrow(LOCATION, () => "Native function missing required parameter");
          if (values[0] is Double value)
          {
             return func(value);
          }
 
-         throw withLocation(LOCATION, $"{values[0]} isn't a Number").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"{values[0]} isn't a Number");
       }
 
-      static Value isArray(Value[] values) => values[0].Type == Value.ValueType.Array;
+      protected static Value isArray(Value[] values) => values[0].Type == Value.ValueType.Array;
 
-      static Value now() => new Date(Now);
+      protected static Value now() => new Date(Now);
 
-      static Value today() => new Date(Today);
+      protected static Value today() => new Date(Today);
 
-      static Value time() => new Date((Now - Today).Ticks);
+      protected static Value time() => new Date((Now - Today).Ticks);
 
-      const string LOCATION = "Region manager";
+      protected const string LOCATION = "Region manager";
 
-      Region[] regions;
-      int level;
+      protected Region[] regions;
+      protected int level;
 
       public RegionManager(Sys sys, string text)
       {
@@ -240,12 +237,12 @@ namespace Orange.Library.Managers
          head.CreateAndSet("ln", new NativeFunction("ln", v => invokeDouble(v, d => Log(d.Number))));
          head.CreateAndSet("succ", new NativeFunction("succ", v => invokeDouble(v, d => d.Number + 1)));
          head.CreateAndSet("pred", new NativeFunction("pred", v => invokeDouble(v, d => d.Number - 1)));
-         head.CreateAndSet("Buffer", new NativeFunction("Buffer", v => new Values.Buffer()));
-         head.CreateAndSet("now", new NativeFunction("now", v => now()));
-         head.CreateAndSet("today", new NativeFunction("today", v => today()));
-         head.CreateAndSet("time", new NativeFunction("time", v => time()));
+         head.CreateAndSet("Buffer", new NativeFunction("Buffer", _ => new Values.Buffer()));
+         head.CreateAndSet("now", new NativeFunction("now", _ => now()));
+         head.CreateAndSet("today", new NativeFunction("today", _ => today()));
+         head.CreateAndSet("time", new NativeFunction("time", _ => time()));
          head.CreateAndSet("tabs", new NativeFunction("tabs", tabs));
-         head.CreateAndSet("indentation", new NativeFunction("indentation", v => State.Indentation()));
+         head.CreateAndSet("indentation", new NativeFunction("indentation", _ => State.Indentation()));
       }
 
       public void Reset()
@@ -276,7 +273,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"Field {fieldName} not defined");
       }
 
       public bool FieldExists(string fieldName)
@@ -316,7 +313,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"Field {fieldName} not defined");
       }
 
       public void SetOrCreateField(string fieldName, Value value)
@@ -354,8 +351,7 @@ namespace Orange.Library.Managers
 
       public void RemoveField(string fieldName)
       {
-         specialVariables.Contains(fieldName).Must().Not.BeTrue()
-            .OrThrow(() => withLocation(LOCATION, $"Special field {fieldName} can't be removed"));
+         specialVariables.Contains(fieldName).Must().Not.BeTrue().OrThrow(LOCATION, () => $"Special field {fieldName} can't be removed");
          for (var i = level; i >= 0; i--)
          {
             var region = regions[i];
@@ -366,7 +362,7 @@ namespace Orange.Library.Managers
             }
          }
 
-         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"Field {fieldName} not defined");
       }
 
       public bool FieldIsReadOnly(string fieldName)
@@ -380,10 +376,10 @@ namespace Orange.Library.Managers
             }
          }
 
-         throw withLocation(LOCATION, $"Field {fieldName} not defined").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"Field {fieldName} not defined");
       }
 
-      static Value getSpecialField(string name)
+      protected static Value getSpecialField(string name)
       {
          switch (name)
          {
@@ -440,33 +436,21 @@ namespace Orange.Library.Managers
          }
       }
 
-      public static string ValueAsString(Value value)
+      public static string ValueAsString(Value value) => value switch
       {
-         switch (value)
-         {
-            case Object obj when obj.RespondsNoDefault("str"):
-               return SendMessage(obj, "str").Text;
-            case INSGenerator generator:
-               return ToArray(generator).Text;
-            default:
-               return value.Text;
-         }
-      }
+         Object obj when obj.RespondsNoDefault("str") => SendMessage(obj, "str").Text,
+         INSGenerator generator => ToArray(generator).Text,
+         _ => value.Text
+      };
 
-      public static string ValueAsRep(Value value)
+      public static string ValueAsRep(Value value) => value switch
       {
-         switch (value)
-         {
-            case Object obj when obj.RespondsNoDefault("str"):
-               return SendMessage(obj, "str").ToString();
-            case INSGenerator generator:
-               return ToArray(generator).ToString();
-            default:
-               return value.ToString();
-         }
-      }
+         Object obj when obj.RespondsNoDefault("str") => SendMessage(obj, "str").ToString(),
+         INSGenerator generator => ToArray(generator).ToString(),
+         _ => value.ToString()
+      };
 
-      static void iterate(Value value, Action<string> action)
+      protected static void iterate(Value value, Action<string> action)
       {
          if (value.IsArray)
          {
@@ -488,7 +472,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static void setSpecialField(string name, Value value)
+      protected static void setSpecialField(string name, Value value)
       {
          switch (name)
          {
@@ -568,13 +552,13 @@ namespace Orange.Library.Managers
          {
             WriteLine($"getting {name} in {name}");
 
-            name.Must().Not.BeEmpty().OrThrow(() => withLocation(LOCATION, "Name zero length (getting)"));
+            name.Must().Not.BeEmpty().OrThrow(LOCATION, () => "Name zero length (getting)");
 
             return Field(name, out var value) ? value : null;
          }
          set
          {
-            name.Must().Not.BeEmpty().OrThrow(() => withLocation(LOCATION, "Name zero length (getting)"));
+            name.Must().Not.BeEmpty().OrThrow(LOCATION, () => "Name zero length (getting)");
             if (value == null || value.IsNil)
             {
                return;
@@ -598,7 +582,7 @@ namespace Orange.Library.Managers
 
       public void Push(string tag)
       {
-         Count.Must().BeLessThan(MAX_VAR_DEPTH).OrThrow(() => withLocation(LOCATION, "Regions nested too deeply"));
+         Count.Must().BeLessThan(MAX_VAR_DEPTH).OrThrow(LOCATION, () => "Regions nested too deeply");
          var region = new Region
          {
             Tag = tag,
@@ -609,7 +593,7 @@ namespace Orange.Library.Managers
 
       public void Push(Region region, string tag)
       {
-         Count.Must().BeLessThan(MAX_VAR_DEPTH).OrThrow(() => withLocation(LOCATION, "Regions nested too deeply"));
+         Count.Must().BeLessThan(MAX_VAR_DEPTH).OrThrow(LOCATION, () => "Regions nested too deeply");
          region.Tag = tag;
          region.Level = ++level;
          regions[level] = region;
@@ -617,7 +601,7 @@ namespace Orange.Library.Managers
 
       public void Pop(string text)
       {
-         Count.Must().BeGreaterThan(0).OrThrow(() => withLocation(LOCATION, "Regions popped unevenly"));
+         Count.Must().BeGreaterThan(0).OrThrow(LOCATION, () => "Regions popped unevenly");
          var region = regions[level--];
          region.Dispose();
          WriteLine($"{"-".Repeat(level)}]{text}");

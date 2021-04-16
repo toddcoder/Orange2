@@ -1,25 +1,28 @@
-﻿using Core.Internet.Sgml;
+﻿using Core.Assertions;
+using Core.Internet.Markup;
 using Orange.Library.Managers;
-using static Orange.Library.Runtime;
+using static Core.Assertions.AssertionFunctions;
 
 namespace Orange.Library.Values
 {
    public class IndirectXML : XML
    {
-      const string LOCATION = "Indirect XML";
+      protected const string LOCATION = "Indirect XML";
 
-      string variableName;
+      protected string variableName;
 
       public IndirectXML(string variableName) : base(null, null, null) => this.variableName = variableName;
 
-      public IndirectXML() : this("$unknown") { }
+      public IndirectXML() : this("$unknown")
+      {
+      }
 
       public override Element Element
       {
          get
          {
             var value = RegionManager.Regions[variableName];
-            Assert(value.Type == ValueType.XML, LOCATION, $"Variable {variableName} doesn't result in XML");
+            assert(() => value.Type).Must().Equal(ValueType.XML).OrThrow(LOCATION, () => $"Variable {variableName} doesn't result in XML");
             return ((XML)value).Element;
          }
       }

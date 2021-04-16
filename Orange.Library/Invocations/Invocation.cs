@@ -25,37 +25,30 @@ namespace Orange.Library.Invocations
          New
       }
 
-      public enum InvocationBindingType
-      {
-         Method,
-         Property,
-         Field
-      }
-
-      const string LOCATION = "Invocation";
-      static readonly string regexInvocation = $"^ ('|' /(-['|']+) '|')? (/({REGEX_VARIABLE}) " +
+      protected const string LOCATION = "Invocation";
+      protected static readonly string regexInvocation = $"^ ('|' /(-['|']+) '|')? (/({REGEX_VARIABLE}) " +
          "/(/s* '=' /s*))? /('#'? [/w .]+) /(['.:']) /(/w+) '(' /(-[')']*) ')' /('.'? ['!?'])? $";
 
-      static Hash<string, Assembly> assemblies;
-      static Hash<string, string> typeAliases;
-      static Hash<string, string> typeToAssemblies;
+      protected static StringHash<Assembly> assemblies;
+      protected static StringHash<string> typeAliases;
+      protected static StringHash<string> typeToAssemblies;
 
       static Invocation()
       {
-         assemblies = new Hash<string, Assembly>();
-         typeAliases = new Hash<string, string>();
-         typeToAssemblies = new Hash<string, string>();
+         assemblies = new StringHash<Assembly>(false);
+         typeAliases = new StringHash<string>(false);
+         typeToAssemblies = new StringHash<string>(false);
       }
 
-      InvocationType invocationType;
-      Assembly assembly;
-      Type type;
-      string member;
-      string[] parameters;
-      Bits32<BindingFlags> bindingFlags;
-      Matcher matcher;
-      string source;
-      int index;
+      protected InvocationType invocationType;
+      protected Assembly assembly;
+      protected Type type;
+      protected string member;
+      protected string[] parameters;
+      protected Bits32<BindingFlags> bindingFlags;
+      protected Matcher matcher;
+      protected string source;
+      protected int index;
 
       public Invocation(string source, int index)
       {
@@ -64,7 +57,7 @@ namespace Orange.Library.Invocations
          initialize();
       }
 
-      void initialize()
+      protected void initialize()
       {
          matcher = new Matcher();
          assert(() => matcher).Must().Match(source, regexInvocation, true, false).OrThrow($"Didn't understand invocation <[{source}]>");
@@ -156,7 +149,7 @@ namespace Orange.Library.Invocations
 
          if (typeName.StartsWith("#"))
          {
-            typeName = typeAliases.Find(typeName.Drop(1), t => "");
+            typeName = typeAliases.Find(typeName.Drop(1), _ => "");
          }
 
          if (alias.IsNotEmpty())
@@ -164,7 +157,7 @@ namespace Orange.Library.Invocations
             typeAliases[alias] = typeName;
          }
 
-         typeName.Must().Not.BeNullOrEmpty().OrThrow(withLocation(LOCATION, "Couldn't find type"));
+         typeName.Must().Not.BeNullOrEmpty().OrThrow(LOCATION, () => "Couldn't find type");
          var fullAssemblyName = typeToAssemblies[typeName];
          if (fullAssemblyName != null)
          {
@@ -173,7 +166,7 @@ namespace Orange.Library.Invocations
 
          assembly = assemblies.Find(assemblyName, Assembly.Load);
          type = assembly.GetType(typeName, false, true);
-         type.Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, $"Didn't understand .NET type {typeName}"));
+         type.Must().Not.BeNull().OrThrow(LOCATION, () => $"Didn't understand .NET type {typeName}");
          typeToAssemblies[typeName] = assemblyName;
          parameters = parameterSource.Split("/s* ',' /s*");
       }
@@ -190,7 +183,7 @@ namespace Orange.Library.Invocations
          switch (invocationType)
          {
             case InvocationType.Instance:
-               target.Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, "Target object is null"));
+               target.Must().Not.BeNull().OrThrow(LOCATION, () => "Target object is null");
                return target.GetType().InvokeMember(member, bindingFlags, null, target, args);
             case InvocationType.Static:
                return type.InvokeMember(member, bindingFlags, null, null, args);
@@ -201,9 +194,9 @@ namespace Orange.Library.Invocations
          }
       }
 
-      object[] getArguments(Value[] arguments) => parameters.Select((p, i) => getArgument(p, arguments[i])).ToArray();
+      protected object[] getArguments(Value[] arguments) => parameters.Select((p, i) => getArgument(p, arguments[i])).ToArray();
 
-      object getArgument(string argumentType, Value value)
+      protected object getArgument(string argumentType, Value value)
       {
          var isArray = matcher.IsMatch(argumentType, "/(.+) /('[]') $");
          string typeName;

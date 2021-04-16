@@ -1,13 +1,12 @@
 ﻿using Orange.Library.Managers;
 using Orange.Library.Messages;
-using static Orange.Library.Runtime;
 using static Orange.Library.Values.Nil;
 
 namespace Orange.Library.Values
 {
    public class BoundValue : Value, IMessageHandler
    {
-      const string LOCATION = "Bound value";
+      protected const string LOCATION = "Bound value";
 
       public static bool Unbind(Value value, out string name, out Value innerValue)
       {
@@ -23,8 +22,8 @@ namespace Orange.Library.Values
          return false;
       }
 
-      string name;
-      Value innerValue;
+      protected string name;
+      protected Value innerValue;
 
       public BoundValue(string name, Value innerValue)
       {
@@ -61,14 +60,12 @@ namespace Orange.Library.Values
       public Value Send(Value value, string messageName, Arguments arguments, out bool handled)
       {
          handled = false;
-         Throw(LOCATION, "Value must be unbound first");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => "Value must be unbound first");
       }
 
       public bool RespondsTo(string messageName)
       {
-         Throw(LOCATION, "Value must be unbound first");
-         return false;
+         throw LOCATION.ThrowsWithLocation(() => "Value must be unbound first");
       }
 
       public override string ToString() => $"{name} = {innerValue}";

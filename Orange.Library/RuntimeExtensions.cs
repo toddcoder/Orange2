@@ -1,5 +1,4 @@
 ﻿using System;
-using Core.Assertions;
 using Core.Assertions.Collections;
 using Core.Assertions.Comparables;
 using Core.Assertions.Monads;
@@ -16,7 +15,7 @@ namespace Orange.Library
          return Debugging.Debugger.CanAssert ? message : $"at {location}: {message}";
       }
 
-      public static Exception throwsWithLocation(string location, Func<string> func) => new ApplicationException(withLocation(location, func));
+      public static Exception ThrowsWithLocation(this string location, Func<string> func) => new ApplicationException(withLocation(location, func));
 
       public static void OrThrow(this StringAssertion assertion, string location, Func<string> func)
       {

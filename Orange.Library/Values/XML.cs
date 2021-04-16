@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Core.Internet.Sgml;
+using Core.Internet.Markup;
 using Orange.Library.Managers;
 using static Orange.Library.Managers.RegionManager;
 
@@ -8,11 +8,11 @@ namespace Orange.Library.Values
 {
    public class XML : Value
    {
-      Value name;
-      Block attributes;
-      Value innerText;
-      List<XML> children;
-      Queue<Region> namespaces;
+      protected Value name;
+      protected Block attributes;
+      protected Value innerText;
+      protected List<XML> children;
+      protected Queue<Region> namespaces;
 
       public XML(Value name, Block attributes, Value innerText)
       {
@@ -112,7 +112,7 @@ namespace Orange.Library.Values
          }
       }
 
-      void addArray(Array array)
+      protected void addArray(Array array)
       {
          foreach (var xml in array
             .Select(item => new { item, value = item.Value })

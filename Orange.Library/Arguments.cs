@@ -7,7 +7,6 @@ using Orange.Library.Verbs;
 using static Core.Arrays.ArrayFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Runtime;
-using static Orange.Library.RuntimeExtensions;
 using static Orange.Library.Values.Block;
 using static Orange.Library.Values.Null;
 
@@ -29,7 +28,7 @@ namespace Orange.Library
                   return new Arguments(innerValue, innerLambda.Block, innerLambda.Parameters);
                }
 
-               throw throwsWithLocation(LOCATION, () => "Second value must be a lambda");
+               throw LOCATION.ThrowsWithLocation(() => "Second value must be a lambda");
             }
             case MessagePath chain:
             {
@@ -369,11 +368,11 @@ namespace Orange.Library
          {
             switch (verb)
             {
-               case AppendToArray _:
+               case AppendToArray:
                   list.Add(accum);
                   accum = new Block();
                   break;
-               case AppendToMessage _:
+               case AppendToMessage:
                   return new[] { block };
                default:
                   accum.Add(verb);

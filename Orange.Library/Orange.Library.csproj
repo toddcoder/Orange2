@@ -23,7 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -36,17 +36,17 @@
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Core, Version=1.2.5.6, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.5.6\lib\net45\Core.dll</HintPath>
+    <Reference Include="Core, Version=1.2.8.4, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Data, Version=1.2.5.6, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.5.6\lib\net45\Core.Data.dll</HintPath>
+    <Reference Include="Core.Data, Version=1.2.8.4, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Internet, Version=1.2.5.6, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.5.6\lib\net45\Core.Internet.dll</HintPath>
+    <Reference Include="Core.Internet, Version=1.2.8.4, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.Internet.dll</HintPath>
     </Reference>
-    <Reference Include="Core.ObjectGraphs, Version=1.2.5.6, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.5.6\lib\net45\Core.ObjectGraphs.dll</HintPath>
+    <Reference Include="Core.ObjectGraphs, Version=1.2.8.4, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.ObjectGraphs.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

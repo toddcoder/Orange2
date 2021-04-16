@@ -2,8 +2,6 @@
 using System.Linq;
 using Core.Assertions;
 using Core.Collections;
-using Core.Exceptions;
-using Core.Monads;
 using Core.RegularExpressions;
 using Orange.Library.Values;
 using static Orange.Library.Managers.RegionManager;
@@ -14,17 +12,17 @@ namespace Orange.Library
 {
    public class ObjectBuildingRegion : Region
    {
-      const string LOCATION = "Object building namespace";
+      protected const string LOCATION = "Object building namespace";
 
-      string className;
-      List<Block> staticBlocks;
-      Hash<string, IInvokable> invariants;
+      protected string className;
+      protected List<Block> staticBlocks;
+      protected StringHash<IInvokable> invariants;
 
       public ObjectBuildingRegion(string className)
       {
          this.className = className;
          staticBlocks = new List<Block>();
-         invariants = new Hash<string, IInvokable>();
+         invariants = new StringHash<IInvokable>();
       }
 
       public string InvokableName(string name) => Object.InvokableName(className, IsObject, name);
@@ -45,13 +43,13 @@ namespace Orange.Library
                return;
             }
 
-            variables.Must().HaveValueAt(name).OrThrow(() => withLocation(LOCATION, $"Variable {name} undefined"));
+            variables.Must().HaveKeyOf(name).OrThrow(LOCATION, () => $"Variable {name} undefined");
             switch (value)
             {
                case IInvokable invokable:
                   if (variables[name] is Abstract anAbstract)
                   {
-                     invokable.Matches(anAbstract.Signature).Must().BeTrue().OrThrow(withLocation(LOCATION, $"Signature for {name} doesn't match"));
+                     invokable.Matches(anAbstract.Signature).Must().BeTrue().OrThrow(LOCATION, () => $"Signature for {name} doesn't match");
                   }
 
                   getContractInvokable(name, invokable);
@@ -71,7 +69,7 @@ namespace Orange.Library
          }
       }
 
-      void setAuto(string name)
+      protected void setAuto(string name)
       {
          if (name.Matcher($"^ '__$get_' /({REGEX_VARIABLE})").If(out var matcher))
          {
@@ -79,7 +77,7 @@ namespace Orange.Library
          }
       }
 
-      void getContractInvokable(string name, IInvokable invokable)
+      protected void getContractInvokable(string name, IInvokable invokable)
       {
          if (!IsPrefixed(name, out var type, out var plainName))
          {
@@ -91,8 +89,7 @@ namespace Orange.Library
             return;
          }
 
-         variables.Must().HaveValueAt(plainName)
-            .OrThrow(() => withLocation(LOCATION, $"Invokable {plainName} must be defined before any of its contract terms"));
+         variables.Must().HaveKeyOf(plainName).OrThrow(LOCATION, () => $"Invokable {plainName} must be defined before any of its contract terms");
          var mainValue = variables[plainName];
 
          if (mainValue is InvokableReference mainReference)
@@ -116,11 +113,11 @@ namespace Orange.Library
          }
          else
          {
-            throw withLocation(LOCATION, $"{plainName} must be an invokable").Throws();
+            throw LOCATION.ThrowsWithLocation(() => $"{plainName} must be an invokable");
          }
       }
 
-      void addPossibleInvariant(string name, IInvokable invokable)
+      protected void addPossibleInvariant(string name, IInvokable invokable)
       {
          if (!IsPrefixed(name, out var type, out var plainName))
          {
@@ -133,13 +130,11 @@ namespace Orange.Library
          }
 
          var setterName = $"{VAR_MANGLE}set_{plainName}";
+         if (!variables.ContainsKey(setterName) && !variables.ContainsKey(plainName))
+         {
+            LOCATION.ThrowsWithLocation(() => $"Field {plainName} for invariant must be defined first");
+         }
 
-         variables.Must().HaveKeyOf(setterName)
-            .OrFailure()
-            .Or(() =>
-               variables.Must().HaveKeyOf(plainName)
-                  .OrFailure(() => withLocation(LOCATION, $"Field {plainName} for invariant must be defined first")))
-            .ThrowIfFailed();
          invariants[plainName] = invokable;
       }
 
@@ -166,7 +161,7 @@ namespace Orange.Library
          return region;
       }
 
-      void purgeTemporaryVariables(Region region)
+      protected void purgeTemporaryVariables(Region region)
       {
          var list = region.Variables.Where(i => isTemporary(i.Key)).Select(i => i.Key).ToArray();
          foreach (var key in list)
@@ -175,7 +170,7 @@ namespace Orange.Library
          }
       }
 
-      void lockVariables()
+      protected void lockVariables()
       {
          var list = variables.Where(i => isLocked(i.Key)).Select(i => i.Key).ToArray();
          foreach (var key in list)
@@ -189,8 +184,7 @@ namespace Orange.Library
       {
          foreach (var (key, value) in Variables)
          {
-            value.Type.Must().Not.Equal(Value.ValueType.Abstract)
-               .OrFailure(() => withLocation(LOCATION, $"Abstract {key} hasn't been redefined"));
+            value.Type.Must().Not.Equal(Value.ValueType.Abstract).OrThrow(LOCATION, () => $"Abstract {key} hasn't been redefined");
          }
       }
 
@@ -198,8 +192,7 @@ namespace Orange.Library
       {
          foreach (var (key, value) in Variables)
          {
-            value.Type.Must().Not.Equal(Value.ValueType.ToDo)
-               .OrFailure(() => withLocation(LOCATION, $"ToDo {key} hasn't been implemented"));
+            value.Type.Must().Not.Equal(Value.ValueType.ToDo).OrThrow(LOCATION, () => $"ToDo {key} hasn't been implemented");
          }
       }
 
@@ -232,7 +225,7 @@ namespace Orange.Library
          removeAbstracts(name);
       }
 
-      void removeAbstracts(string name)
+      protected void removeAbstracts(string name)
       {
          var getter = LongToMangledPrefix("get", name);
          if (variables.ContainsKey(getter))
@@ -284,8 +277,7 @@ namespace Orange.Library
 
       public override Region ReferenceClone<TRegion>(TRegion target)
       {
-         var objectBuildingRegion = target as ObjectBuildingRegion;
-         if (objectBuildingRegion != null)
+         if (target is ObjectBuildingRegion objectBuildingRegion)
          {
             objectBuildingRegion.staticBlocks = staticBlocks;
             objectBuildingRegion.invariants = invariants;

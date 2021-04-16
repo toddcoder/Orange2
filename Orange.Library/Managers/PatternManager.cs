@@ -10,16 +10,16 @@ namespace Orange.Library.Managers
 {
    public class PatternManager
    {
-      const string LOCATION = "Pattern manager";
+      protected const string LOCATION = "Pattern manager";
 
       public class PatternState
       {
-         ConditionalReplacements replacements;
-         bool anchored;
-         Stack<AlternateData> alternates;
-         Stack<string> workingInputStack;
-         string workingInput;
-         Hash<string, string> bindings;
+         protected ConditionalReplacements replacements;
+         protected bool anchored;
+         protected Stack<AlternateData> alternates;
+         protected Stack<string> workingInputStack;
+         protected string workingInput;
+         protected StringHash<string> bindings;
 
          public PatternState()
          {
@@ -32,7 +32,7 @@ namespace Orange.Library.Managers
             workingInputStack = new Stack<string>();
             Multi = false;
             workingInput = "";
-            bindings = new Hash<string, string>();
+            bindings = new StringHash<string>(false);
          }
 
          public ConditionalReplacements Replacements => replacements;
@@ -88,8 +88,8 @@ namespace Orange.Library.Managers
          }
       }
 
-      Stack<PatternState> patternStates;
-      Depth depth;
+      protected Stack<PatternState> patternStates;
+      protected Depth depth;
 
       public PatternManager()
       {
@@ -172,7 +172,7 @@ namespace Orange.Library.Managers
       public void Push()
       {
          patternStates.Push(new PatternState());
-         patternStates.Count.Must().BeLessThanOrEqual(MAX_BLOCK_DEPTH).OrThrow(() => withLocation(LOCATION, "Excessive recursion"));
+         patternStates.Count.Must().BeLessThanOrEqual(MAX_BLOCK_DEPTH).OrThrow(LOCATION, () => "Excessive recursion");
       }
 
       public void Pop() => patternStates.Pop();

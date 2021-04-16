@@ -3,7 +3,6 @@ using System.Linq;
 using Core.Assertions;
 using Core.Collections;
 using Core.Computers;
-using Core.Exceptions;
 using Core.ObjectGraphs;
 using Core.RegularExpressions;
 using Core.Strings;
@@ -22,22 +21,22 @@ namespace Orange.Library.Managers
 {
    public class MessageManager
    {
-      const string LOCATION = "Message Manager";
-      const string MSG_NO_MESSAGE_RECIPIENT = "No message recipient";
+      protected const string LOCATION = "Message Manager";
+      protected const string MSG_NO_MESSAGE_RECIPIENT = "No message recipient";
 
       public static MessageManager MessagingState { get; set; }
 
       public static string MessageKey(Value value, string message) => $"{value.ContainerType}~{message}";
 
-      Hash<string, bool> messagesUsed;
-      Hash<string, Message> messages;
-      Hash<string, bool> registeredTypes;
+      protected StringHash<bool> messagesUsed;
+      protected StringHash<Message> messages;
+      protected StringHash<bool> registeredTypes;
 
       public MessageManager()
       {
-         messagesUsed = new Hash<string, bool>();
-         messages = new Hash<string, Message>();
-         registeredTypes = new Hash<string, bool>();
+         messagesUsed = new StringHash<bool>(false);
+         messages = new StringHash<Message>(false);
+         registeredTypes = new StringHash<bool>(false);
       }
 
       public bool TemplateMode { get; set; }
@@ -79,7 +78,7 @@ namespace Orange.Library.Managers
 
       public Value SendMessage(Value value, string messageName, Arguments arguments)
       {
-         assert(() => (object)value).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, MSG_NO_MESSAGE_RECIPIENT));
+         assert(() => (object)value).Must().Not.BeNull().OrThrow(LOCATION, () => MSG_NO_MESSAGE_RECIPIENT);
 
          RegisterMessageCall(messageName);
          value.RegisterMessages();
@@ -94,8 +93,8 @@ namespace Orange.Library.Managers
 
       public Value Send(Value value, string messageName, Arguments arguments, bool reregister = false)
       {
-         assert(() => (object)value).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, MSG_NO_MESSAGE_RECIPIENT));
-         assert(() => (object)arguments).Must().Not.BeNull().OrThrow(() => withLocation(LOCATION, "No arguments passed in message"));
+         assert(() => (object)value).Must().Not.BeNull().OrThrow(LOCATION, () => MSG_NO_MESSAGE_RECIPIENT);
+         assert(() => (object)arguments).Must().Not.BeNull().OrThrow(LOCATION, () => "No arguments passed in message");
 
          Variable variable;
          if (value.IsVariable)
@@ -110,7 +109,7 @@ namespace Orange.Library.Managers
 
          LastValue = value;
          var type = value.ContainerType;
-         if (!registeredTypes.Find(type, s => false) || reregister)
+         if (!registeredTypes.Find(type, _ => false) || reregister)
          {
             value.RegisterMessages();
             registeredTypes[type] = true;
@@ -118,7 +117,7 @@ namespace Orange.Library.Managers
 
          Value result;
          bool handled;
-         if (messagesUsed.Find(messageName, s => false))
+         if (messagesUsed.Find(messageName, _ => false))
          {
             var message = messages[MessageKey(value, messageName)];
             if (message != null)
@@ -164,33 +163,30 @@ namespace Orange.Library.Managers
             return Send(alternate, messageName, arguments);
          }
 
-         throw withLocation(LOCATION, $"Didn't understand message {Unmangle(messageName)} sent to <{value}>({value.Type}) " +
-            $"with arguments {arguments}").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"Didn't understand message {Unmangle(messageName)} sent to <{value}>({value.Type}) " +
+            $"with arguments {arguments}");
       }
 
       public static Value SendSuperMessage(Class super, string messageName, Arguments arguments)
       {
          var reference = State.GetInvokable(Object.InvokableName(super.Name, true, messageName));
-         ((object)reference).Must().Not.BeNull()
-            .OrThrow(() => withLocation(LOCATION, $"reference for super.{Unmangle(messageName)} couldn't be found"));
+         reference.Must().Not.BeNull().OrThrow(LOCATION, () => $"reference for super.{Unmangle(messageName)} couldn't be found");
 
-         using (var popper = new RegionPopper(new Region(), "super"))
+         using var popper = new RegionPopper(new Region(), "super");
+         if (super.SuperName.IsNotEmpty())
          {
-            if (super.SuperName.IsNotEmpty())
-            {
-               var newSuper = Regions[super.SuperName];
-               popper.Push();
-               Regions.SetParameter("super", newSuper);
-            }
-            else
-            {
-               popper.Push();
-               Regions.SetParameter("super", "");
-            }
-
-            var value = reference.Invoke(arguments);
-            return value;
+            var newSuper = Regions[super.SuperName];
+            popper.Push();
+            Regions.SetParameter("super", newSuper);
          }
+         else
+         {
+            popper.Push();
+            Regions.SetParameter("super", "");
+         }
+
+         var value = reference.Invoke(arguments);
+         return value;
       }
 
       public bool RespondsTo(Value value, string messageName)
@@ -203,7 +199,7 @@ namespace Orange.Library.Managers
                return true;
             }
 
-            if (value is Variable variable && variable.Name == "super" && Regions["self"] is Object obj)
+            if (value is Variable { Name: "super" } && Regions["self"] is Object obj)
             {
                return obj.SuperRespondsTo(messageName);
             }
@@ -249,7 +245,7 @@ namespace Orange.Library.Managers
          return message != null;
       }
 
-      static Value ifTrueResult(Arguments arguments, bool performElse)
+      protected static Value ifTrueResult(Arguments arguments, bool performElse)
       {
          var result = arguments.Executable.Evaluate();
          if (result == null)
@@ -261,7 +257,7 @@ namespace Orange.Library.Managers
          return result;
       }
 
-      static Value ifMessage(Value value, Arguments arguments)
+      protected static Value ifMessage(Value value, Arguments arguments)
       {
          var executable = arguments.Executable;
          if (executable.CanExecute && value.IsTrue)
@@ -273,10 +269,12 @@ namespace Orange.Library.Managers
          return new Nil();
       }
 
-      static Value elseMessage(Value value, Arguments arguments) => value.Type == Value.ValueType.Nil &&
-         arguments.Executable.CanExecute ? arguments.Executable.Evaluate() : value;
+      protected static Value elseMessage(Value value, Arguments arguments)
+      {
+         return value.Type == Value.ValueType.Nil && arguments.Executable.CanExecute ? arguments.Executable.Evaluate() : value;
+      }
 
-      static Values.Buffer getBuffer(string variableName)
+      protected static Values.Buffer getBuffer(string variableName)
       {
          var value = Regions[variableName];
          Values.Buffer buffer;
@@ -293,7 +291,7 @@ namespace Orange.Library.Managers
          return buffer;
       }
 
-      static void print(string text, Arguments arguments)
+      protected static void print(string text, Arguments arguments)
       {
          var argument = arguments[0];
          if (argument.IsEmpty)
@@ -307,7 +305,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static void put(string text, Arguments arguments)
+      protected static void put(string text, Arguments arguments)
       {
          var argument = arguments[0];
          if (argument.IsEmpty)
@@ -321,7 +319,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static void write(string text, Arguments arguments)
+      protected static void write(string text, Arguments arguments)
       {
          var argument = arguments[0];
          if (argument.IsEmpty)
@@ -335,7 +333,7 @@ namespace Orange.Library.Managers
          }
       }
 
-      static Value with(Value value, Arguments arguments)
+      protected static Value with(Value value, Arguments arguments)
       {
          var block = arguments.Executable;
          if (block.CanExecute)
@@ -350,7 +348,7 @@ namespace Orange.Library.Managers
          return value;
       }
 
-      static Value forLoop(Value value, Arguments arguments, out bool handled)
+      protected static Value forLoop(Value value, Arguments arguments, out bool handled)
       {
          handled = false;
          var array = value.YieldValue;
@@ -359,45 +357,43 @@ namespace Orange.Library.Managers
             return value;
          }
 
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return value;
-            }
-
-            Regions.Push("for");
-
-            foreach (var item in array)
-            {
-               assistant.SetParameterValues(item);
-               block.Evaluate();
-               var signal = ParameterAssistant.Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-            }
-
-            value.YieldValue = null;
-
-            Regions.Pop("for");
-
-            handled = true;
-            return array;
+            return value;
          }
+
+         Regions.Push("for");
+
+         foreach (var item in array)
+         {
+            assistant.SetParameterValues(item);
+            block.Evaluate();
+            var signal = ParameterAssistant.Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+         }
+
+         value.YieldValue = null;
+
+         Regions.Pop("for");
+
+         handled = true;
+         return array;
       }
 
-      static void freeze(Value value, Arguments arguments)
+      protected static void freeze(Value value, Arguments arguments)
       {
          FileName file = arguments[0].Text;
          var objectType = value.GetType();
@@ -405,27 +401,22 @@ namespace Orange.Library.Managers
          file.SetObject(value);
       }
 
-      static Value thaw(Value value)
+      protected static Value thaw(Value value)
       {
          FileName file = value.Text;
          var matcher = new Matcher();
          return matcher.IsMatch(file.Name, "'-' /(-['-']+) $") ? file.GetObject<Value>() : "";
       }
 
-      static bool can(Value value, Value message)
+      protected static bool can(Value value, Value message) => message.Type switch
       {
-         switch (message.Type)
-         {
-            case Value.ValueType.Array:
-               return ((Array)message).All(i => can(value, i.Value));
-            default:
-               return MessagingState.RespondsTo(value, message.Text);
-         }
-      }
+         Value.ValueType.Array => ((Array)message).All(i => can(value, i.Value)),
+         _ => MessagingState.RespondsTo(value, message.Text)
+      };
 
-      static bool can(Value value, Arguments arguments) => arguments.Values.All(v => can(value, v));
+      protected static bool can(Value value, Arguments arguments) => arguments.Values.All(v => can(value, v));
 
-      static bool invokable(Value value) => value is IInvokable;
+      protected static bool invokable(Value value) => value is IInvokable;
 
       public static Value DefaultSendMessage(Value value, string messageName, Arguments arguments, out bool handled)
       {
@@ -531,7 +522,6 @@ namespace Orange.Library.Managers
             case "alt":
                return value.AlternateValue("alt");
             case "for":
-               handled = false;
                return forLoop(value, arguments, out handled);
             case "json":
                return value.Text;
@@ -589,75 +579,69 @@ namespace Orange.Library.Managers
          return null;
       }
 
-      static Value tap(Value value, Arguments arguments)
+      protected static Value tap(Value value, Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return value;
-            }
-
-            assistant.IteratorParameter();
-            assistant.SetIteratorParameter(value);
-            block.Evaluate();
             return value;
          }
+
+         assistant.IteratorParameter();
+         assistant.SetIteratorParameter(value);
+         block.Evaluate();
+
+         return value;
       }
 
-      public static bool DefaultRespondsTo(string messageName)
+      public static bool DefaultRespondsTo(string messageName) => messageName switch
       {
-         switch (messageName)
-         {
-            case "print":
-            case "put":
-            case "date":
-            case "but":
-            case "kind":
-            case "match":
-            case "str":
-            case "num":
-            case "id":
-            case "dup":
-            case "write":
-            case "newMessage":
-            case "isResp":
-            case "isNum":
-            case "cmp":
-            case "isEmpty":
-            case "fmt":
-            case "return":
-            case "result":
-            case "squote":
-            case "dquote":
-            case "rep":
-            case "exit":
-            case "after":
-            case "give":
-            case "with":
-            case "alt":
-            case "for":
-            case "json":
-            case "send":
-            case "assert":
-            case "freeze":
-            case "thaw":
-            case "isVal":
-            case "isKey":
-            case "can":
-            case "isInt":
-            case "isFloat":
-            case "isArr":
-            case "isInv":
-            case "isTrue":
-            case "isIter":
-            case "tap":
-            case "isFailure":
-               return true;
-            default:
-               return false;
-         }
-      }
+         "print" => true,
+         "put" => true,
+         "date" => true,
+         "but" => true,
+         "kind" => true,
+         "match" => true,
+         "str" => true,
+         "num" => true,
+         "id" => true,
+         "dup" => true,
+         "write" => true,
+         "newMessage" => true,
+         "isResp" => true,
+         "isNum" => true,
+         "cmp" => true,
+         "isEmpty" => true,
+         "fmt" => true,
+         "return" => true,
+         "result" => true,
+         "squote" => true,
+         "dquote" => true,
+         "rep" => true,
+         "exit" => true,
+         "after" => true,
+         "give" => true,
+         "with" => true,
+         "alt" => true,
+         "for" => true,
+         "json" => true,
+         "send" => true,
+         "assert" => true,
+         "freeze" => true,
+         "thaw" => true,
+         "isVal" => true,
+         "isKey" => true,
+         "can" => true,
+         "isInt" => true,
+         "isFloat" => true,
+         "isArr" => true,
+         "isInv" => true,
+         "isTrue" => true,
+         "isIter" => true,
+         "tap" => true,
+         "isFailure" => true,
+         _ => false
+      };
    }
 }

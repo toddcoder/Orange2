@@ -1,4 +1,5 @@
 ﻿using System;
+using Core.Assertions;
 using Core.Collections;
 using Core.Strings;
 using Orange.Library.Managers;
@@ -10,15 +11,15 @@ namespace Orange.Library.Values
 {
    public class Case : Value
    {
-      const string LOCATION = "Case";
+      protected const string LOCATION = "Case";
 
-      Value value;
-      Value comparisand;
-      bool matched;
-      Value result;
-      bool mapped;
-      bool required;
-      Block condition;
+      protected Value value;
+      protected Value comparisand;
+      protected bool matched;
+      protected Value result;
+      protected bool mapped;
+      protected bool required;
+      protected Block condition;
 
       public Case(Value value, Value comparisand, bool matched, bool required, Block condition)
       {
@@ -75,7 +76,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "apply", v => ((Case)v).Apply());
       }
 
-      static bool returnMatched(bool result, bool required, Block condition)
+      protected static bool returnMatched(bool result, bool required, Block condition)
       {
          if (result && condition != null && !condition.Evaluate().IsTrue)
          {
@@ -84,7 +85,7 @@ namespace Orange.Library.Values
 
          if (required)
          {
-            Assert(result, LOCATION, "Requirement failed");
+            AssertionFunctions.assert(() => result).Must().BeTrue().OrThrow(LOCATION, () => "Requirement failed");
          }
 
          return result;
@@ -95,11 +96,9 @@ namespace Orange.Library.Values
       {
          if (usePopper)
          {
-            using (var popper = new RegionPopper(region, "case match"))
-            {
-               popper.Push();
-               return Match(left, right, required, condition, bindingName, assigning);
-            }
+            using var popper = new RegionPopper(region, "case match");
+            popper.Push();
+            return Match(left, right, required, condition, bindingName, assigning);
          }
 
          return Match(left, right, required, condition, bindingName, assigning);
@@ -160,7 +159,7 @@ namespace Orange.Library.Values
             }
             case List leftList when right is List rightList:
                return returnMatched(leftList.Match(rightList), required, condition);
-            case List _ when right.IsNil:
+            case List when right.IsNil:
                return returnMatched(false, required, condition);
          }
 
@@ -301,19 +300,15 @@ namespace Orange.Library.Values
                return returnMatched(set.Contains(left), required, condition);
          }
 
-         switch (right)
+         return right switch
          {
-            case Unto unto:
-               return returnMatched(unto.CompareTo(left), required, condition);
-            case Regex regex:
-               return returnMatched(regex.Match(left.Text).IsTrue, required, condition);
-            default:
-               return returnMatched(right is Pattern pattern ? pattern.MatchAndBind(left.Text) : Runtime.Compare(left, right) == 0, required,
-                  condition);
-         }
+            Unto unto => returnMatched(unto.CompareTo(left), required, condition),
+            Regex regex => returnMatched(regex.Match(left.Text).IsTrue, required, condition),
+            _ => returnMatched(right is Pattern pattern ? pattern.MatchAndBind(left.Text) : Runtime.Compare(left, right) == 0, required, condition)
+         };
       }
 
-      static bool matchToLeftObject(Value left, Value right, bool required, Block condition, out bool leftWasAnObject,
+      protected static bool matchToLeftObject(Value left, Value right, bool required, Block condition, out bool leftWasAnObject,
          string bindingName, bool assigning)
       {
          leftWasAnObject = false;
@@ -431,7 +426,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      Value getValue()
+      protected Value getValue()
       {
          if (mapped)
          {
@@ -476,12 +471,10 @@ namespace Orange.Library.Values
       public Value Apply()
       {
          var applyValue = Arguments.ApplyValue;
-         using (var popper = new RegionPopper(new Region(), "case-apply"))
-         {
-            popper.Push();
-            Regions.SetLocal(State.DefaultParameterNames.ValueVariable, applyValue);
-            return Match(applyValue, comparisand, required, condition) ? applyValue : new Nil();
-         }
+         using var popper = new RegionPopper(new Region(), "case-apply");
+         popper.Push();
+         Regions.SetLocal(State.DefaultParameterNames.ValueVariable, applyValue);
+         return Match(applyValue, comparisand, required, condition) ? applyValue : new Nil();
       }
    }
 }

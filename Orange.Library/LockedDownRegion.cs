@@ -1,14 +1,13 @@
 ﻿using Core.Collections;
-using Core.Exceptions;
 using Orange.Library.Values;
 
 namespace Orange.Library
 {
    public class LockedDownRegion : ObjectRegion
    {
-      const string LOCATION = "Locked down region";
+      protected const string LOCATION = "Locked down region";
 
-      string functionName;
+      protected string functionName;
 
       public LockedDownRegion(ObjectRegion region, string functionName) : base(region.Object)
       {
@@ -48,7 +47,7 @@ namespace Orange.Library
          }
       }
 
-      static void throwError(string name) => throw Runtime.withLocation(LOCATION, $"{name} is read-only").Throws();
+      protected static void throwError(string name) => throw LOCATION.ThrowsWithLocation(() => $"{name} is read-only");
 
       public override void SetLocal(string name, Value value, Object.VisibilityType visibility = Object.VisibilityType.Public,
          bool overriding = false, bool allowNil = false, int index = -1)

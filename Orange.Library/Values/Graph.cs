@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
-using Core.Internet.Sgml;
+using Core.Internet.Markup;
 using Core.RegularExpressions;
 using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Managers.MessageManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -15,9 +17,9 @@ namespace Orange.Library.Values
 {
    public class Graph : Value, IMessageHandler
    {
-      const string LOCATION = "Graph";
+      protected const string LOCATION = "Graph";
 
-      ValueGraph graph;
+      protected ValueGraph graph;
 
       public Graph(string name, Value value)
       {
@@ -143,7 +145,7 @@ namespace Orange.Library.Values
 
       public bool RespondsTo(string messageName) => graph.Children.Select(i => i.Key).Any(k => k == messageName);
 
-      Value dispatchClosure(Lambda lambda, Arguments arguments)
+      protected Value dispatchClosure(Lambda lambda, Arguments arguments)
       {
          lambda.Block.AutoRegister = false;
          State.RegisterBlock(lambda.Block);
@@ -174,7 +176,7 @@ namespace Orange.Library.Values
 
       public override Value AlternateValue(string message) => getValue(graph);
 
-      static Value getValue(ValueGraph graph)
+      protected static Value getValue(ValueGraph graph)
       {
          if (graph.Children.Count == 0)
          {
@@ -193,12 +195,12 @@ namespace Orange.Library.Values
 
       public Value XML()
       {
-         var builder = new SgmlBuilder(graph.Name);
+         var builder = new MarkupBuilder(graph.Name);
          renderXML(graph, builder.Root);
          return builder.ToString();
       }
 
-      static void renderXML(ValueGraph graph, Element element)
+      protected static void renderXML(ValueGraph graph, Element element)
       {
          if (graph.Children.Count > 0)
          {
@@ -257,14 +259,14 @@ namespace Orange.Library.Values
          }
       }
 
-      void addToList(ParameterAssistant assistant, Block block, Value value, List<Graph> list)
+      protected void addToList(ParameterAssistant assistant, Block block, Value value, List<Graph> list)
       {
          var graphValue = value as Graph;
-         RejectNull(graphValue, LOCATION, "Item must be a Graph");
+         asObject(() => graphValue).Must().Not.BeNull().OrThrow(LOCATION, () => "Item must be a graph");
          addToList(assistant, block, graphValue.graph, list);
       }
 
-      static void addToList(ParameterAssistant assistant, Block block, ValueGraph graph, List<Graph> list)
+      protected static void addToList(ParameterAssistant assistant, Block block, ValueGraph graph, List<Graph> list)
       {
          var value = new Graph(graph);
          assistant.SetIteratorParameter(value);

@@ -15,8 +15,8 @@ namespace Orange.Library.Parsers
 {
    public class PatternParser : Parser, IElementParser
    {
-      bool resultElement;
-      bool subPattern;
+      protected bool resultElement;
+      protected bool subPattern;
 
       public PatternParser(bool resultElement = false, bool subPattern = false) : base((subPattern ? "^ /(/s*)" : "^ /(' '*)") + REGEX_BEGIN_PATTERN)
       {
@@ -109,7 +109,7 @@ namespace Orange.Library.Parsers
                   break;
                }
 
-               if (!(parser is IElementParser elementParser))
+               if (parser is not IElementParser elementParser)
                {
                   continue;
                }
@@ -183,12 +183,9 @@ namespace Orange.Library.Parsers
             }
          }
 
-         found.Must().BeTrue().OrThrow(() => withLocation("Pattern parser", $"Didn't understand pattern '{source.Substring(index)}'"));
+         found.Must().BeTrue().OrThrow("Pattern parser", () => $"Didn't understand pattern '{source.Substring(index)}'");
 
-         if (head == null)
-         {
-            head = new FailElement();
-         }
+         head ??= new FailElement();
 
          var newPattern = new Pattern(head)
          {

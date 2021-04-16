@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Core.Exceptions;
 using Core.RegularExpressions;
 using Core.Strings;
 using static Orange.Library.Runtime;
@@ -8,7 +7,7 @@ namespace Orange.Library
 {
    public class Formatter
    {
-      const string LOCATION = "Formatter";
+      protected const string LOCATION = "Formatter";
 
       public static Formatter Parse(string source)
       {
@@ -21,10 +20,10 @@ namespace Orange.Library
             return new Formatter(specifier, width, places);
          }
 
-         throw withLocation(LOCATION, $"Didn't understand formatter specification {source}").Throws();
+         throw LOCATION.ThrowsWithLocation(() => $"Didn't understand formatter specification {source}");
       }
 
-      string format;
+      protected string format;
 
       public Formatter(string specifier, string width, string places)
       {

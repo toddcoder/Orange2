@@ -15,13 +15,12 @@ namespace Orange.Library.Parsers
 {
    public class MaybeParser : Parser
    {
-      const string REGEX_GUARD_OR_END = "(^ ' '* 'guard' /b) | (^ /r /n | ^ /r | ^ /n)";
+      protected const string REGEX_GUARD_OR_END = "(^ ' '* 'guard' /b) | (^ /r /n | ^ /r | ^ /n)";
 
-      FreeParser freeParser;
-      EndOfLineParser endOfLineParser;
+      protected FreeParser freeParser;
+      protected EndOfLineParser endOfLineParser;
 
-      public MaybeParser()
-         : base($"^ /(|tabs| 'maybe' /s*) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
+      public MaybeParser() : base($"^ /(|tabs| 'maybe' /s*) /({REGEX_VARIABLE}) /(/s* '=' /s*)")
       {
          freeParser = new FreeParser();
          endOfLineParser = new EndOfLineParser();
@@ -71,7 +70,7 @@ namespace Orange.Library.Parsers
 
                if (guardBlock.IsSome)
                {
-                  ifTrue.LastIsReturn.Must().BeTrue().OrThrow(() => withLocation("Maybe", "return required"));
+                  ifTrue.LastIsReturn.Must().BeTrue().OrThrow("Maybe", () => "return required");
                }
 
                overridePosition = currentIndex;

@@ -6,7 +6,6 @@ using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static Core.Assertions.AssertionFunctions;
-using static Core.Lambdas.LambdaFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
@@ -18,16 +17,16 @@ namespace Orange.Library.Parsers
 {
    public class FunctionParser : Parser, ITraitName
    {
-      FunctionBodyParser functionBodyParser;
-      string functionName;
-      bool singleLine;
-      VisibilityType visibility;
-      bool @override;
-      bool lockedDown;
-      Lambda lambda;
-      Parameters parameters;
-      WhereParser whereParser;
-      int statementIndex;
+      protected FunctionBodyParser functionBodyParser;
+      protected string functionName;
+      protected bool singleLine;
+      protected VisibilityType visibility;
+      protected bool @override;
+      protected bool lockedDown;
+      protected Lambda lambda;
+      protected Parameters parameters;
+      protected WhereParser whereParser;
+      protected int statementIndex;
 
       public FunctionParser()
          : base("^ /(|tabs|) /(('public' | 'hidden' | 'imported') /s+)? /('override' /s+)? /('memo' /s+)?" +
@@ -94,22 +93,20 @@ namespace Orange.Library.Parsers
                break;
          }
 
-         var throwFunc = func<string, string>(message => withLocation(VerboseName, message));
-
          if (lockedDown)
          {
-            type.Must().Not.Equal("set").OrThrow(() => throwFunc("Setters not allowed in views"));
+            type.Must().Not.Equal("set").OrThrow(VerboseName, () => "Setters not allowed in views");
          }
 
          if (InClassDefinition)
          {
-            xMethod.Must().Not.BeTrue().OrThrow(() => throwFunc("xfunc not allowed inside class definitions"));
+            xMethod.Must().Not.BeTrue().OrThrow(VerboseName, () => "xfunc not allowed inside class definitions");
          }
          else
          {
             visibilityName.Must().BeEmpty()
-               .OrThrow(() => throwFunc($"Visibility specifier {visibility} not allowed allowed outside of class definition"));
-            isDef.Must().BeTrue().OrThrow(() => throwFunc($"{type} specifier not allowed outside of a class definition"));
+               .OrThrow(VerboseName, () => $"Visibility specifier {visibility} not allowed allowed outside of class definition");
+            isDef.Must().BeTrue().OrThrow(VerboseName, () => $"{type} specifier not allowed outside of a class definition");
          }
 
          Color(position, whitespaces.Length, Whitespaces);
@@ -169,7 +166,7 @@ namespace Orange.Library.Parsers
             parameters = new Parameters(parameterList);
          }
 
-         assert(() => (object)parameters).Must().Not.BeNull().OrThrow(() => withLocation(VerboseName, "Parameters malformed"));
+         assert(() => (object)parameters).Must().Not.BeNull().OrThrow(VerboseName, () => "Parameters malformed");
          var currying = parametersParser.Currying;
 
          functionBodyParser.ExtractCondition = parametersType == ParametersType.Pattern;
@@ -210,10 +207,12 @@ namespace Orange.Library.Parsers
          return null;
       }
 
-      Verb createFunction(int index, bool currying, Block condition, bool memoize, bool lockedDown, Block body) =>
-         createFunction(index, body, currying, condition, memoize, lockedDown);
+      protected Verb createFunction(int index, bool currying, Block condition, bool memoize, bool lockedDown, Block body)
+      {
+         return createFunction(index, body, currying, condition, memoize, lockedDown);
+      }
 
-      Verb createFunction(int index, Block block, bool currying, Block inlineCondition, bool memoize, bool isLockedDown)
+      protected Verb createFunction(int index, Block block, bool currying, Block inlineCondition, bool memoize, bool isLockedDown)
       {
          var region = getRegion();
          if (currying)
@@ -255,9 +254,9 @@ namespace Orange.Library.Parsers
             { Index = statementIndex };
       }
 
-      Region getRegion() => lockedDown ? new LockedDownRegion(functionName) : new Region();
+      protected Region getRegion() => lockedDown ? new LockedDownRegion(functionName) : new Region();
 
-      Verb createInitializer(int index, Block block)
+      protected Verb createInitializer(int index, Block block)
       {
          overridePosition = index;
          var region = getRegion();
@@ -266,6 +265,7 @@ namespace Orange.Library.Parsers
          var verb = new CreateFunction(functionName, lambda, false, Public, true, null) { Index = statementIndex };
          builder.Verb(verb);
          AddStaticBlock(builder.Block);
+
          return new NullOp();
       }
 

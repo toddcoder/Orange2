@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Core.Exceptions;
 using Core.Monads;
 using Core.Strings;
 using Orange.Library.Parsers.Special;
@@ -17,7 +16,7 @@ namespace Orange.Library.Parsers
 {
    public class ClassParser : Parser
    {
-      const string LOCATION = "Class parser";
+      protected const string LOCATION = "Class parser";
 
       public static (string, Parameters, string[], int) Ancestors(string source, int index)
       {
@@ -44,7 +43,9 @@ namespace Orange.Library.Parsers
 
       public ClassParser()
          : base(@"^ /(|tabs|) /('abstract' /s+)? /(('class' | 'enum' | 'module' | 'union' | 'extend' | 'view') /s+) " +
-            $"/({REGEX_VARIABLE}) /(\'(\')?") { }
+            $"/({REGEX_VARIABLE}) /(\'(\')?")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -145,7 +146,7 @@ namespace Orange.Library.Parsers
          var checker = new InheritanceChecker(className, objectBlock, parameters, superClass, isAbstract, traits);
          if (checker.Passes().IfNot(out var exception))
          {
-            throw withLocation(LOCATION, exception.Message).Throws();
+            throw LOCATION.ThrowsWithLocation(() => exception.Message);
          }
 
          var cls = new Class(parameters, objectBlock, GetStaticBlock(), superClass, traits, superParameters, type == "view");
@@ -174,7 +175,7 @@ namespace Orange.Library.Parsers
 
       public override string VerboseName => "Class";
 
-      static void addEnumerationSupport(string className)
+      protected static void addEnumerationSupport(string className)
       {
          var staticCode = new CodeBuilder();
 
@@ -235,7 +236,7 @@ namespace Orange.Library.Parsers
          AddStaticBlock(staticCode.Block);
       }
 
-      static void addEnumerationInstanceSupport(ref Block objectBlock)
+      protected static void addEnumerationInstanceSupport(ref Block objectBlock)
       {
          var outerBuilder = new CodeBuilder();
 
