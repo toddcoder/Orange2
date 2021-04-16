@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
 using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Messages;
+using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object.VisibilityType;
@@ -12,32 +14,22 @@ namespace Orange.Library.Values
 {
    public class Class : Value, IMessageHandler, IStaticObject, IGetInvokeableReference
    {
-      const string LOCATION = "Class";
+      protected const string LOCATION = "Class";
 
-      static void verifySuperclass(string superName)
-      {
-         var manager = Regions;
-         Assert(manager.VariableExists(superName), LOCATION, $"Class {superName} doesn't exist");
-         var value = manager[superName];
-         Assert(value.Type == ValueType.Class, LOCATION, $"{superName} isn't a class");
-      }
+      protected Parameters parameters;
+      protected Block objectBlock;
+      protected Block classBlock;
+      protected string name;
+      protected string superName;
+      protected Object staticObject;
+      protected Parameters mergedParameters;
+      protected AutoStringHash<string> invokables;
+      protected string[] traitNames;
+      protected StringHash<Trait> traits;
+      protected Block commonBlock;
+      protected bool lockedDown;
 
-      Parameters parameters;
-      Block objectBlock;
-      Block classBlock;
-      string name;
-      string superName;
-      Object staticObject;
-      Parameters mergedParameters;
-      Hash<string, string> invokables;
-      string[] traitNames;
-      Hash<string, Trait> traits;
-      Parameters superParameters;
-      Block commonBlock;
-      bool lockedDown;
-
-      public Class(Parameters parameters, Block objectBlock, Block classBlock, string superName, string[] traitNames,
-         Parameters superParameters, bool lockedDown)
+      public Class(Parameters parameters, Block objectBlock, Block classBlock, string superName, string[] traitNames, bool lockedDown)
       {
          this.parameters = parameters;
          this.objectBlock = objectBlock;
@@ -46,17 +38,16 @@ namespace Orange.Library.Values
          name = "base";
          staticObject = null;
          mergedParameters = null;
-         invokables = new AutoHash<string, string> { Default = DefaultType.Value, DefaultValue = "" };
+         invokables = new AutoStringHash<string>(false) { Default = DefaultType.Value, DefaultValue = "" };
          this.traitNames = traitNames;
          traits = null;
-         this.superParameters = superParameters;
          commonBlock = null;
          this.lockedDown = lockedDown;
       }
 
-      public Class(Parameters parameters, Block objectBlock) : this(parameters, objectBlock, new Block(), "", new string[0], null, false) { }
+      public Class(Parameters parameters, Block objectBlock) : this(parameters, objectBlock, new Block(), "", new string[0], false) { }
 
-      public Class() : this(new Parameters(), new Block(), new Block(), "", new string[0], null, false) { }
+      public Class() : this(new Parameters(), new Block(), new Block(), "", new string[0], false) { }
 
       public Hash<string, Trait> Traits => traits;
 
@@ -66,9 +57,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => value is Class c ? compareToClass(c) : id.CompareTo(value.ID);
 
-      int compareToClass(Class cls) => id == cls.id ? 0 : isChildCompare(cls);
+      protected int compareToClass(Class cls) => id == cls.id ? 0 : isChildCompare(cls);
 
-      int isChildCompare(Class cls) => IsChildOf(cls) ? -1 : 1;
+      protected int isChildCompare(Class cls) => IsChildOf(cls) ? -1 : 1;
 
       public override string Text
       {
@@ -86,8 +77,7 @@ namespace Orange.Library.Values
 
       public override Value Clone()
       {
-         return new Class((Parameters)parameters.Clone(), (Block)objectBlock.Clone(), (Block)classBlock?.Clone(), superName, traitNames,
-            (Parameters)parameters?.Clone(), lockedDown);
+         return new Class((Parameters)parameters.Clone(), (Block)objectBlock.Clone(), (Block)classBlock?.Clone(), superName, traitNames, lockedDown);
       }
 
       protected override void registerMessages(MessageManager manager)
@@ -114,7 +104,7 @@ namespace Orange.Library.Values
             var value = Regions[superName];
             if (value is Class superClass)
             {
-               superClass.MergeParameters(mergedParameters ?? parameters, superParameters ?? superClass.parameters);
+               superClass.MergeParameters(mergedParameters ?? parameters);
                var superObject = superClass.NewObject(arguments, allowAbstracts: true);
                superObject.CopyAllNonPrivateTo(region);
                superClass.UnmergeParameters();
@@ -123,14 +113,14 @@ namespace Orange.Library.Values
             }
             else
             {
-               Throw(LOCATION, $"{superName} isn't a class");
+               throw LOCATION.ThrowsWithLocation(() => $"{superName} isn't a class");
             }
          }
          else
          {
             region = new ObjectBuildingRegion(name) { ID = id, IsObject = isObject };
             region.CreateVariable("super", overriding: true);
-            region["super"] = new Class(new Parameters(), new Block(), null, "", new string[0], null, false);
+            region["super"] = new Class(new Parameters(), new Block(), null, "", new string[0], false);
          }
 
          if (staticObject != null)
@@ -234,7 +224,7 @@ namespace Orange.Library.Values
             return;
          }
 
-         var _class = new Class(new Parameters(), classBlock, null, "", new string[0], null, false)
+         var _class = new Class(new Parameters(), classBlock, null, "", new string[0], false)
          {
             Arguments = new Arguments()
          };
@@ -260,9 +250,9 @@ namespace Orange.Library.Values
          commonBlock = closure.Block;
       }
 
-      void retrieveTraits()
+      protected void retrieveTraits()
       {
-         traits = new Hash<string, Trait>();
+         traits = new StringHash<Trait>(false);
          foreach (var traitName in traitNames)
          {
             var value = Regions[traitName];
@@ -272,12 +262,12 @@ namespace Orange.Library.Values
             }
             else
             {
-               Throw("Object builder", $"{traitName} is not a trait");
+               throw LOCATION.ThrowsWithLocation(() => $"{traitName} is not a trait");
             }
          }
       }
 
-      void checkTraits(Region region)
+      protected void checkTraits(Region region)
       {
          foreach (var (traitName, trait) in traits)
          {
@@ -290,19 +280,20 @@ namespace Orange.Library.Values
                      var value = region[messageName];
                      if (value is InvokableReference reference)
                      {
-                        Assert(reference.MatchesSignature(signature), LOCATION, $"Trait {traitName}.{signature.Name} has not been implemented");
+                        reference.MatchesSignature(signature).Must().BeTrue()
+                           .OrThrow(LOCATION, () => $"Trait {traitName}.{signature.Name} has not been implemented");
                      }
                   }
                   else
                   {
-                     Assert(signature.Optional, LOCATION, $"{traitName}.{messageName} isn't implemented");
+                     signature.Optional.Must().BeTrue().OrThrow(LOCATION, () => $"{traitName}.{messageName} isn't implemented");
                   }
                }
             }
          }
       }
 
-      void implementTraits(Region region)
+      protected void implementTraits(Region region)
       {
          foreach (var (_, trait) in traits)
          {
@@ -340,7 +331,7 @@ namespace Orange.Library.Values
             if (staticObject.Region[messageName] is InvokableReference reference)
             {
                var invokable = reference.Invokable;
-               RejectNull(invokable, LOCATION, $"Invokable {messageName} not found");
+               asObject(()=>invokable).Must().Not.BeNull().OrThrow(LOCATION,()=> $"Invokable {messageName} not found");
                if (invokable is Lambda lambda)
                {
                   parameters = lambda.Parameters;
@@ -370,7 +361,7 @@ namespace Orange.Library.Values
          set => classBlock = value;
       }
 
-      public void MergeParameters(Parameters subclassParameters, Parameters suppliedParameters)
+      public void MergeParameters(Parameters subclassParameters)
       {
          mergedParameters = (Parameters)subclassParameters.Clone();
       }
@@ -386,30 +377,28 @@ namespace Orange.Library.Values
 
       public override string ToString()
       {
-         using (var writer = new StringWriter())
+         using var writer = new StringWriter();
+         writer.Write("class ");
+         writer.Write(name);
+         writer.Write("(");
+         if (staticObject != null)
          {
-            writer.Write("class ");
-            writer.Write(name);
-            writer.Write("(");
-            if (staticObject != null)
+            var visibleValues = staticObject.VisibleValues;
+            if (visibleValues.IsNotEmpty())
             {
-               var visibleValues = staticObject.VisibleValues;
-               if (visibleValues.IsNotEmpty())
-               {
-                  writer.Write(" ");
-               }
-
-               writer.Write(visibleValues);
+               writer.Write(" ");
             }
 
-            writer.Write(")");
-            return writer.ToString();
+            writer.Write(visibleValues);
          }
+
+         writer.Write(")");
+         return writer.ToString();
       }
 
       public InvokableReference InvokableReference(string message, bool isObject)
       {
-         return new InvokableReference(Object.InvokableName(name, isObject, message));
+         return new(Object.InvokableName(name, isObject, message));
       }
 
       public Value Required()

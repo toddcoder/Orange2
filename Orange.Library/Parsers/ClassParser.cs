@@ -149,7 +149,7 @@ namespace Orange.Library.Parsers
             throw LOCATION.ThrowsWithLocation(() => exception.Message);
          }
 
-         var cls = new Class(parameters, objectBlock, GetStaticBlock(), superClass, traits, superParameters, type == "view");
+         var cls = new Class(parameters, objectBlock, GetStaticBlock(), superClass, traits, type == "view");
          CompilerState.RegisterClass(ClassName, cls);
          result.Value = cls;
          overridePosition = index;

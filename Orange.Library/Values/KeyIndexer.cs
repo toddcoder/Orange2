@@ -1,18 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Orange.Library.Managers;
 using static Orange.Library.ParameterAssistant;
 using static Orange.Library.ParameterAssistant.SignalType;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
    public class KeyIndexer : BaseIndexer<string>
    {
-      Array keyArray;
+      protected Array keyArray;
 
-      public KeyIndexer(Array array, Array keyArray)
-         : base(array) => this.keyArray = keyArray;
+      public KeyIndexer(Array array, Array keyArray) : base(array)
+      {
+         this.keyArray = keyArray;
+      }
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -61,65 +63,63 @@ namespace Orange.Library.Values
 
       public override Value SelfMap()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-
-            var changes = new Array();
-
-            foreach (var key in getIndicators())
-            {
-               var value = array[key];
-               var index = array.GetIndex(key);
-               assistant.SetParameterValues(value, key, index);
-               value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (value.Type == ValueType.Nil)
-               {
-                  continue;
-               }
-
-               if (value is KeyedValue keyedValue)
-               {
-                  changes[keyedValue.Key] = keyedValue.Value;
-               }
-               else
-               {
-                  changes[key] = value;
-               }
-            }
-
-            if (changes.Length == 0)
-            {
-               return this;
-            }
-
-            foreach (var item in changes)
-            {
-               array[item.Key] = item.Value;
-            }
-
             return this;
          }
+
+         assistant.ArrayParameters();
+
+         var changes = new Array();
+
+         foreach (var key in getIndicators())
+         {
+            var value = array[key];
+            var index = array.GetIndex(key);
+            assistant.SetParameterValues(value, key, index);
+            value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (value.Type == ValueType.Nil)
+            {
+               continue;
+            }
+
+            if (value is KeyedValue keyedValue)
+            {
+               changes[keyedValue.Key] = keyedValue.Value;
+            }
+            else
+            {
+               changes[key] = value;
+            }
+         }
+
+         if (changes.Length == 0)
+         {
+            return this;
+         }
+
+         foreach (var item in changes)
+         {
+            array[item.Key] = item.Value;
+         }
+
+         return this;
       }
 
       public override Value Remove()
@@ -135,49 +135,47 @@ namespace Orange.Library.Values
 
       public override Value Fill()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         Value value;
+         if (block != null)
          {
-            var block = assistant.Block();
-            Value value;
-            if (block != null)
-            {
-               assistant.ArrayParameters();
-               var index = 0;
-               foreach (var key in getIndicators())
-               {
-                  assistant.SetParameterValues(array[key], key, index++);
-                  value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (value != null)
-                  {
-                     array[key] = value;
-                  }
-               }
-
-               return array;
-            }
-
-            value = Arguments[0];
+            assistant.ArrayParameters();
+            var index = 0;
             foreach (var key in getIndicators())
             {
-               array[key] = value.Clone();
+               assistant.SetParameterValues(array[key], key, index++);
+               value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
+               {
+                  break;
+               }
+
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (value != null)
+               {
+                  array[key] = value;
+               }
             }
 
             return array;
          }
+
+         value = Arguments[0];
+         foreach (var key in getIndicators())
+         {
+            array[key] = value.Clone();
+         }
+
+         return array;
       }
 
       public override Value Insert()
@@ -195,13 +193,14 @@ namespace Orange.Library.Values
       public override Value Swap()
       {
          var swapKeys = getIndicators();
-         Reject(swapKeys.Length < 2, "Key indexer", "Must have at least 2 keys");
+         swapKeys.Must().HaveLengthOf(2).OrThrow("Key indexer", () => "Must have at least 2 keys");
          var leftKey = swapKeys[0];
          var rightKey = swapKeys[1];
          var left = array[leftKey];
          var right = array[rightKey];
          array[leftKey] = right;
          array[rightKey] = left;
+
          return array;
       }
 
@@ -265,20 +264,15 @@ namespace Orange.Library.Values
          return result.Length == 1 ? result[0] : result;
       }
 
-      public override Value MessageTarget(string message)
+      public override Value MessageTarget(string message) => message switch
       {
-         switch (message)
-         {
-            case "smap":
-            case "remove":
-            case "fill":
-            case "insert":
-            case "swap":
-            case "get":
-               return this;
-            default:
-               return Value;
-         }
-      }
+         "smap" => this,
+         "remove" => this,
+         "fill" => this,
+         "insert" => this,
+         "swap" => this,
+         "get" => this,
+         _ => Value
+      };
    }
 }

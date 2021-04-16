@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Monads;
 using Orange.Library.Managers;
 using static Orange.Library.Managers.RegionManager;
@@ -35,25 +36,21 @@ namespace Orange.Library.Values
 
          public override Value Next()
          {
-            using (var outerPopper = new ObjectRegionPopper(objectRegion, "object-region"))
-            {
-               outerPopper.Push();
+            using var outerPopper = new ObjectRegionPopper(objectRegion, "object-region");
+            outerPopper.Push();
 
-               using (var innerPopper = new SharedRegionPopper(region, sharedRegion, "lambda-generator"))
-               {
-                  innerPopper.Push();
+            using var innerPopper = new SharedRegionPopper(region, sharedRegion, "lambda-generator");
+            innerPopper.Push();
 
-                  var next = block.Next();
-                  more = !next.IsNil;
-                  return next;
-               }
-            }
+            var next = block.Next();
+            more = !next.IsNil;
+            return next;
          }
       }
 
-      const string LOCATION = "Lambda";
+      protected const string LOCATION = "Lambda";
 
-      public static Lambda FromBlock(Block block) => new Lambda(new Region(), block, new Parameters(), false);
+      public static Lambda FromBlock(Block block) => new(new Region(), block, new Parameters(), false);
 
       protected Region region;
       protected Region sharedRegion;
@@ -142,6 +139,7 @@ namespace Orange.Library.Values
 
             State.UnregisterBlock();
          }
+
          State.UnregisterLambdaRegion();
          return result;
       }
@@ -243,6 +241,7 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new Lambda(region, (Block)block.Clone(), parameters, enclosing);
 
+      // ReSharper disable once UnusedParameter.Global
       public Value Evaluate(bool invoked = false) => Evaluate(Arguments);
 
       protected override void registerMessages(MessageManager manager)
@@ -269,18 +268,12 @@ namespace Orange.Library.Values
 
       public Lambda AsLambda => this;
 
-      public Value Apply()
+      public Value Apply() => Arguments.ApplyValue switch
       {
-         switch (Arguments.ApplyValue)
-         {
-            case Block yieldBlock:
-               return new Comprehension(yieldBlock, parameters) { ArrayBlock = block };
-            case Comprehension comprehension:
-               return comprehension.PushDownComprehension(this);
-            case var applyValue:
-               return Evaluate(new Arguments(applyValue));
-         }
-      }
+         Block yieldBlock => new Comprehension(yieldBlock, parameters) { ArrayBlock = block },
+         Comprehension comprehension => comprehension.PushDownComprehension(this),
+         var applyValue => Evaluate(new Arguments(applyValue))
+      };
 
       public Value GetBlock() => block;
 
@@ -291,7 +284,7 @@ namespace Orange.Library.Values
          get => region;
          set
          {
-            RejectNull(value, LOCATION, "Internal error: region is null");
+            value.Must().Not.BeNull().OrThrow(LOCATION, () => "Internal error: region is null");
             region = new LambdaRegion(value);
          }
       }
@@ -302,18 +295,16 @@ namespace Orange.Library.Values
       {
          var count = (int)Arguments[0].Number;
          var array = new Array();
-         using (var assistant = new ParameterAssistant(ParameterBlock.FromExecutable(this)))
+         using var assistant = new ParameterAssistant(ParameterBlock.FromExecutable(this));
+         assistant.IteratorParameter();
+         for (var i = 0; i < count; i++)
          {
-            assistant.IteratorParameter();
-            for (var i = 0; i < count; i++)
-            {
-               assistant.SetIteratorParameter(i);
-               var value = block.Evaluate();
-               array.Add(value);
-            }
-
-            return array;
+            assistant.SetIteratorParameter(i);
+            var value = block.Evaluate();
+            array.Add(value);
          }
+
+         return array;
       }
 
       public bool Splatting { get; set; }
@@ -331,6 +322,7 @@ namespace Orange.Library.Values
             Message = variable.Name;
             MarkAsXMethod(Message, this);
          }
+
          base.AssignTo(variable);
       }
 
@@ -365,9 +357,9 @@ namespace Orange.Library.Values
          return length2 > 0 ? tabulateDimensions(length1, length2) : tabulateDimension(length1);
       }
 
-      Array tabulateDimension(int length) => new Array(Enumerable.Range(0, length).Select(i => Evaluate(new Arguments(i))));
+      protected Array tabulateDimension(int length) => new(Enumerable.Range(0, length).Select(i => Evaluate(new Arguments(i))));
 
-      Array tabulateDimensions(int length1, int length2)
+      protected Array tabulateDimensions(int length1, int length2)
       {
          var array = new Array();
          for (var i = 0; i < length1; i++)
@@ -394,8 +386,8 @@ namespace Orange.Library.Values
             chain.Add(rightLambda);
             return chain;
          }
-         Throw(LOCATION, "Right hand value must be a lambda");
-         return null;
+
+         throw LOCATION.ThrowsWithLocation(() => "Right hand value must be a lambda");
       }
 
       public INSGenerator GetGenerator() => new LambdaGenerator(this);

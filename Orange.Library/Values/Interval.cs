@@ -2,13 +2,12 @@
 using Core.RegularExpressions;
 using Core.Strings;
 using Orange.Library.Managers;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
    public class Interval : Value
    {
-      const string LOCATION = "Interval";
+      protected const string LOCATION = "Interval";
 
       public static implicit operator Interval(string text)
       {
@@ -44,11 +43,10 @@ namespace Orange.Library.Values
             return new Interval(new TimeSpan(0, 0, 0, 0, milliseconds.ToInt()));
          }
 
-         Throw(LOCATION, $"Didn't understand '{text}'");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => $"Didn't understand '{text}'");
       }
 
-      TimeSpan timeSpan;
+      protected TimeSpan timeSpan;
 
       public Interval(TimeSpan timeSpan) => this.timeSpan = timeSpan;
 
@@ -72,7 +70,9 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new Interval(timeSpan);
 
-      protected override void registerMessages(MessageManager manager) { }
+      protected override void registerMessages(MessageManager manager)
+      {
+      }
 
       public TimeSpan TimeSpan => timeSpan;
    }

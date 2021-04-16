@@ -36,17 +36,17 @@
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Core, Version=1.2.8.4, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.dll</HintPath>
+    <Reference Include="Core, Version=1.2.8.6, Culture=neutral, PublicKeyToken=7080d2d2d522ad62, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.6\lib\net45\Core.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Data, Version=1.2.8.4, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.Data.dll</HintPath>
+    <Reference Include="Core.Data, Version=1.2.8.6, Culture=neutral, PublicKeyToken=8ea6aedd8eadbfe3, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.6\lib\net45\Core.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Core.Internet, Version=1.2.8.4, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.Internet.dll</HintPath>
+    <Reference Include="Core.Internet, Version=1.2.8.6, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.6\lib\net45\Core.Internet.dll</HintPath>
     </Reference>
-    <Reference Include="Core.ObjectGraphs, Version=1.2.8.4, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Core.1.2.8.4\lib\net45\Core.ObjectGraphs.dll</HintPath>
+    <Reference Include="Core.ObjectGraphs, Version=1.2.8.6, Culture=neutral, PublicKeyToken=f6e32ee3171a469f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Core.1.2.8.6\lib\net45\Core.ObjectGraphs.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -552,7 +552,6 @@
     <Compile Include="Values\IndirectXML.cs" />
     <Compile Include="Values\ArrayStream.cs" />
     <Compile Include="Values\Interval.cs" />
-    <Compile Include="Values\Invoker.cs" />
     <Compile Include="Values\IRange.cs" />
     <Compile Include="Values\IntLazyArray.cs" />
     <Compile Include="Values\FileLines.cs" />
@@ -731,7 +730,6 @@
     <Compile Include="Values\Double.cs" />
     <Compile Include="Values\KeyedValue.cs" />
     <Compile Include="Values\Helper.cs" />
-    <Compile Include="Values\Indexer.cs" />
     <Compile Include="Values\NullBlock.cs" />
     <Compile Include="Values\Partition.cs" />
     <Compile Include="Values\Pattern.cs" />

@@ -8,10 +8,10 @@ namespace Orange.Library.Values
 {
    public class Delegate : Value, IInvokable
    {
-      const string LOCATION = "Delegate";
+      protected const string LOCATION = "Delegate";
 
-      string target;
-      string targetMessage;
+      protected string target;
+      protected string targetMessage;
 
       public Delegate(string target, string targetMessage)
       {
@@ -35,7 +35,9 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new Delegate(target, targetMessage);
 
-      protected override void registerMessages(MessageManager manager) { }
+      protected override void registerMessages(MessageManager manager)
+      {
+      }
 
       public Value Invoke(Arguments arguments)
       {
@@ -47,8 +49,7 @@ namespace Orange.Library.Values
                return invokable.Invoke(arguments);
             }
 
-            Throw(LOCATION, $"{targetMessage} isn't an invokable");
-            return null;
+            throw LOCATION.ThrowsWithLocation(() => $"{targetMessage} isn't an invokable");
          }
 
          var targetObject = RegionManager.Regions[target];
@@ -76,7 +77,7 @@ namespace Orange.Library.Values
                }
                else
                {
-                  Throw(LOCATION, "Self not an object");
+                  throw LOCATION.ThrowsWithLocation(() => "Self not an object");
                }
             }
 
@@ -85,7 +86,7 @@ namespace Orange.Library.Values
                return reference.MatchesSignature(signature);
             }
 
-            Throw(LOCATION, $"{targetMessage} isn't invokable");
+            throw LOCATION.ThrowsWithLocation(() => $"{targetMessage} isn't invokable");
          }
 
          if (RegionManager.Regions[target] is IInvokable invokable)
@@ -93,8 +94,7 @@ namespace Orange.Library.Values
             return invokable.Matches(signature);
          }
 
-         Throw(LOCATION, $"{targetMessage} isn't an invokable");
-         return false;
+         throw LOCATION.ThrowsWithLocation(() => $"{targetMessage} isn't invokable");
       }
 
       public bool ReturnNull { get; set; }

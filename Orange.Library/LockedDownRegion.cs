@@ -5,7 +5,7 @@ namespace Orange.Library
 {
    public class LockedDownRegion : ObjectRegion
    {
-      protected const string LOCATION = "Locked down region";
+      protected new const string LOCATION = "Locked down region";
 
       protected string functionName;
 

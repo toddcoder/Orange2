@@ -22,7 +22,7 @@ namespace Orange.Library
       {
          this.className = className;
          staticBlocks = new List<Block>();
-         invariants = new StringHash<IInvokable>();
+         invariants = new StringHash<IInvokable>(false);
       }
 
       public string InvokableName(string name) => Object.InvokableName(className, IsObject, name);

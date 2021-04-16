@@ -2,15 +2,14 @@
 using System.Linq;
 using Core.Enumerables;
 using Orange.Library.Managers;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
    public class FunctionChain : Value
    {
-      const string LOCATION = "Function chain";
+      protected const string LOCATION = "Function chain";
 
-      List<Lambda> functions;
+      protected List<Lambda> functions;
 
       public FunctionChain() => functions = new List<Lambda>();
 
@@ -44,7 +43,7 @@ namespace Orange.Library.Values
          }
          else
          {
-            Throw(LOCATION, "Right hand value must be a lambda");
+            throw LOCATION.ThrowsWithLocation(() => "Right hand value must be a lambda");
          }
 
          return this;

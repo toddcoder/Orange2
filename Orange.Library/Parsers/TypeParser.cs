@@ -43,7 +43,7 @@ namespace Orange.Library.Parsers
          if (parameters.Length == 0)
          {
             var mangledName = MangledName(name);
-            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], new Parameters(), false);
+            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], false);
             var verb = new CreateClass(mangledName, cls);
             builder.Verb(verb);
             builder.End();
@@ -54,7 +54,7 @@ namespace Orange.Library.Parsers
          }
          else
          {
-            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], new Parameters(), false);
+            var cls = new Class(parameters, objectBlock(name), new Block(), ClassName, new string[0], false);
             var verb = new CreateClass(name, cls);
             builder.Verb(verb);
          }

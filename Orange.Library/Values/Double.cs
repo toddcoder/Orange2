@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Linq;
+using Core.Assertions;
 using Core.Dates;
 using Core.Monads;
 using static Core.RegularExpressions.RegexExtensions;
 using Core.Strings;
 using Orange.Library.Managers;
 using static System.Math;
+using static Core.Assertions.AssertionFunctions;
 using static Core.Monads.MonadFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Managers.RegionManager;
@@ -165,9 +167,9 @@ namespace Orange.Library.Values
          return asInt == 0 ? getRandomArray(count) : getRandomArray(asInt, count);
       }
 
-      static Array getRandomArray(int size, int count) => new Array(Enumerable.Range(0, count).Select(i => (Value)State.Random(size)));
+      protected static Array getRandomArray(int size, int count) => new(Enumerable.Range(0, count).Select(_ => (Value)State.Random(size)));
 
-      static Array getRandomArray(int count) => new Array(Enumerable.Range(0, count).Select(i => (Value)State.Random()));
+      protected static Array getRandomArray(int count) => new(Enumerable.Range(0, count).Select(_ => (Value)State.Random()));
 
       public Value IsDivBy() => number % Arguments[0].Number == 0;
 
@@ -225,16 +227,11 @@ namespace Orange.Library.Values
          return Math.Log(number, baseNumber);
       }
 
-      public override Value AlternateValue(string message)
+      public override Value AlternateValue(string message) => message switch
       {
-         switch (message)
-         {
-            case "rev":
-               return Text;
-         }
-
-         return new Array();
-      }
+         "rev" => Text,
+         _ => new Array()
+      };
 
       public Value ToTime() => new TimeSpan((long)number).ToLongString(true);
 
@@ -250,7 +247,7 @@ namespace Orange.Library.Values
       {
          var varName = Arguments.VariableName(0, VAR_VALUE);
          var block = Arguments.Executable;
-         return block.CanExecute ? (Value)new InfArray(varName, block) : new Nil();
+         return block.CanExecute ? new InfArray(varName, block) : new Nil();
       }
 
       public Value RangeWhile(bool isWhile)
@@ -398,18 +395,12 @@ namespace Orange.Library.Values
          return null;
       }
 
-      public Value Random()
+      public Value Random() => (int)number switch
       {
-         switch ((int)number)
-         {
-            case 0:
-               return State.Random();
-            case 1:
-               return State.RandomInt();
-            default:
-               return State.Random((int)number);
-         }
-      }
+         0 => State.Random(),
+         1 => State.RandomInt(),
+         _ => State.Random((int)number)
+      };
 
       public Value Round() => Math.Round(number, (int)Arguments[0].Number);
 
@@ -473,38 +464,20 @@ namespace Orange.Library.Values
             return "zero";
          }
 
-         if (nums == null)
-         {
-            nums = STR_WORDS.Split("/s+");
-         }
+         nums ??= STR_WORDS.Split("/s+");
 
-         if (tens == null)
-         {
-            tens = "ten twenty thirty forty fifty sixty seventy eighty ninety".Split("/s+");
-         }
+         tens ??= "ten twenty thirty forty fifty sixty seventy eighty ninety".Split("/s+");
 
          return intoWords((int)number);
       }
 
-      string intoWords(int n)
+      protected string intoWords(int n) => n switch
       {
-         if (n >= 1000)
-         {
-            return intoWords(n / 1000) + " thousand " + intoWords(n % 1000);
-         }
-
-         if (n >= 100)
-         {
-            return intoWords(n / 100) + " hundred " + intoWords(n % 100);
-         }
-
-         if (n >= 20)
-         {
-            return tens[n / 10 - 1] + " " + intoWords(n % 10);
-         }
-
-         return nums[n - 1];
-      }
+         >= 1000 => intoWords(n / 1000) + " thousand " + intoWords(n % 1000),
+         >= 100 => intoWords(n / 100) + " hundred " + intoWords(n % 100),
+         >= 20 => tens[n / 10 - 1] + " " + intoWords(n % 10),
+         _ => nums[n - 1]
+      };
 
       public Value Fraction() => number - (int)number;
 
@@ -513,7 +486,8 @@ namespace Orange.Library.Values
       public Value FloorDiv()
       {
          var divisor = Arguments[0].Number;
-         Reject((int)divisor == 0, LOCATION, "Divide by 0");
+         assert(() => (int)divisor).Must().Not.Equal(0).OrThrow(LOCATION, () => "Divide by 0");
+
          return Floor(number / divisor);
       }
 
@@ -521,10 +495,11 @@ namespace Orange.Library.Values
       {
          var a = (int)number;
          var b = Arguments[0].Int;
+
          return gcd(a, b);
       }
 
-      static int gcd(int a, int b)
+      protected static int gcd(int a, int b)
       {
          while (b != 0)
          {
@@ -606,41 +581,39 @@ namespace Orange.Library.Values
 
       public Value Values() => createArrayFromNumber();
 
-      Array createArrayFromNumber()
+      protected Array createArrayFromNumber()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return (Array)Range().SourceArray;
-            }
-
-            assistant.IteratorParameter();
-            var array = new Array();
-            foreach (var i in Enumerable.Range(0, (int)number))
-            {
-               assistant.SetIteratorParameter(i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return array;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               array.Add(value);
-            }
-
-            return array;
+            return (Array)Range().SourceArray;
          }
+
+         assistant.IteratorParameter();
+         var array = new Array();
+         foreach (var i in Enumerable.Range(0, (int)number))
+         {
+            assistant.SetIteratorParameter(i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return array;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            array.Add(value);
+         }
+
+         return array;
       }
 
       public override int GetHashCode() => number.GetHashCode();

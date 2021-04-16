@@ -1,4 +1,5 @@
-﻿using Core.Monads;
+﻿using Core.Assertions;
+using Core.Monads;
 using Orange.Library.Managers;
 using static Core.Monads.MonadFunctions;
 using static Orange.Library.Runtime;
@@ -7,9 +8,9 @@ namespace Orange.Library.Values
 {
    public class InvokableReference : Value
    {
-      const string LOCATION = "Invokeable reference";
+      protected const string LOCATION = "Invokeable reference";
 
-      string variableName;
+      protected string variableName;
 
       public InvokableReference(string variableName) => this.variableName = variableName;
 
@@ -70,7 +71,7 @@ namespace Orange.Library.Values
       public Value Invoke(Arguments arguments)
       {
          var invokable = State.GetInvokable(variableName);
-         RejectNull(invokable, LOCATION, $"Invokable for {variableName} not found");
+         invokable.Must().Not.BeNull().OrThrow(LOCATION, () => $"Invokable for {variableName} not found");
          invokable.ObjectRegion = ObjectRegion;
          var value = invokable.Invoke(arguments);
 

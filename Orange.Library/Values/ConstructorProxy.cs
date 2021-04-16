@@ -5,8 +5,8 @@ namespace Orange.Library.Values
 {
    public class ConstructorProxy : Value
    {
-      string dataName;
-      string name;
+      protected string dataName;
+      protected string name;
 
       public ConstructorProxy(string dataName, string name)
       {
@@ -43,8 +43,7 @@ namespace Orange.Library.Values
             return SendMessage(data, name, Arguments);
          }
 
-         Throw("Constructor proxy", $"{value} isn't a data");
-         return null;
+         throw "Constructor proxy".ThrowsWithLocation(() => $"{value} isn't a data");
       }
 
       public string DataName => dataName;

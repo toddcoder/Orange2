@@ -1,13 +1,14 @@
-﻿using Core.Monads;
+﻿using Core.Assertions;
+using Core.Monads;
 using Orange.Library.Managers;
+using static Core.Assertions.AssertionFunctions;
 using static Core.Monads.MonadFunctions;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Values
 {
    public class ContractInvokable : Value, IInvokable
    {
-      const string LOCATION = "Contract Invokeable";
+      protected const string LOCATION = "Contract Invokeable";
 
       public IInvokable Main { get; set; }
 
@@ -27,7 +28,7 @@ namespace Orange.Library.Values
 
       public override bool IsTrue => false;
 
-      static IInvokable cloneInvokable(IInvokable value) => (IInvokable)((Value)value)?.Clone();
+      protected static IInvokable cloneInvokable(IInvokable value) => (IInvokable)((Value)value)?.Clone();
 
       public override Value Clone() => new ContractInvokable
       {
@@ -45,16 +46,16 @@ namespace Orange.Library.Values
          if (Require != null)
          {
             result = Require.Invoke(arguments);
-            Assert(result.IsTrue, LOCATION, $"Require for {Name} failed");
+            result.IsTrue.Must().BeTrue().OrThrow(LOCATION, ()=> $"Require for {Name} failed");
          }
 
-         RejectNull(Main, LOCATION, $"Main invokable for {Name} not created");
+         asObject(() => Main).Must().Not.BeNull().OrThrow(LOCATION, () => $"Main invokable for {Name} not created");
          result = Main.Invoke(arguments);
          if (Ensure != null)
          {
             var ensureArguments = new Arguments(result);
             var ensureResult = Ensure.Invoke(ensureArguments);
-            Assert(ensureResult.IsTrue, LOCATION, $"Ensure for {Name} failed");
+            ensureResult.IsTrue.Must().BeTrue().OrThrow(LOCATION, () => $"Ensure for {Name} failed");
          }
 
          return result;
@@ -68,7 +69,7 @@ namespace Orange.Library.Values
 
       public bool Matches(Signature signature)
       {
-         RejectNull(Main, LOCATION, $"Main for {Name} not created");
+         asObject(() => Main).Must().Not.BeNull().OrThrow(LOCATION, () => $"Main for {Name} not created");
          return Main.Matches(signature);
       }
 
