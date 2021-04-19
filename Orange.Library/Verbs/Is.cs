@@ -18,16 +18,12 @@ namespace Orange.Library.Verbs
 
          if (x is Object obj)
          {
-            switch (y)
+            return y switch
             {
-               case Class cls:
-                  return obj.Class.IsChildOf(cls);
-               case Trait trait:
-                  return obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait);
-               default:
-                  Throw(Location, $"{x} isn't an object");
-                  break;
-            }
+               Class cls => obj.Class.IsChildOf(cls),
+               Trait trait => obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait),
+               _ => throw Location.ThrowsWithLocation(() => $"{x} isn't an object")
+            };
          }
 
          return false;

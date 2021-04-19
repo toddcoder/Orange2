@@ -1,20 +1,22 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
 
 namespace Orange.Library.Verbs
 {
    public class AssignToNewField : Verb, IStatement
    {
-      string fieldName;
-      bool readOnly;
-      Block expression;
-      VisibilityType visibilityType;
-      bool global;
-      string result;
-      string typeName;
+      protected const string LOCATION = "Assign to fiel";
+
+      protected string fieldName;
+      protected bool readOnly;
+      protected Block expression;
+      protected VisibilityType visibilityType;
+      protected bool global;
+      protected string result;
+      protected string typeName;
 
       public AssignToNewField(string fieldName, bool readOnly, Block expression, VisibilityType visibilityType, bool global = false)
       {
@@ -30,7 +32,7 @@ namespace Orange.Library.Verbs
       public override Value Evaluate()
       {
          var current = Regions.Current;
-         Reject(current.Exists(fieldName), "Assign to field", $"{fieldName} already exists");
+         current.Exists(fieldName).Must().Not.BeTrue().OrThrow(LOCATION, () => $"{fieldName} already exists");
          if (readOnly)
          {
             current.CreateReadOnlyVariable(fieldName, visibility: visibilityType, global: global);

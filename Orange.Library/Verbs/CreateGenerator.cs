@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -6,12 +7,12 @@ namespace Orange.Library.Verbs
 {
    public class CreateGenerator : Verb
    {
-      const string LOCATION = "Create generator";
+      protected const string LOCATION = "Create generator";
 
       public override Value Evaluate()
       {
          var value = State.Stack.Pop(true, LOCATION);
-         var generator = Assert(value.PossibleGenerator(), LOCATION, $"{value} isn't a generator source");
+         var generator = value.PossibleGenerator().Must().HaveValue().Force(LOCATION, () => $"{value} isn't a generator source");
          return (Value)generator;
       }
 

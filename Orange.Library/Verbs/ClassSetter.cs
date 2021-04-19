@@ -1,4 +1,5 @@
-﻿using Core.Monads;
+﻿using Core.Assertions;
+using Core.Monads;
 using Orange.Library.Values;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -7,14 +8,16 @@ namespace Orange.Library.Verbs
 {
    public class ClassSetter : Setter
    {
-      const string LOCATION = "Class setter";
+      protected const string LOCATION = "Class setter";
 
-      public ClassSetter(string message, IMatched<Verb> verb, Block expression) : base(message, verb, expression) { }
+      public ClassSetter(string message, IMatched<Verb> verb, Block expression) : base(message, verb, expression)
+      {
+      }
 
       public override Value Evaluate()
       {
          var cls = Regions["class"];
-         Reject(cls.IsEmpty, LOCATION, $"{message} message called out of class");
+         cls.IsEmpty.Must().Not.BeTrue().OrThrow(LOCATION, () => $"{message} message called out of class");
          State.Stack.Push(cls);
 
          return base.Evaluate();

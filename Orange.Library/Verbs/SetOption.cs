@@ -4,52 +4,41 @@ using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
-	public class SetOption : Verb
-	{
-		const string LOCATION = "Set option";
+   public class SetOption : Verb
+   {
+      protected const string LOCATION = "Set option";
 
-		static Value setOption(Value value, Value.OptionType option)
-		{
-			value.SetOption(option);
-			return value;
-		}
+      protected static Value setOption(Value value, Value.OptionType option)
+      {
+         value.SetOption(option);
+         return value;
+      }
 
-		public override Value Evaluate()
-		{
-		   var stack = State.Stack;
-		   var option = stack.Pop<Variable>(false, LOCATION);
-			var value = stack.Pop(true, LOCATION);
-			var name = option.Name.ToLower();
-			switch (name)
-			{
-				case "rjust":
-					return setOption(value, Value.OptionType.RJust);
-				case "ljust":
-					return setOption(value, Value.OptionType.LJust);
-				case "center":
-					return setOption(value, Value.OptionType.Center);
-				case "max":
-					return setOption(value, Value.OptionType.Max);
-				case "no-pad":
-					return setOption(value, Value.OptionType.NoPad);
-				case "case":
-					return setOption(value, Value.OptionType.Case);
-				case "anchor":
-					return setOption(value, Value.OptionType.Anchor);
-				case "num":
-					return setOption(value, Value.OptionType.Numeric);
-				case "desc":
-					return setOption(value, Value.OptionType.Descending);
-				case "flat":
-					return setOption(value, Value.OptionType.Flat);
-				default:
-					Throw(LOCATION, $"Didn't understand option {option.Name}");
-					return null;
-			}
-		}
+      public override Value Evaluate()
+      {
+         var stack = State.Stack;
+         var option = stack.Pop<Variable>(false, LOCATION);
+         var value = stack.Pop(true, LOCATION);
+         var name = option.Name.ToLower();
 
-		public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
+         return name switch
+         {
+            "rjust" => setOption(value, Value.OptionType.RJust),
+            "ljust" => setOption(value, Value.OptionType.LJust),
+            "center" => setOption(value, Value.OptionType.Center),
+            "max" => setOption(value, Value.OptionType.Max),
+            "no-pad" => setOption(value, Value.OptionType.NoPad),
+            "case" => setOption(value, Value.OptionType.Case),
+            "anchor" => setOption(value, Value.OptionType.Anchor),
+            "num" => setOption(value, Value.OptionType.Numeric),
+            "desc" => setOption(value, Value.OptionType.Descending),
+            "flat" => setOption(value, Value.OptionType.Flat),
+            _ => throw LOCATION.ThrowsWithLocation(() => $"Didn't understand option {name}")
+         };
+      }
 
-	   public override string ToString() => "!-";
-	}
+      public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;
+
+      public override string ToString() => "!-";
+   }
 }

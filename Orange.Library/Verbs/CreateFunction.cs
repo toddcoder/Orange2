@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Runtime;
@@ -10,16 +11,16 @@ namespace Orange.Library.Verbs
 {
    public class CreateFunction : Verb, IStatement
    {
-      string functionName;
-      Lambda lambda;
-      bool multiCapable;
-      VisibilityType visibility;
-      bool overriding;
-      Block condition;
-      bool autoInvoke;
-      bool memoize;
-      bool global;
-      string result;
+      protected string functionName;
+      protected Lambda lambda;
+      protected bool multiCapable;
+      protected VisibilityType visibility;
+      protected bool overriding;
+      protected Block condition;
+      protected bool autoInvoke;
+      protected bool memoize;
+      protected bool global;
+      protected string result;
 
       public CreateFunction(string functionName, Lambda lambda, bool multiCapable, VisibilityType visibility, bool overriding, Block condition,
          bool autoInvoke = false, bool memoize = false, bool global = false)
@@ -36,7 +37,9 @@ namespace Orange.Library.Verbs
          result = "";
       }
 
-      public CreateFunction() : this("", null, false, Public, false, null) { }
+      public CreateFunction() : this("", null, false, Public, false, null)
+      {
+      }
 
       public override Value Evaluate()
       {
@@ -53,11 +56,11 @@ namespace Orange.Library.Verbs
                {
                   isAReference = true;
                   var invokable = invokableReference.Invokable;
-                  RejectNull(invokable, "Create function", "Not an invokable");
+                  invokable.Must().Not.BeNull().OrThrow("Create function", () => "Not an invokable");
                   value = (Value)invokable;
                }
 
-               if (!(value is MultiLambda multi))
+               if (value is not MultiLambda multi)
                {
                   var lambdaItem = (Lambda)value;
                   var multiLambdaItem = new MultiLambdaItem(lambdaItem, false, condition);
@@ -110,10 +113,11 @@ namespace Orange.Library.Verbs
          Regions.SetReadOnly(functionName);
          MarkAsXMethod(functionName, lambda);
          result = representation();
+
          return null;
       }
 
-      string representation() => $"func {functionName}({lambda.Parameters})";
+      protected string representation() => $"func {functionName}({lambda.Parameters})";
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
@@ -127,7 +131,7 @@ namespace Orange.Library.Verbs
 
       public override string ToString() => $"func {functionName}";
 
-      public Signature Signature => new Signature(functionName, lambda.ParameterCount, false);
+      public Signature Signature => new(functionName, lambda.ParameterCount, false);
 
       public string Result => result;
 

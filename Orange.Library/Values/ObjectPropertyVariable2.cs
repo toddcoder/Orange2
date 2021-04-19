@@ -1,15 +1,17 @@
-﻿using static Orange.Library.Runtime;
+﻿using Core.Assertions;
 
 namespace Orange.Library.Values
 {
    public class ObjectPropertyVariable2 : Variable
    {
-      const string LOCATION = "Property";
+      protected new const string LOCATION = "Property";
 
-      Object obj;
+      protected Object obj;
 
-      public ObjectPropertyVariable2(Object obj, string name)
-         : base(name) => this.obj = obj;
+      public ObjectPropertyVariable2(Object obj, string name) : base(name)
+      {
+         this.obj = obj;
+      }
 
       public IInvokable Getter { get; set; }
 
@@ -72,27 +74,16 @@ namespace Orange.Library.Values
             }
 
             var result = obj.Invoke(Invariant, valuesArguments);
-            Assert(result.IsTrue, LOCATION, $"Invariant for {Name} failed");
+            result.IsTrue.Must().BeTrue().OrThrow(LOCATION, () => $"Invariant for {Name} failed");
          }
       }
 
-      void assertGetter() => RejectNull(Getter, LOCATION, $"No getter for {Name}");
+      protected void assertGetter() => Getter.Must().Not.BeNull().OrThrow(LOCATION, () => $"No getter for {Name}");
 
-      void assertSetter() => RejectNull(Setter, LOCATION, $"No setter for {Name}");
+      protected void assertSetter() => Setter.Must().Not.BeNull().OrThrow(LOCATION, () => $"No setter for {Name}");
 
       public override ValueType Type => ValueType.Lambda;
 
-/*	   public override string ToString()
-		{
-			try
-			{
-				return Value.ToString();
-			}
-			catch
-			{
-				return Name;
-			}
-		}*/
-      public override string ToString() => Name; //Value.ToString();
+      public override string ToString() => Name;
    }
 }

@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -6,7 +7,7 @@ namespace Orange.Library.Verbs
 {
    public class Cross : Verb
    {
-      const string LOCATION = "Cross";
+      protected const string LOCATION = "Cross";
 
       public override Value Evaluate()
       {
@@ -14,8 +15,8 @@ namespace Orange.Library.Verbs
          var right = stack.Pop(true, LOCATION);
          var left = stack.Pop(true, LOCATION);
 
-         var leftGenerator = Assert(left.PossibleGenerator(), LOCATION, $"{left} is not a generator");
-         var rightGenerator = Assert(right.PossibleGenerator(), LOCATION, $"{right} is not a generator");
+         var leftGenerator = left.PossibleGenerator().Must().HaveValue().Force(LOCATION, () => $"{left} is not a generator");
+         var rightGenerator = right.PossibleGenerator().Must().HaveValue().Force(LOCATION, () => $"{right} is not a generator");
 
          var leftIterator = new NSIterator(leftGenerator);
          var rightIterator = new NSIterator(rightGenerator);

@@ -8,14 +8,14 @@ namespace OrangePlayground
    {
       public class WindowExtender : NativeWindow
       {
-         const int WM_PAINT = 15;
+         protected const int WM_PAINT = 15;
 
-         DrawableRichTextBox baseControl;
-         Bitmap canvas;
-         Graphics bufferGraphics;
-         Rectangle bufferClip;
-         Graphics controlGraphics;
-         bool canRender;
+         protected DrawableRichTextBox baseControl;
+         protected Bitmap canvas;
+         protected Graphics bufferGraphics;
+         protected Rectangle bufferClip;
+         protected Graphics controlGraphics;
+         protected bool canRender;
 
          public WindowExtender(DrawableRichTextBox baseControl)
          {
@@ -76,7 +76,7 @@ namespace OrangePlayground
 
       public new event EventHandler<PaintEventArgs> Paint;
 
-      WindowExtender windowExtender;
+      protected WindowExtender windowExtender;
 
       public DrawableRichTextBox()
       {

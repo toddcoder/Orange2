@@ -1,4 +1,5 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Runtime;
 
@@ -11,7 +12,7 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var right = stack.Pop(true, Location);
          var left = stack.Pop(true, Location);
-         var generator = Assert(left.PossibleGenerator(), Location, $"{left} is not a generator");
+         var generator = left.PossibleGenerator().Must().HaveValue().Force(Location, () => $"{left} is not a generator");
 
          if (right is Lambda lambda)
          {
@@ -19,8 +20,7 @@ namespace Orange.Library.Verbs
             return Evaluate(iterator, lambda);
          }
 
-         Throw(Location, $"{right} is not a lambda");
-         return null;
+         throw Location.ThrowsWithLocation(() => $"{right} is not a lambda");
       }
 
       public abstract Value Evaluate(NSIterator iterator, Lambda lambda);

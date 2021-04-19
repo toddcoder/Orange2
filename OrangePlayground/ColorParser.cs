@@ -20,13 +20,13 @@ namespace OrangePlayground
 
       public static void ResumeTextBoxUpdate(RichTextBox textBox) => SendMessage(textBox.Handle, WM_SET_REDRAW, true, 0);
 
-      const int WM_SET_REDRAW = 11;
+      protected const int WM_SET_REDRAW = 11;
 
       [DllImport("user32.dll")]
       public static extern int SendMessage(IntPtr hWnd, int msg, bool wParam, int lParam);
 
-      Hash<string, IDEColor> colors;
-      RichTextBox textBox;
+      protected Hash<string, IDEColor> colors;
+      protected RichTextBox textBox;
 
       public ColorParser(RichTextBox textBox)
       {
@@ -39,55 +39,53 @@ namespace OrangePlayground
          var position = textBox.SelectionStart;
          var length = textBox.SelectionLength;
          var normalFont = textBox.Font;
-         using (var boldFont = new Font(textBox.Font, Bold))
-         using (var italicFont = new Font(textBox.Font, Italic))
-         using (var underlineFont = new Font("Monoid", textBox.Font.Size, Underline))
-         using (var specialFont = new Font("Monoid", textBox.Font.Size, Regular))
+         using var boldFont = new Font(textBox.Font, Bold);
+         using var italicFont = new Font(textBox.Font, Italic);
+         using var underlineFont = new Font("Monoid", textBox.Font.Size, Underline);
+         using var specialFont = new Font("Monoid", textBox.Font.Size, Regular);
+         StopTextBoxUpdate(textBox);
+
+         foreach (var color in colors.Select(item => item.Value))
          {
-            StopTextBoxUpdate(textBox);
-
-            foreach (var color in colors.Select(item => item.Value))
+            textBox.Select(color.Position, color.Length);
+            textBox.SelectionColor = getForeColor(color);
+            textBox.SelectionBackColor = getBackColor(color);
+            Font selectionFont;
+            if (isItalic(color.Type))
             {
-               textBox.Select(color.Position, color.Length);
-               textBox.SelectionColor = getForeColor(color);
-               textBox.SelectionBackColor = getBackColor(color);
-               Font selectionFont;
-               if (isItalic(color.Type))
-               {
-                  selectionFont = italicFont;
-               }
-               else if (isBold(color.Type))
-               {
-                  selectionFont = boldFont;
-               }
-               else if (isUnderline(color.Type))
-               {
-                  selectionFont = underlineFont;
-               }
-               else if (isSpecial(color.Type))
-               {
-                  selectionFont = specialFont;
-               }
-               else
-               {
-                  selectionFont = normalFont;
-               }
-
-               textBox.SelectionFont = selectionFont;
+               selectionFont = italicFont;
+            }
+            else if (isBold(color.Type))
+            {
+               selectionFont = boldFont;
+            }
+            else if (isUnderline(color.Type))
+            {
+               selectionFont = underlineFont;
+            }
+            else if (isSpecial(color.Type))
+            {
+               selectionFont = specialFont;
+            }
+            else
+            {
+               selectionFont = normalFont;
             }
 
-            //markText("/t", GhostWhite);
-            markText("/s+ (/r /n | /r | /n)", PaleVioletRed);
-
-            textBox.SelectionStart = position;
-            textBox.SelectionLength = length;
-
-            ResumeTextBoxUpdate(textBox);
-            textBox.Refresh();
+            textBox.SelectionFont = selectionFont;
          }
+
+         //markText("/t", GhostWhite);
+         markText("/s+ (/r /n | /r | /n)", PaleVioletRed);
+
+         textBox.SelectionStart = position;
+         textBox.SelectionLength = length;
+
+         ResumeTextBoxUpdate(textBox);
+         textBox.Refresh();
       }
 
-      void markText(string pattern, Color backColor)
+      protected void markText(string pattern, Color backColor)
       {
          if (textBox.Text.Matcher(pattern).If(out var matcher))
          {
@@ -100,86 +98,50 @@ namespace OrangePlayground
          }
       }
 
-      static bool isBold(EntityType type)
+      protected static bool isBold(EntityType type) => type switch
       {
-         switch (type)
-         {
-            case Structures:
-            case Messaging:
-            case KeyWords:
-               return true;
-            default:
-               return false;
-         }
-      }
+         Structures => true,
+         Messaging => true,
+         KeyWords => true,
+         _ => false
+      };
 
-      static bool isItalic(EntityType type)
+      protected static bool isItalic(EntityType type) => type switch
       {
-         switch (type)
-         {
-            case Variables:
-               return true;
-            default:
-               return false;
-         }
-      }
+         Variables => true,
+         _ => false
+      };
 
-      static bool isUnderline(EntityType type) => type == Types;
+      protected static bool isUnderline(EntityType type) => type == Types;
 
-      static bool isSpecial(EntityType type) => type == Strings || type == Interpolated;
+      protected static bool isSpecial(EntityType type) => type is Strings or Interpolated;
 
-      static Color getBackColor(IDEColor color)
+      protected static Color getBackColor(IDEColor color) => color.Type switch
       {
-         switch (color.Type)
-         {
-            default:
-               return White;
-         }
-      }
+         _ => White
+      };
 
-      static Color getForeColor(IDEColor color)
+      protected static Color getForeColor(IDEColor color) => color.Type switch
       {
-         switch (color.Type)
-         {
-            case Strings:
-               return FromArgb(38, 205, 0);
-            case Numbers:
-               return DeepSkyBlue;
-            case Operators:
-               return Red;
-            case Variables:
-               return Blue;
-            case Structures:
-               return Black;
-            case Whitespaces:
-               return Black;
-            case Comments:
-               return FromArgb(128, 128, 128);
-            case Messaging:
-               return Teal;
-            case Formats:
-               return Violet;
-            case Dates:
-               return DarkOliveGreen;
-            case Arrays:
-               return LightSalmon;
-            case Alternators:
-               return CadetBlue;
-            case Symbols:
-               return CornflowerBlue;
-            case Booleans:
-               return Coral;
-            case KeyWords:
-               return BlueViolet;
-            case Invokeables:
-               return CadetBlue;
-            case Interpolated:
-               return DodgerBlue;
-            case Types:
-               return CadetBlue;
-            default:
-               return Black;
-         }
-      }
+         Strings => FromArgb(38, 205, 0),
+         Numbers => DeepSkyBlue,
+         Operators => Red,
+         Variables => Blue,
+         Structures => Black,
+         Whitespaces => Black,
+         Comments => FromArgb(128, 128, 128),
+         Messaging => Teal,
+         Formats => Violet,
+         Dates => DarkOliveGreen,
+         Arrays => LightSalmon,
+         Alternators => CadetBlue,
+         Symbols => CornflowerBlue,
+         Booleans => Coral,
+         KeyWords => BlueViolet,
+         Invokeables => CadetBlue,
+         Interpolated => DodgerBlue,
+         Types => CadetBlue,
+         _ => Black
+      };
    }
 }

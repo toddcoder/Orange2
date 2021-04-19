@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
 using Orange.Library.Values;
@@ -85,16 +86,16 @@ namespace Orange.Library.Verbs
                break;
          }
 
-         var generator = Assert(value.PossibleGenerator(), "MultiAssign", "Value must be generator or generator source");
+         var generator = value.PossibleGenerator().Must().HaveValue().Force("MultiAssign", () => "Value must be generator or generator source");
          return FromFields(generator, parameters, readOnly, setting, overriding, transformation);
       }
 
-      Parameters parameters;
-      Block block;
-      bool readOnly;
-      bool setting;
-      string result;
-      string typeName;
+      protected Parameters parameters;
+      protected Block block;
+      protected bool readOnly;
+      protected bool setting;
+      protected string result;
+      protected string typeName;
 
       public MultiAssign(Parameters parameters, Block block, bool readOnly, bool setting)
       {

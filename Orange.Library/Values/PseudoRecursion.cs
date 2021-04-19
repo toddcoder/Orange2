@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Core.Assertions;
 using Orange.Library.Managers;
 using Orange.Library.Verbs;
 using static Orange.Library.Runtime;
@@ -7,19 +8,19 @@ namespace Orange.Library.Values
 {
    public class PseudoRecursion : Value
    {
-      const string LOCATION = "Pseudo recursion";
+      protected const string LOCATION = "Pseudo recursion";
 
-      string name;
-      Block block;
-      Block initialization;
-      Block checkExpression;
-      Block invariant;
-      Block increment;
-      string mainParameterName;
-      Parameters parameters;
-      Block arrayComparisand;
-      Block terminalExpression;
-      bool useTerminalExpression;
+      protected string name;
+      protected Block block;
+      protected Block initialization;
+      protected Block checkExpression;
+      protected Block invariant;
+      protected Block increment;
+      protected string mainParameterName;
+      protected Parameters parameters;
+      protected Block arrayComparisand;
+      protected Block terminalExpression;
+      protected bool useTerminalExpression;
 
       public PseudoRecursion(string name)
       {
@@ -88,11 +89,12 @@ namespace Orange.Library.Values
                builder.Variable(parameter.Name);
             }
          }
+
          initialization = builder.Block;
          initialization.AutoRegister = false;
 
          var comparisand = TerminalExpression.Parameters[0].Comparisand;
-         RejectNull(comparisand, LOCATION, "No check expression provided");
+         comparisand.Must().Not.BeNull().OrThrow(LOCATION, () => "No check expression provided");
          checkExpression = comparisand;
          checkExpression.AutoRegister = false;
 
@@ -105,7 +107,7 @@ namespace Orange.Library.Values
          {
             if (CodeBuilder.FunctionInvoke(block, ref i, out var functionName, out var foundArguments) && functionName == name)
             {
-               Reject(found, LOCATION, $"{name} already invoked");
+               found.Must().Not.BeTrue().OrThrow(LOCATION, () => $"{name} already invoked");
                found = true;
                arguments = foundArguments;
                builder.Variable(VAR_ACCUM);
@@ -118,7 +120,7 @@ namespace Orange.Library.Values
 
          invariant = builder.Block;
          invariant.AutoRegister = false;
-         Assert(found, LOCATION, $"Didn't find any function invocations for {name}");
+         found.Must().BeTrue().OrThrow(LOCATION, () => $"Didn't find any function invocations for {name}");
          increment = arguments.ArgumentsBlock;
          increment.AutoRegister = false;
 
@@ -132,11 +134,12 @@ namespace Orange.Library.Values
             if (setup)
             {
                var length = parameters.Length;
-               Assert(parameterIndex < length, LOCATION, "No more parameters");
+               parameterIndex.Must().BeLessThan(length).OrThrow(LOCATION, () => "No more parameters");
                builder.Define(VAR_MANGLE + parameters[parameterIndex++].Name);
                builder.Assign();
                setup = false;
             }
+
             if (verb is AppendToArray)
             {
                builder.End();
@@ -166,8 +169,7 @@ namespace Orange.Library.Values
          builder.Push();
          foreach (var verb in terminalExpression)
          {
-            string variableName;
-            if (CodeBuilder.PushVariable(verb, out variableName))
+            if (CodeBuilder.PushVariable(verb, out var variableName))
             {
                useTerminalExpression = true;
                builder.Variable(variableName == name ? VAR_ACCUM : variableName);
@@ -187,66 +189,65 @@ namespace Orange.Library.Values
       public Value Invoke()
       {
          var region = new Region();
-         using (var popper = new RegionPopper(region, "pseudo-recursion"))
+         using var popper = new RegionPopper(region, "pseudo-recursion");
+         List<ParameterValue> values = null;
+         if (parameters != null)
          {
-            List<ParameterValue> values = null;
-            if (parameters != null)
-            {
-               values = parameters.GetArguments(Arguments);
-            }
+            values = parameters.GetArguments(Arguments);
+         }
 
-            popper.Push();
-            if (values != null)
-            {
-               Parameters.SetArguments(values);
-            }
+         popper.Push();
+         if (values != null)
+         {
+            Parameters.SetArguments(values);
+         }
 
-            initialization.Evaluate(region);
-            var failedArrayComparison = false;
-            for (var i = 0; i < MAX_TAIL_CALL; i++)
-            {
-               var value = region[mainParameterName];
+         initialization.Evaluate(region);
+         var failedArrayComparison = false;
+         for (var i = 0; i < MAX_TAIL_CALL; i++)
+         {
+            var value = region[mainParameterName];
 
-               if (arrayComparisand != null)
+            if (arrayComparisand != null)
+            {
+               var right = arrayComparisand.Evaluate(region);
+               if (!Case.Match(value, right, region, false, false, parameters.Condition))
                {
-                  var right = arrayComparisand.Evaluate(region);
-                  if (!Case.Match(value, right, region, false, false, parameters.Condition))
+                  if (right.IsArray)
                   {
-                     if (right.IsArray)
+                     var array = (Array)right.SourceArray;
+                     foreach (var item in array)
                      {
-                        var array = (Array)right.SourceArray;
-                        foreach (var item in array)
+                        if (item.Value is Placeholder placeholder)
                         {
-                           if (item.Value is Placeholder placeholder)
-                           {
-                              var variableName = placeholder.Text;
-                              region.CreateVariableIfNonexistent(variableName);
-                              region[variableName] = new Array();
-                           }
+                           var variableName = placeholder.Text;
+                           region.CreateVariableIfNonexistent(variableName);
+                           region[variableName] = new Array();
                         }
                      }
-
-                     failedArrayComparison = true;
                   }
-               }
 
-               var comparisand = checkExpression.Evaluate(region);
-               if (failedArrayComparison || comparisand.Type == ValueType.Boolean && comparisand.IsTrue ||
-                  Case.Match(value, comparisand, region, false, false, parameters.Condition))
-               {
-                  return useTerminalExpression ? terminalExpression.Evaluate(region) : region[VAR_ACCUM];
+                  failedArrayComparison = true;
                }
-
-               increment.Evaluate(region);
-               invariant.Evaluate(region);
             }
 
-            Throw(LOCATION, "Exceed recursion limit");
-            return null;
+            var comparisand = checkExpression.Evaluate(region);
+            if (failedArrayComparison || comparisand.Type == ValueType.Boolean && comparisand.IsTrue ||
+               Case.Match(value, comparisand, region, false, false, parameters.Condition))
+            {
+               return useTerminalExpression ? terminalExpression.Evaluate(region) : region[VAR_ACCUM];
+            }
+
+            increment.Evaluate(region);
+            invariant.Evaluate(region);
          }
+
+         throw LOCATION.ThrowsWithLocation(() => "Exceed recursion limit");
       }
 
-      public override string ToString() => $"init({initialization}) inc({increment}) inv({invariant}) " +
-         $"trm({terminalExpression}) chk({checkExpression})";
+      public override string ToString()
+      {
+         return $"init({initialization}) inc({increment}) inv({invariant}) " + $"trm({terminalExpression}) chk({checkExpression})";
+      }
    }
 }

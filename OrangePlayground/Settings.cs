@@ -4,24 +4,37 @@ namespace OrangePlayground
 {
    public class Settings
    {
-      public string LastFile { get; set; } = "unknown.orange";
+      public Settings()
+      {
+         ErrorFontSize = 12;
+         ErrorFont = "Consolas";
+         ConsoleFontSize = 12;
+         ConsoleFont = "Consolas";
+         EditorFontSize = 14;
+         EditorFont = "Consolas";
+         Text = "";
+         DefaultFolder = FolderName.Current.FullPath;
+         LastFile = "unknown.orange";
+      }
 
-      public string DefaultFolder { get; set; } = FolderName.Current.FullPath;
+      public string LastFile { get; set; }
 
-      public string Text { get; set; } = "";
+      public string DefaultFolder { get; set; }
+
+      public string Text { get; set; }
 
       public bool Manual { get; set; }
 
-      public string EditorFont { get; set; } = "Consolas";
+      public string EditorFont { get; set; }
 
-      public int EditorFontSize { get; set; } = 14;
+      public int EditorFontSize { get; set; }
 
-      public string ConsoleFont { get; set; } = "Consolas";
+      public string ConsoleFont { get; set; }
 
-      public int ConsoleFontSize { get; set; } = 12;
+      public int ConsoleFontSize { get; set; }
 
-      public string ErrorFont { get; set; } = "Consolas";
+      public string ErrorFont { get; set; }
 
-      public int ErrorFontSize { get; set; } = 12;
+      public int ErrorFontSize { get; set; }
    }
 }

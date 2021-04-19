@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Enumerables;
 using Core.Monads;
 using Orange.Library.Managers;
@@ -14,7 +15,7 @@ namespace Orange.Library.Values
 {
    public class MultiLambda : Value, IXMethod, IHasRegion, IInvokable, IWhere
    {
-      const string LOCATION = "MultiLambda";
+      protected const string LOCATION = "MultiLambda";
 
       protected string functionName;
       protected List<MultiLambdaItem> items;
@@ -74,41 +75,39 @@ namespace Orange.Library.Values
          return block == null ? new Nil() : block.Evaluate();
       }
 
-      Block getExpandedBlock(Arguments arguments)
+      protected Block getExpandedBlock(Arguments arguments)
       {
          var region = new Region();
-         using (var popper = new RegionPopper(region, "invoke expanded"))
+         using var popper = new RegionPopper(region, "invoke expanded");
+         items.Must().HaveCountOfExactly(2).OrThrow(LOCATION, () => "There must be exactly two functions");
+         var item0 = items[0];
+         var item1 = items[1];
+         var lambda0 = item0.Lambda;
+         var lambda1 = item1.Lambda;
+         var parameters0 = lambda0.Parameters;
+         var parameters1 = lambda1.Parameters;
+         parameters0.AnyComparisands.Must().BeTrue().OrThrow(LOCATION, () => "The first function must have a comparisand");
+
+         var values = parameters1.GetArguments(arguments);
+         popper.Push();
+
+         var (checkExpression, checkVariable) = firstComparisand(lambda0.Parameters);
+         var expander = new Expander(functionName, item1.Lambda.Block, checkExpression, checkVariable, lambda0.Block, region);
+
+         SetArguments(values);
+         foreach (var parameter in parameters1.GetParameters())
          {
-            Assert(items.Count == 2, LOCATION, "There must be exactly two functions");
-            var item0 = items[0];
-            var item1 = items[1];
-            var lambda0 = item0.Lambda;
-            var lambda1 = item1.Lambda;
-            var parameters0 = lambda0.Parameters;
-            var parameters1 = lambda1.Parameters;
-            Assert(parameters0.AnyComparisands, LOCATION, "The first function must have a comparisand");
-
-            var values = parameters1.GetArguments(arguments);
-            popper.Push();
-
-            var (checkExpression, checkVariable) = firstComparisand(lambda0.Parameters);
-            var expander = new Expander(functionName, item1.Lambda.Block, checkExpression, checkVariable, lambda0.Block, region);
-
-            SetArguments(values);
-            foreach (var parameter in parameters1.GetParameters())
-            {
-               expander.AddParameter(parameter);
-            }
-
-            var block = expander.Expand();
-            return block;
+            expander.AddParameter(parameter);
          }
+
+         var block = expander.Expand();
+         return block;
       }
 
-      static (Block, string) firstComparisand(Parameters parameters)
+      protected static (Block, string) firstComparisand(Parameters parameters)
       {
          var selectedParameter = parameters.GetParameters().FirstOrDefault(p => p.Comparisand != null);
-         RejectNull(selectedParameter, LOCATION, $"No comparisands in parameters {parameters}");
+         selectedParameter.Must().Not.BeNull().OrThrow(LOCATION, () => $"No comparisands in parameters {parameters}");
          return (selectedParameter.Comparisand, selectedParameter.Name);
       }
 
@@ -167,50 +166,49 @@ namespace Orange.Library.Values
          foreach (var item in items)
          {
             var region = new Region();
-            using (var popper = new RegionPopper(region, "multi-lambda"))
+            using var popper = new RegionPopper(region, "multi-lambda");
+            var parameters = item.Lambda.Parameters;
+            var values = parameters.GetArguments(arguments);
+            if (memoize)
             {
-               var parameters = item.Lambda.Parameters;
-               var values = parameters.GetArguments(arguments);
-               if (memoize)
+               memo.Value.Evaluate(values);
+            }
+
+            popper.Push();
+            SetArguments(values);
+            if (canInvoke(parameters, values, item.Required))
+            {
+               ExecuteWhere(this);
+               if (!(parameters.Condition?.Evaluate().IsTrue ?? true))
                {
-                  memo.Value.Evaluate(values);
+                  continue;
                }
 
-               popper.Push();
-               SetArguments(values);
-               if (canInvoke(parameters, values, item.Required))
+               if (!(item.Condition?.Evaluate().IsTrue ?? true))
                {
-                  ExecuteWhere(this);
-                  if (!(parameters.Condition?.Evaluate().IsTrue ?? true))
-                  {
-                     continue;
-                  }
+                  continue;
+               }
 
-                  if (!(item.Condition?.Evaluate().IsTrue ?? true))
-                  {
-                     continue;
-                  }
+               if (Region != null)
+               {
+                  item.Lambda.Region = Region;
+               }
 
-                  if (Region != null)
-                  {
-                     item.Lambda.Region = Region;
-                  }
-
-                  var item1 = item;
-                  var result = memoize ? memo.Value.Evaluate(() => evaluate(arguments, item1)) : evaluate(arguments, item);
-                  /*                  if (result != null && result.IsNil)
+               var item1 = item;
+               var result = memoize ? memo.Value.Evaluate(() => evaluate(arguments, item1)) : evaluate(arguments, item);
+               /*                  if (result != null && result.IsNil)
                                        continue;*/
-                  return result ?? NilValue;
-               }
+               return result ?? NilValue;
             }
          }
 
-         Throw(LOCATION, $"No match found for ({arguments})");
-         return NilValue;
+         throw LOCATION.ThrowsWithLocation(() => $"No match found for ({arguments})");
       }
 
-      static Value evaluate(Arguments arguments, MultiLambdaItem item) =>
-         item.Lambda.Evaluate(arguments, register: true, setArguments: false);
+      protected static Value evaluate(Arguments arguments, MultiLambdaItem item)
+      {
+         return item.Lambda.Evaluate(arguments, register: true, setArguments: false);
+      }
 
       public Value ExpandedBlock() => getExpandedBlock(Arguments);
 

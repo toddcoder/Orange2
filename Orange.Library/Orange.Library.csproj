@@ -512,7 +512,6 @@
     <Compile Include="Values\IStaticObject.cs" />
     <Compile Include="Values\IExecutable.cs" />
     <Compile Include="Values\ObjectPropertyVariable2.cs" />
-    <Compile Include="Values\ObjectRange.cs" />
     <Compile Include="Values\ObjectVariable.cs" />
     <Compile Include="Values\InvokableReference.cs" />
     <Compile Include="Values\MessageArguments.cs" />
@@ -521,7 +520,6 @@
     <Compile Include="Values\Null.cs" />
     <Compile Include="Values\Class.cs" />
     <Compile Include="Values\Pair.cs" />
-    <Compile Include="Values\Pending.cs" />
     <Compile Include="Values\Placeholder.cs" />
     <Compile Include="Values\PseudoRecursion.cs" />
     <Compile Include="Values\RationalRange.cs" />
@@ -799,7 +797,6 @@
     <Compile Include="Verbs\ApplyWhile.cs" />
     <Compile Include="Verbs\ArrayConcatenate.cs" />
     <Compile Include="Verbs\ArrayFromValue.cs" />
-    <Compile Include="Verbs\ArrayOperation.cs" />
     <Compile Include="Verbs\As.cs" />
     <Compile Include="Verbs\AsArray.cs" />
     <Compile Include="Verbs\Assert.cs" />
@@ -939,8 +936,6 @@
     <Compile Include="Verbs\SpecialAssignment.cs" />
     <Compile Include="Verbs\Stringify.cs" />
     <Compile Include="Verbs\Swap.cs" />
-    <Compile Include="Verbs\Then.cs" />
-    <Compile Include="Verbs\AllowIn.cs" />
     <Compile Include="Verbs\CaseExecute.cs" />
     <Compile Include="Verbs\Unpipe.cs" />
     <Compile Include="Verbs\Use.cs" />
@@ -1000,7 +995,6 @@
     <Compile Include="Verbs\FoldL.cs" />
     <Compile Include="Verbs\SendMessage.cs" />
     <Compile Include="Verbs\SendMessageToClass.cs" />
-    <Compile Include="Verbs\SendMessageToLastValue.cs" />
     <Compile Include="Verbs\SendMessageToSelf.cs" />
     <Compile Include="Verbs\SendOptionalMessage.cs" />
     <Compile Include="Verbs\Define.cs" />
@@ -1028,7 +1022,6 @@
     <Compile Include="Verbs\XJoin.cs" />
     <Compile Include="Verbs\XOr.cs" />
     <Compile Include="Verbs\Zip.cs" />
-    <Compile Include="Verbs\ZipToOneArray.cs" />
     <Compile Include="WithRegion.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Core.Assertions;
 using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.MessageManager;
@@ -8,7 +9,7 @@ namespace Orange.Library.Verbs
 {
    public class SendMessage : Verb, ITailCallVerb
    {
-      const string LOCATION = "Send message";
+      protected const string LOCATION = "Send message";
 
       protected string message;
       protected Arguments arguments;
@@ -16,8 +17,7 @@ namespace Orange.Library.Verbs
       protected bool registerCall;
       protected bool optional;
 
-      public SendMessage(string message, Arguments arguments, bool inPlace = false, bool registerCall = false,
-         bool optional = false)
+      public SendMessage(string message, Arguments arguments, bool inPlace = false, bool registerCall = false, bool optional = false)
       {
          this.message = message;
          this.arguments = arguments;
@@ -27,15 +27,12 @@ namespace Orange.Library.Verbs
          IsOperator = true;
       }
 
-      public SendMessage()
-         : this("", null) { }
-
       public override Value Evaluate()
       {
          var stack = State.Stack;
          var value = stack.Pop(false, LOCATION);
          arguments.FromSelf = arguments.FromSelf;
-         if (value is Variable variable && variable.Name == "super" && variable.Value is Class super)
+         if (value is Variable { Name: "super", Value: Class super })
          {
             return SendSuperMessage(super, message, arguments);
          }
@@ -47,24 +44,26 @@ namespace Orange.Library.Verbs
 
          value = value.Resolve();
          var responds = MessagingState.RespondsTo(value, message);
-         if (optional && !responds)
+         switch (optional)
          {
-            return new Nil();
-         }
-
-         if (!optional && !responds)
-         {
-            message = GetterName(message);
-            responds = MessagingState.RespondsTo(value, message);
-            if (optional && !responds)
-            {
+            case true when !responds:
                return new Nil();
+            case false when !responds:
+            {
+               message = GetterName(message);
+               responds = MessagingState.RespondsTo(value, message);
+               if (optional && !responds)
+               {
+                  return new Nil();
+               }
+
+               break;
             }
          }
 
-         Assert(optional || responds, LOCATION, () => $"{value} doesn't understand {Unmangle(message)} message");
+         (optional || responds).Must().BeTrue().OrThrow(LOCATION, () => $"{value} doesn't understand {Unmangle(message)} message");
          var result = MessagingState.SendMessage(value, message, arguments);
-         if (result is ObjectVariable objectVariable && objectVariable.Value is Class cls)
+         if (result is ObjectVariable { Value: Class cls })
          {
             return SendMessage(cls, "invoke", arguments);
          }
@@ -73,21 +72,18 @@ namespace Orange.Library.Verbs
          {
             if (result is ObjectVariable innerValue)
             {
-               switch (innerValue.Value)
+               return innerValue.Value switch
                {
-                  case Some some:
-                     return some.Value();
-                  case None _:
-                     return None.NoneValue;
-                  default:
-                     return innerValue.Value;
-               }
+                  Some some => some.Value(),
+                  None => None.NoneValue,
+                  _ => innerValue.Value
+               };
             }
          }
 
          if (value is Variable variable1 && inPlace)
          {
-            Reject(variable1.Name.StartsWith(VAR_ANONYMOUS), LOCATION, "Can't reassign to an anonymous variable");
+            variable1.Name.StartsWith(VAR_ANONYMOUS).Must().Not.BeTrue().OrThrow(LOCATION, () => "Can't reassign to an anonymous variable");
             variable1.Value = result;
          }
 

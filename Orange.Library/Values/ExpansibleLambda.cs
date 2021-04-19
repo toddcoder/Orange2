@@ -9,9 +9,9 @@ namespace Orange.Library.Values
 {
    public class ExpansibleLambda : MultiLambda
    {
-      class ExpansibleItem
+      protected class ExpansibleItem
       {
-         static void setPlaceholderNames(Parameters parameters)
+         protected static void setPlaceholderNames(Parameters parameters)
          {
             foreach (var parameter in parameters.GetParameters().Where(p => (p.Comparisand?.Count ?? 0) != 0))
             {
@@ -48,9 +48,9 @@ namespace Orange.Library.Values
             }
          }
 
-         Parameters parameters;
-         VerbList verbs;
-         Block condition;
+         protected Parameters parameters;
+         protected VerbList verbs;
+         protected Block condition;
 
          public ExpansibleItem(MultiLambdaItem item)
          {
@@ -70,9 +70,9 @@ namespace Orange.Library.Values
          public Block Condition => condition;
       }
 
-      const string LOCATION = "Expansible lambda";
+      protected new const string LOCATION = "Expansible lambda";
 
-      List<ExpansibleItem> expansibleItems;
+      protected List<ExpansibleItem> expansibleItems;
 
       public ExpansibleLambda(string functionName, bool memoize) : base(functionName, memoize) => expansibleItems = new List<ExpansibleItem>();
 
@@ -83,52 +83,50 @@ namespace Orange.Library.Values
          var current = new VerbList();
 
          arguments.DefaultValue = new Nil();
-         using (var popper = new RegionPopper(new Region(), "expand-lambda"))
+         using var popper = new RegionPopper(new Region(), "expand-lambda");
+         popper.Push();
+         for (var i = 0; i < MAX_RECURSION; i++)
          {
-            popper.Push();
-            for (var i = 0; i < MAX_RECURSION; i++)
+            foreach (var item in expansibleItems)
             {
-               foreach (var item in expansibleItems)
+               var parameters = item.Parameters;
+               var values = parameters.GetArguments(arguments);
+               popper.Push();
+               SetArguments(values);
+               if (canInvoke(parameters, values, false))
                {
-                  var parameters = item.Parameters;
-                  var values = parameters.GetArguments(arguments);
-                  popper.Push();
-                  SetArguments(values);
-                  if (canInvoke(parameters, values, false))
+                  ExecuteWhere(this);
+                  if (parameters.Condition != null && !parameters.Condition.Evaluate().IsTrue)
                   {
-                     ExecuteWhere(this);
-                     if (parameters.Condition != null && !parameters.Condition.Evaluate().IsTrue)
-                     {
-                        continue;
-                     }
+                     continue;
+                  }
 
-                     if (item.Condition != null && !item.Condition.Evaluate().IsTrue)
-                     {
-                        continue;
-                     }
+                  if (item.Condition != null && !item.Condition.Evaluate().IsTrue)
+                  {
+                     continue;
+                  }
 
-                     if (current.IsEmpty)
-                     {
-                        current.Add(item.Verbs);
-                     }
-                     else
-                     {
-                        current.ReplacePlaceholderInvokeWithBody(item.Verbs);
-                     }
+                  if (current.IsEmpty)
+                  {
+                     current.Add(item.Verbs);
+                  }
+                  else
+                  {
+                     current.ReplacePlaceholderInvokeWithBody(item.Verbs);
+                  }
 
-                     current.ReplaceParameters(parameters);
-                     current.ReplaceArrayParameters(parameters);
-                     current.ReplaceListParameters(parameters);
-                     if (!current.ReplaceInvocationWithPlaceholder(functionName, ref arguments))
-                     {
-                        return current.Block;
-                     }
+                  current.ReplaceParameters(parameters);
+                  current.ReplaceArrayParameters(parameters);
+                  current.ReplaceListParameters(parameters);
+                  if (!current.ReplaceInvocationWithPlaceholder(functionName, ref arguments))
+                  {
+                     return current.Block;
                   }
                }
             }
-
-            return new Nil();
          }
+
+         return new Nil();
       }
 
       public override string ToString() => expansibleItems.ToString(", ");

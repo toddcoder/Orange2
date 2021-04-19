@@ -9,23 +9,14 @@ namespace Orange.Library.Verbs
    {
       protected const string LOCATION = "Range";
 
-      public static Value GetGenerator(Value left, Value right, bool inclusive)
+      public static Value GetGenerator(Value left, Value right, bool inclusive) => left.Type switch
       {
-         switch (left.Type)
-         {
-            case ValueType.Number when right.Type == ValueType.Number:
-               return new NSIntRange(left.Int, right.Int, inclusive);
-            case ValueType.String when right.Type == ValueType.String:
-               return new NSStringRange(left.Text, right.Text, inclusive);
-            case ValueType.Date when right.Type == ValueType.Date:
-               return new NSDateRange((Date)left, (Date)right, inclusive);
-            case ValueType.Object when right.Type == ValueType.Object:
-               return new NSObjectRange((Object)left, (Object)right);
-            default:
-               Throw(LOCATION, "Not a range");
-               return null;
-         }
-      }
+         ValueType.Number when right.Type == ValueType.Number => new NSIntRange(left.Int, right.Int, inclusive),
+         ValueType.String when right.Type == ValueType.String => new NSStringRange(left.Text, right.Text, inclusive),
+         ValueType.Date when right.Type == ValueType.Date => new NSDateRange((Date)left, (Date)right, inclusive),
+         ValueType.Object when right.Type == ValueType.Object => new NSObjectRange((Object)left, (Object)right),
+         _ => throw LOCATION.ThrowsWithLocation(() => "Not a range")
+      };
 
       protected bool inclusive;
 
@@ -36,6 +27,7 @@ namespace Orange.Library.Verbs
          var stack = State.Stack;
          var right = stack.Pop(true, LOCATION);
          var left = stack.Pop(true, LOCATION);
+
          return GetGenerator(left.Self, right.Self, inclusive);
       }
 

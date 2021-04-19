@@ -5,8 +5,8 @@ namespace OrangePlayground
 {
    public class PlaygroundConsole : IConsole
    {
-      TextWriter writer;
-      TextReader reader;
+      protected TextWriter writer;
+      protected TextReader reader;
 
       public PlaygroundConsole(TextWriter writer, TextReader reader)
       {

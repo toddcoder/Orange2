@@ -1,4 +1,5 @@
 ﻿using System;
+using Core.Assertions;
 using Core.Monads;
 using Orange.Library.Managers;
 using static Core.Monads.MonadFunctions;
@@ -8,13 +9,13 @@ namespace Orange.Library.Values
 {
    public class NSInnerComprehension : Value, INSGenerator
    {
-      Parameters parameters;
-      Block generatorSource;
-      NSIterator iterator;
-      IMaybe<Block> ifBlock;
-      int index;
-      Region region;
-      bool more;
+      protected Parameters parameters;
+      protected Block generatorSource;
+      protected NSIterator iterator;
+      protected IMaybe<Block> ifBlock;
+      protected int index;
+      protected Region region;
+      protected bool more;
 
       public NSInnerComprehension(Parameters parameters, Block generatorSource, IMaybe<Block> ifBlock)
       {
@@ -86,15 +87,15 @@ namespace Orange.Library.Values
       {
          index = 0;
          var value = generatorSource.Evaluate().PossibleGenerator();
-         var innerValue = Assert(value, "Inner comprehension", "Source must be a generator");
+         var innerValue = value.Must().HaveValue().Force("Inner comprehension", () => "Source must be a generator");
          iterator = new NSIterator(innerValue);
          iterator.Reset();
          more = true;
       }
 
-      Value nextGeneratorValue()
+      protected Value nextGeneratorValue()
       {
-         RejectNull(iterator, LOCATION, "Reset not called");
+         iterator.Must().Not.BeNull().OrThrow(LOCATION, () => "Reset not called");
          var next = iterator.Next();
          if (next.IsNil)
          {
@@ -216,11 +217,13 @@ namespace Orange.Library.Values
          }
       }
 
-      public void Visit(Value value) { }
+      public void Visit(Value value)
+      {
+      }
 
       public bool More => more;
 
-      bool ifTrue() => ifBlock.Map(b => b.IsTrue).DefaultTo(() => true);
+      protected bool ifTrue() => ifBlock.Map(b => b.IsTrue).DefaultTo(() => true);
 
       public void SetValue(Value value) => parameters.SetValues(value, index++);
 

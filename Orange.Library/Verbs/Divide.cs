@@ -1,6 +1,6 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
@@ -9,7 +9,8 @@ namespace Orange.Library.Verbs
 		public override Value Evaluate(Value x, Value y)
 		{
 			var divisor = y.Number;
-			Reject(divisor == 0, Location, "Divide by 0");
+         divisor.Must().Not.Equal(0).OrThrow(Location, () => "Divide by 0");
+
 			return x.Number / divisor;
 		}
 

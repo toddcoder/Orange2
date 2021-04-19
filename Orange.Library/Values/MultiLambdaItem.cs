@@ -1,30 +1,31 @@
-﻿using Orange.Library.Managers;
-using static Orange.Library.Runtime;
+﻿using Core.Assertions;
+using Orange.Library.Managers;
 
 namespace Orange.Library.Values
 {
    public class MultiLambdaItem : Value, IWhere
    {
-      const string LOCATION = "MultiLambda item";
+      protected const string LOCATION = "MultiLambda item";
 
-      readonly Lambda lambda;
-      readonly bool required;
-      readonly Block condition;
+      protected readonly Lambda lambda;
+      protected readonly bool required;
+      protected readonly Block condition;
 
       public MultiLambdaItem(Lambda lambda, bool required, Block condition)
       {
          this.lambda = lambda;
-         RejectNull(this.lambda.Parameters.AnyComparisands, LOCATION, "No comparisand provided");
+         this.lambda.Parameters.AnyComparisands.Must().BeTrue().OrThrow(LOCATION, () => "No comparisand provided");
          this.required = required;
          this.condition = condition;
       }
 
-      public MultiLambdaItem()
-         : this(null, false, null) { }
+      public MultiLambdaItem() : this(null, false, null)
+      {
+      }
 
       public override int Compare(Value value) => 0;
 
-      public override string Text { get; set; } = "";
+      public override string Text { get; set; } = string.Empty;
 
       public override double Number { get; set; }
 
@@ -34,7 +35,9 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new MultiLambdaItem((Lambda)lambda.Clone(), required, (Block)condition?.Clone());
 
-      protected override void registerMessages(MessageManager manager) { }
+      protected override void registerMessages(MessageManager manager)
+      {
+      }
 
       public Lambda Lambda => lambda;
 

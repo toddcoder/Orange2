@@ -10,10 +10,10 @@ namespace Orange.Library.Values
 {
    public class Set : Value, IEqualityComparer<Value>, INSGeneratorSource
    {
-      const string LOCATION = "Set";
+      protected const string LOCATION = "Set";
 
-      HashSet<Value> hashSet;
-      Lazy<Value[]> values;
+      protected HashSet<Value> hashSet;
+      protected Lazy<Value[]> values;
 
       public Set(Array array)
       {
@@ -21,7 +21,7 @@ namespace Orange.Library.Values
          setValues();
       }
 
-      void setValues() => values = new Lazy<Value[]>(getValues);
+      protected void setValues() => values = new Lazy<Value[]>(getValues);
 
       public Set(SortedSet<Value> sortedSet)
       {
@@ -41,10 +41,11 @@ namespace Orange.Library.Values
          setValues();
       }
 
-      Value[] getValues()
+      protected Value[] getValues()
       {
          var elements = new Value[hashSet.Count];
          hashSet.CopyTo(elements);
+
          return elements;
       }
 
@@ -52,7 +53,7 @@ namespace Orange.Library.Values
 
       public bool IsSubsetOf(Set other) => hashSet.IsSubsetOf(other.hashSet);
 
-      static Set getOtherSet(Arguments arguments)
+      protected static Set getOtherSet(Arguments arguments)
       {
          var value = arguments[0];
          if (value is Set otherSet)
@@ -60,8 +61,7 @@ namespace Orange.Library.Values
             return otherSet;
          }
 
-         Throw(LOCATION, $"{value} isn't a set");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => $"{value} isn't a set");
       }
 
       public Set getOtherSet() => getOtherSet(Arguments);
@@ -170,7 +170,7 @@ namespace Orange.Library.Values
          return set;
       }
 
-      public Value Tail() => new Set(hashSet.Where((v, i) => i != 0));
+      public Value Tail() => new Set(hashSet.Where((_, i) => i != 0));
 
       public override bool IsEmpty => hashSet.Count == 0;
 

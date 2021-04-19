@@ -21,12 +21,12 @@ namespace Orange.Library.Values
 {
    public class Pattern : Value, IMessageHandler
    {
-      const string DIV_MAJOR = "////////////////////";
-      const string DIV_MINOR = "--------------------";
-      const string LOCATION = "Pattern";
-      const string REGEX_LIMIT = "^ '$' /(/d+) 'x'";
-      const string REGEX_NTH = "^ '$' /(/d+) ('th' | 'st' | 'rd' | 'nd')";
-      const string TEXT_OUT_OF_CONTROL = "Text out of control";
+      protected const string DIV_MAJOR = "////////////////////";
+      protected const string DIV_MINOR = "--------------------";
+      protected const string LOCATION = "Pattern";
+      protected const string REGEX_LIMIT = "^ '$' /(/d+) 'x'";
+      protected const string REGEX_NTH = "^ '$' /(/d+) ('th' | 'st' | 'rd' | 'nd')";
+      protected const string TEXT_OUT_OF_CONTROL = "Text out of control";
 
       public static explicit operator Pattern(string source)
       {
@@ -41,13 +41,13 @@ namespace Orange.Library.Values
          return (Pattern)parser.Result.Value;
       }
 
-      Element head;
-      int startIndex;
-      int stopIndex;
-      bool multiScan;
-      int limit;
-      int nth;
-      Matcher matcher;
+      protected Element head;
+      protected int startIndex;
+      protected int stopIndex;
+      protected bool multiScan;
+      protected int limit;
+      protected int nth;
+      protected Matcher matcher;
 
       public Pattern(Element head)
       {
@@ -59,7 +59,9 @@ namespace Orange.Library.Values
       }
 
       public Pattern()
-         : this(null) { }
+         : this(null)
+      {
+      }
 
       public bool Direct { get; set; }
 
@@ -206,7 +208,7 @@ namespace Orange.Library.Values
          if (isReadOnly)
          {
             State.PopPatternManager();
-            return matched ? (Value)new Some(text.Drop(startIndex).Keep(stopIndex - startIndex)) : new None();
+            return matched ? new Some(text.Drop(startIndex).Keep(stopIndex - startIndex)) : new None();
          }
 
          var result = matched ? new PatternResult
@@ -236,9 +238,9 @@ namespace Orange.Library.Values
          return result;
       }
 
-      bool withinLimit(int index) => limit == -1 || index < limit;
+      protected bool withinLimit(int index) => limit == -1 || index < limit;
 
-      bool withinNth(int index) => nth == -1 || index == nth;
+      protected bool withinNth(int index) => nth == -1 || index == nth;
 
       public Value ApplyWhile()
       {
@@ -252,12 +254,12 @@ namespace Orange.Library.Values
          string input;
          switch (argument)
          {
-            case PatternResult patternResult when patternResult.Success:
+            case PatternResult { Success: true } patternResult:
                input = patternResult.Text;
                variable = patternResult.Variable;
                isVariable = variable != null;
                break;
-            case PatternResult _:
+            case PatternResult:
                return PatternResult.Failure();
             default:
                input = argument.Text;
@@ -327,7 +329,7 @@ namespace Orange.Library.Values
 
       public int Length => stopIndex - startIndex;
 
-      void trace(Element current, string input, bool success)
+      protected void trace(Element current, string input, bool success)
       {
          if (!State.Trace)
          {
@@ -346,11 +348,11 @@ namespace Orange.Library.Values
          state.Print(builder.ToString());
       }
 
-      static void traceMinor() => State.Print(DIV_MINOR);
+      protected static void traceMinor() => State.Print(DIV_MINOR);
 
-      static void traceMajor() => State.Print(DIV_MAJOR);
+      protected static void traceMajor() => State.Print(DIV_MAJOR);
 
-      bool result(bool success)
+      protected bool result(bool success)
       {
          State.PatternDepth--;
          if (success)
@@ -619,7 +621,7 @@ namespace Orange.Library.Values
          return result(false);
       }
 
-      static void addToReplacements(IReplacement replacement, string text, Element current)
+      protected static void addToReplacements(IReplacement replacement, string text, Element current)
       {
          if (replacement.Immediate)
          {
@@ -791,70 +793,68 @@ namespace Orange.Library.Values
       public Value For()
       {
          var input = Arguments[0].Text;
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
+            return new Nil();
+         }
+
+         assistant.ReplacementParameters();
+
+         State.PushPatternManager();
+         State.Multi = true;
+         for (var i = 0; i < MAX_LOOP && withinLimit(i); i++)
+         {
+            if (Scan(input))
             {
-               return new Nil();
-            }
-
-            assistant.ReplacementParameters();
-
-            State.PushPatternManager();
-            State.Multi = true;
-            for (var i = 0; i < MAX_LOOP && withinLimit(i); i++)
-            {
-               if (Scan(input))
-               {
-                  State.Alternates.Clear();
-                  assistant.SetReplacement(State.Input.Drop(Index).Keep(Length), Index, Length, i);
-                  var blockResult = block.Evaluate();
-                  var signal = ParameterAssistant.Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case ReturningNull:
-                     {
-                        State.PopPatternManager();
-                        return null;
-                     }
-                     case Continuing:
-                        continue;
-                  }
-
-                  if (blockResult != null && !blockResult.IsNil)
-                  {
-                     Slicer slicer = State.Input;
-                     var oldLength = slicer.Length;
-                     slicer[Index, Length] = blockResult.Text;
-                     var offset = slicer.Length - oldLength;
-                     State.Input = slicer.ToString();
-                     State.Position += offset;
-                  }
-               }
-               else
+               State.Alternates.Clear();
+               assistant.SetReplacement(State.Input.Drop(Index).Keep(Length), Index, Length, i);
+               var blockResult = block.Evaluate();
+               var signal = ParameterAssistant.Signal();
+               if (signal == Breaking)
                {
                   break;
                }
 
-               input = State.Input;
+               switch (signal)
+               {
+                  case ReturningNull:
+                  {
+                     State.PopPatternManager();
+                     return null;
+                  }
+                  case Continuing:
+                     continue;
+               }
+
+               if (blockResult != null && !blockResult.IsNil)
+               {
+                  Slicer slicer = State.Input;
+                  var oldLength = slicer.Length;
+                  slicer[Index, Length] = blockResult.Text;
+                  var offset = slicer.Length - oldLength;
+                  State.Input = slicer.ToString();
+                  State.Position += offset;
+               }
+            }
+            else
+            {
+               break;
             }
 
-            State.PopPatternManager();
-            return null;
+            input = State.Input;
          }
+
+         State.PopPatternManager();
+         return null;
       }
 
       public Value While()
       {
          var value = Arguments[0];
          var variableName = value.Text;
-         Reject(variableName.IsEmpty(), LOCATION, "Variable name not set for .while");
+         variableName.IsEmpty().Must().Not.BeTrue().OrThrow(LOCATION, () => "Variable name not set for .while");
          var variable = new Variable(variableName);
 
          var oneSuccess = false;
@@ -862,10 +862,7 @@ namespace Orange.Library.Values
          for (var i = 0; i < MAX_LOOP && withinLimit(i); i++)
          {
             var input = variable.Value.Text;
-            if (originalInput == null)
-            {
-               originalInput = input.Copy();
-            }
+            originalInput ??= input.Copy();
 
             State.PushPatternManager();
             State.Multi = true;

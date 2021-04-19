@@ -1,4 +1,5 @@
-﻿using Core.Computers;
+﻿using Core.Assertions;
+using Core.Computers;
 using Orange.Library.Managers;
 using static System.StringComparison;
 using static Orange.Library.Managers.RegionManager;
@@ -9,13 +10,18 @@ namespace Orange.Library.Values
 {
    public class Symbol : Value
    {
-      const string LOCATION = "Symbol";
+      protected const string LOCATION = "Symbol";
 
-      string text;
+      protected string text;
 
-      public Symbol(string text) => this.text = text;
+      public Symbol(string text)
+      {
+         this.text = text;
+      }
 
-      public Symbol() : this("") { }
+      public Symbol() : this("")
+      {
+      }
 
       public override int Compare(Value value) => string.Compare(text, value.Text, Ordinal);
 
@@ -52,7 +58,7 @@ namespace Orange.Library.Values
       public Value Import()
       {
          FileName file = @"C:\Enterprise\Modules\" + text + ".orange";
-         Assert(file.Exists(), LOCATION, $"Module {text} doesn't exist");
+         file.Must().Exist().OrThrow(LOCATION, () => $"Module {text} doesn't exist");
          var source = file.Text;
          var block = Compile(source);
          var region = new Region();

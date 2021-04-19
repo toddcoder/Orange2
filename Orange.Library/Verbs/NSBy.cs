@@ -7,7 +7,7 @@ namespace Orange.Library.Verbs
 {
    public class NSBy : Verb
    {
-      const string LOCATION = "By";
+      protected const string LOCATION = "By";
 
       public override Value Evaluate()
       {
@@ -19,8 +19,7 @@ namespace Orange.Library.Verbs
             return new NSIntRange(intRange, right.Int);
          }
 
-         Throw(LOCATION, "Value isn't a range");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => "Value isn't a range");
       }
 
       protected virtual Value increment(ValueStack stack) => stack.Pop(true, LOCATION);

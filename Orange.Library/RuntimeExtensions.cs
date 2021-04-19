@@ -1,6 +1,7 @@
 ﻿using System;
 using Core.Assertions.Collections;
 using Core.Assertions.Comparables;
+using Core.Assertions.Computers;
 using Core.Assertions.Monads;
 using Core.Assertions.Objects;
 using Core.Assertions.Strings;
@@ -54,6 +55,16 @@ namespace Orange.Library
       }
 
       public static void OrThrow<T>(this ArrayAssertion<T> assertion, string location, Func<string> func)
+      {
+         assertion.OrThrow(() => withLocation(location, func));
+      }
+
+      public static void OrThrow<T>(this ListAssertion<T> assertion, string location, Func<string> func)
+      {
+         assertion.OrThrow(() => withLocation(location, func));
+      }
+
+      public static void OrThrow(this FileNameAssertion assertion, string location, Func<string> func)
       {
          assertion.OrThrow(() => withLocation(location, func));
       }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Enumerables;
 using Orange.Library.Managers;
 using static Orange.Library.Runtime;
@@ -8,7 +9,7 @@ namespace Orange.Library.Values
 {
    public class MessagePath : Value
    {
-      List<Message> messages;
+      protected List<Message> messages;
 
       public MessagePath(Message message1, Message message2) => messages = new List<Message>
       {
@@ -62,8 +63,9 @@ namespace Orange.Library.Values
       public Value Concat()
       {
          var message = MessageFromArguments(Arguments);
-         RejectNull(message, "Message chain", "Couldn't resolve message");
+         message.Must().Not.BeNull().OrThrow("Message chain", () => "Couldn't resolve message");
          messages.Add(message);
+
          return this;
       }
 

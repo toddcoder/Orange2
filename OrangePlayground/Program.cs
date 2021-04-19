@@ -8,7 +8,7 @@ namespace OrangePlayground
    internal static class Program
    {
       [STAThread]
-      static void Main(string[] args)
+      public static void Main(string[] args)
       {
          var passedFile = maybe(args.Length > 0, () => (FileName)args[0]);
          EnableVisualStyles();

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Core.Arrays;
+using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
 using Core.Numbers;
@@ -21,8 +22,10 @@ namespace Orange.Library.Values
 {
    public class Parameter
    {
-      public static Parameter FromComparisand(int index, Block comparisand, Block condition) => new Parameter($"${index}",
-         PushValue(new Nil()), comparisand: comparisand, condition: condition);
+      public static Parameter FromComparisand(int index, Block comparisand, Block condition)
+      {
+         return new($"${index}", PushValue(new Nil()), comparisand: comparisand, condition: condition);
+      }
 
       public Parameter(string name, Block defaultValue = null, VisibilityType visibility = Public,
          bool readOnly = false, bool lazy = false, Block comparisand = null, Block condition = null)
@@ -57,7 +60,7 @@ namespace Orange.Library.Values
 
       public Parameter Clone()
       {
-         return new Parameter(Name.Copy(), (Block)DefaultValue?.Clone(), Visibility, ReadOnly, Lazy, Comparisand, (Block)Condition?.Clone());
+         return new(Name.Copy(), (Block)DefaultValue?.Clone(), Visibility, ReadOnly, Lazy, Comparisand, (Block)Condition?.Clone());
       }
 
       public void Assign(Value value, bool readOnly, bool setting, bool @override = false)
@@ -80,7 +83,7 @@ namespace Orange.Library.Values
 
    public class ParameterValue
    {
-      static Value evaluateBlock(Block block, bool lazy)
+      protected static Value evaluateBlock(Block block, bool lazy)
       {
          if (lazy)
          {
@@ -149,9 +152,9 @@ namespace Orange.Library.Values
 
    public class Parameters : Value
    {
-      const string LOCATION = "Parameters";
+      protected const string LOCATION = "Parameters";
 
-      Parameter[] parameters;
+      protected Parameter[] parameters;
 
       public Parameters(IEnumerable<Parameter> parameters) => this.parameters = parameters.ToArray();
 
@@ -199,7 +202,7 @@ namespace Orange.Library.Values
       public Value Assign()
       {
          var self = Regions["self"];
-         Reject(self.IsEmpty, LOCATION, "Must assign within a method or with block");
+         self.IsEmpty.Must().Not.BeTrue().OrThrow(LOCATION, () => "Must assign within a method or with block");
          foreach (var variableName in VariableNames)
          {
             var value = MessagingState.Send(self, variableName, new Arguments());
@@ -224,7 +227,7 @@ namespace Orange.Library.Values
 
       public string[] VariableNames => parameters.Select(p => p.Name).ToArray();
 
-      static Value evaluateBlock(Block block, bool lazy)
+      protected static Value evaluateBlock(Block block, bool lazy)
       {
          if (lazy)
          {
@@ -446,7 +449,7 @@ namespace Orange.Library.Values
          }
       }
 
-      static void awkify(Value value)
+      protected static void awkify(Value value)
       {
          var newParameters = new Parameters(Range(0, 10).Select(i => new Parameter($"${i}")));
          Splat(value, newParameters, true, false, true);

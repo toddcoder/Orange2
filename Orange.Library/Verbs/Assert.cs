@@ -1,16 +1,17 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
    public class Assert : Verb, IStatement
    {
-      const string LOCATION = "Assert";
-      bool assert;
-      Block condition;
-      String message;
-      string result;
+      protected const string LOCATION = "Assert";
+
+      protected bool assert;
+      protected Block condition;
+      protected String message;
+      protected string result;
 
       public Assert(bool assert, Block condition, String message)
       {
@@ -28,13 +29,14 @@ namespace Orange.Library.Verbs
          if (assert)
          {
             result = "assertion true";
-            Assert(condition.IsTrue, LOCATION, message.Text);
+            condition.IsTrue.Must().BeTrue().OrThrow(LOCATION, () => message.Text);
          }
          else
          {
             result = "not rejected";
-            Reject(condition.IsTrue, LOCATION, message.Text);
+            condition.IsTrue.Must().Not.BeTrue().OrThrow(LOCATION, () => message.Text);
          }
+
          return null;
       }
 

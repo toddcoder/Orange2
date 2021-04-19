@@ -8,7 +8,7 @@ namespace Orange.Library.Verbs
 {
    public class FoldR : Verb
    {
-      const string LOCATION = "foldr";
+      protected const string LOCATION = "foldr";
 
       public override Value Evaluate()
       {
@@ -20,8 +20,7 @@ namespace Orange.Library.Verbs
             return MessagingState.SendMessage(value, "foldr", FromValue(lambda));
          }
 
-         Throw(LOCATION, "Expected lambda");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => "Expected lambda");
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;

@@ -1,12 +1,11 @@
 ﻿using Orange.Library.Managers;
-using static Orange.Library.Runtime;
 using static Orange.Library.Values.Null;
 
 namespace Orange.Library.Values
 {
    public class None : Value
    {
-      public static None NoneValue => new None();
+      public static None NoneValue => new();
 
       public override int Compare(Value value) => value is None ? 0 : -1;
 
@@ -32,7 +31,7 @@ namespace Orange.Library.Values
       {
          manager.RegisterMessage(this, "map", v => ((None)v).Map());
          manager.RegisterMessage(this, "fmap", v => ((None)v).FlatMap());
-         manager.RegisterMessage(this, "value", v => Value());
+         manager.RegisterMessage(this, "value", _ => Value());
          manager.RegisterMessage(this, "defaultTo", v => ((None)v).DefaultTo());
       }
 
@@ -40,11 +39,7 @@ namespace Orange.Library.Values
 
       public Value FlatMap() => this;
 
-      public static Value Value()
-      {
-         Assert(false, "None", "None has no value");
-         return null;
-      }
+      public static Value Value() => throw "None".ThrowsWithLocation(() => "Non has no value");
 
       public Value DefaultTo()
       {
@@ -54,16 +49,9 @@ namespace Orange.Library.Values
             return value;
          }
 
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return NullValue;
-            }
-
-            return block.Evaluate();
-         }
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         return block == null ? NullValue : block.Evaluate();
       }
 
       public override string ToString() => "none";

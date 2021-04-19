@@ -32,32 +32,32 @@ namespace OrangePlayground
 {
    public partial class Playground : Form
    {
-      const string MENU_FILE = "File";
-      const string MENU_EDIT = "Edit";
-      const string MENU_BUILD = "Build";
-      const string MENU_TEXT = "Text";
-      const string MENU_INSERT = "Insert";
+      protected const string MENU_FILE = "File";
+      protected const string MENU_EDIT = "Edit";
+      protected const string MENU_BUILD = "Build";
+      protected const string MENU_TEXT = "Text";
+      protected const string MENU_INSERT = "Insert";
 
-      Document document;
-      TextBoxConsole outputConsole;
-      TextBoxConsole errorConsole;
-      TextWriter errorWriter;
-      TextWriter consoleWriter;
-      TextReader textReader;
-      bool locked;
-      bool manual;
-      Stopwatch stopwatch;
-      InteractiveFileCache fileCache;
-      Settings settings;
-      Hash<int, string> results;
-      int[] tabStops;
-      Menus menus;
+      protected Document document;
+      protected TextBoxConsole outputConsole;
+      protected TextBoxConsole errorConsole;
+      protected TextWriter errorWriter;
+      protected TextWriter consoleWriter;
+      protected TextReader textReader;
+      protected bool locked;
+      protected bool manual;
+      protected Stopwatch stopwatch;
+      protected InteractiveFileCache fileCache;
+      protected Settings settings;
+      protected Hash<int, string> results;
+      protected int[] tabStops;
+      protected Menus menus;
 
       public Playground() => InitializeComponent();
 
       public IMaybe<FileName> PassedFileName { get; set; } = none<FileName>();
 
-      static IMaybe<FileName> getSettingsFile()
+      protected static IMaybe<FileName> getSettingsFile()
       {
          FolderName folder = @"C:\Enterprise\Configurations\Orange";
          var file = folder + "orange.json";
@@ -70,7 +70,7 @@ namespace OrangePlayground
          return maybe(file.Exists(), () => file);
       }
 
-      static FolderName getSettingsFolder()
+      protected static FolderName getSettingsFolder()
       {
          FolderName folder = @"C:\Enterprise\Configurations\Orange";
          if (folder.Exists())
@@ -79,19 +79,15 @@ namespace OrangePlayground
          }
 
          folder = @"C:\Configurations";
-         if (folder.Exists())
-         {
-            return folder;
-         }
 
-         return FolderName.Current;
+         return folder.Exists() ? folder : FolderName.Current;
       }
 
-      static Settings getSettings() => getSettingsFile().Map(f => DeserializeObject<Settings>(f.Text)).DefaultTo(() => new Settings());
+      protected static Settings getSettings() => getSettingsFile().Map(f => DeserializeObject<Settings>(f.Text)).DefaultTo(() => new Settings());
 
-      void Playground_Load(object sender, EventArgs e)
+      protected void Playground_Load(object sender, EventArgs e)
       {
-         results = new AutoHash<int, string>(k => "");
+         results = new AutoHash<int, string>(_ => "");
          settings = getSettings();
 
          errorConsole = new TextBoxConsole(this, textErrors, settings.ErrorFont, settings.ErrorFontSize, TextBoxConsole.ConsoleColorType.Cathode);
@@ -116,22 +112,22 @@ namespace OrangePlayground
             document = new Document(this, textEditor, ".orange", "Orange", settings.EditorFont, settings.EditorFontSize);
             document.StandardMenus();
             menus = document.Menus;
-            menus.Menu(MENU_FILE, "Set Current Folder", (s, evt) => setCurrentFolder());
+            menus.Menu(MENU_FILE, "Set Current Folder", (_, _) => setCurrentFolder());
 
-            menus.Menu(MENU_EDIT, "Duplicate", (s, evt) => duplicate(), "^D");
-            menus.Menu(MENU_EDIT, "Indent", (s, evt) => indent(), "^I");
-            menus.Menu(MENU_EDIT, "Unindent", (s, evt) => unindent(), "^%I");
+            menus.Menu(MENU_EDIT, "Duplicate", (_, _) => duplicate(), "^D");
+            menus.Menu(MENU_EDIT, "Indent", (_, _) => indent(), "^I");
+            menus.Menu(MENU_EDIT, "Unindent", (_, _) => unindent(), "^%I");
 
             menus.Menu($"&{MENU_BUILD}");
-            menus.Menu(MENU_BUILD, "Run", (s, evt) => run(), "F5");
-            menus.Menu(MENU_BUILD, "Manual", (s, evt) =>
+            menus.Menu(MENU_BUILD, "Run", (_, _) => run(), "F5");
+            menus.Menu(MENU_BUILD, "Manual", (s, _) =>
             {
                manual = !manual;
                ((ToolStripMenuItem)s).Checked = manual;
             }, "^F5");
 
             menus.Menu($"&{MENU_TEXT}");
-            menus.Menu(MENU_TEXT, "Clipboard -> Text", (s, evt) =>
+            menus.Menu(MENU_TEXT, "Clipboard -> Text", (_, _) =>
             {
                if (ClipboardText().If(out var clipboardText))
                {
@@ -148,7 +144,7 @@ namespace OrangePlayground
                   tabs.SelectedTab = tabText;
                }
             }, "^|V");
-            menus.Menu(MENU_TEXT, "Clipboard -> Append to Text", (s, evt) =>
+            menus.Menu(MENU_TEXT, "Clipboard -> Append to Text", (_, _) =>
             {
                if (ClipboardText().If(out var clipboardText))
                {
@@ -157,7 +153,7 @@ namespace OrangePlayground
                   tabs.SelectedTab = tabText;
                }
             });
-            menus.Menu(MENU_TEXT, "Clipboard -> Text & Run", (s, evt) =>
+            menus.Menu(MENU_TEXT, "Clipboard -> Text & Run", (_, _) =>
             {
                if (ClipboardText().If(out var clipboardText))
                {
@@ -170,13 +166,13 @@ namespace OrangePlayground
                selectedText = GetWindowsText(selectedText);
                SetText(selectedText);
             }, "F6");
-            menus.Menu(MENU_TEXT, "Text -> Clipboard", (s, evt) =>
+            menus.Menu(MENU_TEXT, "Text -> Clipboard", (_, _) =>
             {
                var text = textConsole.SelectionLength == 0 ? textConsole.Text : textConsole.SelectedText;
                text = GetWindowsText(text);
                SetText(text);
             }, "^|C");
-            menus.Menu(MENU_TEXT, "Save text to file", (s, evt) =>
+            menus.Menu(MENU_TEXT, "Save text to file", (_, _) =>
             {
                var text = textConsole.SelectionLength == 0 ? textConsole.Text : textConsole.SelectedText;
                text = GetWindowsText(text);
@@ -195,19 +191,19 @@ namespace OrangePlayground
             });
 
             menus.Menu($"&{MENU_INSERT}");
-            menus.Menu(MENU_INSERT, "println", (s, evt) => insertText("println ", 0, 0), "^P");
-            menus.Menu(MENU_INSERT, "println interpolated", (s, evt) => insertText("println $\"\"", -1, 0), "^%P");
-            menus.Menu(MENU_INSERT, "print", (s, evt) => insertText("print ", 0, 0));
-            menus.Menu(MENU_INSERT, "manifln", (s, evt) => insertText("manifln ", 0, 0), "^M");
-            menus.Menu(MENU_INSERT, "manif", (s, evt) => insertText("manif", 0, 0));
-            menus.Menu(MENU_INSERT, "put", (s, evt) => insertText("put ", 0, 0));
-            menus.Menu(MENU_INSERT, "peek", (s, evt) => surround("peek(", ")"), "^K");
+            menus.Menu(MENU_INSERT, "println", (_, _) => insertText("println ", 0, 0), "^P");
+            menus.Menu(MENU_INSERT, "println interpolated", (_, _) => insertText("println $\"\"", -1, 0), "^%P");
+            menus.Menu(MENU_INSERT, "print", (_, _) => insertText("print ", 0, 0));
+            menus.Menu(MENU_INSERT, "manifln", (_, _) => insertText("manifln ", 0, 0), "^M");
+            menus.Menu(MENU_INSERT, "manif", (_, _) => insertText("manif", 0, 0));
+            menus.Menu(MENU_INSERT, "put", (_, _) => insertText("put ", 0, 0));
+            menus.Menu(MENU_INSERT, "peek", (_, _) => surround("peek(", ")"), "^K");
             menus.MenuSeparator(MENU_INSERT);
-            menus.Menu(MENU_INSERT, "if template", (s, evt) => insertTemplate("if true", "true"), "^|I");
-            menus.Menu(MENU_INSERT, "while template", (s, evt) => insertTemplate("while true", "true"), "^|W");
-            menus.Menu(MENU_INSERT, "for template", (s, evt) => insertTemplate("for i in ^0", "^0"), "^|F");
-            menus.Menu(MENU_INSERT, "func template", (s, evt) => insertTemplate("func proc()", "proc"), "^|P");
-            menus.Menu(MENU_INSERT, "func template", (s, evt) => insertTemplate("func proc()", "proc"), "^|P");
+            menus.Menu(MENU_INSERT, "if template", (_, _) => insertTemplate("if true", "true"), "^|I");
+            menus.Menu(MENU_INSERT, "while template", (_, _) => insertTemplate("while true", "true"), "^|W");
+            menus.Menu(MENU_INSERT, "for template", (_, _) => insertTemplate("for i in ^0", "^0"), "^|F");
+            menus.Menu(MENU_INSERT, "func template", (_, _) => insertTemplate("func proc()", "proc"), "^|P");
+            menus.Menu(MENU_INSERT, "func template", (_, _) => insertTemplate("func proc()", "proc"), "^|P");
 
             menus.CreateMainMenu(this);
 
@@ -220,7 +216,7 @@ namespace OrangePlayground
             stopwatch = new Stopwatch();
             fileCache = new InteractiveFileCache();
 
-            textEditor.Paint += (s, evt) => paintResults(evt);
+            textEditor.Paint += (_, evt) => paintResults(evt);
 
             setManual(settings.Manual);
             if (settings.DefaultFolder != null)
@@ -244,20 +240,20 @@ namespace OrangePlayground
          }
       }
 
-      void setManual(bool value)
+      protected void setManual(bool value)
       {
          manual = value;
          ((ToolStripMenuItem)menus[MENU_BUILD].DropDownItems[1]).Checked = manual;
       }
 
-      void paintResults(PaintEventArgs e)
+      protected void paintResults(PaintEventArgs e)
       {
          try
          {
             var firstVisibleChar = textEditor.GetCharIndexFromPosition(new Point(0, 0));
             var firstVisibleLine = textEditor.GetLineFromCharIndex(firstVisibleChar);
-            var resultLines = Enumerable.Range(0, textEditor.Lines.Length).Select(l => "").ToArray();
-            var tops = Enumerable.Range(0, textEditor.Lines.Length).Select(l => 0f).ToArray();
+            var resultLines = Enumerable.Range(0, textEditor.Lines.Length).Select(_ => "").ToArray();
+            var tops = Enumerable.Range(0, textEditor.Lines.Length).Select(_ => 0f).ToArray();
             foreach (var (key, value) in results)
             {
                var lineIndex = textEditor.GetLineFromCharIndex(key);
@@ -317,14 +313,16 @@ namespace OrangePlayground
                }
             }
          }
-         catch { }
+         catch
+         {
+         }
       }
 
-      static Rectangle getRectangle(RectangleF rect) => new Rectangle((int)rect.Left, (int)rect.Top, (int)rect.Width, (int)rect.Height);
+      protected static Rectangle getRectangle(RectangleF rect) => new((int)rect.Left, (int)rect.Top, (int)rect.Width, (int)rect.Height);
 
-      static Size getSize(SizeF size) => new Size((int)size.Width, (int)size.Height);
+      protected static Size getSize(SizeF size) => new((int)size.Width, (int)size.Height);
 
-      void duplicate()
+      protected void duplicate()
       {
          var dupLine = "";
 
@@ -350,21 +348,18 @@ namespace OrangePlayground
          textEditor.AppendAtEnd(dupLine, "/n");
       }
 
-      static void setCurrentFolder()
+      protected static void setCurrentFolder()
       {
-         using (var dialog = new FolderBrowserDialog())
+         using var dialog = new FolderBrowserDialog { SelectedPath = FolderName.Current.ToString() };
+         if (dialog.ShowDialog() == DialogResult.OK)
          {
-            dialog.SelectedPath = FolderName.Current.ToString();
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-               FolderName.Current = dialog.SelectedPath;
-            }
+            FolderName.Current = dialog.SelectedPath;
          }
       }
 
-      void run() => update(true, true);
+      protected void run() => update(true, true);
 
-      void update(bool execute, bool fromMenu)
+      protected void update(bool execute, bool fromMenu)
       {
          if (locked || textEditor.TextLength == 0)
          {
@@ -429,7 +424,7 @@ namespace OrangePlayground
          }
       }
 
-      void displayException(Exception exception)
+      protected void displayException(Exception exception)
       {
          errorWriter.WriteLine(exception.Message);
          consoleWriter.WriteLine("Dumping print buffer:");
@@ -438,7 +433,7 @@ namespace OrangePlayground
          textEditor.Select();
       }
 
-      void textEditor_TextChanged(object sender, EventArgs e)
+      protected void textEditor_TextChanged(object sender, EventArgs e)
       {
          if (document == null)
          {
@@ -449,7 +444,7 @@ namespace OrangePlayground
          document.Dirty();
       }
 
-      void insertText(string text, int selectionOffset, int length = -1)
+      protected void insertText(string text, int selectionOffset, int length = -1)
       {
          textEditor.SelectedText = text;
          textEditor.SelectionStart += selectionOffset;
@@ -459,14 +454,14 @@ namespace OrangePlayground
          }
       }
 
-      void surround(string before, string after)
+      protected void surround(string before, string after)
       {
          var selected = textEditor.SelectedText;
          var replacement = $"{before}{selected}{after}";
          textEditor.SelectedText = replacement;
       }
 
-      void insertDelimiterText(string delimiter, int selectionOffset, int length, int halfLength = -1)
+      protected void insertDelimiterText(string delimiter, int selectionOffset, int length, int halfLength = -1)
       {
          if (textEditor.SelectionLength == 0)
          {
@@ -484,18 +479,18 @@ namespace OrangePlayground
          }
       }
 
-      string textAtInsert(int take, int skip = 0) => textEditor.Text.Drop(textEditor.SelectionStart + skip).Keep(take);
+      protected string textAtInsert(int take, int skip = 0) => textEditor.Text.Drop(textEditor.SelectionStart + skip).Keep(take);
 
-      void setTextAtInsert(int take, int skip = 0, string text = "")
+      protected void setTextAtInsert(int take, int skip = 0, string text = "")
       {
          textEditor.Select(textEditor.SelectionStart + skip, take);
          textEditor.SelectedText = text;
          textEditor.Select(textEditor.SelectionStart + skip, 0);
       }
 
-      void moveSelectionRelative(int amount = 1) => textEditor.SelectionStart += amount;
+      protected void moveSelectionRelative(int amount = 1) => textEditor.SelectionStart += amount;
 
-      void textEditor_KeyPress(object sender, KeyPressEventArgs e)
+      protected void textEditor_KeyPress(object sender, KeyPressEventArgs e)
       {
          switch (e.KeyChar)
          {
@@ -584,7 +579,7 @@ namespace OrangePlayground
          }
       }
 
-      void Playground_FormClosing(object sender, FormClosingEventArgs e)
+      protected void Playground_FormClosing(object sender, FormClosingEventArgs e)
       {
          if (document.FileName.If(out var fileName))
          {
@@ -604,7 +599,7 @@ namespace OrangePlayground
          }
       }
 
-      void textEditor_KeyUp(object sender, KeyEventArgs e)
+      protected void textEditor_KeyUp(object sender, KeyEventArgs e)
       {
          switch (e.KeyCode)
          {
@@ -667,20 +662,20 @@ namespace OrangePlayground
          }
       }
 
-      IMaybe<string> getWord()
+      protected IMaybe<string> getWord()
       {
          var startIndex = textEditor.SelectionStart;
          var begin = textEditor.Text.Keep(startIndex);
          return begin.Matcher("/(/w+) $").Map(m => m.FirstGroup);
       }
 
-      IMaybe<string> findWord(string begin)
+      protected IMaybe<string> findWord(string begin)
       {
          var matches = textEditor.Text.Split("-/w+").Distinct().Where(word => word.StartsWith(begin));
          return matches.FirstOrNone();
       }
 
-      void matchPass(bool first)
+      protected void matchPass(bool first)
       {
          if (textEditor.Text.Matcher("/b 'pass' /b").If(out var matcher))
          {
@@ -689,9 +684,9 @@ namespace OrangePlayground
          }
       }
 
-      string getIndent() => textEditor.CurrentLine().Matcher("^ /t*").Map(m => m[0]).DefaultTo(() => "");
+      protected string getIndent() => textEditor.CurrentLine().Matcher("^ /t*").Map(m => m[0]).DefaultTo(() => "");
 
-      void insertTemplate(string template, string replacement)
+      protected void insertTemplate(string template, string replacement)
       {
          var indent = getIndent();
          var expandedTemplate = $"{indent}{template}\n{indent}\tpass";
@@ -707,14 +702,14 @@ namespace OrangePlayground
          }
       }
 
-      void insertPass()
+      protected void insertPass()
       {
          var indent = getIndent();
          var text = $"\n{indent}\tpass";
          insertText(text, -text.Length, 0);
       }
 
-      IMaybe<(string[], int)> linesFromSelection()
+      protected IMaybe<(string[], int)> linesFromSelection()
       {
          var startIndex = textEditor.GetLineFromCharIndex(textEditor.SelectionStart);
          var stopIndex = textEditor.GetLineFromCharIndex(textEditor.SelectionStart + textEditor.SelectionLength);
@@ -727,7 +722,7 @@ namespace OrangePlayground
          return none<(string[], int)>();
       }
 
-      void indent()
+      protected void indent()
       {
          try
          {
@@ -750,7 +745,7 @@ namespace OrangePlayground
          }
       }
 
-      void unindent()
+      protected void unindent()
       {
          try
          {
@@ -776,31 +771,28 @@ namespace OrangePlayground
          }
       }
 
-      (int, int) saveSelection() => (textEditor.SelectionStart, textEditor.SelectionLength);
+      protected (int, int) saveSelection() => (textEditor.SelectionStart, textEditor.SelectionLength);
 
-      void restoreSelection((int start, int length) saved) => textEditor.Select(saved.start, saved.length);
+      protected void restoreSelection((int start, int length) saved) => textEditor.Select(saved.start, saved.length);
 
-      void textEditor_VScroll(object sender, EventArgs e)
+      protected void textEditor_VScroll(object sender, EventArgs e)
       {
          try
          {
-            /*            var currentLine = textEditor.CurrentLineIndex();
-                        var position = textResults.GetFirstCharIndexFromLine(currentLine);
-                        if (position < 0)
-                           return;
-
-                        textResults.Select(position, 0);*/
          }
-         catch { }
+         catch
+         {
+         }
       }
 
-      void textResults_SelectionChanged(object sender, EventArgs e)
+      protected void textResults_SelectionChanged(object sender, EventArgs e)
       {
          try
          {
-            //labelResult.Text = textResults.CurrentLine();
          }
-         catch { }
+         catch
+         {
+         }
       }
    }
 }

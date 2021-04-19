@@ -1,17 +1,17 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
    public class DefineExpression : Verb, IStatement
    {
-      const string LOCATION = "Define expression";
+      protected const string LOCATION = "Define expression";
 
-      string fieldName;
-      Thunk thunk;
-      string result;
+      protected string fieldName;
+      protected Thunk thunk;
+      protected string result;
 
       public DefineExpression(string fieldName, Thunk thunk)
       {
@@ -22,10 +22,11 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         Reject(Regions.FieldExists(fieldName), LOCATION, $"Field {fieldName} is already defined");
+         Regions.FieldExists(fieldName).Must().Not.BeTrue().OrThrow(LOCATION, () => $"Field {fieldName} is already defined");
          Regions.CreateReadOnlyVariable(fieldName);
          Regions[fieldName] = thunk;
          result = thunk.ToString();
+
          return null;
       }
 

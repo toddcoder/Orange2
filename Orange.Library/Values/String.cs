@@ -31,9 +31,9 @@ namespace Orange.Library.Values
 {
    public class String : Value, IRepeatable, INSGeneratorSource
    {
-      const string LOCATION = "String";
-      const string REGEX_ALPHA = "^ {A-Za-z} $";
-      const string REGEX_ALPHANUM = "^ {A-Za-z0-9} $";
+      protected const string LOCATION = "String";
+      protected const string REGEX_ALPHA = "^ {A-Za-z} $";
+      protected const string REGEX_ALPHANUM = "^ {A-Za-z0-9} $";
 
       public static string Pad(int width, string padding)
       {
@@ -91,15 +91,17 @@ namespace Orange.Library.Values
 
       public String(string text)
       {
-         RejectNull(text, LOCATION, "String not set");
+         text.Must().Not.BeNull().OrThrow(LOCATION, () => "String not set");
          this.text = text;
       }
 
-      public String() : this("") { }
+      public String() : this("")
+      {
+      }
 
       protected virtual string getText()
       {
-         RejectNull(text, LOCATION, "String not set");
+         text.Must().Not.BeNull().OrThrow(LOCATION, () => "String not set");
          return text;
       }
 
@@ -242,7 +244,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "top", v => ((String)v).Unshift());
          manager.RegisterMessage(this, "read", v => ((String)v).Shift());
          manager.RegisterMessage(this, "trunc", v => ((String)v).Truncate());
-         manager.RegisterMessage(this, "ask", v => Ask());
+         manager.RegisterMessage(this, "ask", _ => Ask());
          manager.RegisterMessage(this, "get", v => ((String)v).Get());
          manager.RegisterMessage(this, "frecs", v => ((String)v).FRecs());
          manager.RegisterMessage(this, "lines", v => ((String)v).Lines());
@@ -401,7 +403,7 @@ namespace Orange.Library.Values
          }
 
          var result = records[0];
-         text = records.Where((record, i) => i > 0).ToString(State.RecordSeparator.text);
+         text = records.Where((_, i) => i > 0).ToString(State.RecordSeparator.text);
          return result;
       }
 
@@ -429,20 +431,15 @@ namespace Orange.Library.Values
             }
          }
 
-         switch (message)
+         return message switch
          {
-            case "smap":
-            case "for":
-               return new Array
-               {
-                  this
-               };
-         }
-
-         return Number;
+            "smap" => new Array { this },
+            "for" => new Array { this },
+            _ => Number
+         };
       }
 
-      char[] getTrimChars()
+      protected char[] getTrimChars()
       {
          var value = Arguments[0];
          return value.IsEmpty ? null : Runtime.Expand(value.Text).ToCharArray();
@@ -587,10 +584,10 @@ namespace Orange.Library.Values
          return this;
       }
 
-      Buffer getBuffer(string messageName)
+      protected Buffer getBuffer(string messageName)
       {
          var variableName = Arguments[0].Text;
-         Assert(variableName.IsNotEmpty(), LOCATION, $"Need a variable name for {messageName}");
+         variableName.Must().Not.BeNullOrEmpty().OrThrow(LOCATION, () => $"Need a variable name for {messageName}");
          var value = Regions[variableName];
          Buffer buffer;
          if (value.Type != ValueType.Buffer)
@@ -622,7 +619,7 @@ namespace Orange.Library.Values
          return result.ToString();
       }
 
-      static string squeeze(string text, string needle)
+      protected static string squeeze(string text, string needle)
       {
          if (needle.IsEmpty())
          {
@@ -755,11 +752,11 @@ namespace Orange.Library.Values
          return "";
       }
 
-      string[] getRecords() => State.RecordPattern.Split(getText());
+      protected string[] getRecords() => State.RecordPattern.Split(getText());
 
       public Value First() => getText().Keep(1);
 
-      public Value NotFirst() => new Array(getRecords().Where((s, i) => i != 0).ToArray());
+      public Value NotFirst() => new Array(getRecords().Where((_, i) => i != 0).ToArray());
 
       public Value Last() => getText().Drop(getText().Length - 1).Keep(1);
 
@@ -767,14 +764,14 @@ namespace Orange.Library.Values
       {
          var records = getRecords();
          var last = records.Length - 1;
-         return new Array(records.Where((s, i) => i != last).ToArray());
+         return new Array(records.Where((_, i) => i != last).ToArray());
       }
 
       public Value Middle()
       {
          var records = getRecords();
          var last = records.Length - 1;
-         return new Array(records.Where((s, i) => i != 0 && i != last).ToArray());
+         return new Array(records.Where((_, i) => i != 0 && i != last).ToArray());
       }
 
       public Value NotMiddle()
@@ -894,9 +891,9 @@ namespace Orange.Library.Values
          return -1;
       }
 
-      static string getPadding(string text, string padding = " ") => text.IsEmpty() ? padding : text.Substring(0, 1);
+      protected static string getPadding(string text, string padding = " ") => text.IsEmpty() ? padding : text.Substring(0, 1);
 
-      static char getPaddingAsChar(string text, string padding = " ") => getPadding(text, padding)[0];
+      protected static char getPaddingAsChar(string text, string padding = " ") => getPadding(text, padding)[0];
 
       public Value CompareTo()
       {
@@ -932,7 +929,7 @@ namespace Orange.Library.Values
 
       public Value Reverse() => getText().Reverse();
 
-      Value indexOf(string needle, int start)
+      protected Value indexOf(string needle, int start)
       {
          var str = getText();
          if (start >= str.Length)
@@ -941,10 +938,10 @@ namespace Orange.Library.Values
          }
 
          var index = str.IndexOf(needle, start, Ordinal);
-         return index == -1 ? (Value)None.NoneValue : new Some(index);
+         return index == -1 ? None.NoneValue : new Some(index);
       }
 
-      static Value indexBackOf(string str, string needle, int start)
+      protected static Value indexBackOf(string str, string needle, int start)
       {
          if (start >= str.Length)
          {
@@ -952,7 +949,7 @@ namespace Orange.Library.Values
          }
 
          var index = str.LastIndexOf(needle, start, Ordinal);
-         return index == -1 ? (Value)None.NoneValue : new Some(index);
+         return index == -1 ? None.NoneValue : new Some(index);
       }
 
       public Value Find()
@@ -1173,7 +1170,7 @@ namespace Orange.Library.Values
          return NilValue;
       }
 
-      string charMap(string from, string to, bool ignore)
+      protected string charMap(string from, string to, bool ignore)
       {
          from = Runtime.Expand(from);
          to = Runtime.Expand(to);
@@ -1314,11 +1311,11 @@ namespace Orange.Library.Values
          return targetMatcher.ToString();
       }
 
-      static bool isAllCaps(string subject) => subject.ToUpper() == subject;
+      protected static bool isAllCaps(string subject) => subject.ToUpper() == subject;
 
-      static bool isAllLower(string subject) => subject.ToLower() == subject;
+      protected static bool isAllLower(string subject) => subject.ToLower() == subject;
 
-      static string convertWord(string subject, string target)
+      protected static string convertWord(string subject, string target)
       {
          if (isAllCaps(subject))
          {
@@ -1625,13 +1622,14 @@ namespace Orange.Library.Values
       public Value Ref()
       {
          var str = text;
-         Reject(str.IsEmpty(), LOCATION, "Variable can't be created from an empty string");
+         str.Must().Not.BeNullOrEmpty().OrThrow(LOCATION, () => "Variable can't be created from an empty string");
+
          return new Variable(str);
       }
 
       public static Value Ask()
       {
-         RejectNull(State.Asker == null, LOCATION, "Asker not set");
+         State.Asker.Must().Not.BeNull().OrThrow(LOCATION, () => "Asker not set");
          return State.Asker();
       }
 
@@ -1650,14 +1648,9 @@ namespace Orange.Library.Values
 
       public Value Unstring()
       {
-         var destringifier = new Destringifier(getText())
-         {
-            SingleQuote = '\'',
-            DoubleQuote = '"',
-            Escape = '`'
-         };
-         var destringified = destringifier.Parse();
-         var array = new Array(destringifier.Strings);
+         var delimitedText = new DelimitedText("[quote]", "[quote]", "'`'");
+         var destringified = delimitedText.Destringify(getText());
+         var array = new Array(delimitedText.Strings.Select(s => (String)s));
          if (Arguments.Executable.CanExecute)
          {
             var block = Arguments.Executable;
@@ -1670,7 +1663,7 @@ namespace Orange.Library.Values
             var result = block.Evaluate();
             result = State.UseReturnValue(result);
             State.UnregisterBlock();
-            return destringifier.Restring(result.Text, true);
+            return delimitedText.Restringify(result.Text, RestringifyQuotes.None);
          }
 
          return new Array { destringified, array };
@@ -1738,13 +1731,12 @@ namespace Orange.Library.Values
          for (var i = 0; i < STRING_ACCENTS.Length; i += 3)
          {
             var start = 0;
-            var index = 0;
             Slicer slicer = str;
             var search = STRING_ACCENTS.Substring(i, 2);
             var replacement = STRING_ACCENTS.Substring(i + 2, 1);
             while (start < slicer.Length)
             {
-               index = slicer.ToString().IndexOf(search, start, Ordinal);
+               var index = slicer.ToString().IndexOf(search, start, Ordinal);
                slicer.Reset();
                if (index <= -1)
                {
@@ -1835,7 +1827,9 @@ namespace Orange.Library.Values
       {
          var includeQuotes = Arguments[0].IsTrue;
          var str = getText();
+#pragma warning disable 618
          var destringifier = new Destringifier(str);
+#pragma warning restore 618
          var parsed = destringifier.Parse();
          var split = State.FieldPattern.Split(parsed);
          for (var i = 0; i < split.Length; i++)
@@ -1874,9 +1868,9 @@ namespace Orange.Library.Values
          return this;
       }
 
-      public Array ToArray() => new Array(toArray());
+      public Array ToArray() => new(toArray());
 
-      string[] toArray() => getText().Select(c => c.ToString()).ToArray();
+      protected string[] toArray() => getText().Select(c => c.ToString()).ToArray();
 
       public Value Date() => new Date(this);
 
@@ -1976,273 +1970,261 @@ namespace Orange.Library.Values
 
       public Value Map()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.LoopParameters();
-
-            var builder = new StringBuilder();
-
-            var str = getText();
-            for (var i = 0; i < str.Length; i++)
-            {
-               var ch = str[i];
-               var s = ch.ToString();
-               assistant.SetLoopParameters(s, i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return builder.ToString();
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (value.IsNil)
-               {
-                  continue;
-               }
-
-               foreach (var newChar in value.Text)
-               {
-                  builder.Append(newChar);
-               }
-            }
-
-            return builder.ToString();
+            return this;
          }
+
+         assistant.LoopParameters();
+
+         var builder = new StringBuilder();
+
+         var str = getText();
+         for (var i = 0; i < str.Length; i++)
+         {
+            var ch = str[i];
+            var s = ch.ToString();
+            assistant.SetLoopParameters(s, i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return builder.ToString();
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (value.IsNil)
+            {
+               continue;
+            }
+
+            foreach (var newChar in value.Text)
+            {
+               builder.Append(newChar);
+            }
+         }
+
+         return builder.ToString();
       }
 
       public Value Skip() => getText().Drop(Arguments[0].Int);
 
       public Value SkipWhile()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.LoopParameters();
-
-            var str = getText();
-            for (var i = 0; i < str.Length; i++)
-            {
-               var ch = str[i];
-               var s = ch.ToString();
-               assistant.SetLoopParameters(s, i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return "";
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (!value.IsTrue)
-               {
-                  return str.Substring(i);
-               }
-            }
-
-            return getText();
+            return this;
          }
+
+         assistant.LoopParameters();
+
+         var str = getText();
+         for (var i = 0; i < str.Length; i++)
+         {
+            var ch = str[i];
+            var s = ch.ToString();
+            assistant.SetLoopParameters(s, i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return "";
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (!value.IsTrue)
+            {
+               return str.Substring(i);
+            }
+         }
+
+         return getText();
       }
 
       public Value SkipUntil()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.LoopParameters();
-
-            var str = getText();
-            for (var i = 0; i < str.Length; i++)
-            {
-               var ch = str[i];
-               var s = ch.ToString();
-               assistant.SetLoopParameters(s, i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return "";
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (value.IsTrue)
-               {
-                  return str.Substring(i);
-               }
-            }
-
-            return getText();
+            return this;
          }
+
+         assistant.LoopParameters();
+
+         var str = getText();
+         for (var i = 0; i < str.Length; i++)
+         {
+            var ch = str[i];
+            var s = ch.ToString();
+            assistant.SetLoopParameters(s, i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return "";
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (value.IsTrue)
+            {
+               return str.Substring(i);
+            }
+         }
+
+         return getText();
       }
 
       public Value Take() => getText().Keep(Arguments[0].Int);
 
       public Value TakeWhile()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.LoopParameters();
-
-            var str = getText();
-            for (var i = 0; i < str.Length; i++)
-            {
-               var ch = str[i];
-               var s = ch.ToString();
-               assistant.SetLoopParameters(s, i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return "";
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (!value.IsTrue)
-               {
-                  return str.Substring(0, i);
-               }
-            }
-
-            return getText();
+            return this;
          }
+
+         assistant.LoopParameters();
+
+         var str = getText();
+         for (var i = 0; i < str.Length; i++)
+         {
+            var ch = str[i];
+            var s = ch.ToString();
+            assistant.SetLoopParameters(s, i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return "";
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (!value.IsTrue)
+            {
+               return str.Substring(0, i);
+            }
+         }
+
+         return getText();
       }
 
       public Value TakeUntil()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.LoopParameters();
-
-            var str = getText();
-            for (var i = 0; i < str.Length; i++)
-            {
-               var ch = str[i];
-               var s = ch.ToString();
-               assistant.SetLoopParameters(s, i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return "";
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (value.IsTrue)
-               {
-                  return str.Substring(0, i);
-               }
-            }
-
-            return getText();
+            return this;
          }
+
+         assistant.LoopParameters();
+
+         var str = getText();
+         for (var i = 0; i < str.Length; i++)
+         {
+            var ch = str[i];
+            var s = ch.ToString();
+            assistant.SetLoopParameters(s, i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return "";
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (value.IsTrue)
+            {
+               return str.Substring(0, i);
+            }
+         }
+
+         return getText();
       }
 
       public Value If()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.LoopParameters();
-
-            var builder = new StringBuilder();
-
-            var str = getText();
-            for (var i = 0; i < str.Length; i++)
-            {
-               var ch = str[i];
-               var s = ch.ToString();
-               assistant.SetLoopParameters(s, i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return builder.ToString();
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (value.IsTrue)
-               {
-                  builder.Append(ch);
-               }
-            }
-
-            return builder.ToString();
+            return this;
          }
+
+         assistant.LoopParameters();
+
+         var builder = new StringBuilder();
+
+         var str = getText();
+         for (var i = 0; i < str.Length; i++)
+         {
+            var ch = str[i];
+            var s = ch.ToString();
+            assistant.SetLoopParameters(s, i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return builder.ToString();
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (value.IsTrue)
+            {
+               builder.Append(ch);
+            }
+         }
+
+         return builder.ToString();
       }
 
       public Value ToList() => List.FromArray(new Array(getText().ToCharArray().Select(c => c.ToString()).ToArray()));
@@ -2264,46 +2246,65 @@ namespace Orange.Library.Values
       {
          var str = getText();
 
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null || str.Length == 0)
          {
-            var block = assistant.Block();
-            if (block == null || str.Length == 0)
-            {
-               return assistant.NilOrClosure;
-            }
+            return assistant.NilOrClosure;
+         }
 
-            if (str.Length == 1)
-            {
-               return str[0];
-            }
+         if (str.Length == 1)
+         {
+            return str[0];
+         }
 
-            assistant.TwoValueParameters();
+         assistant.TwoValueParameters();
 
-            var values = toArray();
+         var values = toArray();
 
-            Value initialValue;
-            Value secondValue;
-            int start;
-            var initialFromArguments = Arguments[0];
-            if (initialFromArguments.IsEmpty)
-            {
-               initialValue = values[0];
-               secondValue = values[1];
-               start = 2;
-            }
-            else
-            {
-               initialValue = initialFromArguments;
-               secondValue = values[0];
-               start = 1;
-            }
+         Value initialValue;
+         Value secondValue;
+         int start;
+         var initialFromArguments = Arguments[0];
+         if (initialFromArguments.IsEmpty)
+         {
+            initialValue = values[0];
+            secondValue = values[1];
+            start = 2;
+         }
+         else
+         {
+            initialValue = initialFromArguments;
+            secondValue = values[0];
+            start = 1;
+         }
 
-            assistant.SetParameterValues(initialValue, secondValue);
-            var value = block.Evaluate();
-            var signal = Signal();
+         assistant.SetParameterValues(initialValue, secondValue);
+         var value = block.Evaluate();
+         var signal = Signal();
+         if (signal == Breaking)
+         {
+            return value;
+         }
+
+         switch (signal)
+         {
+            case ReturningNull:
+               return null;
+            case Continuing:
+               return value;
+         }
+
+         value.Must().Not.BeNull().OrThrow(LOCATION, () => "Scalar block must return a value");
+
+         for (var i = start; i < values.Length; i++)
+         {
+            assistant.SetParameterValues(value, values[i]);
+            value = block.Evaluate();
+            signal = Signal();
             if (signal == Breaking)
             {
-               return value;
+               break;
             }
 
             switch (signal)
@@ -2311,81 +2312,79 @@ namespace Orange.Library.Values
                case ReturningNull:
                   return null;
                case Continuing:
-                  return value;
+                  continue;
             }
 
-            RejectNull(value, LOCATION, "Scalar block must return a value");
-
-            for (var i = start; i < values.Length; i++)
-            {
-               assistant.SetParameterValues(value, values[i]);
-               value = block.Evaluate();
-               signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ReturningNull:
-                     return null;
-                  case Continuing:
-                     continue;
-               }
-
-               RejectNull(value, LOCATION, "Scalar block must return a value");
-            }
-
-            return value;
+            value.Must().Not.BeNull().OrThrow(LOCATION, () => "Scalar block must return a value");
          }
+
+         return value;
       }
 
       public Value FoldR()
       {
          var str = getText();
 
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null || str.Length == 0)
          {
-            var block = assistant.Block();
-            if (block == null || str.Length == 0)
-            {
-               return assistant.NilOrClosure;
-            }
+            return assistant.NilOrClosure;
+         }
 
-            if (str.Length == 1)
-            {
-               return str[0];
-            }
+         if (str.Length == 1)
+         {
+            return str[0];
+         }
 
-            assistant.TwoValueParameters();
+         assistant.TwoValueParameters();
 
-            var values = toArray();
+         var values = toArray();
 
-            Value initialValue;
-            Value secondValue;
-            int start;
-            var init = values.Length - 1;
-            var initialFromArguments = Arguments[0];
-            if (initialFromArguments.IsEmpty)
-            {
-               initialValue = values[init];
-               secondValue = values[init - 1];
-               start = init - 2;
-            }
-            else
-            {
-               initialValue = initialFromArguments;
-               secondValue = values[init];
-               start = init - 1;
-            }
+         Value initialValue;
+         Value secondValue;
+         int start;
+         var init = values.Length - 1;
+         var initialFromArguments = Arguments[0];
+         if (initialFromArguments.IsEmpty)
+         {
+            initialValue = values[init];
+            secondValue = values[init - 1];
+            start = init - 2;
+         }
+         else
+         {
+            initialValue = initialFromArguments;
+            secondValue = values[init];
+            start = init - 1;
+         }
 
-            assistant.SetParameterValues(secondValue, initialValue);
-            var value = block.Evaluate();
-            var signal = Signal();
+         assistant.SetParameterValues(secondValue, initialValue);
+         var value = block.Evaluate();
+         var signal = Signal();
+         if (signal == Breaking)
+         {
+            return value;
+         }
+
+         switch (signal)
+         {
+            case ReturningNull:
+               return null;
+            case Continuing:
+               return value;
+         }
+
+         value.Must().Not.BeNull().OrThrow(LOCATION, () => "Scalar block must return a value");
+
+         for (var i = start; i > -1; i--)
+         {
+            assistant.SetParameterValues(values[i], value);
+            value = block.Evaluate();
+            signal = Signal();
             if (signal == Breaking)
             {
-               return value;
+               break;
             }
 
             switch (signal)
@@ -2393,34 +2392,13 @@ namespace Orange.Library.Values
                case ReturningNull:
                   return null;
                case Continuing:
-                  return value;
+                  continue;
             }
 
-            RejectNull(value, LOCATION, "Scalar block must return a value");
-
-            for (var i = start; i > -1; i--)
-            {
-               assistant.SetParameterValues(values[i], value);
-               value = block.Evaluate();
-               signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ReturningNull:
-                     return null;
-                  case Continuing:
-                     continue;
-               }
-
-               RejectNull(value, LOCATION, "Scalar block must return a value");
-            }
-
-            return value;
+            value.Must().Not.BeNull().OrThrow(LOCATION, () => "Scalar block must return a value");
          }
+
+         return value;
       }
 
       public INSGenerator GetGenerator() => new NSGenerator(this);
@@ -2428,12 +2406,12 @@ namespace Orange.Library.Values
       public Value Next(int index)
       {
          var str = getText();
-         return index < str.Length ? (Value)str.Substring(index, 1) : NilValue;
+         return index < str.Length ? str.Substring(index, 1) : NilValue;
       }
 
       public bool IsGeneratorAvailable => true;
 
-      static int[] getSliceArguments(Value[] values, int length)
+      protected static int[] getSliceArguments(Value[] values, int length)
       {
          var list = new List<int>();
          foreach (var value in values)
@@ -2471,57 +2449,43 @@ namespace Orange.Library.Values
             return regex.Slice(getText(), index);
          }
 
-         using (var popper = new RegionPopper(new Region(), "get-item"))
+         using var popper = new RegionPopper(new Region(), "get-item");
+         popper.Push();
+         var str = getText();
+         Regions.Current.SetParameter("$", str.Length);
+         var indexes = getSliceArguments(argumentsValues, str.Length);
+         switch (indexes.Length)
          {
-            popper.Push();
-            var str = getText();
-            Regions.Current.SetParameter("$", str.Length);
-            var indexes = getSliceArguments(argumentsValues, str.Length);
-            switch (indexes.Length)
-            {
-               case 0:
-                  return "";
-               case 1:
-                  return getText().Drop(WrapIndex(indexes[0], str.Length, true)).Keep(1);
-            }
-
-            var builder = new StringBuilder();
-            foreach (var chr in indexes.Select(i => WrapIndex(i, str.Length, true)).Select(i => str.Drop(i).Keep(1)))
-            {
-               builder.Append(chr);
-            }
-
-            return builder.ToString();
+            case 0:
+               return "";
+            case 1:
+               return getText().Drop(WrapIndex(indexes[0], str.Length, true)).Keep(1);
          }
+
+         var builder = new StringBuilder();
+         foreach (var chr in indexes.Select(i => WrapIndex(i, str.Length, true)).Select(i => str.Drop(i).Keep(1)))
+         {
+            builder.Append(chr);
+         }
+
+         return builder.ToString();
       }
 
       public override IMaybe<INSGenerator> PossibleIndexGenerator() => none<INSGenerator>();
 
-      public Value IsMatch()
+      public Value IsMatch() => Arguments[0] switch
       {
-         switch (Arguments[0])
-         {
-            case Pattern pattern:
-               return SendMessage(pattern, "apply", this);
-            case Regex regex:
-               return SendMessage(regex, "match", this);
-            default:
-               return false;
-         }
-      }
+         Pattern pattern => SendMessage(pattern, "apply", this),
+         Regex regex => SendMessage(regex, "match", this),
+         _ => false
+      };
 
-      public Value IsNotMatch()
+      public Value IsNotMatch() => Arguments[0] switch
       {
-         switch (Arguments[0])
-         {
-            case Pattern pattern:
-               return SendMessage(pattern, "applyNot", this);
-            case Regex regex:
-               return SendMessage(regex, "match", this) is None;
-            default:
-               return true;
-         }
-      }
+         Pattern pattern => SendMessage(pattern, "applyNot", this),
+         Regex regex => SendMessage(regex, "match", this) is None,
+         _ => true
+      };
 
       public Value Match() => Arguments[0] is Regex regex ? regex.Match(getText()) : this;
 

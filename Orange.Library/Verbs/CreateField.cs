@@ -1,17 +1,17 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Runtime;
 using static Orange.Library.Values.Object;
 
 namespace Orange.Library.Verbs
 {
    public class CreateField : Verb, IStatement
    {
-      bool readOnly;
-      string fieldName;
-      VisibilityType visibility;
-      string type;
+      protected bool readOnly;
+      protected string fieldName;
+      protected VisibilityType visibility;
+      protected string type;
 
       public CreateField(bool readOnly, string fieldName, VisibilityType visibility)
       {
@@ -33,7 +33,7 @@ namespace Orange.Library.Verbs
       public static void CreateFieldInCurrentRegion(string fieldName, bool readOnly, VisibilityType visibility)
       {
          var current = Regions.Current;
-         Reject(current.Exists(fieldName), "Create field", $"{fieldName} already exists");
+         current.Exists(fieldName).Must().Not.BeTrue().OrThrow("Create field", () => $"{fieldName} already exists");
          if (readOnly)
          {
             current.CreateReadOnlyVariable(fieldName, visibility: visibility);

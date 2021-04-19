@@ -1,17 +1,19 @@
-﻿using Orange.Library.Values;
+﻿using Core.Assertions;
+using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
    public class AssignToField : Verb, IStatement
    {
-      string fieldName;
-      Block expression;
-      bool reference;
-      string result;
-      string typeName;
+      protected const string LOCATION = "Assign to field";
+
+      protected string fieldName;
+      protected Block expression;
+      protected bool reference;
+      protected string result;
+      protected string typeName;
 
       public AssignToField(string fieldName, Block expression, bool reference)
       {
@@ -24,7 +26,7 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         Assert(Regions.FieldExists(fieldName), "Assign to field", $"{fieldName} doesn't exist");
+         Regions.FieldExists(fieldName).Must().BeTrue().OrThrow(LOCATION, () => $"{fieldName} doesn't exist");
          var assignmentValue = expression.Evaluate().AssignmentValue();
          if (reference)
          {
@@ -34,6 +36,7 @@ namespace Orange.Library.Verbs
          Regions[fieldName] = assignmentValue;
          result = assignmentValue.ToString();
          typeName = assignmentValue.Type.ToString();
+
          return null;
       }
 

@@ -6,7 +6,7 @@ namespace Orange.Library.Verbs
 {
    public class EndOfDataAssign : Verb
    {
-      const string LOCATION = "End of data assign";
+      protected const string LOCATION = "End of data assign";
 
       public override Value Evaluate()
       {
@@ -24,8 +24,7 @@ namespace Orange.Library.Verbs
             return true;
          }
 
-         Throw(LOCATION, "Expected a variable");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => "Expected a variable");
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;

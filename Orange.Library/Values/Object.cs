@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Assertions;
 using Core.Collections;
 using Core.Enumerables;
 using Core.Monads;
@@ -22,10 +23,12 @@ namespace Orange.Library.Values
    {
       public class ObjectGenerator : NSGenerator
       {
-         Object obj;
+         protected Object obj;
 
-         public ObjectGenerator(Object generatorSource)
-            : base(generatorSource) => obj = generatorSource;
+         public ObjectGenerator(Object generatorSource) : base(generatorSource)
+         {
+            obj = generatorSource;
+         }
 
          public override void Reset() => obj.SendToSelf("reset");
 
@@ -41,35 +44,27 @@ namespace Orange.Library.Values
          Locked
       }
 
-      const string LOCATION = "Object";
+      protected const string LOCATION = "Object";
 
       public static string InvokableName(string className, bool isObj, string name)
       {
          return $"{(isObj ? "obj" : "cls")}/{className}/{name}";
       }
 
-      public static VisibilityType ParseVisibility(string text)
+      public static VisibilityType ParseVisibility(string text) => text switch
       {
-         switch (text)
-         {
-            case "hidden":
-               return Private;
-            case "inherited":
-               return Protected;
-            case "temp":
-               return Temporary;
-            case "locked":
-               return Locked;
-         }
+         "hidden" => Private,
+         "inherited" => Protected,
+         "temp" => Temporary,
+         "locked" => Locked,
+         _ => Parser.CurrentVisibility
+      };
 
-         return Parser.CurrentVisibility;
-      }
-
-      ObjectRegion region;
-      Hash<string, VisibilityType> visibilityTypes;
-      bool isObject;
-      string className;
-      bool initialized;
+      protected ObjectRegion region;
+      protected Hash<string, VisibilityType> visibilityTypes;
+      protected bool isObject;
+      protected string className;
+      protected bool initialized;
 
       public Object()
       {
@@ -93,7 +88,7 @@ namespace Orange.Library.Values
          initialized = true;
       }
 
-      void setObjectPropertyVariable(string name, ObjectPropertyVariable2 variable, Action<ObjectPropertyVariable2, IInvokable> action)
+      protected void setObjectPropertyVariable(string name, ObjectPropertyVariable2 variable, Action<ObjectPropertyVariable2, IInvokable> action)
       {
          if (!region.Variables.ContainsKey(name))
          {
@@ -105,19 +100,11 @@ namespace Orange.Library.Values
          action(variable, reference.Invokable);
       }
 
-      static Value defaultFunc(string messageName)
-      {
-         Throw(LOCATION, $"Didn't understand message {messageName}");
-         return new Nil();
-      }
+      protected static Value defaultFunc(string messageName) => throw LOCATION.ThrowsWithLocation(() => $"Didn't understand message {messageName}");
 
       public Value SendToSelf(string messageName, Arguments arguments, Func<Value> func = null)
       {
-         if (func == null)
-         {
-            func = () => defaultFunc(messageName);
-         }
-
+         func ??= () => defaultFunc(messageName);
          return RespondsTo(messageName) ? Send(this, messageName, arguments, out _) : func();
       }
 
@@ -171,8 +158,7 @@ namespace Orange.Library.Values
          if (!initialized)
          {
             handled = true;
-            Throw(LOCATION, "Object messages can't be invoked in initializer");
-            return null;
+            throw LOCATION.ThrowsWithLocation(() => "Object messages can't be invoked in initializer");
          }
 
          if (!IsPublic(messageName) && !arguments.FromSelf)
@@ -180,8 +166,7 @@ namespace Orange.Library.Values
             if (region.ContainsMessage(messageName))
             {
                handled = true;
-               Throw(LOCATION, $"Message {unmanagledMessage} is not public");
-               return null;
+               throw LOCATION.ThrowsWithLocation(() => $"Message {unmanagledMessage} is not public");
             }
 
             handled = false;
@@ -199,7 +184,7 @@ namespace Orange.Library.Values
                   var result = invoke(invokableReference, arguments.AddLambdaAsArgument());
                   return result;
                }
-               case ObjectPropertyVariable2 _:
+               case ObjectPropertyVariable2:
                   return retrieved;
                default:
                   return new ObjectVariable(this, region, messageName);
@@ -246,29 +231,27 @@ namespace Orange.Library.Values
          return region.ContainsMessage(message) && region[message] is InvokableReference reference ? reference : null;
       }
 
-      Value invoke(InvokableReference reference, Arguments arguments)
+      protected Value invoke(InvokableReference reference, Arguments arguments)
       {
          var name = $"invoking reference {reference.VariableName}";
-         using (var popper = new RegionPopper(region, name))
-         {
-            popper.Push();
-            reference.ObjectRegion = region.Some();
-            var result = reference.Invoke(arguments);
-            result = State.UseReturnValue(result);
-            return result;
-         }
+         using var popper = new RegionPopper(region, name);
+         popper.Push();
+         reference.ObjectRegion = region.Some();
+         var result = reference.Invoke(arguments);
+         result = State.UseReturnValue(result);
+
+         return result;
       }
 
       public Value Invoke(IInvokable invokable, Arguments arguments)
       {
-         using (var popper = new RegionPopper(region, "Invoking invokable"))
-         {
-            popper.Push();
-            invokable.ObjectRegion = region.Some();
-            var result = invokable.Invoke(arguments);
-            result = State.UseReturnValue(result);
-            return result;
-         }
+         using var popper = new RegionPopper(region, "Invoking invokable");
+         popper.Push();
+         invokable.ObjectRegion = region.Some();
+         var result = invokable.Invoke(arguments);
+         result = State.UseReturnValue(result);
+
+         return result;
       }
 
       public Value New()
@@ -439,10 +422,10 @@ namespace Orange.Library.Values
          return invoke(reference, arguments);
       }
 
-      InvokableReference superInvokable(string messageName)
+      protected InvokableReference superInvokable(string messageName)
       {
          var super = Super;
-         RejectNull(super, LOCATION, "Couldn't retrieve super");
+         super.Must().Not.BeNull().OrThrow(LOCATION, () => "Couldn't retrieve super");
          var name = InvokableName(super.Name, isObject, messageName);
          var reference = new InvokableReference(name);
 
@@ -522,7 +505,7 @@ namespace Orange.Library.Values
          get => region.Variables.Where(i => isComparison(i.Key, i.Value)).ToHash(i => i.Key, i => i.Value);
       }
 
-      bool isComparison(string name, Value value)
+      protected bool isComparison(string name, Value value)
       {
          if (!IsPublic(name))
          {
@@ -537,20 +520,15 @@ namespace Orange.Library.Values
          return !isBuiltIn(name);
       }
 
-      static bool isBuiltIn(string name)
+      protected static bool isBuiltIn(string name) => name switch
       {
-         switch (name)
-         {
-            case "id":
-            case "super":
-            case "self":
-            case MESSAGE_BUILDER:
-            case "class":
-               return true;
-            default:
-               return false;
-         }
-      }
+         "id" => true,
+         "super" => true,
+         "self" => true,
+         MESSAGE_BUILDER => true,
+         "class" => true,
+         _ => false
+      };
 
       public Value With()
       {
@@ -680,9 +658,9 @@ namespace Orange.Library.Values
                         return 1;
                      }
 
-                     Assert(value.Type == ValueType.Object, LOCATION, $"parse must return an Object or a nil {value}");
+                     value.Type.Must().Equal(ValueType.Object).OrThrow(LOCATION, () => $"parse must return an Object or a nil {value}");
                      obj1 = value as Object;
-                     RejectNull(obj, LOCATION, "Value must be null");
+                     obj.Must().Not.BeNull().OrThrow(LOCATION, () => "Value must be null");
 
                      if (MatchObjects(obj1, obj2, false, assigning))
                      {
@@ -713,11 +691,11 @@ namespace Orange.Library.Values
 
       public bool IsPublic(string message) => visibilityTypes[message] == Public;
 
-      bool isPrivate(string message) => visibilityTypes[message] == Private;
+      protected bool isPrivate(string message) => visibilityTypes[message] == Private;
 
-      bool isProtected(string message) => visibilityTypes[message] == Protected;
+      protected bool isProtected(string message) => visibilityTypes[message] == Protected;
 
-      bool isTemporary(string message) => visibilityTypes[message] == Temporary;
+      protected bool isTemporary(string message) => visibilityTypes[message] == Temporary;
 
       public Value IsA()
       {
@@ -728,19 +706,17 @@ namespace Orange.Library.Values
 
       public bool ImplementsInterface(Trait @interface)
       {
-         using (var popper = new RegionPopper(region, "implements-interface"))
+         using var popper = new RegionPopper(region, "implements-interface");
+         popper.Push();
+         foreach (var (key, value) in @interface.Members)
          {
-            popper.Push();
-            foreach (var (key, value) in @interface.Members)
+            if (value is Signature signature && RespondsNoDefault(key))
             {
-               if (value is Signature signature && RespondsNoDefault(key))
-               {
-                  return (!(region[key] is InvokableReference reference) || reference.MatchesSignature(signature)) && signature.Optional;
-               }
+               return (region[key] is not InvokableReference reference || reference.MatchesSignature(signature)) && signature.Optional;
             }
-
-            return true;
          }
+
+         return true;
       }
 
       public Value Members()

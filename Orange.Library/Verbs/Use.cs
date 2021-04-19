@@ -2,15 +2,14 @@
 using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
    public class Use : Verb
    {
-      const string LOCATION = "Use";
+      protected const string LOCATION = "Use";
 
-      string moduleName;
+      protected string moduleName;
 
       public Use(string moduleName) => this.moduleName = moduleName;
 
@@ -32,7 +31,7 @@ namespace Orange.Library.Verbs
          }
          else
          {
-            Throw(LOCATION, $"{value} isn't an object");
+            throw LOCATION.ThrowsWithLocation(() => $"{value} isn't an object");
          }
 
          return null;

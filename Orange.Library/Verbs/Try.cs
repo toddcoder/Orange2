@@ -7,10 +7,10 @@ namespace Orange.Library.Verbs
 {
    public class Try : Verb, IStatement
    {
-      string fieldName;
-      Block block;
-      string result;
-      string typeName;
+      protected string fieldName;
+      protected Block block;
+      protected string result;
+      protected string typeName;
 
       public Try(string fieldName, Block block)
       {
@@ -43,6 +43,8 @@ namespace Orange.Library.Verbs
 
       public int Index { get; set; }
 
+#pragma warning disable 612
       public override string ToString() => $"try {fieldName.Map(() => $"{fieldName} = ")} {block}";
+#pragma warning restore 612
    }
 }

@@ -7,7 +7,7 @@ namespace Orange.Library.Verbs
 {
    public class NSLazyRange : Verb
    {
-      const string LOCATION = "Range";
+      protected const string LOCATION = "Range";
 
       public static Value GetGenerator(Value seed, Value increment)
       {
@@ -16,13 +16,8 @@ namespace Orange.Library.Verbs
             return new Values.NSLazyRange(seed, (Lambda)increment);
          }
 
-         Throw(LOCATION, "Not a range");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => "Not a range");
       }
-
-      protected bool inclusive;
-
-      public NSLazyRange() => inclusive = true;
 
       public override Value Evaluate()
       {

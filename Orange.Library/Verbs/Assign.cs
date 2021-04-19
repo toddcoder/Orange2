@@ -10,53 +10,46 @@ namespace Orange.Library.Verbs
 {
    public class Assign : Verb
    {
-      const string LOCATION = "Assign";
+      protected const string LOCATION = "Assign";
 
       public override Value Evaluate()
       {
          var stack = State.Stack;
          var value = stack.Pop(true, LOCATION);
          var target = stack.Pop(false, LOCATION);
-         if (target is Parameters parameters)
+         switch (target)
          {
-            if (value is Object obj)
-            {
+            case Parameters parameters when value is Object obj:
                return fromObject(parameters, obj);
-            }
-
-            return value.IsArray ? fromFields(target, value.SourceArray) : fromText(target, value);
+            case Parameters:
+               return value.IsArray ? fromFields(target, value.SourceArray) : fromText(target, value);
+            case Variable variable:
+               value.AssignmentValue().AssignTo(variable);
+               return variable;
+            case var t when t.IsArray:
+               return value.IsArray ? fromArray(target, value.SourceArray) : fromArrayText(target, value);
+            default:
+               throw LOCATION.ThrowsWithLocation(() => "Expected a variable");
          }
-
-         if (target.IsArray)
-         {
-            return value.IsArray ? fromArray(target, value.SourceArray) : fromArrayText(target, value);
-         }
-
-         if (target is Variable variable)
-         {
-            value.AssignmentValue().AssignTo(variable);
-            return variable;
-         }
-
-         Throw(LOCATION, "Expected a variable");
-         return null;
       }
 
-      static Array fromFields(Value target, Value value)
+      protected static Array fromFields(Value target, Value value)
       {
          var parameters = (Parameters)target.Resolve();
          var sourceArray = (Array)value.Resolve();
+
          return FromFields(sourceArray, parameters);
       }
 
-      static Array fromArray(Value target, Value value)
+      protected static Array fromArray(Value target, Value value)
       {
          var parameters = new Parameters((Array)target.SourceArray);
          var sourceArray = (Array)value.Resolve();
+
          return FromFields(sourceArray, parameters);
       }
 
-      static Array fromArrayText(Value target, Value value)
+      protected static Array fromArrayText(Value target, Value value)
       {
          var parameters = new Parameters((Array)target.SourceArray);
          return fromText(parameters, value);
@@ -123,7 +116,7 @@ namespace Orange.Library.Verbs
          return result;
       }
 
-      public static Array FromFieldsLocal(Array sourceArray, Parameters parameters)
+      public static void FromFieldsLocal(Array sourceArray, Parameters parameters)
       {
          var length = sourceArray.Length;
          var parametersLength = parameters.Length;
@@ -136,7 +129,7 @@ namespace Orange.Library.Verbs
                Regions.SetReadOnly(variableName);
             }
 
-            return sourceArray;
+            return;
          }
 
          var minLength = Min(length, parametersLength);
@@ -191,8 +184,6 @@ namespace Orange.Library.Verbs
             var name = parameters[i].Name;
             result[name] = Regions[name];
          }
-
-         return result;
       }
 
       public static void FromFieldsLocal(Array sourceArray, string[] parameters)
@@ -239,7 +230,7 @@ namespace Orange.Library.Verbs
          }
       }
 
-      static Array fromText(Value target, Value value)
+      protected static Array fromText(Value target, Value value)
       {
          var fields = State.FieldPattern.Split(value.Text);
          var fieldQueue = new Queue<string>(fields);
@@ -268,7 +259,7 @@ namespace Orange.Library.Verbs
          return new Array(fields);
       }
 
-      static Array fromObject(Parameters target, Object source)
+      protected static Array fromObject(Parameters target, Object source)
       {
          var array = new Array();
          foreach (var variableName in target.VariableNames)

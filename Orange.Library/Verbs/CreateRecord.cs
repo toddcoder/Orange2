@@ -5,14 +5,13 @@ using Core.Strings;
 using Orange.Library.Values;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
-using static Orange.Library.Runtime;
 
 namespace Orange.Library.Verbs
 {
    public class CreateRecord : Verb
    {
-      Hash<string, Thunk> members;
-      string fieldName;
+      protected Hash<string, Thunk> members;
+      protected string fieldName;
 
       public CreateRecord(Hash<string, Thunk> members, string fieldName)
       {
@@ -33,8 +32,7 @@ namespace Orange.Library.Verbs
             return new Record(sourceRecord, members, Regions.Current);
          }
 
-         Throw("Create record", $"{value} isn't record");
-         return null;
+         throw "Create record".ThrowsWithLocation(() => $"{value} isn't record");
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;

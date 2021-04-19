@@ -10,10 +10,10 @@ namespace Orange.Library.Verbs
 {
    public class Import : Verb, IStatement
    {
-      const string LOCATION = "Import";
+      protected const string LOCATION = "Import";
 
-      string path;
-      string result;
+      protected string path;
+      protected string result;
 
       public Import(string path)
       {
@@ -25,14 +25,17 @@ namespace Orange.Library.Verbs
       {
          var source = getSource();
          var block = Compile(source);
+
          result = $"{path} imported";
+
          Block.Registering = false;
          block.Evaluate(Regions.Global);
          Block.Registering = true;
+
          return null;
       }
 
-      string getSource()
+      protected string getSource()
       {
          if (path.Contains("\\"))
          {
@@ -46,8 +49,7 @@ namespace Orange.Library.Verbs
             return fileName.Text;
          }
 
-         Throw(LOCATION, $"Couldn't find module {path}");
-         return null;
+         throw LOCATION.ThrowsWithLocation(() => $"Couldn't find module {path}");
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
