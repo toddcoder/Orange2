@@ -1,6 +1,5 @@
 ﻿using Core.Assertions;
 using Orange.Library.Replacements;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Patterns
@@ -21,14 +20,8 @@ namespace Orange.Library.Patterns
       {
          get
          {
-            assert(() => length).Must().BeLessThanOrEqual(MAX_LOOP).OrThrow("Arb infinite loop");
-
-            if (length > State.Input.Length)
-            {
-               return alternate;
-            }
-
-            return new ArbElement(length + 1) { Next = next, Replacement = Replacement, Alternate = alternate };
+            length.Must().BeLessThanOrEqual(MAX_LOOP).OrThrow("Arb infinite loop");
+            return length > State.Input.Length ? alternate : new ArbElement(length + 1) { Next = next, Replacement = Replacement, Alternate = alternate };
          }
          set => base.Alternate = value;
       }

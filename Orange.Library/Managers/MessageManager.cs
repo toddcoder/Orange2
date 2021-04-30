@@ -2,13 +2,9 @@
 using System.Linq;
 using Core.Assertions;
 using Core.Collections;
-using Core.Computers;
-using Core.ObjectGraphs;
-using Core.RegularExpressions;
 using Core.Strings;
 using Orange.Library.Messages;
 using Orange.Library.Values;
-using static Core.Assertions.AssertionFunctions;
 using Array = Orange.Library.Values.Array;
 using Message = Orange.Library.Messages.Message;
 using static Orange.Library.Managers.RegionManager;
@@ -78,7 +74,7 @@ namespace Orange.Library.Managers
 
       public Value SendMessage(Value value, string messageName, Arguments arguments)
       {
-         assert(() => (object)value).Must().Not.BeNull().OrThrow(LOCATION, () => MSG_NO_MESSAGE_RECIPIENT);
+         value.Must().Not.BeNull().OrThrow(LOCATION, () => MSG_NO_MESSAGE_RECIPIENT);
 
          RegisterMessageCall(messageName);
          value.RegisterMessages();
@@ -93,8 +89,8 @@ namespace Orange.Library.Managers
 
       public Value Send(Value value, string messageName, Arguments arguments, bool reregister = false)
       {
-         assert(() => (object)value).Must().Not.BeNull().OrThrow(LOCATION, () => MSG_NO_MESSAGE_RECIPIENT);
-         assert(() => (object)arguments).Must().Not.BeNull().OrThrow(LOCATION, () => "No arguments passed in message");
+         value.Must().Not.BeNull().OrThrow(LOCATION, () => MSG_NO_MESSAGE_RECIPIENT);
+         arguments.Must().Not.BeNull().OrThrow(LOCATION, () => "No arguments passed in message");
 
          Variable variable;
          if (value.IsVariable)
@@ -393,21 +389,6 @@ namespace Orange.Library.Managers
          return array;
       }
 
-      protected static void freeze(Value value, Arguments arguments)
-      {
-         FileName file = arguments[0].Text;
-         var objectType = value.GetType();
-         file.Name = file.Name + "-" + objectType.FullName;
-         file.SetObject(value);
-      }
-
-      protected static Value thaw(Value value)
-      {
-         FileName file = value.Text;
-         var matcher = new Matcher();
-         return matcher.IsMatch(file.Name, "'-' /(-['-']+) $") ? file.GetObject<Value>() : "";
-      }
-
       protected static bool can(Value value, Value message) => message.Type switch
       {
          Value.ValueType.Array => ((Array)message).All(i => can(value, i.Value)),
@@ -542,11 +523,6 @@ namespace Orange.Library.Managers
                }
 
                return null;
-            case "freeze":
-               freeze(value, arguments);
-               return value;
-            case "thaw":
-               return thaw(value);
             case "isVal":
                return arguments.IsArray() ? arguments.AsArray().ContainsValue(value) : arguments[0].Text.Has(value.Text,
                   true);

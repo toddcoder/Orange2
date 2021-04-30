@@ -3,7 +3,6 @@ using Core.Assertions;
 using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Values;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Runtime;
 using Array = Orange.Library.Values.Array;
 
@@ -37,7 +36,7 @@ namespace Orange.Library.Patterns
 
          var value = RegionManager.Regions[functionName];
          var closure = value as Lambda;
-         assert(() => (object)closure).Must().Not.BeNull().OrThrow(LOCATION, () => $"{functionName} isn't a function");
+         closure.Must().Not.BeNull().OrThrow(LOCATION, () => $"{functionName} isn't a function");
          value = closure.Evaluate(arguments);
          string text;
          StringElement element;

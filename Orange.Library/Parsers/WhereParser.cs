@@ -1,7 +1,6 @@
 ﻿using Core.Assertions;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.ExpressionParser;
 
@@ -35,14 +34,14 @@ namespace Orange.Library.Parsers
                               builder.Define(variable.Name);
                               stage = WhereStageType.Assign;
                               break;
-                           case Parameters _:
+                           case Parameters:
                               builder.Verb(verb);
                               stage = WhereStageType.Assign;
                               break;
                         }
 
                         break;
-                     case Define _:
+                     case Define:
                         builder.Verb(verb);
                         stage = WhereStageType.Assign;
 
@@ -102,7 +101,7 @@ namespace Orange.Library.Parsers
          {
             var (b, i) = t;
             var block = WhereFilter(b);
-            assert(() => (object)block).Must().Not.BeNull().OrThrow(VerboseName, () => "Where filter malformed");
+            block.Must().Not.BeNull().OrThrow(VerboseName, () => "Where filter malformed");
             overridePosition = i;
             result.Value = block;
 

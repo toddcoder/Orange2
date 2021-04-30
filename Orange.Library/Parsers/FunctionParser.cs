@@ -5,7 +5,6 @@ using Core.Strings;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
@@ -59,16 +58,12 @@ namespace Orange.Library.Parsers
          functionName = LongToMangledPrefix(type, tokens[6].Trim());
 
          var parameterType = tokens[7];
-         var parametersType = ParametersType.Message;
-         switch (parameterType)
+         var parametersType = parameterType switch
          {
-            case "(":
-               parametersType = ParametersType.Standard;
-               break;
-            case "[":
-               parametersType = ParametersType.Pattern;
-               break;
-         }
+            "(" => ParametersType.Standard,
+            "[" => ParametersType.Pattern,
+            _ => ParametersType.Message
+         };
 
          var xMethod = false;
          var isDef = true;
@@ -166,7 +161,7 @@ namespace Orange.Library.Parsers
             parameters = new Parameters(parameterList);
          }
 
-         assert(() => (object)parameters).Must().Not.BeNull().OrThrow(VerboseName, () => "Parameters malformed");
+         parameters.Must().Not.BeNull().OrThrow(VerboseName, () => "Parameters malformed");
          var currying = parametersParser.Currying;
 
          functionBodyParser.ExtractCondition = parametersType == ParametersType.Pattern;

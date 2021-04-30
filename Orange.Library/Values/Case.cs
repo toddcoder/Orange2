@@ -85,7 +85,7 @@ namespace Orange.Library.Values
 
          if (required)
          {
-            AssertionFunctions.assert(() => result).Must().BeTrue().OrThrow(LOCATION, () => "Requirement failed");
+            result.Must().BeTrue().OrThrow(LOCATION, () => "Requirement failed");
          }
 
          return result;
@@ -472,8 +472,10 @@ namespace Orange.Library.Values
       {
          var applyValue = Arguments.ApplyValue;
          using var popper = new RegionPopper(new Region(), "case-apply");
+
          popper.Push();
          Regions.SetLocal(State.DefaultParameterNames.ValueVariable, applyValue);
+
          return Match(applyValue, comparisand, required, condition) ? applyValue : new Nil();
       }
    }

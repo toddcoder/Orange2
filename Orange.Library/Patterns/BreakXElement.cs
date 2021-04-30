@@ -3,7 +3,6 @@ using Core.Assertions;
 using Core.RegularExpressions;
 using Core.Strings;
 using Orange.Library.Replacements;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Runtime;
 
 namespace Orange.Library.Patterns
@@ -82,7 +81,7 @@ namespace Orange.Library.Patterns
                return alternate;
             }
 
-            assert(() => matchIndex).Must().BeLessThanOrEqual(MAX_LOOP).OrThrow("BreakX: infinite loop");
+            matchIndex.Must().BeLessThanOrEqual(MAX_LOOP).OrThrow("BreakX: infinite loop");
             return new BreakXElement(text, matchIndex + 1) { Next = next, Alternate = alternate };
          }
          set => base.Alternate = value;

@@ -7,7 +7,6 @@ using static Core.RegularExpressions.RegexExtensions;
 using Core.Strings;
 using Orange.Library.Managers;
 using static System.Math;
-using static Core.Assertions.AssertionFunctions;
 using static Core.Monads.MonadFunctions;
 using static Orange.Library.CodeBuilder;
 using static Orange.Library.Managers.RegionManager;
@@ -147,12 +146,7 @@ namespace Orange.Library.Values
       public Value Repeat()
       {
          var count = (int)Arguments[0].Number;
-         if (count == 0)
-         {
-            return Text;
-         }
-
-         return Text.Repeat(count);
+         return count == 0 ? Text : Text.Repeat(count);
       }
 
       public Value RandomArray()
@@ -183,6 +177,7 @@ namespace Orange.Library.Values
       {
          var divisor = Arguments[0].Int;
          var result = Math.DivRem((int)number, divisor, out var remainder);
+
          return new OTuple(new Value[] { result, remainder });
       }
 
@@ -194,6 +189,7 @@ namespace Orange.Library.Values
          var fPart = absNumber - intPart;
          intPart *= sign;
          fPart *= sign;
+
          return new Array(new Value[] { intPart, fPart });
       }
 
@@ -247,6 +243,7 @@ namespace Orange.Library.Values
       {
          var varName = Arguments.VariableName(0, VAR_VALUE);
          var block = Arguments.Executable;
+
          return block.CanExecute ? new InfArray(varName, block) : new Nil();
       }
 
@@ -345,6 +342,7 @@ namespace Orange.Library.Values
          var stop = (int)Arguments[0].Number;
          var incrementValue = Arguments[1];
          var increment = incrementValue.IsEmpty ? 1 : (int)incrementValue.Number;
+
          return To(stop, increment);
       }
 
@@ -416,6 +414,7 @@ namespace Orange.Library.Values
       {
          var other = Arguments[0].Number;
          var delta = Arguments[1].Number;
+
          return Abs(number - other) <= delta;
       }
 
@@ -486,7 +485,7 @@ namespace Orange.Library.Values
       public Value FloorDiv()
       {
          var divisor = Arguments[0].Number;
-         assert(() => (int)divisor).Must().Not.Equal(0).OrThrow(LOCATION, () => "Divide by 0");
+         ((int)divisor).Must().Not.Equal(0).OrThrow(LOCATION, () => "Divide by 0");
 
          return Floor(number / divisor);
       }

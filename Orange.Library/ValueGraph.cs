@@ -2,31 +2,21 @@
 using System.Text;
 using Core.Collections;
 using Core.Enumerables;
-using Core.ObjectGraphs;
 using Orange.Library.Values;
 
 namespace Orange.Library
 {
    public class ValueGraph
    {
-      string name;
-      Value value;
-      Hash<string, ValueGraph> children;
+      protected string name;
+      protected Value value;
+      protected StringHash<ValueGraph> children;
 
       public ValueGraph(string name)
       {
          this.name = name;
          value = "";
-         children = new Hash<string, ValueGraph>();
-      }
-
-      public ValueGraph() : this("") { }
-
-      public ValueGraph(ObjectGraph graph)
-      {
-         name = graph.Name;
-         value = graph.Value;
-         children = graph.Children.Select(g => new ValueGraph(g)).ToHash(g => g.name);
+         children = new StringHash<ValueGraph>(true);
       }
 
       public string Name => name;
@@ -43,7 +33,7 @@ namespace Orange.Library
          set => children[name] = value;
       }
 
-      public Hash<string, ValueGraph> Children => children;
+      public StringHash<ValueGraph> Children => children;
 
       public override string ToString()
       {

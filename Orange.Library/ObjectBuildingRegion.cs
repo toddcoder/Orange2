@@ -12,7 +12,7 @@ namespace Orange.Library
 {
    public class ObjectBuildingRegion : Region
    {
-      protected const string LOCATION = "Object building namespace";
+      protected new const string LOCATION = "Object building namespace";
 
       protected string className;
       protected List<Block> staticBlocks;

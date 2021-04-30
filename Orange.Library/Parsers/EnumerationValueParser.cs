@@ -3,7 +3,6 @@ using Core.Monads;
 using Orange.Library.Parsers.Special;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Special.ParametersParser;
 using static Orange.Library.Runtime;
@@ -135,7 +134,7 @@ namespace Orange.Library.Parsers
 
       protected static void setArrayValues(CodeBuilder builder, string caseName)
       {
-         assert(() => (object)builder).Must().Not.BeNull().OrThrow(LOCATION, () => "Not called from an enumeration");
+         builder.Must().Not.BeNull().OrThrow(LOCATION, () => "Not called from an enumeration");
 
          var enumerationValue = new Double(EnumerationValue).Pushed;
          var name = new String(caseName).Pushed;

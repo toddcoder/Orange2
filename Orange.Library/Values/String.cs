@@ -16,7 +16,6 @@ using Orange.Library.Managers;
 using Orange.Library.Parsers;
 using static System.StringComparison;
 using static System.Text.Encoding;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Runtime;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.ParameterAssistant;
@@ -45,6 +44,7 @@ namespace Orange.Library.Values
 
          var count = width / length;
          var remainder = width - length * count;
+
          return padding.Repeat(count) + padding.Keep(remainder);
       }
 
@@ -84,6 +84,7 @@ namespace Orange.Library.Values
          half = remainingWidth / 2;
          var padLeft = half;
          var padRight = remainingWidth.IsEven() ? half : half + 1;
+
          return Pad(padLeft, padding) + text + Pad(padRight, padding);
       }
 
@@ -139,7 +140,7 @@ namespace Orange.Library.Values
          get
          {
             FileName file = getText();
-            return assert(() => file).Must().Exist().Value.Text;
+            return file.Must().Exist().Value.Text;
          }
       }
 

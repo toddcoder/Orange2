@@ -5,7 +5,6 @@ using Core.Assertions;
 using Core.Strings;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
-using static Core.Assertions.AssertionFunctions;
 
 namespace Orange.Library.Debugging
 {
@@ -26,11 +25,11 @@ namespace Orange.Library.Debugging
 
       public int CurrentLine { get; set; }
 
-      StringBuilder currentLine;
-      Position position;
-      int linePosition;
-      List<Line> lines;
-      List<bool> breakpoints;
+      protected StringBuilder currentLine;
+      protected Position position;
+      protected int linePosition;
+      protected List<Line> lines;
+      protected List<bool> breakpoints;
 
       public delegate void StepHandler(Position position);
 
@@ -80,9 +79,9 @@ namespace Orange.Library.Debugging
 
       public int LinePosition => linePosition;
 
-      string formattedMessage(string format, object[] args) => displaySource() + ": " + string.Format(format, args);
+      protected string formattedMessage(string format, object[] args) => displaySource() + ": " + string.Format(format, args);
 
-      string displaySource()
+      protected string displaySource()
       {
          if (CurrentVerb == null)
          {
@@ -93,14 +92,14 @@ namespace Orange.Library.Debugging
          return line.Source.Drop(CurrentVerb.LinePosition);
       }
 
-      void checkBreakpointRange(int lineNumber)
+      protected void checkBreakpointRange(int lineNumber)
       {
-         assert(() => lineNumber).Must().BeBetween(0).Until(breakpoints.Count).OrThrow("Breakpoint out of range");
+         lineNumber.Must().BeBetween(0).Until(breakpoints.Count).OrThrow("Breakpoint out of range");
       }
 
-      void checkLineRange(int lineNumber)
+      protected void checkLineRange(int lineNumber)
       {
-         assert(() => lineNumber).Must().BeBetween(0).Until(lines.Count).OrThrow("Line out of range");
+         lineNumber.Must().BeBetween(0).Until(lines.Count).OrThrow("Line out of range");
       }
 
       public void ToggleBreakpoint(int lineNumber)
@@ -140,7 +139,7 @@ namespace Orange.Library.Debugging
 
          var stack = Runtime.State.Stack;
 
-         foreach (var verb in block.Verbs.TakeWhile(verb => !Runtime.State.ExitSignal && !Runtime.State.SkipSignal))
+         foreach (var verb in block.Verbs.TakeWhile(_ => !Runtime.State.ExitSignal && !Runtime.State.SkipSignal))
          {
             linePosition = verb.LineNumber;
             CurrentVerb = verb;
@@ -223,7 +222,7 @@ namespace Orange.Library.Debugging
          return result ?? "";
       }
 
-      void obeyMode(Line line)
+      protected void obeyMode(Line line)
       {
          switch (DebugMode)
          {

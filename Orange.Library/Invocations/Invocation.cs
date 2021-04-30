@@ -8,7 +8,6 @@ using Core.RegularExpressions;
 using Core.Strings;
 using Orange.Library.Values;
 using static System.Reflection.BindingFlags;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Invocations.Invocation.InvocationType;
 using static Orange.Library.Parsers.IDEColor.EntityType;
 using static Orange.Library.Parsers.Parser;
@@ -60,7 +59,7 @@ namespace Orange.Library.Invocations
       protected void initialize()
       {
          matcher = new Matcher();
-         assert(() => matcher).Must().Match(source, regexInvocation, true, false).OrThrow($"Didn't understand invocation <[{source}]>");
+         matcher.Must().Match(source, regexInvocation, true, false).OrThrow($"Didn't understand invocation <[{source}]>");
          var assemblyName = matcher.FirstGroup;
          var alias = matcher.SecondGroup;
          var sign = matcher.ThirdGroup;
@@ -114,15 +113,12 @@ namespace Orange.Library.Invocations
                break;
             default:
                invocationType = dot == "." ? InvocationType.Instance : InvocationType.Static;
-               switch (invocationType)
+               bindingFlags = invocationType switch
                {
-                  case InvocationType.Instance:
-                     bindingFlags = BindingFlags.Instance;
-                     break;
-                  case InvocationType.Static:
-                     bindingFlags = BindingFlags.Static;
-                     break;
-               }
+                  InvocationType.Instance => BindingFlags.Instance,
+                  InvocationType.Static => BindingFlags.Static,
+                  _ => bindingFlags
+               };
 
                bindingFlags[Public] = true;
                switch (invocationMethod)

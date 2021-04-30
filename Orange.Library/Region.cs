@@ -5,7 +5,6 @@ using Core.Enumerables;
 using Core.Strings;
 using Orange.Library.Managers;
 using Orange.Library.Values;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Compiler;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Region.ReadOnlyType;
@@ -28,8 +27,8 @@ namespace Orange.Library
       public const string LINE_DIVIDER = "================================================================================";
       public const string LINE_COUNT0 = "          1111111111222222222233333333334444444444555555555566666666667777777777";
       public const string LINE_COUNT1 = "01234567890123456789012345678901234567890123456789012345678901234567890123456789";
-      const int TRUNCATE_SIZE = 80;
-      const string LOCATION = "Region";
+      protected const int TRUNCATE_SIZE = 80;
+      protected const string LOCATION = "Region";
 
       public static Region CopyCurrent()
       {
@@ -93,6 +92,7 @@ namespace Orange.Library
          target.Level = Level;
          target.Name = Name;
          target.Instance = Instance;
+
          return target;
       }
 
@@ -132,7 +132,7 @@ namespace Orange.Library
             readonlys[name] = ReadOnly;
          }
 
-         if (!(value is InvokableReference reference))
+         if (value is not InvokableReference reference)
          {
             return;
          }
@@ -145,7 +145,7 @@ namespace Orange.Library
          }
       }
 
-      void checkDeinitialization(Value value, string name)
+      protected void checkDeinitialization(Value value, string name)
       {
          if (deinitializations[name] && MessageManager.MessagingState.RespondsTo(value, "deinit"))
          {
@@ -165,11 +165,12 @@ namespace Orange.Library
       protected virtual void setValue(string name, Value value, VisibilityType visibility, bool overriding,
          bool allowNil, int index)
       {
-         assert(() => (object)value).Must().Not.BeNull().OrThrow(LOCATION, () => $"Name {name} not properly set");
+         value.Must().Not.BeNull().OrThrow(LOCATION, () => $"Name {name} not properly set");
          if (!overriding)
          {
             readonlys[name].Must().Not.Equal(ReadOnly).OrThrow(LOCATION, () => $"{name} is read only");
          }
+
          if (name.IsEmpty() || value.Type == ValueType.Nil && !allowNil)
          {
             return;
@@ -200,7 +201,8 @@ namespace Orange.Library
          setValue(name, value, visibility, overriding, allowNil, -1);
       }
 
-      public void SetReadOnly(string name, Value value, VisibilityType visibility = VisibilityType.Public, bool overriding = false, bool allowNil = false)
+      public void SetReadOnly(string name, Value value, VisibilityType visibility = VisibilityType.Public, bool overriding = false,
+         bool allowNil = false)
       {
          SetLocal(name, value, visibility, overriding, allowNil);
          readonlys[name] = ReadOnlyNotSet;
@@ -223,11 +225,12 @@ namespace Orange.Library
 
       public virtual bool Exists(string name) => variables.ContainsKey(name);
 
-      static string truncate(string text)
+      protected static string truncate(string text)
       {
          text = text.Replace("\t", "¬");
          text = text.Replace("\r", "µ");
          text = text.Replace("\n", "¶");
+
          return text.Truncate(TRUNCATE_SIZE);
       }
 
@@ -246,7 +249,9 @@ namespace Orange.Library
 
       public Hash<string, Value> Variables => variables;
 
-      public void Dispose() { }
+      public void Dispose()
+      {
+      }
 
       public Value Instance { get; set; }
 
@@ -312,7 +317,7 @@ namespace Orange.Library
          CreateVariable(variableName, global, visibility, overriding);
       }
 
-      bool canBeSet(string variableName, bool @override, bool global)
+      protected bool canBeSet(string variableName, bool @override, bool global)
       {
          if (global)
          {
@@ -324,19 +329,17 @@ namespace Orange.Library
             return true;
          }
 
-         return @override || !variables.ContainsKey(variableName) || variables[variableName].Type == ValueType.Pending ||
-            variables[variableName].Type == ValueType.Abstract;
+         return @override || !variables.ContainsKey(variableName) || variables[variableName].Type is ValueType.Pending or ValueType.Abstract;
       }
 
-      static bool canBeSetGlobal(string variableName, bool @override)
+      protected static bool canBeSetGlobal(string variableName, bool @override)
       {
          if (!Regions.VariableExists(variableName))
          {
             return true;
          }
 
-         return @override || Regions[variableName].Type == ValueType.Pending ||
-            Regions[variableName].Type == ValueType.Abstract;
+         return @override || Regions[variableName].Type is ValueType.Pending or ValueType.Abstract;
       }
 
       public void CreateReadOnlyVariable(string variableName, bool global = false,
@@ -354,9 +357,9 @@ namespace Orange.Library
 
       protected bool isPublic(string message) => visibilityTypes[message] == VisibilityType.Public;
 
-      bool isPrivate(string message) => visibilityTypes[message] == VisibilityType.Private;
+      protected bool isPrivate(string message) => visibilityTypes[message] == VisibilityType.Private;
 
-      bool isProtected(string message) => visibilityTypes[message] == VisibilityType.Protected;
+      protected bool isProtected(string message) => visibilityTypes[message] == VisibilityType.Protected;
 
       protected bool isTemporary(string message) => visibilityTypes[message] == VisibilityType.Temporary;
 
@@ -374,7 +377,7 @@ namespace Orange.Library
          }
       }
 
-      public static LockedDownRegion LockedDown() => new LockedDownRegion("");
+      public static LockedDownRegion LockedDown() => new("");
 
       public void CreateAndSet(string name, Value value, bool global = false,
          VisibilityType visibility = VisibilityType.Public, bool @override = false)

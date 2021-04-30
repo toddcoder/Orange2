@@ -5,9 +5,9 @@ namespace Orange.Library
 {
    public class WithRegion : Region
    {
-      const string LOCATION = "With region";
+      protected new const string LOCATION = "With region";
 
-      Object obj;
+      protected Object obj;
 
       public WithRegion(Object obj) => this.obj = obj;
 

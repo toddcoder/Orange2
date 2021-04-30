@@ -1,6 +1,5 @@
 ﻿using Core.Assertions;
 using Orange.Library.Values;
-using static Core.Assertions.AssertionFunctions;
 using static Orange.Library.Managers.ExpressionManager;
 using static Orange.Library.Managers.RegionManager;
 using static Orange.Library.Values.Value;
@@ -23,7 +22,7 @@ namespace Orange.Library.Verbs
 
       public override Value Evaluate()
       {
-         assert(() => className).Must().Not.BeEmpty().OrThrow(LOCATION, () => "No class name provided");
+         className.Must().Not.BeEmpty().OrThrow(LOCATION, () => "No class name provided");
          if (!Regions.VariableExists(className))
          {
             var newClass = new Class(new Parameters(), new Block(), null, "", new string[0], false);
@@ -32,7 +31,7 @@ namespace Orange.Library.Verbs
 
          Regions.VariableExists(className).Must().BeTrue().OrThrow(LOCATION, () => $"Class {className} doesn't exist");
          var value = Regions[className];
-         assert(() => value.Type).Must().Equal(ValueType.Class).OrThrow(LOCATION, () => $"{className} isn't a class");
+         value.Type.Must().Equal(ValueType.Class).OrThrow(LOCATION, () => $"{className} isn't a class");
          var cls = (Class)value;
          cls.ClassBlock = staticBlock;
          cls.StaticObject = null;

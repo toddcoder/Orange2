@@ -4,21 +4,20 @@ using Core.Assertions;
 using Core.Enumerables;
 using Core.Exceptions;
 using Orange.Library.Values;
-using static Core.Assertions.AssertionFunctions;
 
 namespace Orange.Library
 {
    public class ValueStack
    {
-      Stack<Value> stack;
+      protected Stack<Value> stack;
 
       public ValueStack() => stack = new Stack<Value>();
 
       public bool IsEmpty => stack.Count == 0;
 
-      void assertStackNotEmpty(string location) => assert(() => IsEmpty).Must().Not.BeTrue().OrThrow($"Bad syntax at {location}");
+      protected void assertStackNotEmpty(string location) => IsEmpty.Must().Not.BeTrue().OrThrow($"Bad syntax at {location}");
 
-      void assertStackNotEmpty() => assert(() => IsEmpty).Must().Not.BeTrue().OrThrow("Bad syntax");
+      protected void assertStackNotEmpty() => IsEmpty.Must().Not.BeTrue().OrThrow("Bad syntax");
 
       public void Push(Value value) => stack.Push(value);
 
@@ -77,7 +76,7 @@ namespace Orange.Library
          return value;
       }
 
-      static Value stringify(Value value) => value is IStringify s ? s.String : value;
+      protected static Value stringify(Value value) => value is IStringify s ? s.String : value;
 
       public override string ToString() => IsEmpty ? "" : stack.Select(v => v.ToString()).ToString(" ");
 

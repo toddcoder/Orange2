@@ -7,7 +7,7 @@ namespace Orange.Library
 {
    public class ObjectRegion : Region
    {
-      protected const string LOCATION = "Object region";
+      protected new const string LOCATION = "Object region";
 
       protected Object obj;
       protected Hash<string, IInvokable> invariants;
