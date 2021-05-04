@@ -9,8 +9,9 @@ namespace Orange.Library.Parsers
 {
    public class IndentParser : Parser
    {
-      public IndentParser()
-         : base("^ /(|tabs|) /('indent') /b /(/s+ ['-+'])?") { }
+      public IndentParser() : base("^ /(|tabs|) /('indent') /b /(/s+ ['-+'])?")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -27,12 +28,8 @@ namespace Orange.Library.Parsers
          {
             case EndOfLineType.EndOfSource:
             case EndOfLineType.EndOfLine:
-               if (isRelative)
-               {
-                  return null;
-               }
+               return isRelative ? null : new Indent(((Values.Double)1).Pushed, false, 0) { Index = position };
 
-               return new Indent(((Values.Double)1).Pushed, false, 0) { Index = position };
             case EndOfLineType.More:
                if (GetExpression(source, NextPosition, EndOfLineConsuming()).If(out var e, out var i))
                {

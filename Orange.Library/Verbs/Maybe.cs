@@ -6,21 +6,22 @@ namespace Orange.Library.Verbs
 {
    public class Maybe : Verb, IStatement
    {
-      string fieldName;
-      Block expression;
-      Block ifTrue;
-      IMaybe<Block> anyIfFalse;
-      IMaybe<Block> anyGuardBlock;
-      string result;
-      string typeName;
+      protected string fieldName;
+      protected Block expression;
+      protected Block ifTrue;
+      protected IMaybe<Block> _ifFalse;
+      protected IMaybe<Block> _guardBlock;
+      protected string result;
+      protected string typeName;
 
-      public Maybe(string fieldName, Block expression, Block ifTrue, IMaybe<Block> anyIfFalse, IMaybe<Block> anyGuardBlock)
+      public Maybe(string fieldName, Block expression, Block ifTrue, IMaybe<Block> ifFalse, IMaybe<Block> guardBlock)
       {
          this.fieldName = fieldName;
          this.expression = expression;
          this.ifTrue = ifTrue;
-         this.anyIfFalse = anyIfFalse;
-         this.anyGuardBlock = anyGuardBlock;
+         _ifFalse = ifFalse;
+         _guardBlock = guardBlock;
+
          result = "";
          typeName = "";
       }
@@ -31,31 +32,31 @@ namespace Orange.Library.Verbs
          Value returned;
          switch (evaluated)
          {
-            case None _ when anyGuardBlock.HasValue:
+            case None when _guardBlock.IsSome:
                returned = ifTrue.Evaluate();
                result = ifTrue.ToString();
                typeName = returned.Type.ToString();
 
                return returned;
-            case None _ when anyIfFalse.If(out var ifFalse):
+            case None when _ifFalse.If(out var ifFalse):
                returned = ifFalse.Evaluate();
-               result = anyIfFalse.ToString();
+               result = _ifFalse.ToString();
                typeName = returned.Type.ToString();
 
                return returned;
-            case None _:
+            case None:
                return null;
-            case Some _ when anyIfFalse.If(out var ifFalse):
+            case Some when _ifFalse.If(out var ifFalse):
                returned = ifFalse.Evaluate();
                result = returned.ToString();
                typeName = returned.Type.ToString();
 
                return returned;
-            case Some _:
+            case Some:
                return null;
          }
 
-         if (anyGuardBlock.If(out var guardBlock))
+         if (_guardBlock.If(out var guardBlock))
          {
             if (guardBlock.IsTrue)
             {
@@ -71,20 +72,19 @@ namespace Orange.Library.Verbs
             return returned;
          }
 
-         using (var popper = new RegionPopper(new Region(), "maybe"))
-         {
-            popper.Push();
-            returned = ifTrue.Evaluate();
-            result = ifTrue.ToString();
-            typeName = returned.Type.ToString();
-         }
+         using var popper = new RegionPopper(new Region(), "maybe");
+         popper.Push();
+
+         returned = ifTrue.Evaluate();
+         result = ifTrue.ToString();
+         typeName = returned.Type.ToString();
 
          return returned;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;
 
-      public override string ToString() => $"maybe {fieldName} = {expression} ({ifTrue}){anyIfFalse.Map(f => $" ({f})").DefaultTo(() => "")}";
+      public override string ToString() => $"maybe {fieldName} = {expression} ({ifTrue}){_ifFalse.Map(f => $" ({f})").DefaultTo(() => "")}";
 
       public string Result => result;
 

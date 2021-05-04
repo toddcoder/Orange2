@@ -21,35 +21,35 @@ namespace Orange.Library.Values
    {
       public class BlockGenerator : NSGenerator
       {
-         Block block;
-         IMaybe<INSGenerator> currentGenerator;
+         protected Block block;
+         protected IMaybe<INSGenerator> _currentGenerator;
 
-         public BlockGenerator(Block block)
-            : base(block)
+         public BlockGenerator(Block block) : base(block)
          {
             this.block = block;
+
             index = 0;
-            currentGenerator = none<INSGenerator>();
+            _currentGenerator = none<INSGenerator>();
             this.block.AutoRegister = false;
          }
 
          public override void Reset()
          {
             index = 0;
-            currentGenerator = none<INSGenerator>();
+            _currentGenerator = none<INSGenerator>();
             block.ResetReturnSignal = true;
             block.region?.RemoveAll();
          }
 
-         IMaybe<Value> evaluateGenerator(INSGenerator generator, int i)
+         protected IMaybe<Value> evaluateGenerator(INSGenerator generator, int i)
          {
-            currentGenerator = generator.Some();
+            _currentGenerator = generator.Some();
             generator.Region = Region;
             generator.Reset();
             var returnValue = generator.Next();
             if (returnValue.IsNil)
             {
-               currentGenerator = none<INSGenerator>();
+               _currentGenerator = none<INSGenerator>();
                return none<Value>();
             }
 
@@ -59,36 +59,34 @@ namespace Orange.Library.Values
 
          public override Value Next()
          {
-            if (currentGenerator.If(out var nsGenerator))
+            if (_currentGenerator.If(out var currentGenerator))
             {
-               var returnValue = nsGenerator.Next();
+               var returnValue = currentGenerator.Next();
                if (!returnValue.IsNil)
                {
-                  if (returnValue is INSGenerator g)
+                  if (returnValue is INSGenerator returnGenerator)
                   {
-                     g.Region = Region;
+                     returnGenerator.Region = Region;
                   }
 
                   return returnValue;
                }
 
-               currentGenerator = none<INSGenerator>();
+               _currentGenerator = none<INSGenerator>();
             }
 
             Value value;
-
-            IMaybe<INSGenerator> anyGenerator;
 
             for (var i = index; i < block.builder.Verbs.Count; i++)
             {
                var verb = block.builder.Verbs[i];
                if (verb.Yielding)
                {
-                  anyGenerator = verb.PossibleGenerator();
-                  if (anyGenerator.If(out var generator))
+                  var _generator = verb.PossibleGenerator();
+                  if (_generator.If(out var generator))
                   {
-                     var anyEvaluated = evaluateGenerator(generator, i);
-                     if (anyEvaluated.If(out var evaluated))
+                     var _evaluated = evaluateGenerator(generator, i);
+                     if (_evaluated.If(out var evaluated))
                      {
                         return evaluated;
                      }
@@ -138,17 +136,7 @@ namespace Orange.Library.Values
             }
 
             value = State.Stack.Pop(block.ResolveVariables, LOCATION).ArgumentValue();
-            if (value.PossibleIndexGenerator().If(out var generator2))
-            {
-               if (evaluateGenerator(generator2, index).If(out var evaluatedValue))
-               {
-                  return evaluatedValue;
-               }
-
-               return NilValue;
-            }
-
-            return block.evaluateReturn(value);
+            return value.PossibleIndexGenerator().Map(g => evaluateGenerator(g, index)).DefaultTo(() => block.evaluateReturn(value));
          }
 
          public override Value Clone() => new BlockGenerator((Block)block.Clone());
@@ -156,11 +144,11 @@ namespace Orange.Library.Values
          public override string ToString() => block.ToString();
       }
 
-      static Hash<int, string> results;
+      protected static AutoHash<int, string> results;
 
       static Block()
       {
-         results = new AutoHash<int, string>(k => "");
+         results = new AutoHash<int, string>(_ => "");
       }
 
       public static void RegisterResult(Verb verb)
@@ -204,10 +192,11 @@ namespace Orange.Library.Values
          ifPattern.Variable(State.DefaultParameterNames.ValueVariable);
          ifPattern.Apply();
          ifPattern.Value(pattern);
+
          return ifPattern.Block;
       }
 
-      const string LOCATION = "Block";
+      protected const string LOCATION = "Block";
 
       protected BlockBuilder builder;
       protected Region region;
@@ -410,7 +399,7 @@ namespace Orange.Library.Values
 
       public bool AutoRegister { get; set; }
 
-      static bool evaluateForEnd(Verb verb)
+      protected static bool evaluateForEnd(Verb verb)
       {
          Value value = "";
          if (verb is IEnd end)
@@ -445,7 +434,7 @@ namespace Orange.Library.Values
          return false;
       }
 
-      static bool evaluateVerb(Verb verb)
+      protected static bool evaluateVerb(Verb verb)
       {
          var value = verb.Evaluate();
          RegisterResult(verb);
@@ -463,7 +452,7 @@ namespace Orange.Library.Values
          return false;
       }
 
-      Value evaluateReturn(Value value, bool popExtra)
+      protected Value evaluateReturn(Value value, bool popExtra)
       {
          if (value is IStringify stringify)
          {
@@ -488,7 +477,7 @@ namespace Orange.Library.Values
          return value ?? NilValue;
       }
 
-      Value evaluateReturn(Value value)
+      protected Value evaluateReturn(Value value)
       {
          if (value is IStringify stringify)
          {
@@ -552,7 +541,7 @@ namespace Orange.Library.Values
          return evaluateReturn(value, false);
       }
 
-      bool beginEvaluation()
+      protected bool beginEvaluation()
       {
          if (IsDebugging)
          {
@@ -603,7 +592,9 @@ namespace Orange.Library.Values
             }
 
             var result = tryEvaluateVerb(verb);
-            if (result.If(out _, out var exception)) { }
+            if (result.If(out _, out var exception))
+            {
+            }
             else
             {
                return new Failure(exception.Message);
@@ -632,7 +623,7 @@ namespace Orange.Library.Values
          return new Some(evaluateReturn(value, false));
       }
 
-      static IResult<bool> tryEvaluateVerb(Verb verb)
+      protected static IResult<bool> tryEvaluateVerb(Verb verb)
       {
          Value value;
          try
@@ -661,9 +652,9 @@ namespace Orange.Library.Values
 
       public Block Action => this;
 
-      public Lambda AsLambda => new Lambda(Regions.Current, this, new Parameters(), true);
+      public Lambda AsLambda => new(Regions.Current, this, new Parameters(), true);
 
-      public Parameters Parameters => new Parameters();
+      public Parameters Parameters => new();
 
       public Value Evaluate(Region regionToUse)
       {
@@ -733,18 +724,18 @@ namespace Orange.Library.Values
       {
          var count = (int)Arguments[0].Number;
          var array = new Array();
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            assistant.IteratorParameter();
-            for (var i = 0; i < count; i++)
-            {
-               assistant.SetIteratorParameter(i);
-               var value = Evaluate();
-               array.Add(value);
-            }
 
-            return array;
+         using var assistant = new ParameterAssistant(Arguments);
+         assistant.IteratorParameter();
+
+         for (var i = 0; i < count; i++)
+         {
+            assistant.SetIteratorParameter(i);
+            var value = Evaluate();
+            array.Add(value);
          }
+
+         return array;
       }
 
       public Value From() => new Comprehension(this, Arguments.Parameters)

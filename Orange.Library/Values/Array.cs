@@ -36,7 +36,7 @@ namespace Orange.Library.Values
    {
       public class Pusher
       {
-         Array array;
+         protected Array array;
 
          public Pusher() => array = new Array();
 
@@ -84,8 +84,8 @@ namespace Orange.Library.Values
 
       public class ArrayEnumerator : IEnumerator<IterItem>
       {
-         Array array;
-         int index;
+         protected Array array;
+         protected int index;
 
          public ArrayEnumerator(Array array)
          {
@@ -93,7 +93,9 @@ namespace Orange.Library.Values
             index = -1;
          }
 
-         public void Dispose() { }
+         public void Dispose()
+         {
+         }
 
          public bool MoveNext()
          {
@@ -115,6 +117,7 @@ namespace Orange.Library.Values
 
             index++;
             var moveNext = index < array.Length;
+
             return moveNext;
          }
 
@@ -159,7 +162,7 @@ namespace Orange.Library.Values
          None
       }
 
-      const string LOCATION = "Array";
+      protected const string LOCATION = "Array";
 
       public static Array SliceRange(int start, int stop, int length, bool inside, int increment = 1)
       {
@@ -213,16 +216,14 @@ namespace Orange.Library.Values
          {
             for (var i = start; i <= stop; i += increment)
             {
-               var value = i;
-               array.Add(value);
+               array.Add(i);
             }
          }
          else
          {
             for (var i = start; i >= stop; i -= increment)
             {
-               var value = i;
-               array.Add(value);
+               array.Add(i);
             }
          }
 
@@ -262,15 +263,9 @@ namespace Orange.Library.Values
          return array;
       }
 
-      protected static ArrayBase createArrayBase()
-      {
-         return new ArrayBase { Default = DefaultType.Lambda, DefaultLambda = k => NullValue };
-      }
+      protected static ArrayBase createArrayBase() => new() { Default = DefaultType.Lambda, DefaultLambda = _ => NullValue };
 
-      protected static IndexBase createIndexBase()
-      {
-         return new IndexBase { Default = DefaultType.Lambda, DefaultLambda = i => "" };
-      }
+      protected static IndexBase createIndexBase() => new() { Default = DefaultType.Lambda, DefaultLambda = _ => "" };
 
       public static Array Repeat(Value value, int count)
       {
@@ -415,7 +410,7 @@ namespace Orange.Library.Values
          maybe = false;
       }
 
-      void updateIndexes()
+      protected void updateIndexes()
       {
          if (suspendIndexUpdate)
          {
@@ -429,16 +424,13 @@ namespace Orange.Library.Values
          }
       }
 
-      void updateIndex(string key) => indexes[indexes.Count] = key;
+      protected void updateIndex(string key) => indexes[indexes.Count] = key;
 
       public virtual Value this[string key]
       {
          get
          {
-            if (key == null)
-            {
-               key = "";
-            }
+            key ??= "";
 
             if (maybe)
             {
@@ -460,10 +452,7 @@ namespace Orange.Library.Values
          }
          set
          {
-            if (key == null)
-            {
-               key = "";
-            }
+            key ??= "";
 
             if (value.ID == id)
             {
@@ -764,7 +753,7 @@ namespace Orange.Library.Values
 
       public virtual void Add(Value value) => basicAdd(value);
 
-      void basicAdd(Value value)
+      protected void basicAdd(Value value)
       {
          value.Type.Must().Not.Equal(ValueType.System).OrThrow(LOCATION, () => "System variable can't be added!");
          string key;
@@ -930,7 +919,7 @@ namespace Orange.Library.Values
          return maybe ? new Some(result) : result;
       }
 
-      Value shiftOne()
+      protected Value shiftOne()
       {
          if (Length == 0)
          {
@@ -1016,7 +1005,7 @@ namespace Orange.Library.Values
          };
       }
 
-      static string getKey() => VAR_MANGLE + "key" + Compiler.CompilerState.ObjectID();
+      protected static string getKey() => VAR_MANGLE + "key" + Compiler.CompilerState.ObjectID();
 
       public string GetKey(int index)
       {
@@ -1328,16 +1317,16 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "exists", v => ((Array)v).Exists());
       }
 
-      static IMaybe<int> getIntIndex(Value arg) => maybe(arg.Type == ValueType.Number, () => (int)arg.Number);
+      protected static IMaybe<int> getIntIndex(Value arg) => maybe(arg.Type == ValueType.Number, () => (int)arg.Number);
 
-      static string getStrIndex(Value arg) => arg.Text;
+      protected static string getStrIndex(Value arg) => arg.Text;
 
-      static IMaybe<int[]> getIntIndexes(Value[] values)
+      protected static IMaybe<int[]> getIntIndexes(Value[] values)
       {
          return maybe(values.All(v => v.Type == ValueType.Number), () => values.Select(v => (int)v.Number).ToArray());
       }
 
-      static string[] getStrIndexes(Value[] values) => values.Select(v => v.Text).ToArray();
+      protected static string[] getStrIndexes(Value[] values) => values.Select(v => v.Text).ToArray();
 
       public Value GetItem()
       {
@@ -1368,25 +1357,24 @@ namespace Orange.Library.Values
             }
          }
 
-         using (var popper = new RegionPopper(new Region(), "get-item"))
-         {
-            popper.Push();
-            Regions.Current.SetParameter("$", Length);
-            var iterator = new NSIteratorByLength(new Array(Arguments.GetValues(Length)).GetGenerator(), Length);
-            var list = iterator.ToList();
-            if (list.Count == 0)
-            {
-               return new Array();
-            }
+         using var popper = new RegionPopper(new Region(), "get-item");
+         popper.Push();
 
-            var result = new Array(list.Select(getValue));
-            return result.Length < 2 ? result[0] : result;
+         Regions.Current.SetParameter("$", Length);
+         var iterator = new NSIteratorByLength(new Array(Arguments.GetValues(Length)).GetGenerator(), Length);
+         var list = iterator.ToList();
+         if (list.Count == 0)
+         {
+            return new Array();
          }
+
+         var result = new Array(list.Select(getValue));
+         return result.Length < 2 ? result[0] : result;
       }
 
-      Value getValue(Value value) => getIntIndex(value).Map(index => this[index]).DefaultTo(() => this[getStrIndex(value)]);
+      protected Value getValue(Value value) => getIntIndex(value).Map(index => this[index]).DefaultTo(() => this[getStrIndex(value)]);
 
-      void setValue(Value value, Value valueToAssign)
+      protected void setValue(Value value, Value valueToAssign)
       {
          if (getIntIndex(value).If(out var index))
          {
@@ -1483,74 +1471,68 @@ namespace Orange.Library.Values
 
       public Value All()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               if (!block.IsTrue)
                {
-                  assistant.SetParameterValues(item);
-                  if (!block.IsTrue)
-                  {
-                     return false;
-                  }
+                  return false;
                }
-
-               return true;
             }
 
-            return Items.All(i => i.Value.IsTrue);
+            return true;
          }
+
+         return Items.All(i => i.Value.IsTrue);
       }
 
       public Value Any()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               if (block.IsTrue)
                {
-                  assistant.SetParameterValues(item);
-                  if (block.IsTrue)
-                  {
-                     return true;
-                  }
+                  return true;
                }
-
-               return false;
             }
 
-            return Items.Any(i => i.Value.IsTrue);
+            return false;
          }
+
+         return Items.Any(i => i.Value.IsTrue);
       }
 
       public Value None()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               if (block.IsTrue)
                {
-                  assistant.SetParameterValues(item);
-                  if (block.IsTrue)
-                  {
-                     return false;
-                  }
+                  return false;
                }
-
-               return true;
             }
 
-            return Items.All(i => !i.Value.IsTrue);
+            return true;
          }
+
+         return Items.All(i => !i.Value.IsTrue);
       }
 
       public Value Flatten()
@@ -1597,56 +1579,54 @@ namespace Orange.Library.Values
 
       public virtual Value Remove()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            var keysToRemove = new List<string>();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               var keysToRemove = new List<string>();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               if (block.Evaluate().IsTrue)
                {
-                  assistant.SetParameterValues(item);
-                  if (block.Evaluate().IsTrue)
-                  {
-                     keysToRemove.Add(item.Key);
-                  }
-
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
+                  keysToRemove.Add(item.Key);
                }
 
-               keysToRemove.Reverse();
-               foreach (var keyToRemove in keysToRemove)
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  Remove(keyToRemove);
+                  break;
                }
 
-               return this;
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
             }
 
-            var value = Arguments[0];
-            var key = this.Where(i => value.Compare(i.Value) == 0).Select(i => i.Key).FirstOrDefault();
-            if (key != null)
+            keysToRemove.Reverse();
+            foreach (var keyToRemove in keysToRemove)
             {
-               var element = this[key];
-               Remove(key);
-               return new Some(element);
+               Remove(keyToRemove);
             }
 
-            return new None();
+            return this;
          }
+
+         var value = Arguments[0];
+         var key = this.Where(i => value.Compare(i.Value) == 0).Select(i => i.Key).FirstOrDefault();
+         if (key != null)
+         {
+            var element = this[key];
+            Remove(key);
+            return new Some(element);
+         }
+
+         return new None();
       }
 
       public Value RemoveWithKey()
@@ -1717,82 +1697,80 @@ namespace Orange.Library.Values
 
       public Value Take()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            var newArray = new Array();
+            assistant.ArrayParameters();
+            foreach (var item in this)
             {
-               var newArray = new Array();
-               assistant.ArrayParameters();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var result = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (result.IsTrue)
-                  {
-                     newArray.Add(item.Value);
-                  }
-                  else
-                  {
-                     break;
-                  }
+                  break;
                }
 
-               return newArray;
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (result.IsTrue)
+               {
+                  newArray.Add(item.Value);
+               }
+               else
+               {
+                  break;
+               }
             }
 
-            var count = (int)Arguments[0].Number;
-            if (count > 0)
-            {
-               if (count > Length)
-               {
-                  count = Length;
-               }
-
-               var newArray = new Array();
-               for (var i = 0; i < count; i++)
-               {
-                  newArray.Add(this[i]);
-               }
-
-               return newArray;
-            }
-
-            if (count < 0)
-            {
-               count = -count;
-               if (count > Length)
-               {
-                  count = Length;
-               }
-
-               var newArray = new Array();
-               var offset = Length - count;
-               for (var i = 0; i < count; i++)
-               {
-                  var index = i + offset;
-                  newArray.Add(this[index]);
-               }
-
-               return newArray;
-            }
-
-            return this;
+            return newArray;
          }
+
+         var count = (int)Arguments[0].Number;
+         if (count > 0)
+         {
+            if (count > Length)
+            {
+               count = Length;
+            }
+
+            var newArray = new Array();
+            for (var i = 0; i < count; i++)
+            {
+               newArray.Add(this[i]);
+            }
+
+            return newArray;
+         }
+
+         if (count < 0)
+         {
+            count = -count;
+            if (count > Length)
+            {
+               count = Length;
+            }
+
+            var newArray = new Array();
+            var offset = Length - count;
+            for (var i = 0; i < count; i++)
+            {
+               var index = i + offset;
+               newArray.Add(this[index]);
+            }
+
+            return newArray;
+         }
+
+         return this;
       }
 
       public Value Apply()
@@ -1842,18 +1820,12 @@ namespace Orange.Library.Values
          return newArray;
       }
 
-      public Value GetDefault()
+      public Value GetDefault() => array.Default switch
       {
-         switch (array.Default)
-         {
-            case DefaultType.Value:
-               return array.DefaultValue;
-            case DefaultType.Lambda:
-               return array.DefaultLambda("");
-            default:
-               return new Nil();
-         }
-      }
+         DefaultType.Value => array.DefaultValue,
+         DefaultType.Lambda => array.DefaultLambda(""),
+         _ => new Nil()
+      };
 
       public Value SetDefault()
       {
@@ -1887,7 +1859,7 @@ namespace Orange.Library.Values
 
       public Value Padder() => new Padder(this);
 
-      static Array merge(Array source, Array other, Arguments arguments)
+      protected static Array merge(Array source, Array other, Arguments arguments)
       {
          var newArray = new Array();
          foreach (var item in source)
@@ -1895,38 +1867,36 @@ namespace Orange.Library.Values
             newArray[item.Key] = item.Value;
          }
 
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.MergeParameters();
+            foreach (var key in other.Keys)
             {
-               assistant.MergeParameters();
-               foreach (var key in other.Keys)
+               var value2 = other[key];
+               if (newArray.ContainsKey(key))
                {
-                  var value2 = other[key];
-                  if (newArray.ContainsKey(key))
-                  {
-                     var value1 = newArray[key];
-                     assistant.SetMergeParameters(key, value1, value2);
-                     var replacement = block.Evaluate();
-                     newArray[key] = replacement;
-                  }
-                  else
-                  {
-                     newArray[key] = value2;
-                  }
+                  var value1 = newArray[key];
+                  assistant.SetMergeParameters(key, value1, value2);
+                  var replacement = block.Evaluate();
+                  newArray[key] = replacement;
+               }
+               else
+               {
+                  newArray[key] = value2;
                }
             }
-            else
-            {
-               foreach (var key in other.Keys)
-               {
-                  newArray[key] = other[key];
-               }
-            }
-
-            return newArray;
          }
+         else
+         {
+            foreach (var key in other.Keys)
+            {
+               newArray[key] = other[key];
+            }
+         }
+
+         return newArray;
       }
 
       public virtual Value Merge()
@@ -1962,7 +1932,7 @@ namespace Orange.Library.Values
          var countValue = Arguments[0];
          if (countValue.IsEmpty)
          {
-            return Length == 0 ? (Value)new None() : new Some(this[0]);
+            return Length == 0 ? new None() : new Some(this[0]);
          }
 
          var count = Math.Min((int)countValue.Number, Length);
@@ -1980,7 +1950,7 @@ namespace Orange.Library.Values
          var countValue = Arguments[0];
          if (countValue.IsEmpty)
          {
-            return Length == 0 ? (Value)new None() : new Some(this[-1]);
+            return Length == 0 ? new None() : new Some(this[-1]);
          }
 
          var count = Math.Min((int)countValue.Number, Length);
@@ -1996,47 +1966,45 @@ namespace Orange.Library.Values
 
       public Value RemoveWhere()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            var keys = new List<string>();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               var keys = new List<string>();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (value.IsTrue)
-                  {
-                     keys.Add(item.Key);
-                  }
+                  break;
                }
 
-               foreach (var key in keys)
+               switch (signal)
                {
-                  Remove(key);
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
                }
 
-               return this;
+               if (value.IsTrue)
+               {
+                  keys.Add(item.Key);
+               }
+            }
+
+            foreach (var key in keys)
+            {
+               Remove(key);
             }
 
             return this;
          }
+
+         return this;
       }
 
       public Value Unfield() => array.ValueArray().ToString(State.FieldSeparator.Text);
@@ -2079,18 +2047,12 @@ namespace Orange.Library.Values
          return spliceResult(result);
       }
 
-      static Value spliceResult(Array result)
+      protected static Value spliceResult(Array result) => result.Length switch
       {
-         switch (result.Length)
-         {
-            case 0:
-               return "";
-            case 1:
-               return result[0];
-            default:
-               return result;
-         }
-      }
+         0 => "",
+         1 => result[0],
+         _ => result
+      };
 
       public Value Invert()
       {
@@ -2113,7 +2075,7 @@ namespace Orange.Library.Values
          return newArray;
       }
 
-      static void invertArray(Array newArray, string key, Array valueArray)
+      protected static void invertArray(Array newArray, string key, Array valueArray)
       {
          foreach (var item in valueArray)
          {
@@ -2131,7 +2093,7 @@ namespace Orange.Library.Values
          }
       }
 
-      static Value arrayify(Value currentValue, Value newValue)
+      protected static Value arrayify(Value currentValue, Value newValue)
       {
          if (currentValue.IsEmpty)
          {
@@ -2192,42 +2154,40 @@ namespace Orange.Library.Values
       public Value Any(Func<int, bool> func)
       {
          var count = 0;
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (value.IsTrue)
-                  {
-                     count++;
-                  }
+                  break;
                }
 
-               return func(count);
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (value.IsTrue)
+               {
+                  count++;
+               }
             }
 
-            return false;
+            return func(count);
          }
+
+         return false;
       }
 
       public bool MatchArrayAsList(Array comparisand, bool required)
@@ -2379,7 +2339,7 @@ namespace Orange.Library.Values
          return newArray;
       }
 
-      static void flatJoin(Array array, Value value)
+      protected static void flatJoin(Array array, Value value)
       {
          if (value.IsArray)
          {
@@ -2396,24 +2356,57 @@ namespace Orange.Library.Values
 
       public Value Count()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         int count;
+         if (block == null)
          {
-            var block = assistant.Block();
-            int count;
-            if (block == null)
+            var value = Arguments[0];
+            if (value.IsEmpty)
             {
-               var value = Arguments[0];
-               if (value.IsEmpty)
-               {
-                  return Length;
-               }
-
-               count = this.Count(i => i.Value.Compare(value) == 0);
-               return count;
+               return Length;
             }
 
+            count = this.Count(i => i.Value.Compare(value) == 0);
+            return count;
+         }
+
+         assistant.ArrayParameters();
+         count = 0;
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (result.IsTrue)
+            {
+               count++;
+            }
+         }
+
+         return count;
+      }
+
+      public Value FindIndex()
+      {
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
+         {
             assistant.ArrayParameters();
-            count = 0;
             foreach (var item in this)
             {
                assistant.SetParameterValues(item);
@@ -2434,57 +2427,20 @@ namespace Orange.Library.Values
 
                if (result.IsTrue)
                {
-                  count++;
+                  return new Some(item.Index);
                }
-            }
-
-            return count;
-         }
-      }
-
-      public Value FindIndex()
-      {
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            var block = assistant.Block();
-            if (block != null)
-            {
-               assistant.ArrayParameters();
-               foreach (var item in this)
-               {
-                  assistant.SetParameterValues(item);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (result.IsTrue)
-                  {
-                     return new Some(item.Index);
-                  }
-               }
-
-               return new None();
-            }
-
-            var value = Arguments[0];
-            foreach (var item in this.Where(item => item.Value.Compare(value) == 0))
-            {
-               return new Some(item.Index);
             }
 
             return new None();
          }
+
+         var value = Arguments[0];
+         foreach (var item in this.Where(item => item.Value.Compare(value) == 0))
+         {
+            return new Some(item.Index);
+         }
+
+         return new None();
       }
 
       public Value Max()
@@ -2494,61 +2450,59 @@ namespace Orange.Library.Values
             return new Nil();
          }
 
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         Value max;
+         if (block != null)
          {
-            var block = assistant.Block();
-            Value max;
-            if (block != null)
+            assistant.ArrayParameters();
+            var items = Items;
+            var first = items[0];
+            assistant.SetParameterValues(first.Value, first.Key, 0);
+            max = first.Value;
+            var maxCompare = block.Evaluate();
+            for (var i = 1; i < items.Length; i++)
             {
-               assistant.ArrayParameters();
-               var items = Items;
-               var first = items[0];
-               assistant.SetParameterValues(first.Value, first.Key, 0);
-               max = first.Value;
-               var maxCompare = block.Evaluate();
-               for (var i = 1; i < items.Length; i++)
+               var item = items[i];
+               assistant.SetParameterValues(item.Value, item.Key, i);
+               var compare = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  var item = items[i];
-                  assistant.SetParameterValues(item.Value, item.Key, i);
-                  var compare = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
+                  break;
+               }
 
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (compare.Compare(maxCompare) <= 0)
-                  {
+               switch (signal)
+               {
+                  case Continuing:
                      continue;
-                  }
-
-                  maxCompare = compare;
-                  max = item.Value;
+                  case ReturningNull:
+                     return null;
                }
 
-               return max;
-            }
-
-            max = this[0];
-            for (var i = 1; i < Length; i++)
-            {
-               var value = this[i];
-               if (value.Compare(max) > 0)
+               if (compare.Compare(maxCompare) <= 0)
                {
-                  max = value;
+                  continue;
                }
+
+               maxCompare = compare;
+               max = item.Value;
             }
 
             return max;
          }
+
+         max = this[0];
+         for (var i = 1; i < Length; i++)
+         {
+            var value = this[i];
+            if (value.Compare(max) > 0)
+            {
+               max = value;
+            }
+         }
+
+         return max;
       }
 
       public Value Min()
@@ -2558,109 +2512,105 @@ namespace Orange.Library.Values
             return new Nil();
          }
 
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         Value min;
+         if (block != null)
          {
-            var block = assistant.Block();
-            Value min;
-            if (block != null)
+            assistant.ArrayParameters();
+            var items = Items;
+            var first = items[0];
+            assistant.SetParameterValues(first.Value, first.Key, 0);
+            min = first.Value;
+            var minCompare = block.Evaluate();
+            for (var i = 1; i < items.Length; i++)
             {
-               assistant.ArrayParameters();
-               var items = Items;
-               var first = items[0];
-               assistant.SetParameterValues(first.Value, first.Key, 0);
-               min = first.Value;
-               var minCompare = block.Evaluate();
-               for (var i = 1; i < items.Length; i++)
+               var item = items[i];
+               assistant.SetParameterValues(item.Value, item.Key, i);
+               var compare = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  var item = items[i];
-                  assistant.SetParameterValues(item.Value, item.Key, i);
-                  var compare = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
+                  break;
+               }
 
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (compare.Compare(minCompare) >= 0)
-                  {
+               switch (signal)
+               {
+                  case Continuing:
                      continue;
-                  }
-
-                  minCompare = compare;
-                  min = item.Value;
+                  case ReturningNull:
+                     return null;
                }
 
-               return min;
-            }
-
-            min = this[0];
-            for (var i = 1; i < Length; i++)
-            {
-               var value = this[i];
-               if (value.Compare(min) < 0)
+               if (compare.Compare(minCompare) >= 0)
                {
-                  min = value;
+                  continue;
                }
+
+               minCompare = compare;
+               min = item.Value;
             }
 
             return min;
          }
+
+         min = this[0];
+         for (var i = 1; i < Length; i++)
+         {
+            var value = this[i];
+            if (value.Compare(min) < 0)
+            {
+               min = value;
+            }
+         }
+
+         return min;
       }
 
       public Value Listify() => Values.Select(v => v.Text).ToString(Arguments[0].Text);
 
       public Value Fill()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         Value value;
+         if (block != null)
          {
-            var block = assistant.Block();
-            Value value;
-            if (block != null)
-            {
-               assistant.ArrayParameters();
-               foreach (var key in Keys)
-               {
-                  assistant.SetParameterValues(this[key], key, GetIndex(key));
-                  value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (value != null)
-                  {
-                     this[key] = value;
-                  }
-               }
-
-               return this;
-            }
-
-            value = Arguments[0];
+            assistant.ArrayParameters();
             foreach (var key in Keys)
             {
-               this[key] = value.Clone();
+               assistant.SetParameterValues(this[key], key, GetIndex(key));
+               value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
+               {
+                  break;
+               }
+
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (value != null)
+               {
+                  this[key] = value;
+               }
             }
 
             return this;
          }
+
+         value = Arguments[0];
+         foreach (var key in Keys)
+         {
+            this[key] = value.Clone();
+         }
+
+         return this;
       }
 
       public Value End() => Length - 1;
@@ -2733,9 +2683,9 @@ namespace Orange.Library.Values
          return result;
       }
 
-      Value ifValue(Value value) => value is Pattern pattern ? ifPattern(pattern) : ifText(value.Text);
+      protected Value ifValue(Value value) => value is Pattern pattern ? ifPattern(pattern) : ifText(value.Text);
 
-      Value ifPattern(Pattern pattern)
+      protected Value ifPattern(Pattern pattern)
       {
          var result = new Array();
          foreach (var item in this.Where(i => pattern.IsMatch(i.Value.Text)))
@@ -2746,7 +2696,7 @@ namespace Orange.Library.Values
          return result;
       }
 
-      Value ifText(string text)
+      protected Value ifText(string text)
       {
          var result = new Array();
          foreach (var item in this.Where(i => i.Value.Text.Has(text)))
@@ -2757,9 +2707,9 @@ namespace Orange.Library.Values
          return result;
       }
 
-      Value unlessValue(Value value) => value is Pattern pattern ? unlessPattern(pattern) : unlessText(value.Text);
+      protected Value unlessValue(Value value) => value is Pattern pattern ? unlessPattern(pattern) : unlessText(value.Text);
 
-      Value unlessPattern(Pattern pattern)
+      protected Value unlessPattern(Pattern pattern)
       {
          var result = new Array();
          foreach (var item in this.Where(i => !pattern.IsMatch(i.Value.Text)))
@@ -2770,7 +2720,7 @@ namespace Orange.Library.Values
          return result;
       }
 
-      Value unlessText(string text)
+      protected Value unlessText(string text)
       {
          var result = new Array();
          foreach (var item in this.Where(i => !i.Value.Text.Has(text)))
@@ -2783,182 +2733,174 @@ namespace Orange.Library.Values
 
       public Value While()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            var result = new Array();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               var result = new Array();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (value.IsTrue)
-                  {
-                     result[item.Key] = item.Value;
-                  }
-                  else
-                  {
-                     break;
-                  }
+                  break;
                }
 
-               return result;
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (value.IsTrue)
+               {
+                  result[item.Key] = item.Value;
+               }
+               else
+               {
+                  break;
+               }
             }
 
-            return null;
+            return result;
          }
+
+         return null;
       }
 
       public Value Until()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            var result = new Array();
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               var result = new Array();
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (!value.IsTrue)
-                  {
-                     result[item.Key] = item.Value;
-                  }
-                  else
-                  {
-                     break;
-                  }
+                  break;
                }
 
-               return result;
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (!value.IsTrue)
+               {
+                  result[item.Key] = item.Value;
+               }
+               else
+               {
+                  break;
+               }
             }
 
-            return null;
+            return result;
          }
+
+         return null;
       }
 
       public Value SkipWhile() => skipWhile(Arguments);
 
-      Value skipWhile(Arguments arguments)
+      protected Value skipWhile(Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            var result = new Array();
+            var active = false;
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               var result = new Array();
-               var active = false;
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (value.IsTrue && !active)
-                  {
-                     continue;
-                  }
-
-                  active = true;
-                  result.Add(item.Value);
+                  break;
                }
 
-               return result;
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (value.IsTrue && !active)
+               {
+                  continue;
+               }
+
+               active = true;
+               result.Add(item.Value);
             }
 
-            return null;
+            return result;
          }
+
+         return null;
       }
 
       public Value SkipUntil() => skipUntil(Arguments);
 
-      Value skipUntil(Arguments arguments)
+      protected Value skipUntil(Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.ArrayParameters();
+            var result = new Array();
+            var active = false;
+            foreach (var item in this)
             {
-               assistant.ArrayParameters();
-               var result = new Array();
-               var active = false;
-               foreach (var item in this)
+               assistant.SetParameterValues(item);
+               var value = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetParameterValues(item);
-                  var value = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (!value.IsTrue && !active)
-                  {
-                     continue;
-                  }
-
-                  active = true;
-                  result.Add(item.Value);
+                  break;
                }
 
-               return result;
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (!value.IsTrue && !active)
+               {
+                  continue;
+               }
+
+               active = true;
+               result.Add(item.Value);
             }
 
-            return null;
+            return result;
          }
+
+         return null;
       }
 
       public Value NotTop() => new Array(this.Where(i => i.Index > 0).Select(i => i.Value));
@@ -2977,7 +2919,7 @@ namespace Orange.Library.Values
          return insertAt(key, value);
       }
 
-      Value insertAt(Value key, Value value)
+      protected Value insertAt(Value key, Value value)
       {
          if (key.IsNumeric())
          {
@@ -3071,27 +3013,25 @@ namespace Orange.Library.Values
             return this;
          }
 
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var newArray = new Array();
+         var block = assistant.Block();
+         assistant.TwoValueParameters();
+         var length = options[OptionType.Max] ? Math.Max(Length, other.Length) : Math.Min(Length, other.Length);
+         for (var i = 0; i < length; i++)
          {
-            var newArray = new Array();
-            var block = assistant.Block();
-            assistant.TwoValueParameters();
-            var length = options[OptionType.Max] ? Math.Max(Length, other.Length) : Math.Min(Length, other.Length);
-            for (var i = 0; i < length; i++)
+            assistant.SetParameterValues(this[i], other[i]);
+            var value = block.Evaluate();
+            if (value != null)
             {
-               assistant.SetParameterValues(this[i], other[i]);
-               var value = block.Evaluate();
-               if (value != null)
-               {
-                  newArray.Add(value);
-               }
+               newArray.Add(value);
             }
-
-            return newArray;
          }
+
+         return newArray;
       }
 
-      Value zip(Array other)
+      protected Value zip(Array other)
       {
          var newArray = new Array();
          for (var i = 0; i < Math.Min(Length, other.Length); i++)
@@ -3099,79 +3039,73 @@ namespace Orange.Library.Values
             newArray.Add(OTuple.Concatenate(this[i], other[i]));
          }
 
-         using (var popper = new RegionPopper(new Region(), "zip"))
+         using var popper = new RegionPopper(new Region(), "zip");
+         popper.Push();
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            popper.Push();
-            using (var assistant = new ParameterAssistant(Arguments))
-            {
-               var block = assistant.Block();
-               if (block == null)
-               {
-                  return newArray;
-               }
-
-               var parameters = Arguments.Parameters;
-               parameters.Splatting = true;
-               var resultArray = new Array();
-               foreach (var item in newArray)
-               {
-                  parameters.SetValues(item.Value);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  resultArray.Add(result);
-               }
-
-               return resultArray;
-            }
+            return newArray;
          }
+
+         var parameters = Arguments.Parameters;
+         parameters.Splatting = true;
+         var resultArray = new Array();
+         foreach (var item in newArray)
+         {
+            parameters.SetValues(item.Value);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            resultArray.Add(result);
+         }
+
+         return resultArray;
       }
 
-      Value flatZip(Array other)
+      protected Value flatZip(Array other)
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var newArray = new Array();
+         var block = assistant.Block();
+         int length;
+         if (block == null)
          {
-            var newArray = new Array();
-            var block = assistant.Block();
-            int length;
-            if (block == null)
-            {
-               length = options[OptionType.Max] ? Math.Max(Length, other.Length) : Math.Min(Length, other.Length);
-               for (var i = 0; i < length; i++)
-               {
-                  newArray.Add(this[i]);
-                  newArray.Add(other[i]);
-               }
-
-               return newArray;
-            }
-
-            assistant.TwoValueParameters();
             length = options[OptionType.Max] ? Math.Max(Length, other.Length) : Math.Min(Length, other.Length);
             for (var i = 0; i < length; i++)
             {
-               assistant.SetParameterValues(this[i], other[i]);
-               var value = block.Evaluate();
-               if (value != null)
-               {
-                  newArray.Add(value);
-               }
+               newArray.Add(this[i]);
+               newArray.Add(other[i]);
             }
 
             return newArray;
          }
+
+         assistant.TwoValueParameters();
+         length = options[OptionType.Max] ? Math.Max(Length, other.Length) : Math.Min(Length, other.Length);
+         for (var i = 0; i < length; i++)
+         {
+            assistant.SetParameterValues(this[i], other[i]);
+            var value = block.Evaluate();
+            if (value != null)
+            {
+               newArray.Add(value);
+            }
+         }
+
+         return newArray;
       }
 
       public Value ZipToOneArray()
@@ -3194,198 +3128,190 @@ namespace Orange.Library.Values
 
       public Value Each()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-
-            var changes = new ArrayBase();
-
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (result != null)
-               {
-                  changes[item.Key] = result.AssignmentValue();
-               }
-            }
-
-            foreach (var (key, value) in changes)
-            {
-               array[key] = value;
-            }
-
             return this;
          }
+
+         assistant.ArrayParameters();
+
+         var changes = new ArrayBase();
+
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (result != null)
+            {
+               changes[item.Key] = result.AssignmentValue();
+            }
+         }
+
+         foreach (var (key, value) in changes)
+         {
+            array[key] = value;
+         }
+
+         return this;
       }
 
       public Value Map()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-
-            var newArray = new Array();
-
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return newArray;
-               }
-
-               if (value.IsNil)
-               {
-                  continue;
-               }
-
-               if (value is KeyedValue keyedValue)
-               {
-                  newArray[keyedValue.Key] = keyedValue.Value;
-               }
-               else
-               {
-                  newArray[item.Key] = value;
-               }
-            }
-
-            return newArray;
+            return this;
          }
+
+         assistant.ArrayParameters();
+
+         var newArray = new Array();
+
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return newArray;
+            }
+
+            if (value.IsNil)
+            {
+               continue;
+            }
+
+            if (value is KeyedValue keyedValue)
+            {
+               newArray[keyedValue.Key] = keyedValue.Value;
+            }
+            else
+            {
+               newArray[item.Key] = value;
+            }
+         }
+
+         return newArray;
       }
 
       public Value Append()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-
-            var newArray = (Array)Clone();
-
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return newArray;
-               }
-
-               if (value.Type != ValueType.Nil)
-               {
-                  newArray.Add(value);
-               }
-            }
-
-            if (newArray.Length == 0)
-            {
-               return new Nil();
-            }
-
-            return newArray;
+            return this;
          }
+
+         assistant.ArrayParameters();
+
+         var newArray = (Array)Clone();
+
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return newArray;
+            }
+
+            if (value.Type != ValueType.Nil)
+            {
+               newArray.Add(value);
+            }
+         }
+
+         if (newArray.Length == 0)
+         {
+            return new Nil();
+         }
+
+         return newArray;
       }
 
       public Value FlatMap()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-
-            var newArray = new Array();
-
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate();
-               if (value.Type == ValueType.Nil)
-               {
-                  continue;
-               }
-
-               if (value is KeyedValue keyedValue)
-               {
-                  value = keyedValue.Value;
-               }
-
-               if (value.IsArray)
-               {
-                  var innerArray = (Array)value.SourceArray;
-                  foreach (var innerItem in innerArray)
-                  {
-                     newArray.Add(innerItem.Value);
-                  }
-               }
-               else
-               {
-                  newArray.Add(item.Value);
-               }
-            }
-
-            if (newArray.Length == 0)
-            {
-               return new Nil();
-            }
-
-            return newArray;
+            return this;
          }
+
+         assistant.ArrayParameters();
+
+         var newArray = new Array();
+
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate();
+            if (value.Type == ValueType.Nil)
+            {
+               continue;
+            }
+
+            if (value is KeyedValue keyedValue)
+            {
+               value = keyedValue.Value;
+            }
+
+            if (value.IsArray)
+            {
+               var innerArray = (Array)value.SourceArray;
+               foreach (var innerItem in innerArray)
+               {
+                  newArray.Add(innerItem.Value);
+               }
+            }
+            else
+            {
+               newArray.Add(item.Value);
+            }
+         }
+
+         if (newArray.Length == 0)
+         {
+            return new Nil();
+         }
+
+         return newArray;
       }
 
       public int Compare(double x, double y) => x > y ? 1 : x < y ? -1 : 0;
@@ -3422,7 +3348,7 @@ namespace Orange.Library.Values
             .ToString(", ") + "]";
       }
 
-      static Value evaluateSortBlock(KeyValueBase item, ParameterAssistant assistant, Block block)
+      protected static Value evaluateSortBlock(KeyValueBase item, ParameterAssistant assistant, Block block)
       {
          assistant.ArrayParameters();
          var (key, value) = item;
@@ -3430,83 +3356,73 @@ namespace Orange.Library.Values
          return block.Evaluate();
       }
 
-      Array sort(bool ascending)
+      protected Array sort(bool ascending)
       {
          var parameters = Arguments.Parameters;
          var length = parameters?.Length ?? 0;
-         if (length < 1)
-         {
-            return this;
-         }
 
-         if (length == 1)
+         return length switch
          {
-            return Sort(ascending);
-         }
-
-         return Order();
+            < 1 => this,
+            1 => Sort(ascending),
+            _ => Order()
+         };
       }
 
       public Array Sort(bool ascending)
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         IOrderedEnumerable<KeyValuePair<string, Value>> sortedArray;
+         if (block != null)
          {
-            var block = assistant.Block();
-            IOrderedEnumerable<KeyValuePair<string, Value>> sortedArray;
-            if (block != null)
-            {
-               assistant.ArrayParameters();
-               sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Text, this)
-                  : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Text, this);
-            }
-            else
-            {
-               sortedArray = ascending ? array.OrderBy(i => i.Value.Text, this) : array.OrderByDescending(i => i.Value.Text, this);
-            }
-
-            return new Array(sortedArray);
+            assistant.ArrayParameters();
+            sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Text, this)
+               : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Text, this);
          }
+         else
+         {
+            sortedArray = ascending ? array.OrderBy(i => i.Value.Text, this) : array.OrderByDescending(i => i.Value.Text, this);
+         }
+
+         return new Array(sortedArray);
       }
 
       public Array SortNumeric(bool ascending)
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         IOrderedEnumerable<KeyValuePair<string, Value>> sortedArray;
+         if (block != null)
          {
-            var block = assistant.Block();
-            IOrderedEnumerable<KeyValuePair<string, Value>> sortedArray;
-            if (block != null)
-            {
-               assistant.ArrayParameters();
-               sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Number, this)
-                  : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Number, this);
-            }
-            else
-            {
-               sortedArray = ascending ? array.OrderBy(i => i.Value.Number, this) : array.OrderByDescending(i => i.Value.Number, this);
-            }
-
-            return new Array(sortedArray);
+            assistant.ArrayParameters();
+            sortedArray = ascending ? array.OrderBy(i => evaluateSortBlock(i, assistant, block).Number, this)
+               : array.OrderByDescending(i => evaluateSortBlock(i, assistant, block).Number, this);
          }
+         else
+         {
+            sortedArray = ascending ? array.OrderBy(i => i.Value.Number, this) : array.OrderByDescending(i => i.Value.Number, this);
+         }
+
+         return new Array(sortedArray);
       }
 
       public Array Order()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.TwoValueParameters();
-            var items = Items;
-            System.Array.Sort(items, (i1, i2) => evaluateOrderBlock(i1.Value, i2.Value, assistant, block));
-            return new Array(items);
+            return this;
          }
+
+         assistant.TwoValueParameters();
+         var items = Items;
+         System.Array.Sort(items, (i1, i2) => evaluateOrderBlock(i1.Value, i2.Value, assistant, block));
+         return new Array(items);
       }
 
-      static int evaluateOrderBlock(Value value1, Value value2, ParameterAssistant assistant, Block block)
+      protected static int evaluateOrderBlock(Value value1, Value value2, ParameterAssistant assistant, Block block)
       {
          assistant.SetParameterValues(value1, value2);
          return (int)block.Evaluate().Number;
@@ -3514,118 +3430,112 @@ namespace Orange.Library.Values
 
       public Value GroupNumeric()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         var hash = new AutoHash<double, List<Value>>
          {
-            var block = assistant.Block();
-            var hash = new AutoHash<double, List<Value>>
+            Default = DefaultType.Lambda,
+            DefaultLambda = _ => new List<Value>(),
+            AutoAddDefault = true
+         };
+         if (block == null)
+         {
+            foreach (var item in this)
             {
-               Default = DefaultType.Lambda,
-               DefaultLambda = k => new List<Value>(),
-               AutoAddDefault = true
-            };
-            if (block == null)
-            {
-               foreach (var item in this)
+               var value = item.Value;
+               if (!value.IsArray)
                {
-                  var value = item.Value;
-                  if (!value.IsArray)
-                  {
-                     continue;
-                  }
-
-                  var inner = (Array)value.SourceArray;
-                  var key = inner[0].Number;
-                  value = inner[1];
-                  hash[key].Add(value);
+                  continue;
                }
-            }
-            else
-            {
-               assistant.ArrayParameters();
-               foreach (var item in this)
-               {
-                  assistant.SetParameterValues(item);
-                  var key = block.Evaluate().Number;
-                  hash[key].Add(item.Value);
-               }
-            }
 
-            var newArray = new Array();
-            foreach (var item in hash)
-            {
-               newArray[item.Key.ToString()] = new Array(item.Value);
+               var inner = (Array)value.SourceArray;
+               var key = inner[0].Number;
+               value = inner[1];
+               hash[key].Add(value);
             }
-
-            return newArray;
          }
+         else
+         {
+            assistant.ArrayParameters();
+            foreach (var item in this)
+            {
+               assistant.SetParameterValues(item);
+               var key = block.Evaluate().Number;
+               hash[key].Add(item.Value);
+            }
+         }
+
+         var newArray = new Array();
+         foreach (var item in hash)
+         {
+            newArray[item.Key.ToString()] = new Array(item.Value);
+         }
+
+         return newArray;
       }
 
       public Value ReduceL()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            if (Length < 2)
             {
-               if (Length < 2)
-               {
-                  return this;
-               }
-
-               assistant.TwoValueParameters();
-
-               var values = Values;
-               var value = values[0];
-
-               var result = new Array { value };
-
-               for (var i = 1; i < values.Length; i++)
-               {
-                  assistant.SetParameterValues(value, values[i]);
-                  value = block.Evaluate();
-                  value.Must().Not.BeNull().OrThrow(LOCATION, () => "Reduction block must return a value");
-                  result.Add(value);
-               }
-
-               return result;
+               return this;
             }
 
-            return new Array();
+            assistant.TwoValueParameters();
+
+            var values = Values;
+            var value = values[0];
+
+            var result = new Array { value };
+
+            for (var i = 1; i < values.Length; i++)
+            {
+               assistant.SetParameterValues(value, values[i]);
+               value = block.Evaluate();
+               value.Must().Not.BeNull().OrThrow(LOCATION, () => "Reduction block must return a value");
+               result.Add(value);
+            }
+
+            return result;
          }
+
+         return new Array();
       }
 
       public Value ReduceR()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            if (Length < 2)
             {
-               if (Length < 2)
-               {
-                  return this;
-               }
-
-               assistant.TwoValueParameters();
-
-               var values = Values;
-               var value = values[values.Length - 1];
-
-               var result = new Array { value };
-
-               for (var i = values.Length - 2; i > -1; i--)
-               {
-                  assistant.SetParameterValues(values[i], value);
-                  value = block.Evaluate();
-                  value.Must().Not.BeNull().OrThrow(LOCATION, () => "Reduction block must return a value");
-                  result.Add(value);
-               }
-
-               return result;
+               return this;
             }
 
-            return new Array();
+            assistant.TwoValueParameters();
+
+            var values = Values;
+            var value = values[values.Length - 1];
+
+            var result = new Array { value };
+
+            for (var i = values.Length - 2; i > -1; i--)
+            {
+               assistant.SetParameterValues(values[i], value);
+               value = block.Evaluate();
+               value.Must().Not.BeNull().OrThrow(LOCATION, () => "Reduction block must return a value");
+               result.Add(value);
+            }
+
+            return result;
          }
+
+         return new Array();
       }
 
       public void RemoveAllValues(Value value)
@@ -3743,44 +3653,42 @@ namespace Orange.Library.Values
 
       public Value Classify()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            var newArray = new Array();
-            assistant.ArrayParameters();
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var key = block.Evaluate().Text;
-               if (key.IsEmpty())
-               {
-                  continue;
-               }
-
-               var value = newArray[key];
-               if (value.IsEmpty)
-               {
-                  newArray[key] = item.Value;
-               }
-               else if (value.IsArray)
-               {
-                  newArray[key] = new Array { value, item.Value };
-               }
-               else
-               {
-                  var innerArray = (Array)value.SourceArray;
-                  innerArray.Add(item.Value);
-                  newArray[key] = innerArray;
-               }
-            }
-
-            return newArray;
+            return this;
          }
+
+         var newArray = new Array();
+         assistant.ArrayParameters();
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var key = block.Evaluate().Text;
+            if (key.IsEmpty())
+            {
+               continue;
+            }
+
+            var value = newArray[key];
+            if (value.IsEmpty)
+            {
+               newArray[key] = item.Value;
+            }
+            else if (value.IsArray)
+            {
+               newArray[key] = new Array { value, item.Value };
+            }
+            else
+            {
+               var innerArray = (Array)value.SourceArray;
+               innerArray.Add(item.Value);
+               newArray[key] = innerArray;
+            }
+         }
+
+         return newArray;
       }
 
       public Value Concat()
@@ -3870,15 +3778,7 @@ namespace Orange.Library.Values
 
       public Value Average() => this.Average(i => i.Value.Number);
 
-      public Value Tail()
-      {
-         if (Length <= 1)
-         {
-            return new Array();
-         }
-
-         return new Array(this.Where((item, i) => i > 0).Select(i => i.Value));
-      }
+      public Value Tail() => Length <= 1 ? new Array() : new Array(this.Where((_, i) => i > 0).Select(i => i.Value));
 
       public Value Andify() => Values.Select(v => v.Text).ToArray().Andify();
 
@@ -3907,7 +3807,7 @@ namespace Orange.Library.Values
          return value;
       }
 
-      static void setVariable(string runtimeVariable, string variable, Value value = null)
+      protected static void setVariable(string runtimeVariable, string variable, Value value = null)
       {
          if (!variable.IsNotEmpty())
          {
@@ -3932,35 +3832,13 @@ namespace Orange.Library.Values
          return splitter is Pattern pattern ? fields(pattern, awkify) : fields(splitter.Text, awkify);
       }
 
-      Value fields(Pattern pattern, bool awkify)
+      protected Value fields(Pattern pattern, bool awkify)
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var newArray = new Array();
+         var block = assistant.Block();
+         if (block == null)
          {
-            var newArray = new Array();
-            var block = assistant.Block();
-            if (block == null)
-            {
-               foreach (var item in this)
-               {
-                  var value = item.Value;
-                  var fields = value.IsArray ? (Array)value.SourceArray : new Array(pattern.Split(value.Text));
-                  if (awkify)
-                  {
-                     fields.Unshift(value);
-                  }
-
-                  newArray.Add(fields);
-               }
-
-               return newArray;
-            }
-
-            var parameters = Arguments.Parameters;
-            if (parameters == null || parameters.Length == 0)
-            {
-               return this;
-            }
-
             foreach (var item in this)
             {
                var value = item.Value;
@@ -3970,58 +3848,57 @@ namespace Orange.Library.Values
                   fields.Unshift(value);
                }
 
-               SetMultipleParameters(parameters, fields);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               newArray.Add(result);
+               newArray.Add(fields);
             }
 
             return newArray;
          }
+
+         var parameters = Arguments.Parameters;
+         if (parameters == null || parameters.Length == 0)
+         {
+            return this;
+         }
+
+         foreach (var item in this)
+         {
+            var value = item.Value;
+            var fields = value.IsArray ? (Array)value.SourceArray : new Array(pattern.Split(value.Text));
+            if (awkify)
+            {
+               fields.Unshift(value);
+            }
+
+            SetMultipleParameters(parameters, fields);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            newArray.Add(result);
+         }
+
+         return newArray;
       }
 
-      Value fields(string pattern, bool awkify)
+      protected Value fields(string pattern, bool awkify)
       {
          pattern = pattern.Escape();
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var newArray = new Array();
+         var block = assistant.Block();
+         if (block == null)
          {
-            var newArray = new Array();
-            var block = assistant.Block();
-            if (block == null)
-            {
-               foreach (var item in this)
-               {
-                  var fields = new Array(item.Value.Text.Split(pattern));
-                  if (awkify)
-                  {
-                     fields.Unshift(item.Value);
-                  }
-
-                  newArray.Add(fields);
-               }
-
-               return newArray;
-            }
-
-            var parameters = Arguments.Parameters;
-            if (parameters == null || parameters.Length == 0)
-            {
-               return this;
-            }
-
             foreach (var item in this)
             {
                var fields = new Array(item.Value.Text.Split(pattern));
@@ -4030,27 +3907,46 @@ namespace Orange.Library.Values
                   fields.Unshift(item.Value);
                }
 
-               SetMultipleParameters(parameters, fields);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               newArray.Add(result);
+               newArray.Add(fields);
             }
 
             return newArray;
          }
+
+         var parameters = Arguments.Parameters;
+         if (parameters == null || parameters.Length == 0)
+         {
+            return this;
+         }
+
+         foreach (var item in this)
+         {
+            var fields = new Array(item.Value.Text.Split(pattern));
+            if (awkify)
+            {
+               fields.Unshift(item.Value);
+            }
+
+            SetMultipleParameters(parameters, fields);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            newArray.Add(result);
+         }
+
+         return newArray;
       }
 
       public Value Break()
@@ -4064,55 +3960,51 @@ namespace Orange.Library.Values
          Message1.Must().Not.BeNull().OrThrow(LOCATION, () => ".break message not sent");
          Message1.MessageName.Must().Equal("break").OrThrow(LOCATION, () => "previous message not .break");
 
-         using (var breakAssistant = new ParameterAssistant(Message1.MessageArguments))
+         using var breakAssistant = new ParameterAssistant(Message1.MessageArguments);
+         var breakBlock = breakAssistant.Block();
+         if (breakBlock == null)
          {
-            var breakBlock = breakAssistant.Block();
-            if (breakBlock == null)
-            {
-               return this;
-            }
-
-            using (var onAssistant = new ParameterAssistant(Arguments))
-            {
-               var onBlock = onAssistant.Block();
-               if (onBlock == null)
-               {
-                  return this;
-               }
-
-               var hash = new AutoHash<string, List<Value>>
-               {
-                  Default = DefaultType.Lambda,
-                  DefaultLambda = k => new List<Value>(),
-                  AutoAddDefault = true
-               };
-               breakAssistant.ArrayParameters();
-               foreach (var item in this)
-               {
-                  breakAssistant.SetParameterValues(item);
-                  var key = breakBlock.Evaluate().Text;
-                  hash[key].Add(item.Value);
-               }
-
-               onAssistant.BreakOnParameters();
-               var index = 0;
-               var newArray = new Array();
-               foreach (var (key, values) in hash)
-               {
-                  var subArray = new Array(values.ToArray());
-                  onAssistant.SetBreakOnParameters(subArray, key, index++);
-                  var value = onBlock.Evaluate();
-                  newArray.Add(value);
-               }
-
-               return newArray;
-            }
+            return this;
          }
+
+         using var onAssistant = new ParameterAssistant(Arguments);
+         var onBlock = onAssistant.Block();
+         if (onBlock == null)
+         {
+            return this;
+         }
+
+         var hash = new AutoHash<string, List<Value>>
+         {
+            Default = DefaultType.Lambda,
+            DefaultLambda = _ => new List<Value>(),
+            AutoAddDefault = true
+         };
+         breakAssistant.ArrayParameters();
+         foreach (var item in this)
+         {
+            breakAssistant.SetParameterValues(item);
+            var key = breakBlock.Evaluate().Text;
+            hash[key].Add(item.Value);
+         }
+
+         onAssistant.BreakOnParameters();
+         var index = 0;
+         var newArray = new Array();
+         foreach (var (key, values) in hash)
+         {
+            var subArray = new Array(values.ToArray());
+            onAssistant.SetBreakOnParameters(subArray, key, index++);
+            var value = onBlock.Evaluate();
+            newArray.Add(value);
+         }
+
+         return newArray;
       }
 
-      Value beginValue(Value value) => value is Pattern pattern ? betweenPattern(pattern) : betweenText(value.Text);
+      protected Value beginValue(Value value) => value is Pattern pattern ? betweenPattern(pattern) : betweenText(value.Text);
 
-      Value betweenPattern(Pattern pattern)
+      protected Value betweenPattern(Pattern pattern)
       {
          betweening = -1;
          for (var i = 0; i < Length; i++)
@@ -4128,7 +4020,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      Value betweenText(string text)
+      protected Value betweenText(string text)
       {
          betweening = -1;
          for (var i = 0; i < Length; i++)
@@ -4146,49 +4038,47 @@ namespace Orange.Library.Values
 
       public Value Between(bool betweenExclusive)
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return beginValue(Arguments[0]);
-            }
-
-            assistant.ArrayParameters();
-            betweening = -1;
-            exclusive = betweenExclusive;
-            for (var i = 0; i < Length; i++)
-            {
-               assistant.SetParameterValues(this[i], GetKey(i), i);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (value.IsTrue)
-               {
-                  betweening = i;
-                  break;
-               }
-            }
-
-            return this;
+            return beginValue(Arguments[0]);
          }
+
+         assistant.ArrayParameters();
+         betweening = -1;
+         exclusive = betweenExclusive;
+         for (var i = 0; i < Length; i++)
+         {
+            assistant.SetParameterValues(this[i], GetKey(i), i);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (value.IsTrue)
+            {
+               betweening = i;
+               break;
+            }
+         }
+
+         return this;
       }
 
-      Value andValue(Value value) => value is Pattern pattern ? andPattern(pattern) : andText(value.Text);
+      protected Value andValue(Value value) => value is Pattern pattern ? andPattern(pattern) : andText(value.Text);
 
-      Value andPattern(Pattern pattern)
+      protected Value andPattern(Pattern pattern)
       {
          var newArray = new Array();
          for (var i = exclusive ? betweening - 1 : betweening; i < Length; i++)
@@ -4212,7 +4102,7 @@ namespace Orange.Library.Values
          return newArray;
       }
 
-      Value andText(string text)
+      protected Value andText(string text)
       {
          var newArray = new Array();
          for (var i = exclusive ? betweening - 1 : betweening; i < Length; i++)
@@ -4243,51 +4133,49 @@ namespace Orange.Library.Values
             return new Array();
          }
 
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return andValue(Arguments[0]);
-            }
-
-            assistant.ArrayParameters();
-            var newArray = new Array();
-            for (var i = exclusive ? betweening - 1 : betweening; i < Length; i++)
-            {
-               var value = this[i];
-               assistant.SetParameterValues(value, GetKey(i), i);
-               var evaluation = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (evaluation.IsTrue)
-               {
-                  if (!exclusive)
-                  {
-                     newArray.Add(value);
-                  }
-
-                  break;
-               }
-
-               newArray.Add(value);
-            }
-
-            betweening = -1;
-            return newArray;
+            return andValue(Arguments[0]);
          }
+
+         assistant.ArrayParameters();
+         var newArray = new Array();
+         for (var i = exclusive ? betweening - 1 : betweening; i < Length; i++)
+         {
+            var value = this[i];
+            assistant.SetParameterValues(value, GetKey(i), i);
+            var evaluation = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (evaluation.IsTrue)
+            {
+               if (!exclusive)
+               {
+                  newArray.Add(value);
+               }
+
+               break;
+            }
+
+            newArray.Add(value);
+         }
+
+         betweening = -1;
+         return newArray;
       }
 
       public Value Extend()
@@ -4329,86 +4217,84 @@ namespace Orange.Library.Values
 
       public Value Skip()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         Array newArray;
+         if (block != null)
          {
-            var block = assistant.Block();
-            Array newArray;
-            if (block != null)
+            assistant.ArrayParameters();
+            var index = -1;
+            for (var i = 0; i < Length; i++)
             {
-               assistant.ArrayParameters();
-               var index = -1;
-               for (var i = 0; i < Length; i++)
+               var key = GetKey(i);
+               assistant.SetParameterValues(this[i], key, i);
+               var result = block.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  var key = GetKey(i);
-                  assistant.SetParameterValues(this[i], key, i);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  index = i;
-                  if (!result.IsTrue)
-                  {
-                     break;
-                  }
+                  break;
                }
 
-               newArray = new Array();
-               for (var i = index; i < Length; i++)
+               switch (signal)
                {
-                  newArray.Add(this[i]);
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
                }
 
-               return newArray;
-            }
-
-            var count = (int)Arguments[0].Number;
-            if (count == 0)
-            {
-               return this;
-            }
-
-            if (count > 0)
-            {
-               if (count > Length)
+               index = i;
+               if (!result.IsTrue)
                {
-                  count = Length;
+                  break;
                }
-
-               newArray = new Array();
-               for (var i = count; i < Length; i++)
-               {
-                  newArray.Add(this[i]);
-               }
-
-               return newArray;
             }
 
-            count = -count;
-            if (count > Length)
-            {
-               count = Length;
-            }
-
-            count = Length - count;
             newArray = new Array();
-            for (var i = 0; i < count; i++)
+            for (var i = index; i < Length; i++)
             {
                newArray.Add(this[i]);
             }
 
             return newArray;
          }
+
+         var count = (int)Arguments[0].Number;
+         if (count == 0)
+         {
+            return this;
+         }
+
+         if (count > 0)
+         {
+            if (count > Length)
+            {
+               count = Length;
+            }
+
+            newArray = new Array();
+            for (var i = count; i < Length; i++)
+            {
+               newArray.Add(this[i]);
+            }
+
+            return newArray;
+         }
+
+         count = -count;
+         if (count > Length)
+         {
+            count = Length;
+         }
+
+         count = Length - count;
+         newArray = new Array();
+         for (var i = 0; i < count; i++)
+         {
+            newArray.Add(this[i]);
+         }
+
+         return newArray;
       }
 
       public Value Unfields()
@@ -4463,90 +4349,86 @@ namespace Orange.Library.Values
       public Value MapIf()
       {
          var value = Arguments[0];
-         if (!(value is When when))
+         if (value is not When when)
          {
             return this;
          }
 
          var otherwiseExists = when.Otherwise != null;
          var otherwise = otherwiseExists ? (Block)when.Otherwise : null;
-         using (var mapAssistant = new ParameterAssistant(when.Result))
+         using var mapAssistant = new ParameterAssistant(when.Result);
+         var mapBlock = mapAssistant.Block();
+         if (mapBlock == null)
          {
-            var mapBlock = mapAssistant.Block();
-            if (mapBlock == null)
+            return this;
+         }
+
+         mapAssistant.ArrayParameters();
+         using var ifAssistant = new ParameterAssistant(when.Condition);
+         var ifBlock = ifAssistant.Block();
+         if (ifBlock == null)
+         {
+            return this;
+         }
+
+         ifAssistant.ArrayParameters();
+         var newArray = new Array();
+         foreach (var item in this)
+         {
+            mapAssistant.SetParameterValues(item);
+            if (ifBlock.Evaluate().IsTrue)
             {
-               return this;
+               mapAssistant.SetParameterValues(item);
+               var result = mapBlock.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
+               {
+                  return newArray;
+               }
+
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
+
+               if (result.Type != ValueType.Nil)
+               {
+                  newArray[item.Key] = result;
+               }
             }
-
-            mapAssistant.ArrayParameters();
-            using (var ifAssistant = new ParameterAssistant(when.Condition))
+            else if (otherwiseExists)
             {
-               var ifBlock = ifAssistant.Block();
-               if (ifBlock == null)
+               mapAssistant.SetParameterValues(item);
+               var result = otherwise.Evaluate();
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  return this;
+                  return newArray;
                }
 
-               ifAssistant.ArrayParameters();
-               var newArray = new Array();
-               foreach (var item in this)
+               switch (signal)
                {
-                  mapAssistant.SetParameterValues(item);
-                  if (ifBlock.Evaluate().IsTrue)
-                  {
-                     mapAssistant.SetParameterValues(item);
-                     var result = mapBlock.Evaluate();
-                     var signal = Signal();
-                     if (signal == Breaking)
-                     {
-                        return newArray;
-                     }
-
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
-
-                     if (result.Type != ValueType.Nil)
-                     {
-                        newArray[item.Key] = result;
-                     }
-                  }
-                  else if (otherwiseExists)
-                  {
-                     mapAssistant.SetParameterValues(item);
-                     var result = otherwise.Evaluate();
-                     var signal = Signal();
-                     if (signal == Breaking)
-                     {
-                        return newArray;
-                     }
-
-                     switch (signal)
-                     {
-                        case Continuing:
-                           continue;
-                        case ReturningNull:
-                           return null;
-                     }
-
-                     if (result.Type != ValueType.Nil)
-                     {
-                        newArray[item.Key] = result;
-                     }
-                  }
-                  else
-                  {
-                     newArray[item.Key] = item.Value;
-                  }
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
                }
 
-               return newArray;
+               if (result.Type != ValueType.Nil)
+               {
+                  newArray[item.Key] = result;
+               }
+            }
+            else
+            {
+               newArray[item.Key] = item.Value;
             }
          }
+
+         return newArray;
       }
 
       public Value Sequence() => new PseudoStream(this);
@@ -4574,185 +4456,177 @@ namespace Orange.Library.Values
 
       public virtual Value ShiftUntil() => shiftUntil(Arguments);
 
-      Value shiftUntil(Arguments arguments)
+      protected Value shiftUntil(Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-            var newArray = new Array();
-            while (Length > 0)
-            {
-               var value = shiftOne();
-               assistant.SetParameterValues(value, "", 0);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (!result.IsTrue)
-               {
-                  newArray.Add(value);
-               }
-               else
-               {
-                  break;
-               }
-            }
-
-            return newArray;
+            return this;
          }
+
+         assistant.ArrayParameters();
+         var newArray = new Array();
+         while (Length > 0)
+         {
+            var value = shiftOne();
+            assistant.SetParameterValues(value, "", 0);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (!result.IsTrue)
+            {
+               newArray.Add(value);
+            }
+            else
+            {
+               break;
+            }
+         }
+
+         return newArray;
       }
 
       public Value ShiftWhile() => shiftWhile(Arguments);
 
-      Value shiftWhile(Arguments arguments)
+      protected Value shiftWhile(Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-            var newArray = new Array();
-            while (Length > 0)
-            {
-               var value = shiftOne();
-               assistant.SetParameterValues(value, "", 0);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (result.IsTrue)
-               {
-                  newArray.Add(value);
-               }
-               else
-               {
-                  break;
-               }
-            }
-
-            return newArray;
+            return this;
          }
+
+         assistant.ArrayParameters();
+         var newArray = new Array();
+         while (Length > 0)
+         {
+            var value = shiftOne();
+            assistant.SetParameterValues(value, "", 0);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (result.IsTrue)
+            {
+               newArray.Add(value);
+            }
+            else
+            {
+               break;
+            }
+         }
+
+         return newArray;
       }
 
       public Value TakeUntil() => takeUntil(Arguments);
 
-      Value takeUntil(Arguments arguments)
+      protected Value takeUntil(Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            var newArray = new Array();
-            assistant.ArrayParameters();
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (result.IsTrue)
-               {
-                  return newArray;
-               }
-
-               newArray.Add(item.Value);
-            }
-
-            return newArray;
+            return this;
          }
+
+         var newArray = new Array();
+         assistant.ArrayParameters();
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (result.IsTrue)
+            {
+               return newArray;
+            }
+
+            newArray.Add(item.Value);
+         }
+
+         return newArray;
       }
 
       public Value TakeWhile() => takeWhile(Arguments);
 
-      Value takeWhile(Arguments arguments)
+      protected Value takeWhile(Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            var newArray = new Array();
-            assistant.ArrayParameters();
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var result = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               if (!result.IsTrue)
-               {
-                  return newArray;
-               }
-
-               newArray[item.Key] = item.Value;
-               newArray.Add(item.Value);
-            }
-
-            return newArray;
+            return this;
          }
+
+         var newArray = new Array();
+         assistant.ArrayParameters();
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (!result.IsTrue)
+            {
+               return newArray;
+            }
+
+            newArray[item.Key] = item.Value;
+            newArray.Add(item.Value);
+         }
+
+         return newArray;
       }
 
       public Value Succ()
@@ -4804,63 +4678,61 @@ namespace Orange.Library.Values
 
       public virtual Value SelfMap()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-
-            var newArray = new Array();
-
-            foreach (var item in this)
-            {
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  return newArray;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return newArray;
-               }
-
-               if (value.Type == ValueType.Nil)
-               {
-                  continue;
-               }
-
-               if (value is KeyedValue keyedValue)
-               {
-                  newArray[keyedValue.Key] = keyedValue.Value;
-               }
-               else
-               {
-                  newArray[item.Key] = value;
-               }
-            }
-
-            if (newArray.Length == 0)
-            {
-               return this;
-            }
-
-            foreach (var item in newArray)
-            {
-               this[item.Key] = item.Value;
-            }
-
             return this;
          }
+
+         assistant.ArrayParameters();
+
+         var newArray = new Array();
+
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return newArray;
+            }
+
+            if (value.Type == ValueType.Nil)
+            {
+               continue;
+            }
+
+            if (value is KeyedValue keyedValue)
+            {
+               newArray[keyedValue.Key] = keyedValue.Value;
+            }
+            else
+            {
+               newArray[item.Key] = value;
+            }
+         }
+
+         if (newArray.Length == 0)
+         {
+            return this;
+         }
+
+         foreach (var item in newArray)
+         {
+            this[item.Key] = item.Value;
+         }
+
+         return this;
       }
 
       /*      public Value Index()
@@ -4901,18 +4773,12 @@ namespace Orange.Library.Values
 
       public Value Set() => new Set(this);
 
-      public Value Alone()
+      public Value Alone() => Length switch
       {
-         switch (Length)
-         {
-            case 0:
-               return "";
-            case 1:
-               return this[0];
-            default:
-               return this;
-         }
-      }
+         0 => "",
+         1 => this[0],
+         _ => this
+      };
 
       public Value Fork()
       {
@@ -4963,93 +4829,20 @@ namespace Orange.Library.Values
       {
          var taken = new Array();
          var skipped = new Array();
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
-            {
-               assistant.ArrayParameters();
-               var taking = true;
-               foreach (var item in this)
-               {
-                  assistant.SetParameterValues(item);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (!result.IsTrue)
-                  {
-                     taking = false;
-                  }
-
-                  if (taking)
-                  {
-                     taken[item.Key] = item.Value;
-                  }
-                  else
-                  {
-                     skipped[item.Key] = item.Value;
-                  }
-               }
-            }
-            else
-            {
-               var count = (int)Arguments[0].Number;
-               if (count < 0)
-               {
-                  count = WrapIndex(count, Length, true);
-               }
-
-               for (var i = 0; i < count; i++)
-               {
-                  var key = GetKey(i);
-                  taken[key] = this[i];
-               }
-
-               for (var i = count; i < Length; i++)
-               {
-                  var key = GetKey(i);
-                  skipped[key] = this[i];
-               }
-            }
-
-            return new Array { taken, skipped };
-         }
-      }
-
-      public Value Map2()
-      {
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
             assistant.ArrayParameters();
-
-            var newArray = new Array();
-
+            var taking = true;
             foreach (var item in this)
             {
                assistant.SetParameterValues(item);
-               var value = block.Evaluate();
+               var result = block.Evaluate();
                var signal = Signal();
                if (signal == Breaking)
                {
-                  return newArray;
+                  break;
                }
 
                switch (signal)
@@ -5057,36 +4850,105 @@ namespace Orange.Library.Values
                   case Continuing:
                      continue;
                   case ReturningNull:
-                     return newArray;
+                     return null;
                }
 
-               if (value.Type == ValueType.Nil)
+               if (!result.IsTrue)
                {
-                  continue;
+                  taking = false;
                }
 
-               string key;
-               Value newValue;
-               var subArray = new Array();
-               if (value is KeyedValue keyedValue)
+               if (taking)
                {
-                  key = keyedValue.Key;
-                  newValue = keyedValue.Value;
-                  newArray[key] = newValue;
+                  taken[item.Key] = item.Value;
                }
                else
                {
-                  key = item.Key;
-                  newValue = value;
+                  skipped[item.Key] = item.Value;
                }
-
-               subArray.Add(item.Value);
-               subArray.Add(newValue);
-               newArray[key] = subArray;
+            }
+         }
+         else
+         {
+            var count = (int)Arguments[0].Number;
+            if (count < 0)
+            {
+               count = WrapIndex(count, Length, true);
             }
 
-            return newArray;
+            for (var i = 0; i < count; i++)
+            {
+               var key = GetKey(i);
+               taken[key] = this[i];
+            }
+
+            for (var i = count; i < Length; i++)
+            {
+               var key = GetKey(i);
+               skipped[key] = this[i];
+            }
          }
+
+         return new Array { taken, skipped };
+      }
+
+      public Value Map2()
+      {
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
+         {
+            return this;
+         }
+
+         assistant.ArrayParameters();
+
+         var newArray = new Array();
+
+         foreach (var item in this)
+         {
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               return newArray;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return newArray;
+            }
+
+            if (value.Type == ValueType.Nil)
+            {
+               continue;
+            }
+
+            string key;
+            Value newValue;
+            var subArray = new Array();
+            if (value is KeyedValue keyedValue)
+            {
+               key = keyedValue.Key;
+               newValue = keyedValue.Value;
+               newArray[key] = newValue;
+            }
+            else
+            {
+               key = item.Key;
+               newValue = value;
+            }
+
+            subArray.Add(item.Value);
+            subArray.Add(newValue);
+            newArray[key] = subArray;
+         }
+
+         return newArray;
       }
 
       public Value At()
@@ -5162,26 +5024,24 @@ namespace Orange.Library.Values
          }
 
          var sourceArray = (Array)Zip();
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         block.Must().Not.BeNull().OrThrow(LOCATION, () => "No block found for cross");
+         var newArray = new Array();
+         var function = rightAssociate ? func<Array, Value>(a => new NSGenerator(a).FoldR()) : func<Array, Value>(a => new NSGenerator(a).FoldL());
+         foreach (var item in sourceArray)
          {
-            var block = assistant.Block();
-            block.Must().Not.BeNull().OrThrow(LOCATION, () => "No block found for cross");
-            var newArray = new Array();
-            var function = rightAssociate ? func<Array, Value>(a => new NSGenerator(a).FoldR()) : func<Array, Value>(a => new NSGenerator(a).FoldL());
-            foreach (var item in sourceArray)
+            var value = item.Value;
+            if (value.IsArray)
             {
-               var value = item.Value;
-               if (value.IsArray)
-               {
-                  var inner = (Array)value.SourceArray;
-                  inner.Arguments = Arguments.Clone();
-                  value = function(inner);
-                  newArray.Add(value);
-               }
+               var inner = (Array)value.SourceArray;
+               inner.Arguments = Arguments.Clone();
+               value = function(inner);
+               newArray.Add(value);
             }
-
-            return newArray;
          }
+
+         return newArray;
       }
 
       public Value PZip() => new ParallelZip(this);
@@ -5324,7 +5184,7 @@ namespace Orange.Library.Values
          }
       }
 
-      Value removeAt(int index)
+      protected Value removeAt(int index)
       {
          if (ContainsIndex(index))
          {
@@ -5332,20 +5192,25 @@ namespace Orange.Library.Values
             Remove(index);
             return new Some(element);
          }
-
-         return new None();
+         else
+         {
+            return new None();
+         }
       }
 
-      Value removeAt(string key)
+      protected Value removeAt(string key)
       {
          if (ContainsKey(key))
          {
             var element = this[key];
             Remove(key);
+
             return new Some(element);
          }
-
-         return new None();
+         else
+         {
+            return new None();
+         }
       }
 
       public Value RemoveForKey()
@@ -5380,15 +5245,7 @@ namespace Orange.Library.Values
          return newArray;
       }
 
-      public Value Init()
-      {
-         if (Length == 0)
-         {
-            return new Array();
-         }
-
-         return new Array(this.Where((item, i) => i < Length - 1).Select(i => i.Value));
-      }
+      public Value Init() => Length == 0 ? new Array() : new Array(this.Where((_, i) => i < Length - 1).Select(i => i.Value));
 
       public Value List() => ArrayToList(this);
 

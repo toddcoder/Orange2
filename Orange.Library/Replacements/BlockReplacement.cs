@@ -7,10 +7,10 @@ namespace Orange.Library.Replacements
 {
    public class BlockReplacement : IReplacement
    {
-      Block block;
-      Parameters parameters;
-      long id;
-      bool returnValue;
+      protected Block block;
+      protected Parameters parameters;
+      protected long id;
+      protected bool returnValue;
 
       public BlockReplacement(Block block, Parameters parameters, bool returnValue)
       {
@@ -20,18 +20,16 @@ namespace Orange.Library.Replacements
          id = CompilerState.ObjectID();
       }
 
-      public BlockReplacement() => id = CompilerState.ObjectID();
-
-      Value evaluateBlock()
+      protected Value evaluateBlock()
       {
          Arguments.Parameters = parameters;
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            assistant.ReplacementParameters();
-            assistant.SetReplacement();
-            var value = block.Evaluate();
-            return value;
-         }
+
+         using var assistant = new ParameterAssistant(Arguments);
+         assistant.ReplacementParameters();
+         assistant.SetReplacement();
+
+         var value = block.Evaluate();
+         return value;
       }
 
       public string Text

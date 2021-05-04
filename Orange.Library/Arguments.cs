@@ -78,8 +78,7 @@ namespace Orange.Library
          return new Arguments(new NullBlock(), argumentsBlock);
       }
 
-      public static Arguments PipelineSource(Value value) =>
-         GuaranteedExecutable(value is Pattern pattern ? IfPattern(pattern) : value);
+      public static Arguments PipelineSource(Value value) => GuaranteedExecutable(value is Pattern pattern ? IfPattern(pattern) : value);
 
       protected static bool messageArguments(Block block) => block.AsAdded.OfType<AppendToMessage>().Any();
 
@@ -94,21 +93,22 @@ namespace Orange.Library
          this.arguments = arguments;
          this.block = block ?? new NullBlock();
          this.parameters = parameters ?? new NullParameters();
+
          Splatting = parameters?.Splatting ?? false;
          DefaultValue = "";
          MessageArguments = messageArguments(this.arguments);
       }
 
-      public Arguments(Value argument, Block block = null, Parameters parameters = null)
-         : this(blockFromValue(argument), block, parameters)
+      public Arguments(Value argument, Block block = null, Parameters parameters = null) : this(blockFromValue(argument), block, parameters)
       {
       }
 
       public Arguments(ParameterBlock parameterBlock)
       {
-         arguments = new NullBlock();
          block = parameterBlock.Block;
          parameters = parameterBlock.Parameters;
+
+         arguments = new NullBlock();
          Splatting = parameters.Splatting;
          DefaultValue = "";
          MessageArguments = false;
@@ -129,6 +129,7 @@ namespace Orange.Library
       public Arguments(Value value)
       {
          arguments = blockFromValue(value);
+
          block = new NullBlock();
          parameters = new NullParameters();
          DefaultValue = "";
@@ -137,17 +138,17 @@ namespace Orange.Library
 
       public Arguments(Value[] values, Block block = null, Parameters parameters = null)
       {
-         arguments = null;
          blockFromValues(values);
          this.block = block ?? new NullBlock();
          this.parameters = parameters ?? new NullParameters();
+
+         arguments = null;
          Splatting = parameters?.Splatting ?? false;
          DefaultValue = "";
          MessageArguments = messageArguments(arguments);
       }
 
-      public Arguments(INSGenerator generator, Block block = null, Parameters parameters = null)
-         : this(ToArray(generator).Values, block, parameters)
+      public Arguments(INSGenerator generator, Block block = null, Parameters parameters = null) : this(ToArray(generator).Values, block, parameters)
       {
       }
 
@@ -163,13 +164,12 @@ namespace Orange.Library
 
       public void AddBlockArgument(Block argument)
       {
-         var converted = argument;
          if (arguments.Count > 0)
          {
             arguments.Add(new AppendToArray());
          }
 
-         foreach (var verb in converted.AsAdded)
+         foreach (var verb in argument.AsAdded)
          {
             arguments.Add(verb);
          }
@@ -333,7 +333,6 @@ namespace Orange.Library
 
       public Array AsArray(int length)
       {
-         // ReSharper disable once LoopCanBePartlyConvertedToQuery
          foreach (var verb in arguments)
          {
             if (verb is IWrapping wrapping)
@@ -407,12 +406,11 @@ namespace Orange.Library
       public Value[] GetValues(int length)
       {
          var blocks = Blocks;
-         if (blocks.Length == 1)
+         return blocks.Length switch
          {
-            return flattenValue(blocks[0].Evaluate(), length);
-         }
-
-         return flattenValues(Values, length);
+            1 => flattenValue(blocks[0].Evaluate(), length),
+            _ => flattenValues(Values, length)
+         };
       }
 
       protected void blockFromValues(Value[] values)

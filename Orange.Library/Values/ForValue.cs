@@ -7,17 +7,17 @@ namespace Orange.Library.Values
 {
    public class ForValue : Value, IGenerator
    {
-      Parameters parameters;
-      Block value;
-      Block block;
-      IMaybe<IGenerator> generator;
+      protected Parameters parameters;
+      protected Block value;
+      protected Block block;
+      protected IMaybe<IGenerator> _generator;
 
       public ForValue(Parameters parameters, Block value, Block block)
       {
          this.parameters = parameters;
          this.value = value;
          this.block = block;
-         generator = none<IGenerator>();
+         _generator = none<IGenerator>();
       }
 
       public override int Compare(Value value) => 0;
@@ -32,20 +32,26 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new ForValue((Parameters)parameters.Clone(), (Block)value.Clone(), (Block)block.Clone());
 
-      protected override void registerMessages(MessageManager manager) { }
+      protected override void registerMessages(MessageManager manager)
+      {
+      }
 
-      public void Before() { }
+      public void Before()
+      {
+      }
 
       public Value Next(int index)
       {
-         if (!generator.HasValue)
+         if (_generator.IsNone)
          {
-            generator = value.Evaluate().IfCast<IGenerator>();
+            _generator = value.Evaluate().IfCast<IGenerator>();
          }
 
-         return generator.Map(generator => generator.Next(index)).DefaultTo(() => NilValue);
+         return _generator.Map(generator => generator.Next(index)).DefaultTo(() => NilValue);
       }
 
-      public void End() { }
+      public void End()
+      {
+      }
    }
 }

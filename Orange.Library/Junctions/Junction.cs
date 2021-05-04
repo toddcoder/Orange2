@@ -56,27 +56,25 @@ namespace Orange.Library.Junctions
 
       public virtual Value EvaluateAsLambda(NSIterator iterator, Parameters parameters, Block block)
       {
-         using (var popper = new RegionPopper(new Region(), "any-of"))
+         using var popper = new RegionPopper(new Region(), "any-of");
+         popper.Push();
+
+         for (var i = 0; i < MAX_LOOP; i++)
          {
-            popper.Push();
-
-            for (var i = 0; i < MAX_LOOP; i++)
+            var current = iterator.Next();
+            if (current.IsNil)
             {
-               var current = iterator.Next();
-               if (current.IsNil)
-               {
-                  return IfNil();
-               }
-
-               parameters.SetValues(current, i);
-               if (BlockCompare(block) && Success().If(out var success))
-               {
-                  return success;
-               }
+               return IfNil();
             }
 
-            return Final();
+            parameters.SetValues(current, i);
+            if (BlockCompare(block) && Success().If(out var success))
+            {
+               return success;
+            }
          }
+
+         return Final();
       }
    }
 }

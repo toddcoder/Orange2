@@ -5,7 +5,7 @@ namespace Orange.Library
 {
    public abstract class EverySubBlock
    {
-      Block block;
+      protected Block block;
 
       public EverySubBlock(Block block) => this.block = block;
 
@@ -23,7 +23,7 @@ namespace Orange.Library
             Block newBlock;
             switch (verb)
             {
-               case Push push when push.Value is Block sourceBlock:
+               case Push { Value: Block sourceBlock }:
                {
                   newBlock = PushBlock(sourceBlock);
                   if (newBlock != null)

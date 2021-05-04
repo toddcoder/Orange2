@@ -6,10 +6,10 @@ namespace Orange.Library.Patterns
 {
    public class RangeElement : Element
    {
-      int from;
-      int to;
-      Pattern pattern;
-      int count;
+      protected int from;
+      protected int to;
+      protected Pattern pattern;
+      protected int count;
 
       public RangeElement(int from, int to, Pattern pattern, int count = -1)
       {
@@ -20,8 +20,9 @@ namespace Orange.Library.Patterns
          this.count = count == -1 ? to : count;
       }
 
-      public RangeElement()
-         : this(0, 0, new Pattern()) { }
+      public RangeElement() : this(0, 0, new Pattern())
+      {
+      }
 
       public override bool Evaluate(string input)
       {
@@ -46,6 +47,7 @@ namespace Orange.Library.Patterns
 
          State.Anchored = anchored;
          length = State.Position - index;
+
          return true;
       }
 
@@ -57,8 +59,10 @@ namespace Orange.Library.Patterns
             {
                return alternate;
             }
-
-            return new RangeElement(from, to, pattern, count - 1) { Next = next, Alternate = alternate };
+            else
+            {
+               return new RangeElement(from, to, pattern, count - 1) { Next = next, Alternate = alternate };
+            }
          }
          set => base.Alternate = value;
       }

@@ -26,27 +26,18 @@ namespace Orange.Library.Invocations
             return ToType(newArray, type, true);
          }
 
-         switch (type)
+         return type switch
          {
-            case "system.int32":
-               return (int)value.Number;
-            case "system.int64":
-               return (long)value.Number;
-            case "system.int16":
-               return (short)value.Number;
-            case "system.byte":
-               return (byte)value.Number;
-            case "system.double":
-               return value.Number;
-            case "system.single":
-               return (float)value.Number;
-            case "system.boolean":
-               return value.IsTrue;
-            case "system.string":
-               return value.Text;
-            default:
-               throw $"Didn't understand type {type}".Throws();
-         }
+            "system.int32" => value.Number,
+            "system.int64" => value.Number,
+            "system.int16" => value.Number,
+            "system.byte" => value.Number,
+            "system.double" => value.Number,
+            "system.single" => value.Number,
+            "system.boolean" => value.IsTrue,
+            "system.string" => value.Text,
+            _ => throw $"Didn't understand type {type}".Throws()
+         };
       }
 
       public static object[] GetArguments(this Value[] arguments, string[] types)
@@ -57,10 +48,7 @@ namespace Orange.Library.Invocations
 
       public static object GetArgument(this string type, Value value, Matcher matcher = null)
       {
-         if (matcher == null)
-         {
-            matcher = new Matcher();
-         }
+         matcher ??= new Matcher();
 
          var isArray = matcher.IsMatch(type, "/(.+) /('[]') $");
          string typeName;
@@ -84,6 +72,7 @@ namespace Orange.Library.Invocations
          {
             var type = keyedValue.Key;
             var value = keyedValue.Value;
+
             return value.ToType(type, value.IsArray);
          }
 
@@ -102,29 +91,13 @@ namespace Orange.Library.Invocations
          }
       }
 
-      public static Value GetValue(this object obj)
+      public static Value GetValue(this object obj) => obj switch
       {
-         if (obj == null)
-         {
-            return "";
-         }
-
-         if (obj.IsNumeric())
-         {
-            return (double)Convert.ChangeType(obj, typeof(double));
-         }
-
-         if (obj is DateTime)
-         {
-            return new Date((DateTime)obj);
-         }
-
-         if (obj is bool)
-         {
-            return new Boolean((bool)obj);
-         }
-
-         return obj.ToString();
-      }
+         null => "",
+         DateTime dateTime => new Date(dateTime),
+         bool boolean => new Boolean(boolean),
+         var o when o.IsNumeric() => (double)Convert.ChangeType(obj, typeof(double)),
+         _ => obj.ToString()
+      };
    }
 }

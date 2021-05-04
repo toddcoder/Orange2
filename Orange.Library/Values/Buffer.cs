@@ -13,8 +13,8 @@ namespace Orange.Library.Values
 {
    public class Buffer : Value
    {
-      StringBuilder buffer;
-      bool putting;
+      protected StringBuilder buffer;
+      protected bool putting;
 
       public Buffer()
       {
@@ -153,60 +153,52 @@ namespace Orange.Library.Values
 
       public Value GetItem()
       {
-         using (var popper = new RegionPopper(new Region(), "get-item"))
-         {
-            popper.Push();
-            Regions.Current.SetParameter("$", buffer.Length);
-            var arguments = new Array(Arguments.GetValues(buffer.Length));
-            var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
-            var list = iterator.ToList();
-            return list.Count == 0 ? "" : list.Select(getItem).ToString(", ");
-         }
+         using var popper = new RegionPopper(new Region(), "get-item");
+         popper.Push();
+         Regions.Current.SetParameter("$", buffer.Length);
+         var arguments = new Array(Arguments.GetValues(buffer.Length));
+         var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
+         var list = iterator.ToList();
+
+         return list.Count == 0 ? "" : list.Select(getItem).ToString(", ");
       }
 
       public Value SetItem()
       {
-         using (var popper = new RegionPopper(new Region(), "set-item"))
+         using var popper = new RegionPopper(new Region(), "set-item");
+         popper.Push();
+         Regions.Current.SetParameter("$", buffer.Length);
+
+         var popped = Arguments.Values.Pop();
+         if (popped.If(out var poppedValue))
          {
-            popper.Push();
-            Regions.Current.SetParameter("$", buffer.Length);
+            var value = poppedValue.element.AssignmentValue();
+            var values = poppedValue.array;
 
-            var popped = Arguments.Values.Pop();
-            if (popped.If(out var poppedValue))
+            var arguments = new Array(values);
+            var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
+            var list = iterator.ToList();
+            var text = value.Text;
+            foreach (var index in list)
             {
-               var value = poppedValue.element.AssignmentValue();
-               var values = poppedValue.array;
-
-               var arguments = new Array(values);
-               var iterator = new NSIteratorByLength(arguments.GetGenerator(), buffer.Length);
-               var list = iterator.ToList();
-               var text = value.Text;
-               foreach (var index in list)
-               {
-                  setItem(index, text);
-               }
+               setItem(index, text);
             }
-            else
-            {
-               return this;
-            }
+         }
+         else
+         {
+            return this;
          }
 
          return this;
       }
 
-      string getItem(Value index)
+      protected string getItem(Value index)
       {
          var i = index.Int;
-         if (i.Between(0).Until(buffer.Length))
-         {
-            return buffer[i].ToString();
-         }
-
-         return "";
+         return i.Between(0).Until(buffer.Length) ? buffer[i].ToString() : "";
       }
 
-      void setItem(Value index, string value)
+      protected void setItem(Value index, string value)
       {
          var i = index.Int;
          var k = 0;

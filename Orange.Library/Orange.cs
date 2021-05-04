@@ -13,12 +13,12 @@ namespace Orange.Library
 {
    public class Orange
    {
-      string source;
-      IColorizer colorizer;
-      string verboseText;
-      IFileCache fileCache;
-      Block block;
-      IConsole console;
+      protected string source;
+      protected IColorizer colorizer;
+      protected string verboseText;
+      protected IFileCache fileCache;
+      protected Block block;
+      protected IConsole console;
 
       public Orange(string source, IColorizer colorizer = null, IFileCache fileCache = null, IConsole console = null)
       {
@@ -26,8 +26,13 @@ namespace Orange.Library
          this.colorizer = colorizer;
          this.fileCache = fileCache;
          this.console = console;
+
          verboseText = "";
          block = null;
+         Text = "";
+         ModuleFolders = new string[0];
+         LastValue = "";
+         LastType = "";
       }
 
       public Func<string> Ask { get; set; }
@@ -36,10 +41,9 @@ namespace Orange.Library
 
       public bool AutoVariable { get; set; }
 
-      public string Text { get; set; } = "";
+      public string Text { get; set; }
 
-      public string[] ModuleFolders { get; set; } = new string[0];
-
+      public string[] ModuleFolders { get; set; }
 
       public string Execute()
       {
@@ -59,6 +63,7 @@ namespace Orange.Library
             block.Add(new SendMessage("dump", new Arguments()));
             block.Add(new End());
          }
+
          var runtime = new OrangeRuntime(block, Text, fileCache, console) { ModuleFolders = ModuleFolders };
          try
          {
@@ -75,9 +80,9 @@ namespace Orange.Library
          }
       }
 
-      public string LastValue { get; set; } = "";
+      public string LastValue { get; set; }
 
-      public string LastType { get; set; } = "";
+      public string LastType { get; set; }
 
       public string ColorizeOnly()
       {
@@ -85,13 +90,9 @@ namespace Orange.Library
          Coloring = true;
          MessagingState = new MessageManager();
          Compile(source);
-         /*			var compiler = new OrangeCompiler(source)
-                  {
-                     Verbose = verboseCompile
-                  };
-                  compiler.Compile();*/
-         verboseText = ""; //compiler.VerboseText;
+         verboseText = "";
          Coloring = false;
+
          return "";
       }
 
@@ -103,15 +104,14 @@ namespace Orange.Library
 
       public string DumpAll()
       {
-         using (var writer = new StringWriter())
-         {
-            writer.WriteLine(Region.LINE_DIVIDER);
-            writer.WriteLine(Region.LINE_COUNT0);
-            writer.WriteLine(Region.LINE_COUNT1);
-            writer.WriteLine(Regions.Current.Dump());
-            writer.WriteLine(Dump());
-            return writer.ToString();
-         }
+         using var writer = new StringWriter();
+         writer.WriteLine(Region.LINE_DIVIDER);
+         writer.WriteLine(Region.LINE_COUNT0);
+         writer.WriteLine(Region.LINE_COUNT1);
+         writer.WriteLine(Regions.Current.Dump());
+         writer.WriteLine(Dump());
+
+         return writer.ToString();
       }
    }
 }

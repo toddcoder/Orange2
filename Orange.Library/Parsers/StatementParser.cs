@@ -99,8 +99,10 @@ namespace Orange.Library.Parsers
                {
                   return (Inline(whenUnlessParser.Verb), whenUnlessParser.Position).Some();
                }
-
-               return (Inline(verb), parser.Position).Some();
+               else
+               {
+                  return (Inline(verb), parser.Position).Some();
+               }
             }
 
             return none<(Block, int)>();
@@ -142,7 +144,6 @@ namespace Orange.Library.Parsers
       {
          get
          {
-            //yield return new EndParser();
             yield return new BlankLineParser();
             yield return new MultilineCommentParser();
             yield return new SingleLineCommentParser();

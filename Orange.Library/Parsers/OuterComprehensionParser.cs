@@ -10,18 +10,17 @@ namespace Orange.Library.Parsers
 {
    public class OuterComprehensionParser : Parser
    {
-      InnerComprehensionParser innerComprehensionParser;
+      protected InnerComprehensionParser innerComprehensionParser;
 
-      public OuterComprehensionParser()
-         : base("^ /(|sp| '(') /'for' /b") => innerComprehensionParser = new InnerComprehensionParser();
+      public OuterComprehensionParser() : base("^ /(|sp| '(') /'for' /b") => innerComprehensionParser = new InnerComprehensionParser();
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, tokens[1].Length, Structures);
          Color(tokens[2].Length, KeyWords);
          var index = NextPosition;
-         var anyHead = none<NSInnerComprehension>();
-         var anyCurrent = none<NSInnerComprehension>();
+         var _head = none<NSInnerComprehension>();
+         var _current = none<NSInnerComprehension>();
 
          while (index < source.Length)
          {
@@ -29,19 +28,19 @@ namespace Orange.Library.Parsers
             {
                index = innerComprehensionParser.Position;
                var comprehension = ((NSInnerComprehension)innerComprehensionParser.Value).Some();
-               if (anyHead.HasValue)
+               if (_head.IsSome)
                {
-                  if (anyCurrent.If(out var current))
+                  if (_current.If(out var current))
                   {
                      current.NextComprehension = comprehension;
                   }
                }
                else
                {
-                  anyHead = comprehension;
+                  _head = comprehension;
                }
 
-               anyCurrent = comprehension;
+               _current = comprehension;
             }
             else
             {
@@ -53,12 +52,12 @@ namespace Orange.Library.Parsers
                continue;
             }
 
-            if (!anyHead.HasValue)
+            if (_head.IsNone)
             {
                return null;
             }
 
-            if (GetExpression(source, index, CloseParenthesis()).If(out var block, out var i) && anyHead.If(out var head))
+            if (GetExpression(source, index, CloseParenthesis()).If(out var block, out var i) && _head.If(out var head))
             {
                overridePosition = i;
                var value = new NSOuterComprehension(head, block);

@@ -37,9 +37,9 @@ namespace Orange.Library
 
       public class Row
       {
-         List<string> columns;
-         int rowIndex;
-         Hash<string, PadType> overriddenPadTypes;
+         protected List<string> columns;
+         protected int rowIndex;
+         protected Hash<string, PadType> overriddenPadTypes;
 
          public Row(int rowIndex, Hash<string, PadType> overriddenPadTypes)
          {
@@ -48,9 +48,9 @@ namespace Orange.Library
             this.overriddenPadTypes = overriddenPadTypes;
          }
 
-         string getKey() => getKey(rowIndex, columns.Count);
+         protected string getKey() => getKey(rowIndex, columns.Count);
 
-         static string getKey(int rowIndex, int columnIndex) => $"{rowIndex} {columnIndex}";
+         protected static string getKey(int rowIndex, int columnIndex) => $"{rowIndex} {columnIndex}";
 
          public void AddColumn(string text) => columns.Add(text);
 
@@ -80,7 +80,7 @@ namespace Orange.Library
                   continue;
                }
 
-               var padType = overriddenPadTypes.Find(getKey(rowIndex, i), s => data.PadType);
+               var padType = overriddenPadTypes.Find(getKey(rowIndex, i), _ => data.PadType);
                var paddedItem = value.Pad(padType, data.MaxLength);
                fields.Add(paddedItem);
             }
@@ -112,35 +112,36 @@ namespace Orange.Library
          public string Representation => "| " + columns.ToString(" | ") + " |...";
       }
 
-      const string LOCATION = "Table";
+      protected const string LOCATION = "Table";
 
-      static PadType getPadType(Bits32<Value.OptionType> option)
+      protected static PadType getPadType(Bits32<Value.OptionType> option)
       {
          if (option[Value.OptionType.RJust])
          {
             return PadType.Left;
          }
-
-         if (option[Value.OptionType.Center])
+         else if (option[Value.OptionType.Center])
          {
             return PadType.Center;
          }
-
-         return PadType.Right;
+         else
+         {
+            return PadType.Right;
+         }
       }
 
-      static (string, PadType, bool) extractText(Value value)
+      protected static (string, PadType, bool) extractText(Value value)
       {
          var options = value.Options;
          return (value.Text, getPadType(options), options[Value.OptionType.None]);
       }
 
-      static string spread(string text, int length) => text.Repeat(length).Keep(length);
+      protected static string spread(string text, int length) => text.Repeat(length).Keep(length);
 
-      List<MetaData> metaData;
-      Row headerRow;
-      List<Row> rows;
-      Hash<string, PadType> overriddenPadding;
+      protected List<MetaData> metaData;
+      protected Row headerRow;
+      protected List<Row> rows;
+      protected Hash<string, PadType> overriddenPadding;
 
       public Table(Array array, bool lines = false)
       {
@@ -174,6 +175,7 @@ namespace Orange.Library
          {
             var sum = metaData.Sum(d => d.MaxLength);
             sum += Vertical.IsNotEmpty() ? 3 * (metaData.Count - 1) + 4 : metaData.Count - 1;
+
             return sum;
          }
       }
@@ -210,42 +212,40 @@ namespace Orange.Library
          var rightDivider = getRightDivider();
          var hasHorizontal = horizontal != null;
          var hasHeaderDivider = headerDivider != null;
-         using (var writer = new StringWriter())
+         using var writer = new StringWriter();
+         if (hasHorizontal)
          {
+            writer.WriteLine(horizontal);
+         }
+
+         var header = headerRow.RenderAsHeader(leftDivider, middleDivider, rightDivider, metaData);
+         writer.WriteLine(header);
+         if (hasHeaderDivider)
+         {
+            writer.WriteLine(headerDivider);
+         }
+
+         foreach (var renderedRow in rows.Select(row => row.Render(leftDivider, middleDivider, rightDivider, metaData)))
+         {
+            writer.WriteLine(renderedRow);
             if (hasHorizontal)
             {
                writer.WriteLine(horizontal);
             }
-
-            var header = headerRow.RenderAsHeader(leftDivider, middleDivider, rightDivider, metaData);
-            writer.WriteLine(header);
-            if (hasHeaderDivider)
-            {
-               writer.WriteLine(headerDivider);
-            }
-
-            foreach (var renderedRow in rows.Select(row => row.Render(leftDivider, middleDivider, rightDivider, metaData)))
-            {
-               writer.WriteLine(renderedRow);
-               if (hasHorizontal)
-               {
-                  writer.WriteLine(horizontal);
-               }
-            }
-
-            return writer.ToString();
          }
+
+         return writer.ToString();
       }
 
-      string getRightDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Keep(1) : "";
+      protected string getRightDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Keep(1) : "";
 
-      string getMiddleDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Keep(1) + " " : " ";
+      protected string getMiddleDivider() => Vertical.IsNotEmpty() ? " " + Vertical.Keep(1) + " " : " ";
 
-      string getLeftDivider() => Vertical.IsNotEmpty() ? Vertical.Keep(1) + " " : "";
+      protected string getLeftDivider() => Vertical.IsNotEmpty() ? Vertical.Keep(1) + " " : "";
 
-      string getHorizontal(int length) => Horizontal.IsNotEmpty() ? spread(Horizontal, length) : null;
+      protected string getHorizontal(int length) => Horizontal.IsNotEmpty() ? spread(Horizontal, length) : null;
 
-      string getHeaderDivider(int length) => HeaderDivider.IsNotEmpty() ? spread(HeaderDivider, length) : null;
+      protected string getHeaderDivider(int length) => HeaderDivider.IsNotEmpty() ? spread(HeaderDivider, length) : null;
 
       public string Representation => headerRow.Representation;
    }

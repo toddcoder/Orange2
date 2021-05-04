@@ -25,7 +25,9 @@ namespace Orange.Library.Generators
       }
 
       public abstract Value Map(Value value);
+
       public abstract bool Exit(Value value);
+
       public abstract Value ReturnValue();
 
       public Value Evaluate()
@@ -34,42 +36,42 @@ namespace Orange.Library.Generators
          var looping = true;
 
          var region = new Region();
-         using (var popper = new RegionPopper(region, GetType().Name.CamelToObjectGraphCase()))
+
+         using var popper = new RegionPopper(region, GetType().Name.CamelToObjectGraphCase());
+         popper.Push();
+
+         generator.SharedRegion?.CopyAllVariablesTo(region);
+         aGenerator.Before();
+         for (var i = 0; i < MAX_ARRAY && looping; i++)
          {
-            popper.Push();
-            generator.SharedRegion?.CopyAllVariablesTo(region);
-            aGenerator.Before();
-            for (var i = 0; i < MAX_ARRAY && looping; i++)
+            var value = generator.GetNext(aGenerator, i, out var control);
+            if (value.IsNil)
             {
-               var value = generator.GetNext(aGenerator, i, out var control);
-               if (value.IsNil)
-               {
-                  break;
-               }
-
-               switch (control)
-               {
-                  case Continuing:
-                     SetParameter(parameterName, value, argumentName);
-                     value = Map(value);
-                     if (Exit(value))
-                     {
-                        aGenerator.End();
-                        return value;
-                     }
-
-                     break;
-                  case Skipping:
-                     continue;
-                  case Exiting:
-                     looping = false;
-                     break;
-               }
+               break;
             }
 
-            aGenerator.End();
-            return ReturnValue();
+            switch (control)
+            {
+               case Continuing:
+                  SetParameter(parameterName, value, argumentName);
+                  value = Map(value);
+                  if (Exit(value))
+                  {
+                     aGenerator.End();
+                     return value;
+                  }
+
+                  break;
+               case Skipping:
+                  continue;
+               case Exiting:
+                  looping = false;
+                  break;
+            }
          }
+
+         aGenerator.End();
+         return ReturnValue();
       }
    }
 }

@@ -60,7 +60,7 @@ namespace Orange.Library
 
       public static bool PushVariable(Verb verb, out string name)
       {
-         if (verb is Push push && push.Value is Variable variable)
+         if (verb is Push { Value: Variable variable })
          {
             name = variable.Name;
             return true;
@@ -102,9 +102,9 @@ namespace Orange.Library
       public static IMaybe<T> PushValue<T>(Verb verb)
          where T : Value => verb.IfCast<Push>().Map(push => push.Value.IfCast<T>());
 
-      public static Block PushValue(Value value) => new Block { new Push(value) };
+      public static Block PushValue(Value value) => new() { new Push(value) };
 
-      public static Block Inline(Verb verb) => new Block { verb };
+      public static Block Inline(Verb verb) => new() { verb };
 
       public static bool SendMessage(Verb verb, out string message, out Arguments arguments)
       {
@@ -157,7 +157,7 @@ namespace Orange.Library
 
       public static Block DownToBlock(Value value)
       {
-         if (value is Block block && block.Count == 1 && block.AsAdded[0] is Push push && push.Value is Block innerBlock)
+         if (value is Block { Count: 1 } block && block.AsAdded[0] is Push { Value: Block innerBlock })
          {
             var iBlock = innerBlock;
             var modified = true;
@@ -174,7 +174,7 @@ namespace Orange.Library
 
       public static Block DownToBlock(Block block, out bool modified)
       {
-         if (block.Count == 1 && block.AsAdded[0] is Push push && push.Value is Block innerBlock)
+         if (block.Count == 1 && block.AsAdded[0] is Push { Value: Block innerBlock })
          {
             modified = true;
             return innerBlock;
@@ -435,7 +435,7 @@ namespace Orange.Library
       public CreateFunction CreateFunction(string functionName, bool multiCapable = false, VisibilityType visibilityType = Public,
          bool @override = false, bool autoInvoke = false, Block condition = null)
       {
-         return new CreateFunction(functionName, Lambda(), multiCapable, visibilityType, @override, condition, autoInvoke);
+         return new(functionName, Lambda(), multiCapable, visibilityType, @override, condition, autoInvoke);
       }
 
       public void ReturnValueFunction(string functionName, Value value, VisibilityType visibility = Public, bool @override = false)
@@ -490,45 +490,28 @@ namespace Orange.Library
          End();
       }
 
-      public void SendMessage(string message, Arguments arguments = null, bool inPlace = false, bool registerCall = false,
-         bool optional = false)
+      public void SendMessage(string message, Arguments arguments = null, bool inPlace = false, bool registerCall = false, bool optional = false)
       {
-         if (arguments == null)
-         {
-            arguments = new Arguments();
-         }
-
+         arguments ??= new Arguments();
          block.Add(new SendMessage(message, arguments, inPlace, registerCall, optional));
       }
 
       public void SendMessageToSelf(string message, Arguments arguments = null)
       {
-         if (arguments == null)
-         {
-            arguments = new Arguments();
-         }
-
+         arguments ??= new Arguments();
          block.Add(new SendMessageToSelf(message, arguments));
       }
 
       public void SendMessageToClass(string message, Arguments arguments = null)
       {
-         if (arguments == null)
-         {
-            arguments = new Arguments();
-         }
-
+         arguments ??= new Arguments();
          block.Add(new SendMessageToClass(message, arguments));
       }
 
       public void SendMessageToField(string fieldName, string message, Arguments arguments = null,
          VerbPrecedenceType verbPrecedenceType = VerbPrecedenceType.SendMessage)
       {
-         if (arguments == null)
-         {
-            arguments = new Arguments();
-         }
-
+         arguments ??= new Arguments();
          block.Add(new SendMessageToField(fieldName, message, arguments, verbPrecedenceType));
       }
 
@@ -545,11 +528,11 @@ namespace Orange.Library
             return;
          }
 
-         if (expression.AsAdded[0] is Push push1 && push1.Value is Block innerBlock)
+         if (expression.AsAdded[0] is Push { Value: Block innerBlock } push1)
          {
             if (innerBlock.Count > 0)
             {
-               if (innerBlock[0] is Push push2 && push2.Value is Thunk thunk)
+               if (innerBlock[0] is Push { Value: Thunk thunk })
                {
                   expression = thunk.Block;
                }
@@ -872,16 +855,15 @@ namespace Orange.Library
          Verb(new Setter(message, verb, expression));
       }
 
-      public void IndexedSetterMessage(string fieldName, string message, Block index, IMatched<Verb> verb,
-         Block expression, bool insert)
+      public void IndexedSetterMessage(string fieldName, string message, Block index, IMatched<Verb> verb, Block expression, bool insert)
       {
          Verb(new IndexedSetterMessage(fieldName, message, index, verb, expression, insert));
       }
 
-      public Verb EvaluateExpression(bool returnValue) => new EvaluateExpression(Block);
-
-      public void CreateField(string fieldName, bool readOnly, VisibilityType visibility = Public) =>
+      public void CreateField(string fieldName, bool readOnly, VisibilityType visibility = Public)
+      {
          Verb(new CreateField(readOnly, fieldName, visibility));
+      }
 
       public void Defer(Block expression) => Verb(new Defer(expression));
 
@@ -889,8 +871,7 @@ namespace Orange.Library
 
       public void CreateGenerator() => Verb(new CreateGenerator());
 
-      public void CreateLambda(Parameters parameters, Block block, bool splatting) =>
-         this.block.Add(new CreateLambda(parameters, block, splatting));
+      public void CreateLambda(Parameters parameters, Block block, bool splatting) => this.block.Add(new CreateLambda(parameters, block, splatting));
 
       public void CreateLambda(Lambda lambda) => CreateLambda(lambda.Parameters, lambda.Block, lambda.Splatting);
    }

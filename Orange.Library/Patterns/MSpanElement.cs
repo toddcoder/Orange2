@@ -8,11 +8,7 @@ namespace Orange.Library.Patterns
    {
       protected int count;
 
-      public MSpanElement(string text, int count = -1)
-         : base(text) => this.count = count;
-
-      public MSpanElement()
-         : this("") { }
+      public MSpanElement(string text, int count = -1) : base(text) => this.count = count;
 
       public override bool Evaluate(string input)
       {
@@ -22,10 +18,7 @@ namespace Orange.Library.Patterns
             count = text.Length;
          }
 
-         if (needle == null)
-         {
-            needle = Expand(text);
-         }
+         needle ??= Expand(text);
 
          index = State.Position;
          for (var i = index; i < count; i++)
@@ -61,10 +54,7 @@ namespace Orange.Library.Patterns
                return alternate;
             }
 
-            if (needle == null)
-            {
-               needle = Expand(text);
-            }
+            needle ??= Expand(text);
 
             return new MSpanElement(needle, count - 1)
             {

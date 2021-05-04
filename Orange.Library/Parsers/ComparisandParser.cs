@@ -47,12 +47,12 @@ namespace Orange.Library.Parsers
             Arguments arguments;
             switch (verb)
             {
-               case Bind _:
+               case Bind:
                   builder.PopLastVerb();
                   bindingName = variable?.Name ?? "_";
                   bindNextValue = true;
                   break;
-               case If _:
+               case If:
                   iffing = true;
                   condition = new Block();
                   break;
@@ -86,7 +86,7 @@ namespace Orange.Library.Parsers
                   break;
                case SendMessage sendMessage:
                   var lastVerb = builder.Last;
-                  if (lastVerb is Push push1 && push1.Value is Placeholder placeholder)
+                  if (lastVerb is Push { Value: Placeholder placeholder })
                   {
                      builder.PopLastVerb();
                      builder.Variable(placeholder.Text);
@@ -183,7 +183,7 @@ namespace Orange.Library.Parsers
          return (builder.Block, condition);
       }
 
-      static Value evaluateVariable(string name)
+      private static Value evaluateVariable(string name)
       {
          if (name == "_")
          {
@@ -200,10 +200,10 @@ namespace Orange.Library.Parsers
             return trait;
          }
 
-         return IsClassName(name) ? (Value)new Variable(name) : new Placeholder(name);
+         return IsClassName(name) ? new Variable(name) : new Placeholder(name);
       }
 
-      static Arguments convertArguments(Arguments arguments)
+      private static Arguments convertArguments(Arguments arguments)
       {
          var patternParameterParser = new PatternParameterListParser();
          if (patternParameterParser.Parse(arguments.ArgumentsBlock))

@@ -10,8 +10,6 @@ namespace Orange.Library.Patterns
 
       public MBreakElement(string text, int count = -1) : base(text) => this.count = count;
 
-      public MBreakElement() : this("") { }
-
       public override bool Evaluate(string input)
       {
          var comparison = State.IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
@@ -20,10 +18,7 @@ namespace Orange.Library.Patterns
             count = text.Length;
          }
 
-         if (needle == null)
-         {
-            needle = Expand(text);
-         }
+         needle ??= Expand(text);
 
          index = State.Position;
          for (var i = index; i < count; i++)
@@ -63,10 +58,7 @@ namespace Orange.Library.Patterns
                return alternate;
             }
 
-            if (needle == null)
-            {
-               needle = Expand(text);
-            }
+            needle ??= Expand(text);
 
             return new MBreakElement(needle, count - 1)
             {

@@ -12,15 +12,15 @@ namespace Orange.Library.Parsers
 {
    public class InheritanceChecker
    {
-      string className;
-      bool isAbstract;
-      string[] traitNames;
-      IMaybe<Class> anySuperClass;
-      Hash<string, Signature> signatures;
-      Hash<string, Signature> superSignatures;
-      Hash<string, Signature> abstractSignatures;
-      Hash<string, bool> overrides;
-      Hash<string, Trait> traits;
+      protected string className;
+      protected bool isAbstract;
+      protected string[] traitNames;
+      protected IMaybe<Class> _superClass;
+      protected Hash<string, Signature> signatures;
+      protected Hash<string, Signature> superSignatures;
+      protected Hash<string, Signature> abstractSignatures;
+      protected Hash<string, bool> overrides;
+      protected Hash<string, Trait> traits;
 
       public InheritanceChecker(string className, Block objectBlock, Parameters parameters, string superClassName,
          bool isAbstract, string[] traitNames)
@@ -29,11 +29,11 @@ namespace Orange.Library.Parsers
          this.isAbstract = isAbstract;
          this.traitNames = traitNames;
 
-         anySuperClass = CompilerState.Class(superClassName);
-         if (anySuperClass.HasValue || traitNames.Length > 0)
+         _superClass = CompilerState.Class(superClassName);
+         if (_superClass.IsSome || traitNames.Length > 0)
          {
             signatures = getSignatures(objectBlock, parameters);
-            if (anySuperClass.If(out var superClass))
+            if (_superClass.If(out var superClass))
             {
                var superObjectBlock = superClass.ObjectBlock;
                superSignatures = getSignatures(superObjectBlock, superClass.Parameters);
@@ -48,6 +48,7 @@ namespace Orange.Library.Parsers
                superSignatures = new Hash<string, Signature>();
                abstractSignatures = new Hash<string, Signature>();
             }
+
             overrides = objectBlock.AsAdded.OfType<CreateFunction>().ToHash(cf => cf.FunctionName, cf => cf.Overriding);
             foreach (var name in parameters.GetParameters().Select(parameter => parameter.Name))
             {
@@ -57,7 +58,7 @@ namespace Orange.Library.Parsers
          }
       }
 
-      static Hash<string, Signature> getSignatures(Block block, Parameters parameters)
+      protected static Hash<string, Signature> getSignatures(Block block, Parameters parameters)
       {
          var signatures = new Hash<string, Signature>();
 
@@ -104,7 +105,7 @@ namespace Orange.Library.Parsers
 
       public IResult<string> Passes()
       {
-         if (anySuperClass.IsNone && traitNames.Length == 0)
+         if (_superClass.IsNone && traitNames.Length == 0)
          {
             return className.Success();
          }
@@ -116,13 +117,13 @@ namespace Orange.Library.Parsers
             select checkedOverrides;
       }
 
-      IResult<string> checkTraits()
+      protected IResult<string> checkTraits()
       {
          traits = new Hash<string, Trait>();
          foreach (var traitName in traitNames)
          {
-            var anyTrait = CompilerState.Trait(traitName);
-            if (anyTrait.If(out var trait))
+            var _trait = CompilerState.Trait(traitName);
+            if (_trait.If(out var trait))
             {
                traits[traitName] = trait;
             }
@@ -146,7 +147,7 @@ namespace Orange.Library.Parsers
          return className.Success();
       }
 
-      IResult<string> checkAbstracts()
+      protected IResult<string> checkAbstracts()
       {
          if (isAbstract)
          {
@@ -166,7 +167,7 @@ namespace Orange.Library.Parsers
          return className.Success();
       }
 
-      IResult<string> checkOverrides()
+      protected IResult<string> checkOverrides()
       {
          foreach (var item in signatures.Where(item => !isOverridden(item.Key)))
          {
@@ -176,6 +177,6 @@ namespace Orange.Library.Parsers
          return className.Success();
       }
 
-      bool isOverridden(string name) => !superSignatures.ContainsKey(name) || overrides.DefaultTo(name, false);
+      protected bool isOverridden(string name) => !superSignatures.ContainsKey(name) || overrides.DefaultTo(name, false);
    }
 }

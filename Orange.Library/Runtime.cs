@@ -5,7 +5,6 @@ using System.Text;
 using Core.Assertions;
 using Core.Collections;
 using Core.Computers;
-using Core.Exceptions;
 using Core.Monads;
 using Core.Numbers;
 using Core.RegularExpressions;
@@ -16,9 +15,7 @@ using Orange.Library.Patterns;
 using Orange.Library.Values;
 using Orange.Library.Verbs;
 using static System.String;
-using static Core.Assertions.AssertionFunctions;
 using static Core.Monads.MonadFunctions;
-using static Orange.Library.Debugging.Debugger;
 using static Orange.Library.Managers.RegionManager;
 using Array = Orange.Library.Values.Array;
 using Object = Orange.Library.Values.Object;
@@ -108,7 +105,7 @@ namespace Orange.Library
          return wrap ? index >= length ? length % index : index : index;
       }
 
-      static int wrapNegativeIndex(int index, int length)
+      protected static int wrapNegativeIndex(int index, int length)
       {
          if (length == 0)
          {
@@ -138,15 +135,15 @@ namespace Orange.Library
          {
             var keep = matcher[0, 1];
             var remove = matcher[0, 2];
-            keep = remove.Select((t, i) => remove.Substring(i, 1))
-               .Aggregate(keep, (current, chr) => current.Replace(chr, ""));
+            keep = remove.Select((_, i) => remove.Substring(i, 1)).Aggregate(keep, (current, chr) => current.Replace(chr, ""));
+
             return keep;
          }
 
          return expanded;
       }
 
-      static string expandAlpha(string text)
+      protected static string expandAlpha(string text)
       {
          if (text.IsEmpty())
          {
@@ -171,7 +168,7 @@ namespace Orange.Library
          return matcher.ToString();
       }
 
-      static string expandNumeric(string text)
+      protected static string expandNumeric(string text)
       {
          if (text.IsEmpty())
          {
@@ -198,8 +195,7 @@ namespace Orange.Library
 
       public static bool InText(string subject, string character, StringComparison comparison) => subject.IndexOf(character, comparison) > -1;
 
-      public static bool Find(string text, StringComparison comparison, int start, string needle, bool not, ref int index,
-         ref int length)
+      public static bool Find(string text, StringComparison comparison, int start, string needle, bool not, ref int index, ref int length)
       {
          for (var i = start; i < text.Length; i++)
          {
@@ -244,79 +240,12 @@ namespace Orange.Library
             input = input.ToLower();
          }
 
-         if (needle == null)
-         {
-            needle = Expand(text);
-         }
+         needle ??= Expand(text);
 
-         if (needleChars == null)
-         {
-            needleChars = needle.ToCharArray();
-         }
+         needleChars ??= needle.ToCharArray();
 
          return input;
       }
-
-      [Obsolete("Use extension")]
-      public static string withLocation(string location, string message) => CanAssert ? message : $"at {location}: {message}";
-
-      [Obsolete("Use Core assertions")]
-      public static void Assert(bool test, string location, string message)
-      {
-         test.Must().BeTrue().OrThrow(CanAssert ? message : $"at {location}: {message}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static void Assert(bool test, string location, Func<string> message)
-      {
-         if (CanAssert)
-         {
-            test.Must().BeTrue().OrThrow(message);
-         }
-         else
-         {
-            test.Must().BeTrue().OrThrow($"at {location}: {message()}");
-         }
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static T Assert<T>(IMaybe<T> maybe, string location, string message)
-      {
-         return maybe.Must().HaveValue().Force(CanAssert ? message : $"at {location}: {message}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static T Assert<T>(IMaybe<T> maybe, string location, Func<string> message)
-      {
-         return CanAssert ? maybe.Must().HaveValue().Force(message) : maybe.Must().HaveValue().Force($"at {location}: {message()}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static T Assert<T>(IResult<T> maybe, string location, string message)
-      {
-         return maybe.Must().BeSuccessful().Force(CanAssert ? message : $"at {location}: {message}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static T Assert<T>(IResult<T> maybe, string location, Func<string> message)
-      {
-         return CanAssert ? maybe.Must().BeSuccessful().Force(message) : maybe.Must().BeSuccessful().Force($"at {location}: {message()}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static void Reject(bool test, string location, string message)
-      {
-         test.Must().Not.BeTrue().OrThrow(CanAssert ? message : $"at {location}: {message}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static void RejectNull(object obj, string location, string message)
-      {
-         obj.Must().Not.BeNull().OrThrow(CanAssert ? message : $"at {location}: {message}");
-      }
-
-      [Obsolete("Use Core assertions")]
-      public static void Throw(string location, string message) => throw $"at {location}: {message}".Throws();
 
       public static Value ConvertStringToNumber(Value source)
       {
@@ -392,7 +321,7 @@ namespace Orange.Library
          return text;
       }
 
-      static string getCharFromInt(int value) => ((char)value).ToString();
+      protected static string getCharFromInt(int value) => ((char)value).ToString();
 
       public static bool IsNumeric(string value)
       {
@@ -416,35 +345,24 @@ namespace Orange.Library
             return "";
          }
 
-         switch (value.Type)
+         return value.Type switch
          {
-            case Value.ValueType.Number:
-               return value.Number;
-            case Value.ValueType.String:
-               return IsNumeric(value.Text) ? value.Number : value;
-            default:
-               return value;
-         }
+            Value.ValueType.Number => value.Number,
+            Value.ValueType.String => IsNumeric(value.Text) ? value.Number : value,
+            _ => value
+         };
       }
 
       public static string GetReadableKey(string key) => key.IsNumeric() ? "$" + key : key;
 
       public static string GetReadableKey(Array.IterItem item) => GetReadableKey(item.Key);
 
-      static Verb regularizeVerb(Verb verb)
+      protected static Verb regularizeVerb(Verb verb) => verb switch
       {
-         switch (verb)
-         {
-            case LessThan _:
-               verb = new BinaryLessThan();
-               break;
-            case LessThanEqual _:
-               verb = new BinaryLessThanEqual();
-               break;
-         }
-
-         return verb;
-      }
+         LessThan => new BinaryLessThan(),
+         LessThanEqual => new BinaryLessThanEqual(),
+         _ => verb
+      };
 
       public static IMaybe<(Block, bool)> OperatorBlock(Value value)
       {
@@ -567,21 +485,21 @@ namespace Orange.Library
 
       public static Runtime State { get; set; }
 
-      ValueStack stack;
-      BlockManager blockManager;
-      Buffer printBuffer;
-      PatternManager patternManager;
-      ExpressionManager expressionManager;
-      int seed;
-      Random random;
-      Stack<ValueStack> valueStacks;
-      Array takeArray;
-      Stack<DefaultParameterNames> defaultParameterNames;
-      Buffer buffer;
-      Hash<string, IInvokable> invokables;
-      Hash<string, InvokableReference> extenders;
-      ConsoleManager consoleManager;
-      string indent;
+      protected ValueStack stack;
+      protected BlockManager blockManager;
+      protected Buffer printBuffer;
+      protected PatternManager patternManager;
+      protected ExpressionManager expressionManager;
+      protected int seed;
+      protected Random random;
+      protected Stack<ValueStack> valueStacks;
+      protected Array takeArray;
+      protected Stack<DefaultParameterNames> defaultParameterNames;
+      protected Buffer buffer;
+      protected Hash<string, IInvokable> invokables;
+      protected Hash<string, InvokableReference> extenders;
+      protected ConsoleManager consoleManager;
+      protected string indent;
 
       public Runtime(string text = "", IFileCache fileCache = null)
       {
@@ -766,17 +684,15 @@ namespace Orange.Library
       {
          if (Regions.ValueFromVariable(variableName).If(out var value))
          {
-            if (value is Array array)
-            {
-               return array;
-            }
-
-            throw new ApplicationException($"at {LOCATION}: Variable doesn't refer to an array");
+            return value is Array array ? array : throw new ApplicationException($"at {LOCATION}: Variable doesn't refer to an array");
          }
+         else
+         {
+            var newArray = new Array();
+            Regions[variableName] = newArray;
 
-         var newArray = new Array();
-         Regions[variableName] = newArray;
-         return newArray;
+            return newArray;
+         }
       }
 
       public int Random(int value) => random.Next(value);
@@ -848,7 +764,7 @@ namespace Orange.Library
          return stripFromThunk(result);
       }
 
-      static Value stripFromThunk(Value value) => value is Thunk thunk ? thunk.AlternateValue("return") : value;
+      protected static Value stripFromThunk(Value value) => value is Thunk thunk ? thunk.AlternateValue("return") : value;
 
       public void Give(Value value) => takeArray.Add(value);
 
@@ -933,11 +849,12 @@ namespace Orange.Library
 
       public static Value InvokeXMethod(string message, Object obj, Arguments arguments)
       {
-         var anyXMethod = XMethodAvailable(message);
-         if (anyXMethod.If(out var xMethod))
+         var _xMethod = XMethodAvailable(message);
+         if (_xMethod.If(out var xMethod))
          {
             var newArguments = arguments.Clone();
             newArguments.Unshift(obj);
+
             return SendMessage((Value)xMethod, "invoke", newArguments);
          }
 
@@ -949,7 +866,7 @@ namespace Orange.Library
       public IInvokable GetInvokable(string name)
       {
          var invokable = invokables[name];
-         asObject(() => invokable).Must().Not.BeNull().OrThrow(LOCATION, () => $"Invokable reference {name} not found");
+         invokable.Must().Not.BeNull().OrThrow(LOCATION, () => $"Invokable reference {name} not found");
 
          return invokable;
       }
@@ -960,7 +877,7 @@ namespace Orange.Library
          extenders[key] = reference;
       }
 
-      static string extenderKey(string className, string messageName) => $"{className}/{messageName}";
+      protected static string extenderKey(string className, string messageName) => $"{className}/{messageName}";
 
       public InvokableReference GetExtender(string className, string messageName)
       {
@@ -980,8 +897,10 @@ namespace Orange.Library
          {
             return (int)SendMessage(x, "cmp", y).Number;
          }
-
-         return x.Compare(y);
+         else
+         {
+            return x.Compare(y);
+         }
       }
 
       public static string Text(Value x)
@@ -990,8 +909,10 @@ namespace Orange.Library
          {
             return SendMessage(x, "str").Text;
          }
-
-         return x.Text;
+         else
+         {
+            return x.Text;
+         }
       }
 
       public Value Seed
@@ -1004,51 +925,29 @@ namespace Orange.Library
          }
       }
 
-      public static string LongToMangledPrefix(string type, string name)
+      public static string LongToMangledPrefix(string type, string name) => type switch
       {
-         switch (type)
-         {
-            case "get":
-               return $"__$get_{name}";
-            case "set":
-               return $"__$set_{name}";
-            case "before":
-               return $"__$bef_{name}";
-            case "after":
-               return $"__$aft_{name}";
-            case "require":
-               return $"__$req_{name}";
-            case "ensure":
-               return $"__$ens_{name}";
-            case "invariant":
-               return $"__$inv_{name}";
-            default:
-               return name;
-         }
-      }
+         "get" => $"__$get_{name}",
+         "set" => $"__$set_{name}",
+         "before" => $"__$bef_{name}",
+         "after" => $"__$aft_{name}",
+         "require" => $"__$req_{name}",
+         "ensure" => $"__$ens_{name}",
+         "invariant" => $"__$inv_{name}",
+         _ => name
+      };
 
-      public static string ShortToMangledPrefix(string type, string name)
+      public static string ShortToMangledPrefix(string type, string name) => type switch
       {
-         switch (type)
-         {
-            case "get":
-               return $"__$get_{name}";
-            case "set":
-               return $"__$set_{name}";
-            case "bef":
-               return $"__$bef_{name}";
-            case "aft":
-               return $"__$aft_{name}";
-            case "req":
-               return $"__$req_{name}";
-            case "ens":
-               return $"__$ens_{name}";
-            case "inv":
-               return $"__$inv_{name}";
-            default:
-               return name;
-         }
-      }
+         "get" => $"__$get_{name}",
+         "set" => $"__$set_{name}",
+         "bef" => $"__$bef_{name}",
+         "aft" => $"__$aft_{name}",
+         "req" => $"__$req_{name}",
+         "ens" => $"__$ens_{name}",
+         "inv" => $"__$inv_{name}",
+         _ => name
+      };
 
       public static string MangledName(string name) => $"{VAR_MANGLE}{name}";
 
@@ -1068,12 +967,16 @@ namespace Orange.Library
          {
             type = matcher[0, 1];
             plainName = matcher[0, 2];
+
             return true;
          }
+         else
+         {
+            type = "";
+            plainName = "";
 
-         type = "";
-         plainName = "";
-         return false;
+            return false;
+         }
       }
 
       public static bool IsPrefixed(string name, string type) => name.IsMatch($@"^ '__$'{type}'_'");
@@ -1094,13 +997,14 @@ namespace Orange.Library
 
       public void IndentBy(int count)
       {
-         if (count > 0)
+         switch (count)
          {
-            indent += "\t".Repeat(count);
-         }
-         else if (count < 0 && indent.IsNotEmpty())
-         {
-            indent = indent.Drop(count);
+            case > 0:
+               indent += "\t".Repeat(count);
+               break;
+            case < 0 when indent.IsNotEmpty():
+               indent = indent.Drop(count);
+               break;
          }
       }
 

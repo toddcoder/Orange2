@@ -11,8 +11,8 @@ namespace Orange.Library.Parsers
 {
    public class IterateParser : Parser
    {
-      FieldListParser parser;
-      FreeParser freeParser;
+      protected FieldListParser parser;
+      protected FreeParser freeParser;
 
       public IterateParser() : base("^ /(|tabs| 'iterate') /b")
       {
@@ -33,19 +33,19 @@ namespace Orange.Library.Parsers
                if (GetExpression(source, index, EndOfLineConsuming()).If(out var expression, out var i))
                {
                   index = i;
-                  var anyBlock = GetBlock(source, index, true);
-                  if (anyBlock.If(out var block, out index))
+                  var _block = GetBlock(source, index, true);
+                  if (_block.If(out var block, out index))
                   {
                      var firstParser = new FirstParser();
-                     var anyFirst = maybe(firstParser.Scan(source, index), () => firstParser.Block);
-                     if (anyFirst.HasValue)
+                     var _first = maybe(firstParser.Scan(source, index), () => firstParser.Block);
+                     if (_first.IsSome)
                      {
                         index = firstParser.Position;
                      }
 
                      var middleParser = new MiddleParser();
-                     var anyMiddle = maybe(middleParser.Scan(source, index), () => middleParser.Block);
-                     if (anyMiddle.If(out var middle))
+                     var _middle = maybe(middleParser.Scan(source, index), () => middleParser.Block);
+                     if (_middle.If(out var middle))
                      {
                         index = middleParser.Position;
                      }
@@ -55,14 +55,14 @@ namespace Orange.Library.Parsers
                      }
 
                      var lastParser = new LastParser();
-                     var anyLast = maybe(lastParser.Scan(source, index), () => lastParser.Block);
-                     if (anyLast.HasValue)
+                     var _last = maybe(lastParser.Scan(source, index), () => lastParser.Block);
+                     if (_last.IsSome)
                      {
                         index = lastParser.Position;
                      }
 
                      overridePosition = index;
-                     return new Iterate(parameters, expression, anyFirst, middle, anyLast, block) { Index = position };
+                     return new Iterate(parameters, expression, _first, middle, _last, block) { Index = position };
                   }
                }
             }

@@ -14,17 +14,16 @@ namespace Orange.Library
             return new Array();
          }
 
-         if (arguments.Type == Value.ValueType.Array)
+         return arguments.Type switch
          {
-            return getVariables((Array)arguments.Resolve());
-         }
-
-         return new Array { getVariable(arguments) };
+            Value.ValueType.Array => getVariables((Array)arguments.Resolve()),
+            _ => new Array { getVariable(arguments) }
+         };
       }
 
-      static Variable getVariable(Value value) => value.IsVariable ? (Variable)value : new Variable(value.Text);
+      private static Variable getVariable(Value value) => value.IsVariable ? (Variable)value : new Variable(value.Text);
 
-      static Array getVariables(Array array) => new Array(array.Values.Select(getVariable));
+      private static Array getVariables(Array array) => new(array.Values.Select(getVariable));
 
       public static Array ToActualArguments(this Block argumentsAsBlock)
       {
@@ -61,14 +60,7 @@ namespace Orange.Library
          }
 
          arguments = arguments.Resolve();
-         if (arguments.IsArray)
-         {
-            arguments = arguments.SliceArray;
-         }
-         else
-         {
-            arguments = new Array { arguments };
-         }
+         arguments = arguments.IsArray ? arguments.SliceArray : new Array { arguments };
 
          return (Array)arguments;
       }

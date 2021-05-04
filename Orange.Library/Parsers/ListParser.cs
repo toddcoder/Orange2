@@ -20,20 +20,15 @@ namespace Orange.Library.Parsers
 
          foreach (var verb in block.AsAdded)
          {
-            if (verb is AppendToArray)
-            {
-               builder.Verb(new Cons());
-            }
-            else
-            {
-               builder.Verb(verb);
-            }
+            builder.Verb(verb is AppendToArray ? new Cons() : verb);
          }
 
          return new ToList(builder.Block);
       }
 
-      public ListParser() : base("^ /(' '* '[')") { }
+      public ListParser() : base("^ /(' '* '[')")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {

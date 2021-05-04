@@ -8,10 +8,10 @@ namespace Orange.Library.Parsers
 {
    public class CofunctionBuilder
    {
-      const string VAR_STATE = "__$state";
-      const string VAR_SOURCE = "__$source";
+      protected const string VAR_STATE = "__$state";
+      protected const string VAR_SOURCE = "__$source";
 
-      static Block[] getBlocks(Block block, CodeBuilder fieldBuilder, CodeBuilder resetBuilder)
+      protected static Block[] getBlocks(Block block, CodeBuilder fieldBuilder, CodeBuilder resetBuilder)
       {
          var builder = new CodeBuilder();
          var blocks = new List<Block>();
@@ -36,7 +36,7 @@ namespace Orange.Library.Parsers
 
                   resetBuilder.AssignToField(VAR_SOURCE, expression);
                   continue;
-               case AssignToNewField assignToNewField when !assignToNewField.ReadOnly:
+               case AssignToNewField { ReadOnly: false } assignToNewField:
                   var fieldName = assignToNewField.FieldName;
                   fieldBuilder.CreateField(fieldName, false, Private);
                   builder.AssignToField(fieldName, assignToNewField.Expression);
@@ -52,7 +52,7 @@ namespace Orange.Library.Parsers
          return blocks.ToArray();
       }
 
-      static Block getMatch(Block[] blocks)
+      protected static Block getMatch(Block[] blocks)
       {
          var builder = new CodeBuilder();
          builder.Push();
@@ -77,9 +77,9 @@ namespace Orange.Library.Parsers
          return builder.Block;
       }
 
-      string functionName;
-      Parameters parameters;
-      Block body;
+      protected string functionName;
+      protected Parameters parameters;
+      protected Block body;
 
       public CofunctionBuilder(string functionName, Parameters parameters, Block body)
       {
@@ -107,6 +107,7 @@ namespace Orange.Library.Parsers
 
          var cls = new Class(parameters, objectBlock);
          CompilerState.RegisterClass(functionName, cls);
+
          return new CreateClass(functionName, cls);
       }
    }

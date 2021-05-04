@@ -1828,17 +1828,9 @@ namespace Orange.Library.Values
       {
          var includeQuotes = Arguments[0].IsTrue;
          var str = getText();
-#pragma warning disable 618
-         var destringifier = new Destringifier(str);
-#pragma warning restore 618
-         var parsed = destringifier.Parse();
-         var split = State.FieldPattern.Split(parsed);
-         for (var i = 0; i < split.Length; i++)
-         {
-            split[i] = destringifier.Restring(split[i], includeQuotes);
-         }
+         var split = DelimitedText.AsCLike().Split(str, State.FieldPattern.ToString(), includeQuotes).ToArray();
 
-         return new Array(split);
+         return new Array(split.Select(s => new String(s.Text)));
       }
 
       public Value IsVowel() => getText().IsMatch("^ ['aeiou']+ $");

@@ -10,11 +10,11 @@ namespace Orange.Library
 {
    public class Expander
    {
-      class ParameterData
+      protected class ParameterData
       {
-         string name;
-         Value value;
-         Block comparisand;
+         protected string name;
+         protected Value value;
+         protected Block comparisand;
 
          public ParameterData(string name, Value value, Block comparisand)
          {
@@ -35,19 +35,19 @@ namespace Orange.Library
          public Block Incrementer { get; set; }
       }
 
-      string functionName;
-      Block block;
-      Block checkExpression;
-      string checkExpressionVariable;
-      Block terminalExpression;
-      Region region;
-      Hash<string, ParameterData> allParameterData;
-      CodeBuilder builder;
-      Block result;
-      Block sourceBlock;
+      protected string functionName;
+      protected Block block;
+      protected Block checkExpression;
+      protected string checkExpressionVariable;
+      protected Block terminalExpression;
+      protected Region region;
+      protected Hash<string, ParameterData> allParameterData;
+      protected CodeBuilder builder;
+      protected Block result;
+      protected Block sourceBlock;
 
-      public Expander(string functionName, Block block, Block checkExpression, string checkExpressionVariable,
-         Block terminalExpression, Region region)
+      public Expander(string functionName, Block block, Block checkExpression, string checkExpressionVariable, Block terminalExpression,
+         Region region)
       {
          this.functionName = functionName;
          this.block = block;
@@ -55,6 +55,7 @@ namespace Orange.Library
          this.checkExpressionVariable = checkExpressionVariable;
          this.terminalExpression = terminalExpression;
          this.region = region;
+
          allParameterData = new Hash<string, ParameterData>();
       }
 
@@ -66,51 +67,49 @@ namespace Orange.Library
 
       public Block Expand()
       {
-         using (var popper = new RegionPopper(new Region(), "expand"))
+         using var popper = new RegionPopper(new Region(), "expand");
+         popper.Push();
+
+         foreach (var data in allParameterData.Select(item => item.Value))
          {
-            popper.Push();
-
-            foreach (var data in allParameterData.Select(item => item.Value))
+            Regions.SetParameter(data.Name, data.Value);
+            if (data.Comparisand == null)
             {
-               Regions.SetParameter(data.Name, data.Value);
-               if (data.Comparisand == null)
-               {
-                  continue;
-               }
-
-               var right = data.Comparisand.Evaluate(region);
-               if (Case.Match(data.Value, right, false, null))
-               {
-                  continue;
-               }
-
-               return new Block();
+               continue;
             }
 
-            builder = new CodeBuilder();
-            createSourceBlock();
-
-            builder = new CodeBuilder();
-            for (var i = 0; i < MAX_RECURSION; i++)
+            var right = data.Comparisand.Evaluate(region);
+            if (Case.Match(data.Value, right, false, null))
             {
-               expand(sourceBlock);
-               variableExpand();
-               increment();
-
-               if (terminated(out var finalBlock))
-               {
-                  return finalBlock;
-               }
-
-               result = builder.Block;
-               builder = new CodeBuilder();
+               continue;
             }
 
-            return null;
+            return new Block();
          }
+
+         builder = new CodeBuilder();
+         createSourceBlock();
+
+         builder = new CodeBuilder();
+         for (var i = 0; i < MAX_RECURSION; i++)
+         {
+            expand(sourceBlock);
+            variableExpand();
+            increment();
+
+            if (terminated(out var finalBlock))
+            {
+               return finalBlock;
+            }
+
+            result = builder.Block;
+            builder = new CodeBuilder();
+         }
+
+         return null;
       }
 
-      void increment()
+      protected void increment()
       {
          foreach (var item in allParameterData)
          {
@@ -158,7 +157,7 @@ namespace Orange.Library
          }
       }
 
-      void createSourceBlock()
+      protected void createSourceBlock()
       {
          var asAdded = block.AsAdded;
          var incrementerToBeCreated = true;
@@ -174,10 +173,10 @@ namespace Orange.Library
                      var blocks = arguments.Blocks;
                      var length = blocks.Length;
                      var index = 0;
-                     foreach (var item in allParameterData.TakeWhile(item => index < length))
+                     foreach (var (_, value) in allParameterData.TakeWhile(_ => index < length))
                      {
-                        item.Value.Incrementer = blocks[index++];
-                        item.Value.Incrementer.AutoRegister = false;
+                        value.Incrementer = blocks[index++];
+                        value.Incrementer.AutoRegister = false;
                      }
 
                      builder.Variable(functionName);
@@ -203,7 +202,7 @@ namespace Orange.Library
          result = (Block)sourceBlock.Clone();
       }
 
-      void expand(Block expression)
+      protected void expand(Block expression)
       {
          foreach (var verb in result.AsAdded)
          {
@@ -226,7 +225,7 @@ namespace Orange.Library
          }
       }
 
-      bool terminated(out Block finalResult)
+      protected bool terminated(out Block finalResult)
       {
          var right = checkExpression.Evaluate(region);
          if (right == null)
@@ -261,7 +260,7 @@ namespace Orange.Library
          return false;
       }
 
-      void evaluateTerminalExpression(out Block finalResult)
+      protected void evaluateTerminalExpression(out Block finalResult)
       {
          variableExpand();
          builder = new CodeBuilder();
@@ -273,7 +272,7 @@ namespace Orange.Library
          finalResult = builder.Block;
       }
 
-      void variableExpand()
+      protected void variableExpand()
       {
          builder.Push();
          foreach (var verb in result.AsAdded)
@@ -292,7 +291,7 @@ namespace Orange.Library
          result = builder.Pop(true);
       }
 
-      void finalExpand(Block terminalBlock)
+      protected void finalExpand(Block terminalBlock)
       {
          foreach (var verb in result.AsAdded)
          {
