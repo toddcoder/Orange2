@@ -9,12 +9,12 @@ namespace Orange.Library.Verbs
 {
    public class Loop : Verb, IStatement
    {
-      Block initialization;
-      bool isWhile;
-      Block condition;
-      Block increment;
-      Block body;
-      string result;
+      protected Block initialization;
+      protected bool isWhile;
+      protected Block condition;
+      protected Block increment;
+      protected Block body;
+      protected string result;
 
       public Loop(Block initialization, bool isWhile, Block condition, Block increment, Block body)
       {
@@ -42,27 +42,23 @@ namespace Orange.Library.Verbs
       {
          var continuing = isWhile ? func(() => condition.IsTrue) : func(() => !condition.IsTrue);
          var index = 0;
-         using (var popper = new RegionPopper(new Region(), "c-for"))
+         using var popper = new RegionPopper(new Region(), "c-for");
+         popper.Push();
+
+         for (initialization.Evaluate(); continuing() && index++ < MAX_LOOP; increment.Evaluate())
          {
-            popper.Push();
-
-            for (initialization.Evaluate(); continuing() && index++ < MAX_LOOP; increment.Evaluate())
+            using var innerPopper = new RegionPopper(new Region(), "c-for-body");
+            innerPopper.Push();
+            body.Evaluate();
+            var signal = Signal();
+            if (signal is Breaking or ReturningNull)
             {
-               using (var innerPopper = new RegionPopper(new Region(), "c-for-body"))
-               {
-                  innerPopper.Push();
-                  body.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking || signal == ReturningNull)
-                  {
-                     break;
-                  }
-               }
+               break;
             }
-
-            result = index == 1 ? "1 loop" : $"{index} loops";
-            return index;
          }
+
+         result = index == 1 ? "1 loop" : $"{index} loops";
+         return index;
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Statement;

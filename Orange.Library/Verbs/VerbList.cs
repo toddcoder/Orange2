@@ -11,8 +11,8 @@ namespace Orange.Library.Verbs
 {
    public class VerbList : IEnumerable<Verb>
    {
-      List<Verb> verbs;
-      int invokeCount;
+      protected List<Verb> verbs;
+      protected int invokeCount;
 
       public VerbList(Block block)
       {
@@ -107,7 +107,7 @@ namespace Orange.Library.Verbs
                   verbs[i] = new Push(value);
                }
                   continue;
-               case Dereference _ when i > 0:
+               case Dereference when i > 0:
                   var lastIndex = i - 1;
                   var lastVerb = verbs[lastIndex];
                   if (lastVerb is Push lastPush)
@@ -255,7 +255,7 @@ namespace Orange.Library.Verbs
 
       public bool IsEmpty => verbs.Count == 0;
 
-      public Block Block => new Block(verbs);
+      public Block Block => new(verbs);
 
       public IEnumerator<Verb> GetEnumerator() => verbs.GetEnumerator();
 

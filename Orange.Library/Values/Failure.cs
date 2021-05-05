@@ -4,12 +4,13 @@ namespace Orange.Library.Values
 {
    public class Failure : Value
    {
-      InterpolatedString message;
+      protected InterpolatedString message;
 
       public Failure(InterpolatedString message) => this.message = message;
 
-      public Failure(string text)
-         : this(new InterpolatedString(text)) { }
+      public Failure(string text) : this(new InterpolatedString(text))
+      {
+      }
 
       public override int Compare(Value value) => value is Failure f ? message.Compare(f.message) : -1;
 
@@ -43,21 +44,17 @@ namespace Orange.Library.Values
 
       public Value Else()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
 
-            return new Some(block.Evaluate());
-         }
+         return block == null ? this : new Some(block.Evaluate());
       }
 
       public override string ToString() => $"#\"{message}\"";
 
-      public (bool, string, Value) Match(Value right) => right is Failure f ? (Case.Match(message, f.message, false, null), "", message) :
-         (false, "", (Value)null);
+      public (bool, string, Value) Match(Value right)
+      {
+         return right is Failure f ? (Case.Match(message, f.message, false, null), "", message) : (false, "", (Value)null);
+      }
    }
 }

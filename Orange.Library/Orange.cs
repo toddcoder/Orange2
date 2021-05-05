@@ -45,7 +45,7 @@ namespace Orange.Library
 
       public string[] ModuleFolders { get; set; }
 
-      public string Execute()
+      public void Execute()
       {
          CompilerState.Reset();
          IDEColors.Clear();
@@ -67,16 +67,14 @@ namespace Orange.Library
          var runtime = new OrangeRuntime(block, Text, fileCache, console) { ModuleFolders = ModuleFolders };
          try
          {
-            var result = runtime.Execute();
+            runtime.Execute();
             LastValue = runtime.LastValue;
             LastType = runtime.LastType;
-            return result;
          }
          catch (Stop.StopException exception)
          {
             LastValue = exception.Message;
             LastType = "Stopped";
-            return $"Stopped: {exception.Message}";
          }
       }
 
@@ -84,7 +82,7 @@ namespace Orange.Library
 
       public string LastType { get; set; }
 
-      public string ColorizeOnly()
+      public void ColorizeOnly()
       {
          IDEColors.Clear();
          Coloring = true;
@@ -92,8 +90,6 @@ namespace Orange.Library
          Compile(source);
          verboseText = "";
          Coloring = false;
-
-         return "";
       }
 
       public void Colorize() => colorizer?.Colorize();

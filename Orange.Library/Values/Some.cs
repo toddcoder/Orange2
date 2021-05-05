@@ -5,7 +5,7 @@ namespace Orange.Library.Values
 {
    public class Some : Value
    {
-      Value cargo;
+      protected Value cargo;
 
       public Some(Value cargo) => this.cargo = cargo;
 
@@ -39,52 +39,43 @@ namespace Orange.Library.Values
 
       public Value Map()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.IteratorParameter();
-            assistant.SetIteratorParameter(cargo);
-            var result = block.Evaluate();
-
-            var signal = Signal();
-            if (signal != SignalType.None)
-            {
-               return this;
-            }
-
-            if (result.IsNil)
-            {
-               return this;
-            }
-
-            if (result is Some)
-            {
-               return result;
-            }
-
-            return new Some(result);
+            return this;
          }
+
+         assistant.IteratorParameter();
+         assistant.SetIteratorParameter(cargo);
+         var result = block.Evaluate();
+
+         var signal = Signal();
+         if (signal != SignalType.None)
+         {
+            return this;
+         }
+
+         return result switch
+         {
+            { IsNil: true } => this,
+            Some => result,
+            _ => new Some(result)
+         };
       }
 
       public Value FlatMap()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.IteratorParameter();
-            assistant.SetIteratorParameter(cargo);
-            return block.Evaluate();
+            return this;
          }
+
+         assistant.IteratorParameter();
+         assistant.SetIteratorParameter(cargo);
+         return block.Evaluate();
       }
 
       public Value DefaultTo() => cargo;
@@ -93,7 +84,9 @@ namespace Orange.Library.Values
 
       public override string ToString() => $"{cargo}?";
 
-      public (bool, string, Value) Match(Value right) => right is Some c ? (Case.Match(cargo, c.cargo, false, null), "", cargo) :
-         (false, "", (Value)null);
+      public (bool, string, Value) Match(Value right)
+      {
+         return right is Some c ? (Case.Match(cargo, c.cargo, false, null), "", cargo) : (false, "", (Value)null);
+      }
    }
 }

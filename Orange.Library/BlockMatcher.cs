@@ -16,14 +16,14 @@ namespace Orange.Library
             Block
          }
 
-         Verb input;
-         Verb pattern;
-         Value inputValue;
-         Value patternValue;
-         string inputVariable;
-         string patternVariable;
-         Block inputBlock;
-         Block patternBlock;
+         protected Verb input;
+         protected Verb pattern;
+         protected Value inputValue;
+         protected Value patternValue;
+         protected string inputVariable;
+         protected string patternVariable;
+         protected Block inputBlock;
+         protected Block patternBlock;
 
          public VerbMatcher(Verb input, Verb pattern)
          {
@@ -67,16 +67,18 @@ namespace Orange.Library
             set => patternBlock = value;
          }
 
-         static bool matchPush(Verb verb, out Value value)
+         protected static bool matchPush(Verb verb, out Value value)
          {
             if (verb is Push push)
             {
                value = push.Value;
                return true;
             }
-
-            value = null;
-            return false;
+            else
+            {
+               value = null;
+               return false;
+            }
          }
 
          public MatchType MatchPush()
@@ -89,7 +91,7 @@ namespace Orange.Library
                      inputVariable = variable1.Name;
                      patternVariable = variable2.Name;
                      return MatchType.Variable;
-                  case Block _ when patternValue is Block:
+                  case Block when patternValue is Block:
                      return MatchType.Block;
                   default:
                      return MatchType.Value;
@@ -165,8 +167,6 @@ namespace Orange.Library
                {
                   break;
                }
-
-               //i++;
             }
 
             if (successful)

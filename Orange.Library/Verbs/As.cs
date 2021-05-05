@@ -6,27 +6,24 @@ namespace Orange.Library.Verbs
 {
    public class As : Verb
    {
-      const string LOCATION = "As";
+      protected const string LOCATION = "As";
 
       public override Value Evaluate()
       {
          var stack = State.Stack;
          var y = stack.Pop(true, LOCATION);
          var x = stack.Pop(true, LOCATION);
-         if (x is Object obj)
+
+         return x switch
          {
-            if (y is Class cls && obj.Class.IsChildOf(cls))
+            Object obj => y switch
             {
-               return new Some(obj);
-            }
-
-            if (y is Trait trait && (obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait)))
-            {
-               return new Some(obj);
-            }
-         }
-
-         return new None();
+               Class cls when obj.Class.IsChildOf(cls) => new Some(obj),
+               Trait trait when obj.Class.ImplementsTrait(trait) || obj.ImplementsInterface(trait) => new Some(obj),
+               _ => new None()
+            },
+            _ => new None()
+         };
       }
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Apply;

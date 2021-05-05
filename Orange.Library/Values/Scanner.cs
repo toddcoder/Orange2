@@ -8,10 +8,9 @@ namespace Orange.Library.Values
    {
       public class ScannerGenerator : NSGenerator
       {
-         bool oneReset;
+         protected bool oneReset;
 
-         public ScannerGenerator(INSGeneratorSource generatorSource)
-            : base(generatorSource) => oneReset = true;
+         public ScannerGenerator(INSGeneratorSource generatorSource) : base(generatorSource) => oneReset = true;
 
          public override void Reset()
          {
@@ -31,17 +30,18 @@ namespace Orange.Library.Values
          }
       }
 
-      INSGeneratorSource source;
-      string variableName;
-      Block block;
-      Region region;
-      INSGenerator generator;
-      NSGenerator sourceGenerator;
+      protected INSGeneratorSource source;
+      protected string variableName;
+      protected Block block;
+      protected Region region;
+      protected INSGenerator generator;
+      protected NSGenerator sourceGenerator;
 
       public Scanner(INSGeneratorSource source, Lambda lambda)
       {
          this.source = source;
          decomposeLambda(lambda);
+
          region = new Region();
       }
 
@@ -50,10 +50,11 @@ namespace Orange.Library.Values
          this.source = source;
          this.variableName = variableName;
          this.block = block;
+
          region = new Region();
       }
 
-      void decomposeLambda(Lambda lambda)
+      protected void decomposeLambda(Lambda lambda)
       {
          var parameters = lambda.Parameters.GetParameters();
          variableName = parameters.Length == 0 ? MangledName("0") : parameters[0].Name;
@@ -62,17 +63,9 @@ namespace Orange.Library.Values
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      } = "";
+      public override string Text { get; set; } = "";
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.Scanner;
 
@@ -95,15 +88,14 @@ namespace Orange.Library.Values
             generator.Reset();
             sourceGenerator.Reset();
          }
-         using (var popper = new SharedRegionPopper(region, this, "scanner-next"))
-         {
-            popper.Push();
 
-            region.SetParameter(variableName, sourceGenerator);
+         using var popper = new SharedRegionPopper(region, this, "scanner-next");
+         popper.Push();
 
-            var value = generator.Next();
-            return value.IsNull ? NilValue : value;
-         }
+         region.SetParameter(variableName, sourceGenerator);
+
+         var value = generator.Next();
+         return value.IsNull ? NilValue : value;
       }
 
       public bool IsGeneratorAvailable => true;
@@ -112,10 +104,6 @@ namespace Orange.Library.Values
 
       public override string ToString() => ToArray().ToString();
 
-      public Region SharedRegion
-      {
-         get;
-         set;
-      }
+      public Region SharedRegion { get; set; }
    }
 }

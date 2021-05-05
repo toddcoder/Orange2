@@ -14,7 +14,7 @@ namespace Orange.Library.Verbs
    {
       public class IfGenerator : NSGenerator
       {
-         enum IfStage
+         protected enum IfStage
          {
             Condition,
             Result,
@@ -22,33 +22,34 @@ namespace Orange.Library.Verbs
             Else
          }
 
-         Block condition;
-         Block.BlockGenerator resultGenerator;
-         IMaybe<IfGenerator> elseIf;
-         IMaybe<Block.BlockGenerator> elseBlockGenerator;
-         IfStage ifStage;
+         protected Block condition;
+         protected Block.BlockGenerator resultGenerator;
+         protected IMaybe<IfGenerator> _elseIf;
+         protected IMaybe<Block.BlockGenerator> _elseBlockGenerator;
+         protected IfStage ifStage;
 
          public IfGenerator(IfExecute ifExecute) : base(ifExecute)
          {
             var _if = ifExecute.@if;
+
             condition = _if.Condition;
             resultGenerator = new Block.BlockGenerator(_if.Result);
-            elseIf = maybe(_if.Next != null, () => new IfGenerator(new IfExecute(_if.Next)));
-            elseBlockGenerator = maybe(_if.ElseBlock != null, () => new Block.BlockGenerator(_if.ElseBlock));
+            _elseIf = maybe(_if.Next != null, () => new IfGenerator(new IfExecute(_if.Next)));
+            _elseBlockGenerator = maybe(_if.ElseBlock != null, () => new Block.BlockGenerator(_if.ElseBlock));
          }
 
          public override void Reset()
          {
             base.Reset();
             resultGenerator.Reset();
-            if (elseIf.If(out var g))
+            if (_elseIf.If(out var elseIf))
             {
-               g.Reset();
+               elseIf.Reset();
             }
 
-            if (elseBlockGenerator.If(out var bg))
+            if (_elseBlockGenerator.If(out var elseBlockGenerator))
             {
-               bg.Reset();
+               elseBlockGenerator.Reset();
             }
 
             ifStage = IfStage.Condition;
@@ -56,61 +57,45 @@ namespace Orange.Library.Verbs
 
          public override Value Next()
          {
-            using (var popper = new RegionPopper(region, "if-generator"))
+            using var popper = new RegionPopper(region, "if-generator");
+            popper.Push();
+
+            switch (ifStage)
             {
-               popper.Push();
-
-               switch (ifStage)
-               {
-                  case IfStage.Condition:
-                     if (condition.IsTrue)
-                     {
-                        ifStage = IfStage.Result;
-                        return resultGenerator.Next();
-                     }
-
-                     if (elseIf.If(out var ifGenerator))
-                     {
-                        ifStage = IfStage.ElseIf;
-                        return ifGenerator.Next();
-                     }
-
-                     if (elseBlockGenerator.If(out var blockGenerator))
-                     {
-                        ifStage = IfStage.Else;
-                        return blockGenerator.Next();
-                     }
-
-                     return NilValue;
-                  case IfStage.Result:
+               case IfStage.Condition:
+                  if (condition.IsTrue)
+                  {
+                     ifStage = IfStage.Result;
                      return resultGenerator.Next();
-                  case IfStage.ElseIf:
-                     if (elseIf.If(out ifGenerator))
-                     {
-                        return ifGenerator.Next();
-                     }
-                     else
-                     {
-                        return NilValue;
-                     }
-                  case IfStage.Else:
-                     if (elseBlockGenerator.If(out blockGenerator))
-                     {
-                        return blockGenerator.Next();
-                     }
-                     else
-                     {
-                        return NilValue;
-                     }
-                  default:
-                     return IgnoreValue;
-               }
+                  }
+
+                  if (_elseIf.If(out var elseIf))
+                  {
+                     ifStage = IfStage.ElseIf;
+                     return elseIf.Next();
+                  }
+
+                  if (_elseBlockGenerator.If(out var elseBlockGenerator))
+                  {
+                     ifStage = IfStage.Else;
+                     return elseBlockGenerator.Next();
+                  }
+
+                  return NilValue;
+               case IfStage.Result:
+                  return resultGenerator.Next();
+               case IfStage.ElseIf:
+                  return _elseIf.If(out elseIf) ? elseIf.Next() : NilValue;
+               case IfStage.Else:
+                  return _elseBlockGenerator.If(out elseBlockGenerator) ? elseBlockGenerator.Next() : NilValue;
+               default:
+                  return IgnoreValue;
             }
          }
       }
 
-      Values.If @if;
-      VerbPrecedenceType precedence;
+      protected Values.If @if;
+      protected VerbPrecedenceType precedence;
 
       public IfExecute(Values.If @if, VerbPrecedenceType precedence = VerbPrecedenceType.Statement)
       {

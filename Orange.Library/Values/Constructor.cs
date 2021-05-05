@@ -8,9 +8,9 @@ namespace Orange.Library.Values
 {
    public class Constructor : Value, IMatch
    {
-      string dataName;
-      string name;
-      Value[] values;
+      protected string dataName;
+      protected string name;
+      protected Value[] values;
 
       public Constructor(string dataName, string name, Value[] values)
       {
@@ -39,7 +39,9 @@ namespace Orange.Library.Values
 
       public override Value Clone() => new Constructor(dataName, name, values.Select(v => v.Clone()).ToArray());
 
-      protected override void registerMessages(MessageManager manager) { }
+      protected override void registerMessages(MessageManager manager)
+      {
+      }
 
       public override string ToString() => $"{dataName}.{Text}";
 
@@ -47,7 +49,7 @@ namespace Orange.Library.Values
       {
          switch (comparisand)
          {
-            case Any _:
+            case Any:
                return true;
             case Placeholder placeholder:
                var bindingName = placeholder.Text;

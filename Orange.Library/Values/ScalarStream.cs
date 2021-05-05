@@ -2,69 +2,58 @@
 
 namespace Orange.Library.Values
 {
-	public class ScalarStream : ArrayStream
-	{
-		Double current;
+   public class ScalarStream : ArrayStream
+   {
+      protected new Double current;
 
-		public ScalarStream(Value seed, int limit, Region region = null)
-			: base(seed, null, region)
-		{
-			current = null;
-			this.limit = limit;
-		}
+      public ScalarStream(Value seed, int limit, Region region = null) : base(seed, null, region)
+      {
+         current = null;
+         this.limit = limit;
+      }
 
-		public override Value Next()
-		{
-			using (var popper = new RegionPopper(region, "scalar-stream-next"))
-			{
-				popper.Push();
-				if (current == null)
+      public override Value Next()
+      {
+         using var popper = new RegionPopper(region, "scalar-stream-next");
+         popper.Push();
+         if (current == null)
+         {
+            current = (Double)seed.Number;
+         }
+         else
+         {
+            if (current.Number >= limit)
             {
-               current = (Double)seed.Number;
+               return new Nil();
             }
-            else
-				{
-					if (current.Number >= limit)
-               {
-                  return new Nil();
-               }
 
-               current = (Double)(current.Number + 1);
-				}
-				return current;
-			}
-		}
+            current = (Double)(current.Number + 1);
+         }
 
-		public override Value Reset()
-		{
-			current = null;
-			return this;
-		}
+         return current;
+      }
 
-		public override Value Clone() => new ScalarStream(seed.Clone(), limit);
+      public override Value Reset()
+      {
+         current = null;
+         return this;
+      }
 
-	   protected override void registerMessages(MessageManager manager)
-		{
-			manager.RegisterMessage(this, "map", v => ((ScalarStream)v).Map());
-			manager.RegisterMessage(this, "if", v => ((ScalarStream)v).IfMessage());
-			manager.RegisterMessage(this, "take", v => ((ScalarStream)v).Take());
-			manager.RegisterMessage(this, "next", v => ((ScalarStream)v).Next());
-			manager.RegisterMessage(this, "reset", v => ((ScalarStream)v).Reset());
-		}
+      public override Value Clone() => new ScalarStream(seed.Clone(), limit);
 
-		public override Value Map() => new Sequence(this)
-		{
-		   Arguments = Arguments.Clone()
-		}.Map();
+      protected override void registerMessages(MessageManager manager)
+      {
+         manager.RegisterMessage(this, "map", v => ((ScalarStream)v).Map());
+         manager.RegisterMessage(this, "if", v => ((ScalarStream)v).IfMessage());
+         manager.RegisterMessage(this, "take", v => ((ScalarStream)v).Take());
+         manager.RegisterMessage(this, "next", v => ((ScalarStream)v).Next());
+         manager.RegisterMessage(this, "reset", v => ((ScalarStream)v).Reset());
+      }
 
-	   public override Value IfMessage() => new Sequence(this)
-	   {
-	      Arguments = Arguments.Clone()
-	   }.If();
+      public override Value Map() => new Sequence(this) { Arguments = Arguments.Clone() }.Map();
 
-	   public override Value Take() => new Sequence(this)
-	   {
-	      Arguments = Arguments.Clone()
-	   }.Take();
-	}
+      public override Value IfMessage() => new Sequence(this) { Arguments = Arguments.Clone() }.If();
+
+      public override Value Take() => new Sequence(this) { Arguments = Arguments.Clone() }.Take();
+   }
 }

@@ -12,17 +12,18 @@ namespace Orange.Library.Verbs
    {
       public class ForGenerator : NSGenerator
       {
-         Parameters parameters;
-         INSGenerator sourceGenerator;
-         INSGenerator blockGenerator;
-         bool blockGenerating;
-         Value sourceValue;
+         protected Parameters parameters;
+         protected INSGenerator sourceGenerator;
+         protected INSGenerator blockGenerator;
+         protected bool blockGenerating;
+         protected Value sourceValue;
 
          public ForGenerator(ForExecute forExecute) : base(forExecute)
          {
             parameters = forExecute.parameters;
             sourceGenerator = forExecute.value.Evaluate().PossibleGenerator().Required("Value is not a generator");
             blockGenerator = forExecute.block.GetGenerator();
+
             blockGenerating = false;
             sourceValue = NilValue;
          }
@@ -41,34 +42,32 @@ namespace Orange.Library.Verbs
 
          public override Value Next()
          {
-            using (var popper = new RegionPopper(region, "for-generator"))
+            using var popper = new RegionPopper(region, "for-generator");
+            popper.Push();
+
+            if (blockGenerating)
             {
-               popper.Push();
-
-               if (blockGenerating)
+               parameters.SetValues(sourceValue, index);
+               var value = blockGenerator.Next();
+               if (!value.IsNil)
                {
-                  parameters.SetValues(sourceValue, index);
-                  var value = blockGenerator.Next();
-                  if (!value.IsNil)
-                  {
-                     index++;
-                     return value;
-                  }
-
-                  blockGenerating = false;
+                  index++;
+                  return value;
                }
 
-               sourceValue = sourceGenerator.Next();
-               if (sourceValue.IsNil)
-               {
-                  return sourceValue;
-               }
-
-               blockGenerator.Reset();
-               index++;
-               blockGenerating = true;
-               return Values.Ignore.IgnoreValue;
+               blockGenerating = false;
             }
+
+            sourceValue = sourceGenerator.Next();
+            if (sourceValue.IsNil)
+            {
+               return sourceValue;
+            }
+
+            blockGenerator.Reset();
+            index++;
+            blockGenerating = true;
+            return Values.Ignore.IgnoreValue;
          }
 
          public override string ToString() => $"for {parameters} in {sourceGenerator} do {blockGenerator}";
@@ -78,44 +77,42 @@ namespace Orange.Library.Verbs
       {
          var iterator = new NSIterator(generator);
          var index = 0;
-         using (var popper = new RegionPopper(new Region(), "for"))
+         using var popper = new RegionPopper(new Region(), "for");
+         popper.Push();
+         iterator.Reset();
+         for (var i = 0; i < MAX_LOOP; i++)
          {
-            popper.Push();
-            iterator.Reset();
-            for (var i = 0; i < MAX_LOOP; i++)
+            index = i;
+            var next = iterator.Next();
+            if (next.IsNil)
             {
-               index = i;
-               var next = iterator.Next();
-               if (next.IsNil)
-               {
-                  break;
-               }
+               break;
+            }
 
-               parameters.SetValues(next, i);
-               block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking || signal == ReturningNull)
-               {
-                  break;
-               }
+            parameters.SetValues(next, i);
+            block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking || signal == ReturningNull)
+            {
+               break;
             }
          }
 
          return index == 1 ? "1 iteration" : $"{index} iterations";
       }
 
-      Parameters parameters;
-      Block value;
-      Block block;
-      string result;
+      protected Parameters parameters;
+      protected Block value;
+      protected Block block;
+      protected string result;
 
       public ForExecute(Parameters parameters, Block value, Block block)
       {
          this.parameters = parameters;
          this.parameters.Splatting = true;
          this.value = CodeBuilder.ParenthesizeBlock(value);
-         //this.value = value;
          this.block = block;
+
          result = "";
       }
 

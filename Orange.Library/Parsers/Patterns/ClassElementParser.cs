@@ -9,7 +9,9 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class ClassElementParser : Parser, IElementParser, IInstructionParser
    {
-      public ClassElementParser() : base("^ /(/s*) /('-'? /d+)? /('!')? /(['+@#&$.'])") { }
+      public ClassElementParser() : base("^ /(/s*) /('-'? /d+)? /('!')? /(['+@#&$.'])")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -58,11 +60,11 @@ namespace Orange.Library.Parsers.Patterns
          {
             if (not)
             {
-               Element = count > 0 ? (Element)new AnyElement(span, count) { Not = true } : new BreakElement(span);
+               Element = count > 0 ? new AnyElement(span, count) { Not = true } : new BreakElement(span);
             }
             else
             {
-               Element = count > 0 ? (Element)new AnyElement(span, count) : new SpanElement(span);
+               Element = count > 0 ? new AnyElement(span, count) : new SpanElement(span);
             }
          }
 

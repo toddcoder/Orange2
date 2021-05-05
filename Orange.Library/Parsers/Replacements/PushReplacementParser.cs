@@ -7,8 +7,7 @@ namespace Orange.Library.Parsers.Replacements
 {
    public class PushReplacementParser : Parser, IReplacementParser
    {
-      public PushReplacementParser()
-         : base($"^ /(/s*) /(['@+']) /({REGEX_VARIABLE})")
+      public PushReplacementParser() : base($"^ /(/s*) /(['@+']) /({REGEX_VARIABLE})")
       {
       }
 
@@ -18,17 +17,13 @@ namespace Orange.Library.Parsers.Replacements
          Color(position, tokens[1].Length, Whitespaces);
          Color(1, Operators);
          Color(variableName.Length, Variables);
-         Replacement = tokens[2] == "@" ? (IReplacement)new PushReplacement(variableName) :
-            new UniqueReplacement(variableName);
+         Replacement = tokens[2] == "@" ? new PushReplacement(variableName) : new UniqueReplacement(variableName);
+
          return new NullOp();
       }
 
       public override string VerboseName => "push replacement";
 
-      public IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public IReplacement Replacement { get; set; }
    }
 }

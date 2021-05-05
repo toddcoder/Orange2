@@ -45,7 +45,7 @@ namespace Orange.Library.Values
          public abstract Item Clone();
       }
 
-      class IfItem : Item
+      protected class IfItem : Item
       {
          public override Value Evaluate() => Block.Evaluate();
 
@@ -58,7 +58,7 @@ namespace Orange.Library.Values
          public override string ToString() => $"if ({Block})";
       }
 
-      class UnlessItem : Item
+      protected class UnlessItem : Item
       {
          public override Value Evaluate() => !Block.Evaluate().IsTrue;
 
@@ -71,7 +71,7 @@ namespace Orange.Library.Values
          public override string ToString() => $"unless ({Block})";
       }
 
-      class MapItem : Item
+      protected class MapItem : Item
       {
          public override Value Evaluate() => Block.Evaluate();
 
@@ -84,9 +84,9 @@ namespace Orange.Library.Values
          public override string ToString() => $"map ({Block})";
       }
 
-      class TakeItem : Item
+      protected class TakeItem : Item
       {
-         int taken;
+         protected int taken;
 
          public TakeItem() => taken = 0;
 
@@ -101,9 +101,9 @@ namespace Orange.Library.Values
          public override string ToString() => $"take {Count}";
       }
 
-      class TakeWhileItem : Item
+      protected class TakeWhileItem : Item
       {
-         bool take;
+         protected bool take;
 
          public TakeWhileItem() => take = true;
 
@@ -128,7 +128,7 @@ namespace Orange.Library.Values
 
       public class TakeUntilItem : Item
       {
-         bool take;
+         protected bool take;
 
          public TakeUntilItem() => take = true;
 
@@ -151,9 +151,9 @@ namespace Orange.Library.Values
          public override string ToString() => $"take until ({Block})";
       }
 
-      class SkipItem : Item
+      protected class SkipItem : Item
       {
-         int skipped;
+         protected int skipped;
 
          public SkipItem() => skipped = 0;
 
@@ -172,9 +172,9 @@ namespace Orange.Library.Values
          public override string ToString() => $"skip {Count}";
       }
 
-      class SkipWhileItem : Item
+      protected class SkipWhileItem : Item
       {
-         bool skip;
+         protected bool skip;
 
          public SkipWhileItem() => skip = true;
 
@@ -197,9 +197,9 @@ namespace Orange.Library.Values
          public override string ToString() => $"skip while ({Block})";
       }
 
-      class SkipUntilItem : Item
+      protected class SkipUntilItem : Item
       {
-         bool skip;
+         protected bool skip;
 
          public SkipUntilItem() => skip = true;
 
@@ -233,14 +233,14 @@ namespace Orange.Library.Values
          }
       }
 
-      string parameterName;
-      Value source;
-      List<Item> items;
-      int currentIndex;
-      Value currentValue;
-      IGenerator currentGenerator;
-      Generator subGenerator;
-      Region sharedRegion;
+      protected string parameterName;
+      protected Value source;
+      protected List<Item> items;
+      protected int currentIndex;
+      protected Value currentValue;
+      protected IGenerator currentGenerator;
+      protected Generator subGenerator;
+      protected Region sharedRegion;
 
       public Generator(string parameterName, Value source)
       {
@@ -258,11 +258,11 @@ namespace Orange.Library.Values
          subGenerator = null;
       }
 
-      public Generator(string parameterName, Value source, List<Item> items)
-         : this(parameterName, source) => this.items.AddRange(items);
+      public Generator(string parameterName, Value source, List<Item> items) : this(parameterName, source) => this.items.AddRange(items);
 
-      public Generator(Value source)
-         : this("$0", source) { }
+      public Generator(Value source) : this("$0", source)
+      {
+      }
 
       public string ParameterName => parameterName;
 
@@ -313,48 +313,43 @@ namespace Orange.Library.Values
 
       public Value Next()
       {
-         if (currentGenerator == null)
-         {
-            currentGenerator = GetGenerator();
-         }
+         currentGenerator ??= GetGenerator();
 
          var looping = true;
          var region = new Region();
-         using (var popper = new RegionPopper(region, "generator-next"))
+         using var popper = new RegionPopper(region, "generator-next");
+         popper.Push();
+         sharedRegion?.CopyAllVariablesTo(region);
+         for (var i = currentIndex + 1; i < MAX_ARRAY && looping; i++)
          {
-            popper.Push();
-            sharedRegion?.CopyAllVariablesTo(region);
-            for (var i = currentIndex + 1; i < MAX_ARRAY && looping; i++)
+            var value = getNext(i, out var control);
+            if (value.IsNil)
             {
-               var value = getNext(i, out var control);
-               if (value.IsNil)
-               {
-                  return value;
-               }
-
-               switch (control)
-               {
-                  case Continuing:
-                     currentIndex = i;
-                     currentValue = value;
-                     return value;
-                  case Skipping:
-                     currentIndex = i;
-                     currentValue = value;
-                     continue;
-                  case Exiting:
-                     looping = false;
-                     break;
-               }
+               return value;
             }
 
-            currentIndex = -1;
-            currentValue = new Nil();
-            return currentValue;
+            switch (control)
+            {
+               case Continuing:
+                  currentIndex = i;
+                  currentValue = value;
+                  return value;
+               case Skipping:
+                  currentIndex = i;
+                  currentValue = value;
+                  continue;
+               case Exiting:
+                  looping = false;
+                  break;
+            }
          }
+
+         currentIndex = -1;
+         currentValue = new Nil();
+         return currentValue;
       }
 
-      Value getNext(int i, out IterationControlType control)
+      protected Value getNext(int i, out IterationControlType control)
       {
          Value value;
          if (subGenerator != null)
@@ -389,8 +384,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      Generator addItem<TItem>(int count = 0, Arguments arguments = null)
-         where TItem : Item, new()
+      protected Generator addItem<TItem>(int count = 0, Arguments arguments = null) where TItem : Item, new()
       {
          var item = new TItem { Block = arguments == null ? Arguments.Executable : arguments.Executable, Count = count };
          var newGenerator = (Generator)Clone();
@@ -420,22 +414,15 @@ namespace Orange.Library.Values
       {
          var region = new Region();
          sharedRegion?.CopyAllVariablesTo(region);
-         using (var popper = new RegionPopper(region, "get-generator"))
+         using var popper = new RegionPopper(region, "get-generator");
+         popper.Push();
+         var value = source is IExecutable e ? e.Evaluate() : source;
+         return value switch
          {
-            popper.Push();
-            var value = source is IExecutable e ? e.Evaluate() : source;
-            if (value is IGenerator generator)
-            {
-               return generator;
-            }
-
-            if (value is IGetGenerator getGenerator)
-            {
-               return getGenerator.GetGenerator();
-            }
-
-            return new DefaultGenerator(value);
-         }
+            IGenerator generator => generator,
+            IGetGenerator getGenerator => getGenerator.GetGenerator(),
+            _ => new DefaultGenerator(value)
+         };
       }
 
       public Value GetNext(IGenerator generator, int index, out IterationControlType control)
@@ -450,7 +437,7 @@ namespace Orange.Library.Values
 
          var looping = true;
          control = Continuing;
-         foreach (var item in items.TakeWhile(item => looping))
+         foreach (var item in items.TakeWhile(_ => looping))
          {
             SetParameter(parameterName, value);
             var result = item.Evaluate();
@@ -490,7 +477,7 @@ namespace Orange.Library.Values
          return value;
       }
 
-      Array getArray()
+      protected Array getArray()
       {
          var framework = new ArrayFramework(this, Arguments);
          return (Array)framework.Evaluate();
@@ -632,7 +619,7 @@ namespace Orange.Library.Values
          return true;
       }
 
-      bool bindTo(Array placeholderArray, bool assigning)
+      protected bool bindTo(Array placeholderArray, bool assigning)
       {
          var length = placeholderArray.Length;
          if (length == 0)

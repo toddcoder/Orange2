@@ -7,8 +7,7 @@ namespace Orange.Library.Parsers.Replacements
 {
    public class ValueReplacementParser : Parser, IReplacementParser
    {
-      public ValueReplacementParser()
-         : base($"^ /(/s* '#') /('@')? /({REGEX_VARIABLE})", true)
+      public ValueReplacementParser() : base($"^ /(/s* '#') /('@')? /({REGEX_VARIABLE})", true)
       {
       }
 
@@ -19,17 +18,12 @@ namespace Orange.Library.Parsers.Replacements
          Color(array.Length, Operators);
          var variableName = tokens[3];
          Color(variableName.Length, Variables);
-         Replacement = array.Length > 0 ? (IReplacement)new ValueArrayReplacement(variableName) :
-            new ValueReplacement(variableName);
+         Replacement = array.Length > 0 ? new ValueArrayReplacement(variableName) : new ValueReplacement(variableName);
          return new NullOp();
       }
 
       public override string VerboseName => "value replacement";
 
-      public IReplacement Replacement
-      {
-         get;
-         set;
-      }
+      public IReplacement Replacement { get; set; }
    }
 }

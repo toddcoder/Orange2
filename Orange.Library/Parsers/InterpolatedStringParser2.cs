@@ -13,7 +13,9 @@ namespace Orange.Library.Parsers
 {
    public class InterpolatedStringParser2 : Parser
    {
-      public InterpolatedStringParser2() : base("^ |sp| /['$#'] /[quote]") { }
+      public InterpolatedStringParser2() : base("^ |sp| /['$#'] /[quote]")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -81,7 +83,7 @@ namespace Orange.Library.Parsers
                      var newText = ReplaceEscapedValues(text.ToString());
                      var interpolatedString = new InterpolatedString(newText.Substitute("^ /(/r/n | /r | /n)", ""),
                         blocks);
-                     result.Value = type == "$" ? (Value)interpolatedString : new Failure(interpolatedString);
+                     result.Value = type == "$" ? interpolatedString : new Failure(interpolatedString);
                      return new Push(result.Value);
                   }
 

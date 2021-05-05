@@ -6,16 +6,17 @@ namespace Orange.Library.Values
 {
    public class NSOuterComprehension : Value, INSGenerator, ISharedRegion
    {
-      NSInnerComprehension innerComprehension;
-      Block block;
-      Region region;
-      bool more;
+      protected NSInnerComprehension innerComprehension;
+      protected Block block;
+      protected Region region;
+      protected bool more;
 
       public NSOuterComprehension(NSInnerComprehension innerComprehension, Block block)
       {
          this.innerComprehension = innerComprehension;
-         region = new Region();
          this.block = block;
+
+         region = new Region();
       }
 
       public override int Compare(Value value) => 0;
@@ -78,23 +79,22 @@ namespace Orange.Library.Values
             popper.Push();
             innerComprehension.Reset();
          }
+
          more = true;
       }
 
       public Value Next()
       {
-         using (var popper = new SharedRegionPopper(region, this, "next-comp"))
+         using var popper = new SharedRegionPopper(region, this, "next-comp");
+         popper.Push();
+         var value = innerComprehension.Next();
+         if (value.IsNil)
          {
-            popper.Push();
-            var value = innerComprehension.Next();
-            if (value.IsNil)
-            {
-               more = false;
-               return NilValue;
-            }
-
-            return block.Evaluate();
+            more = false;
+            return NilValue;
          }
+
+         return block.Evaluate();
       }
 
       public Value If() => NSGenerator.If(this, Arguments);
@@ -153,7 +153,9 @@ namespace Orange.Library.Values
 
       public INSGeneratorSource GeneratorSource => block;
 
-      public void Visit(Value value) { }
+      public void Visit(Value value)
+      {
+      }
 
       public bool More => more;
 

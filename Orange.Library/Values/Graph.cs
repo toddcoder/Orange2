@@ -140,7 +140,7 @@ namespace Orange.Library.Values
             return dispatchClosure(closure, arguments);
          }
 
-         return childGraph.Children.Count > 0 ? (Value)new Graph(childGraph) : new GraphVariable(messageName, childGraph);
+         return childGraph.Children.Count > 0 ? new Graph(childGraph) : new GraphVariable(messageName, childGraph);
       }
 
       public bool RespondsTo(string messageName) => graph.Children.Select(i => i.Key).Any(k => k == messageName);
@@ -153,6 +153,7 @@ namespace Orange.Library.Values
          var result = lambda.Evaluate(arguments, this);
          result = State.UseReturnValue(result);
          State.UnregisterBlock();
+
          return result;
       }
 
@@ -197,6 +198,7 @@ namespace Orange.Library.Values
       {
          var builder = new MarkupBuilder(graph.Name);
          renderXML(graph, builder.Root);
+
          return builder.ToString();
       }
 
@@ -233,30 +235,28 @@ namespace Orange.Library.Values
 
       public Value If()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return new Graph(graph.Name, "");
-            }
-
-            assistant.IteratorParameter();
-            if (graph.Children.Count == 0)
-            {
-               assistant.SetIteratorParameter(this);
-               var value = block.IsTrue ? graph.Value : "";
-               return new Graph(graph.Name, value);
-            }
-
-            var list = new List<Graph>();
-            foreach (var item in graph.Children)
-            {
-               addToList(assistant, block, item.Value, list);
-            }
-
-            return new Graph(graph.Name, new Array(list));
+            return new Graph(graph.Name, "");
          }
+
+         assistant.IteratorParameter();
+         if (graph.Children.Count == 0)
+         {
+            assistant.SetIteratorParameter(this);
+            var value = block.IsTrue ? graph.Value : "";
+            return new Graph(graph.Name, value);
+         }
+
+         var list = new List<Graph>();
+         foreach (var item in graph.Children)
+         {
+            addToList(assistant, block, item.Value, list);
+         }
+
+         return new Graph(graph.Name, new Array(list));
       }
 
       protected void addToList(ParameterAssistant assistant, Block block, Value value, List<Graph> list)
@@ -296,80 +296,77 @@ namespace Orange.Library.Values
          var message = value.Text;
          var valueGraph = new ValueGraph(message);
          graph[message] = valueGraph;
+
          return new GraphVariable(message, valueGraph);
       }
 
       public Value Map()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            var array = new Array();
-            assistant.ArrayParameters();
-            var index = 0;
-            foreach (var item in graph.Children)
-            {
-               assistant.SetParameterValues(new Graph(item.Value), item.Key, index++);
-               var value = block.Evaluate();
-               var signal = ParameterAssistant.Signal();
-               if (signal == ParameterAssistant.SignalType.Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ParameterAssistant.SignalType.Continuing:
-                     continue;
-                  case ParameterAssistant.SignalType.ReturningNull:
-                     return null;
-               }
-
-               array[item.Key] = value;
-            }
-
-            return array;
+            return this;
          }
+
+         var array = new Array();
+         assistant.ArrayParameters();
+         var index = 0;
+         foreach (var (key, valueGraph) in graph.Children)
+         {
+            assistant.SetParameterValues(new Graph(valueGraph), key, index++);
+            var value = block.Evaluate();
+            var signal = ParameterAssistant.Signal();
+            if (signal == ParameterAssistant.SignalType.Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case ParameterAssistant.SignalType.Continuing:
+                  continue;
+               case ParameterAssistant.SignalType.ReturningNull:
+                  return null;
+            }
+
+            array[key] = value;
+         }
+
+         return array;
       }
 
       public Value For()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.ArrayParameters();
-            var index = 0;
-            foreach (var (key, valueGraph) in graph.Children)
-            {
-               assistant.SetParameterValues(new Graph(valueGraph), key, index++);
-               block.Evaluate();
-               var signal = ParameterAssistant.Signal();
-               if (signal == ParameterAssistant.SignalType.Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ParameterAssistant.SignalType.Continuing:
-                     continue;
-                  case ParameterAssistant.SignalType.ReturningNull:
-                     return null;
-               }
-            }
-
             return this;
          }
+
+         assistant.ArrayParameters();
+         var index = 0;
+         foreach (var (key, valueGraph) in graph.Children)
+         {
+            assistant.SetParameterValues(new Graph(valueGraph), key, index++);
+            block.Evaluate();
+            var signal = ParameterAssistant.Signal();
+            if (signal == ParameterAssistant.SignalType.Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case ParameterAssistant.SignalType.Continuing:
+                  continue;
+               case ParameterAssistant.SignalType.ReturningNull:
+                  return null;
+            }
+         }
+
+         return this;
       }
    }
 }

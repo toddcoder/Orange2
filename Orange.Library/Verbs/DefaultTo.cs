@@ -5,18 +5,12 @@ namespace Orange.Library.Verbs
 {
    public class DefaultTo : TwoValueVerb
    {
-      public override Value Evaluate(Value x, Value y)
+      public override Value Evaluate(Value x, Value y) => x switch
       {
-         switch (x)
-         {
-            case Some some:
-               return some.Value();
-            case None _:
-               return y;
-            default:
-               return x.IsEmpty ? y : x;
-         }
-      }
+         Some some => some.Value(),
+         None => y,
+         _ => x.IsEmpty ? y : x
+      };
 
       public override string Location => "Default to";
 

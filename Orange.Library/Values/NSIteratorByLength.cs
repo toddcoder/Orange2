@@ -6,7 +6,9 @@ namespace Orange.Library.Values
    {
       protected int length;
 
-      public NSIteratorByLength(INSGenerator generator, int length)
-         : base(ReplaceGeneratorSource(generator, length)) => this.length = length;
+      public NSIteratorByLength(INSGenerator generator, int length) : base(ReplaceGeneratorSource(generator, length))
+      {
+         this.length = length;
+      }
    }
 }

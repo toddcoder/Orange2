@@ -12,20 +12,21 @@ namespace Orange.Library.Values
 {
    public class InterpolatedString : String, IStringify
    {
-      Block[] blocks;
+      protected Block[] blocks;
 
-      public InterpolatedString(string text, List<Block> blocks)
-         : base(text) => this.blocks = blocks.ToArray();
+      public InterpolatedString(string text, List<Block> blocks) : base(text) => this.blocks = blocks.ToArray();
 
-      public InterpolatedString()
-         : this("", new List<Block>()) { }
+      public InterpolatedString() : this("", new List<Block>())
+      {
+      }
 
-      public InterpolatedString(string text)
-         : this(text, new List<Block>()) { }
+      public InterpolatedString(string text) : this(text, new List<Block>())
+      {
+      }
 
       protected override string getText() => getText(text);
 
-      string getText(string target)
+      protected string getText(string target)
       {
          var matcher = new Matcher();
          if (matcher.IsMatch(target, "-(< '`') /('#') /(/d+) /('#')"))
@@ -44,7 +45,7 @@ namespace Orange.Library.Values
          return matcher.ToString().Replace("`#", "#").Replace("`i", State.Indentation());
       }
 
-      public InterpolatedString Interpolated => new InterpolatedString(getText(), new List<Block>());
+      public InterpolatedString Interpolated => new(getText(), new List<Block>());
 
       protected override void registerMessages(MessageManager manager)
       {
@@ -74,7 +75,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      Value applyToArray(Array array)
+      protected Value applyToArray(Array array)
       {
          Regions.Push(new Region(), "fill");
          foreach (var item in array)
@@ -84,6 +85,7 @@ namespace Orange.Library.Values
 
          var result = getText();
          Regions.Pop("fill");
+
          return result;
       }
 
@@ -131,6 +133,7 @@ namespace Orange.Library.Values
 
          var result = getText(matcher.ToString());
          Regions.Pop("format");
+
          return result;
       }
 
@@ -138,19 +141,17 @@ namespace Orange.Library.Values
 
       public override Value Invoke()
       {
-         using (var popper = new RegionPopper(new Region(), "formatting"))
+         using var popper = new RegionPopper(new Region(), "formatting");
+         popper.Push();
+         foreach (var value in Arguments.Values)
          {
-            popper.Push();
-            foreach (var value in Arguments.Values)
+            if (BoundValue.Unbind(value, out var boundName, out var boundValue))
             {
-               if (BoundValue.Unbind(value, out var boundName, out var boundValue))
-               {
-                  Regions.SetLocal(boundName, boundValue);
-               }
+               Regions.SetLocal(boundName, boundValue);
             }
-
-            return getText();
          }
+
+         return getText();
       }
 
       public void IterateOverBlocks(Func<Block, Block> action)

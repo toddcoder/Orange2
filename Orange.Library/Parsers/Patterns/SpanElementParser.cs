@@ -10,7 +10,9 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class SpanElementParser : Parser, IElementParser
    {
-      public SpanElementParser() : base("/(^ /s*) /(['+-']1%2) /(['($' quote])") { }
+      public SpanElementParser() : base("/(^ /s*) /(['+-']1%2) /(['($' quote])")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -34,11 +36,11 @@ namespace Orange.Library.Parsers.Patterns
                {
                   if (not)
                   {
-                     Element = mode ? (Element)new BreakBlockElement(text) : new MBreakBlockElement(text);
+                     Element = mode ? new BreakBlockElement(text) : new MBreakBlockElement(text);
                   }
                   else
                   {
-                     Element = mode ? (Element)new SpanBlockElement(text) : new MSpanBlockElement(text);
+                     Element = mode ? new SpanBlockElement(text) : new MSpanBlockElement(text);
                   }
 
                   overridePosition = initialPosition;

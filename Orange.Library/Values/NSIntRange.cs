@@ -39,11 +39,12 @@ namespace Orange.Library.Values
          this.start = start;
          this.stop = stop;
          this.inclusive = inclusive;
+
          increment = 1;
          setCompare();
       }
 
-      void setCompare()
+      protected void setCompare()
       {
          if (inclusive)
          {
@@ -88,43 +89,29 @@ namespace Orange.Library.Values
          manager.RegisterProperty(this, "max", v => ((NSIntRange)v).Max());
       }
 
-      string incrementString()
+      protected string incrementString() => increment switch
       {
-         if (increment == 1)
-         {
-            return "";
-         }
-         else if (increment > 0)
-         {
-            return $".+{increment}";
-         }
-         else
-         {
-            return $".{increment}";
-         }
-      }
+         1 => "",
+         > 0 => $".+{increment}",
+         _ => $".{increment}"
+      };
 
       public override string ToString() => $"{start}{(inclusive ? ".." : "...")}{stop}{incrementString()}";
 
-      public override Value AlternateValue(string message)
+      public override Value AlternateValue(string message) => message switch
       {
-         switch (message)
-         {
-            case "__$get_item":
-            case "__$set_item":
-            case "len":
-               return ToArray();
-            default:
-               return (Value)GetGenerator();
-         }
-      }
+         "__$get_item" => ToArray(),
+         "__$set_item" => ToArray(),
+         "len" => ToArray(),
+         _ => (Value)GetGenerator()
+      };
 
       public INSGenerator GetGenerator() => new NSIntRangeGenerator(this, 0, increment);
 
       public virtual Value Next(int index)
       {
          var value = start + index * increment;
-         return compare(value) ? (Value)value : NilValue;
+         return compare(value) ? value : NilValue;
       }
 
       public bool IsGeneratorAvailable => true;

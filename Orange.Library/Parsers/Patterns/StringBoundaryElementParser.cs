@@ -6,8 +6,7 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class StringBoundaryElementParser : Parser, IElementParser
    {
-      public StringBoundaryElementParser()
-         : base("^ /(/s*) /(['<>'])")
+      public StringBoundaryElementParser() : base("^ /(/s*) /(['<>'])")
       {
       }
 
@@ -15,16 +14,12 @@ namespace Orange.Library.Parsers.Patterns
       {
          Color(position, tokens[1].Length, Whitespaces);
          Color(tokens[2].Length, Operators);
-         Element = tokens[2] == "<" ? (Element)new StringBeginElement() : new StringEndElement();
+         Element = tokens[2] == "<" ? new StringBeginElement() : new StringEndElement();
          return new NullOp();
       }
 
       public override string VerboseName => "string boundary element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

@@ -5,7 +5,7 @@ namespace Orange.Library.Verbs
 {
    public class ToList : Verb
    {
-      Block block;
+      protected Block block;
 
       public ToList(Block block) => this.block = block;
 
@@ -17,17 +17,12 @@ namespace Orange.Library.Verbs
          }
 
          var value = block.Evaluate();
-         if (value is List list)
+         return value switch
          {
-            return list;
-         }
-
-         if (value.IsArray)
-         {
-            return List.FromArray((Array)value.SourceArray);
-         }
-
-         return List.FromValue(value);
+            List list => list,
+            { IsArray: true } => List.FromArray((Array)value.SourceArray),
+            _ => List.FromValue(value)
+         };
       }
 
       public Block Block => block;

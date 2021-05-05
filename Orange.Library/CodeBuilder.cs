@@ -780,18 +780,16 @@ namespace Orange.Library
          block = new Block();
       }
 
-      public Verb PopLastVerb()
+      public void PopLastVerb()
       {
          if (block.Count == 0)
          {
-            return null;
+            return;
          }
 
          var index = block.Count - 1;
-         var verb = block.AsAdded[index];
          block.RemoveAt(index);
          block.Refresh();
-         return verb;
       }
 
       public Verb First => block.Count == 0 ? null : block[0];

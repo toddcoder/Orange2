@@ -6,15 +6,15 @@ namespace Orange.Library.Values
 {
    public class Comprehension : Value
    {
-      Block block;
-      Comprehension innerComprehension;
-      Parameters parameters;
-      Block arrayBlock;
-      Block ifBlock;
-      Region region;
-      Block sortBlock;
-      Block sortDescBlock;
-      Block orderBlock;
+      protected Block block;
+      protected Comprehension innerComprehension;
+      protected Parameters parameters;
+      protected Block arrayBlock;
+      protected Block ifBlock;
+      protected Region region;
+      protected Block sortBlock;
+      protected Block sortDescBlock;
+      protected Block orderBlock;
 
       public Comprehension(Block block, Parameters parameters, Region region = null)
       {
@@ -39,6 +39,7 @@ namespace Orange.Library.Values
       {
          this.innerComprehension = innerComprehension;
          this.parameters = parameters;
+
          sortBlock = null;
          sortDescBlock = null;
          orderBlock = null;
@@ -123,7 +124,7 @@ namespace Orange.Library.Values
          }
       }
 
-      Array getArray()
+      protected Array getArray()
       {
          if (arrayBlock == null)
          {
@@ -132,193 +133,184 @@ namespace Orange.Library.Values
 
          arrayBlock.AutoRegister = false;
          var value = arrayBlock.Evaluate();
-         if (value == null || value.Type == ValueType.Nil)
-         {
-            return new Array();
-         }
 
-         if (value is ISequenceSource sequenceSource)
+         return value switch
          {
-            var pipeline = new Sequence(sequenceSource);
-            var sourceArray = (Array)pipeline.SourceArray;
-            return sourceArray;
-         }
-
-         var array = value.IsArray ? (Array)value.SourceArray : new Array { value };
-         return array;
+            null => new Array(),
+            { Type: ValueType.Nil } => new Array(),
+            { IsArray: true } => (Array)value.SourceArray,
+            _ => new Array { value }
+         };
       }
 
       public Array Evaluate()
       {
-         using (var assistant = new ParameterAssistant(new Arguments(new NullBlock(), null, parameters)
+         using var assistant = new ParameterAssistant(new Arguments(new NullBlock(), null, parameters)
          {
             Splatting = parameters.Splatting
-         }))
+         });
+         if (arrayBlock == null)
          {
-            if (arrayBlock == null)
+            return new Array();
+         }
+
+         using var popper = new RegionPopper(region, "comprehension");
+         popper.Push();
+         var newArray = new Array();
+         assistant.ArrayParameters();
+         if (ifBlock != null)
+         {
+            if (innerComprehension == null)
             {
-               return new Array();
+               foreach (var item in getArray())
+               {
+                  assistant.SetParameterValues(item);
+
+                  if (!ifBlock.Evaluate().IsTrue)
+                  {
+                     continue;
+                  }
+
+                  var value = block.Evaluate();
+                  if (value.Type != ValueType.Nil)
+                  {
+                     newArray.Add(value);
+                  }
+               }
             }
-
-            using (var popper = new RegionPopper(region, "comprehension"))
+            else
             {
-               popper.Push();
-               var newArray = new Array();
-               assistant.ArrayParameters();
-               if (ifBlock != null)
+               foreach (var item in getArray())
                {
-                  if (innerComprehension == null)
+                  assistant.SetParameterValues(item);
+                  if (ifBlock.Evaluate().IsTrue)
                   {
-                     foreach (var item in getArray())
-                     {
-                        assistant.SetParameterValues(item);
-
-                        if (!ifBlock.Evaluate().IsTrue)
-                        {
-                           continue;
-                        }
-
-                        var value = block.Evaluate();
-                        if (value.Type != ValueType.Nil)
-                        {
-                           newArray.Add(value);
-                        }
-                     }
-                  }
-                  else
-                  {
-                     foreach (var item in getArray())
-                     {
-                        assistant.SetParameterValues(item);
-                        if (ifBlock.Evaluate().IsTrue)
-                        {
-                           innerComprehension.Evaluate(newArray);
-                        }
-                     }
+                     innerComprehension.Evaluate(newArray);
                   }
                }
-               else
-               {
-                  if (innerComprehension == null)
-                  {
-                     foreach (var item in getArray())
-                     {
-                        assistant.SetParameterValues(item);
-                        var value = block.Evaluate();
-                        if (value.Type != ValueType.Nil)
-                        {
-                           newArray.Add(value);
-                        }
-                     }
-                  }
-                  else
-                  {
-                     foreach (var item in getArray())
-                     {
-                        assistant.SetParameterValues(item);
-                        innerComprehension.Evaluate(newArray);
-                     }
-                  }
-               }
-
-               newArray = sortArrayIf(newArray, assistant.Arguments.Parameters);
-               return newArray;
             }
          }
+         else
+         {
+            if (innerComprehension == null)
+            {
+               foreach (var item in getArray())
+               {
+                  assistant.SetParameterValues(item);
+                  var value = block.Evaluate();
+                  if (value.Type != ValueType.Nil)
+                  {
+                     newArray.Add(value);
+                  }
+               }
+            }
+            else
+            {
+               foreach (var item in getArray())
+               {
+                  assistant.SetParameterValues(item);
+                  innerComprehension.Evaluate(newArray);
+               }
+            }
+         }
+
+         newArray = sortArrayIf(newArray, assistant.Arguments.Parameters);
+         return newArray;
       }
 
-      Array sortArrayIf(Array newArray, Parameters parameters)
+      protected Array sortArrayIf(Array newArray, Parameters parameters)
       {
          if (sortBlock != null)
          {
             var arguments = GuaranteedExecutable(sortBlock);
             arguments.Parameters = parameters;
             newArray.Arguments = arguments;
+
             return newArray.Sort(true);
          }
-
-         if (sortDescBlock != null)
+         else if (sortDescBlock != null)
          {
             var arguments = GuaranteedExecutable(sortDescBlock);
             arguments.Parameters = parameters;
             newArray.Arguments = arguments;
+
             return newArray.Sort(false);
          }
-
-         if (orderBlock != null)
+         else if (orderBlock != null)
          {
             var arguments = GuaranteedExecutable(orderBlock);
             arguments.Parameters = parameters;
             newArray.Arguments = arguments;
+
             return newArray.Order();
          }
-
-         return newArray;
+         else
+         {
+            return newArray;
+         }
       }
 
       public void Evaluate(Array newArray)
       {
-         using (var assistant = new ParameterAssistant(new Arguments(new NullBlock(), null, parameters) { Splatting = Splatting }))
+         using var assistant = new ParameterAssistant(new Arguments(new NullBlock(), null, parameters) { Splatting = Splatting });
+         assistant.ArrayParameters();
+         if (ifBlock != null)
          {
-            assistant.ArrayParameters();
-            if (ifBlock != null)
+            if (innerComprehension == null)
             {
-               if (innerComprehension == null)
+               foreach (var item in getArray())
                {
-                  foreach (var item in getArray())
+                  assistant.SetParameterValues(item);
+
+                  if (!ifBlock.Evaluate().IsTrue)
                   {
-                     assistant.SetParameterValues(item);
-
-                     if (!ifBlock.Evaluate().IsTrue)
-                     {
-                        continue;
-                     }
-
-                     var value = block.Evaluate();
-                     if (value.Type != ValueType.Nil)
-                     {
-                        newArray.Add(value);
-                     }
+                     continue;
                   }
-               }
-               else
-               {
-                  foreach (var item in getArray())
+
+                  var value = block.Evaluate();
+                  if (value.Type != ValueType.Nil)
                   {
-                     assistant.SetParameterValues(item);
-                     if (ifBlock.Evaluate().IsTrue)
-                     {
-                        innerComprehension.Evaluate(newArray);
-                     }
+                     newArray.Add(value);
                   }
                }
             }
             else
             {
-               if (innerComprehension == null)
+               foreach (var item in getArray())
                {
-                  foreach (var item in getArray())
+                  assistant.SetParameterValues(item);
+                  if (ifBlock.Evaluate().IsTrue)
                   {
-                     assistant.SetParameterValues(item);
-                     var value = block.Evaluate();
-                     if (value.Type != ValueType.Nil)
-                     {
-                        newArray.Add(value);
-                     }
-                  }
-               }
-               else
-               {
-                  foreach (var item in getArray())
-                  {
-                     assistant.SetParameterValues(item);
                      innerComprehension.Evaluate(newArray);
                   }
                }
             }
-
-            newArray = sortArrayIf(newArray, assistant.Arguments.Parameters);
          }
+         else
+         {
+            if (innerComprehension == null)
+            {
+               foreach (var item in getArray())
+               {
+                  assistant.SetParameterValues(item);
+                  var value = block.Evaluate();
+                  if (value.Type != ValueType.Nil)
+                  {
+                     newArray.Add(value);
+                  }
+               }
+            }
+            else
+            {
+               foreach (var item in getArray())
+               {
+                  assistant.SetParameterValues(item);
+                  innerComprehension.Evaluate(newArray);
+               }
+            }
+         }
+
+         newArray = sortArrayIf(newArray, assistant.Arguments.Parameters);
       }
 
       public override Value AlternateValue(string message) => Evaluate();
@@ -372,6 +364,7 @@ namespace Orange.Library.Values
          sortBlock = Arguments.Executable;
          sortDescBlock = null;
          orderBlock = null;
+
          return this;
       }
 
@@ -380,6 +373,7 @@ namespace Orange.Library.Values
          sortBlock = null;
          sortDescBlock = Arguments.Executable;
          orderBlock = null;
+
          return this;
       }
 
@@ -388,6 +382,7 @@ namespace Orange.Library.Values
          sortBlock = null;
          sortDescBlock = null;
          orderBlock = null;
+
          return this;
       }
 

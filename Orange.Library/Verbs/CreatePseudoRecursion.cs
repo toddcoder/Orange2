@@ -6,16 +6,17 @@ namespace Orange.Library.Verbs
 {
    public class CreatePseudoRecursion : Verb, IStatement
    {
-      string name;
-      Parameters parameters;
-      Block block;
-      string result;
+      protected string name;
+      protected Parameters parameters;
+      protected Block block;
+      protected string result;
 
       public CreatePseudoRecursion(string name, Parameters parameters, Block block)
       {
          this.name = name;
          this.parameters = parameters;
          this.block = block;
+
          result = "";
       }
 
@@ -25,14 +26,14 @@ namespace Orange.Library.Verbs
          if (Regions.VariableExists(name))
          {
             var value = Regions[name];
-            if (!(value is PseudoRecursion))
+            if (value is not PseudoRecursion recursion)
             {
                pseudoRecursion = new PseudoRecursion(name);
                Regions[name] = pseudoRecursion;
             }
             else
             {
-               pseudoRecursion = (PseudoRecursion)value;
+               pseudoRecursion = recursion;
             }
          }
          else

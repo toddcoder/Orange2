@@ -5,23 +5,15 @@ namespace Orange.Library.Values
 {
    public class FArray : Value
    {
-      string[] values;
+      protected string[] values;
 
       public FArray(string[] values) => this.values = values;
 
       public override int Compare(Value value) => 0;
 
-      public override string Text
-      {
-         get;
-         set;
-      }
+      public override string Text { get; set; }
 
-      public override double Number
-      {
-         get;
-         set;
-      }
+      public override double Number { get; set; }
 
       public override ValueType Type => ValueType.FArray;
 
@@ -48,16 +40,16 @@ namespace Orange.Library.Values
             return this;
          }
 
-         RegionManager.Regions.Push("farray-for");
+         RegionManager.Regions.Push("f-array-for");
 
-         for (var i = 0; i < values.Length; i++)
+         foreach (var value in values)
          {
-            RegionManager.Regions.SetLocal(valueVar, values[i]);
+            RegionManager.Regions.SetLocal(valueVar, value);
             RegionManager.Regions.SetLocal(indexVar, indexVar);
             block.Evaluate();
          }
 
-         RegionManager.Regions.Pop("farray-for");
+         RegionManager.Regions.Pop("f-array-for");
 
          return this;
       }
@@ -73,7 +65,7 @@ namespace Orange.Library.Values
             return null;
          }
 
-         RegionManager.Regions.Push("farray-select");
+         RegionManager.Regions.Push("f-array-select");
 
          var newArray = new List<string>();
 
@@ -88,7 +80,7 @@ namespace Orange.Library.Values
             }
          }
 
-         RegionManager.Regions.Pop("farray-select");
+         RegionManager.Regions.Pop("f-array-select");
 
          return new FArray(newArray.ToArray());
       }
@@ -110,8 +102,10 @@ namespace Orange.Library.Values
                   result.Add(values[i]);
                }
             }
+
             return new FArray(result.ToArray());
          }
+
          return null;
       }
 

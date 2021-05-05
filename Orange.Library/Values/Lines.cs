@@ -7,8 +7,8 @@ namespace Orange.Library.Values
 {
    public class Lines : Value
    {
-      string text;
-      string filter;
+      protected string text;
+      protected string filter;
 
       public Lines(string text)
       {
@@ -36,73 +36,67 @@ namespace Orange.Library.Values
 
       public Value For()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block != null)
          {
-            var block = assistant.Block();
-            if (block != null)
+            assistant.LoopParameters();
+            if (filter.IsEmpty())
             {
-               assistant.LoopParameters();
-               if (filter.IsEmpty())
+               using var reader = new StringReader(text);
+               string line;
+               var index = 0;
+               while ((line = reader.ReadLine()) != null)
                {
-                  using (var reader = new StringReader(text))
+                  assistant.SetLoopParameters(line, index++);
+                  block.Evaluate();
+                  var signal = ParameterAssistant.Signal();
+                  if (signal == ParameterAssistant.SignalType.Breaking)
                   {
-                     string line;
-                     var index = 0;
-                     while ((line = reader.ReadLine()) != null)
-                     {
-                        assistant.SetLoopParameters(line, index++);
-                        block.Evaluate();
-                        var signal = ParameterAssistant.Signal();
-                        if (signal == ParameterAssistant.SignalType.Breaking)
-                        {
-                           break;
-                        }
+                     break;
+                  }
 
-                        switch (signal)
-                        {
-                           case ParameterAssistant.SignalType.ReturningNull:
-                              return null;
-                           case ParameterAssistant.SignalType.Continuing:
-                              continue;
-                        }
+                  switch (signal)
+                  {
+                     case ParameterAssistant.SignalType.ReturningNull:
+                        return null;
+                     case ParameterAssistant.SignalType.Continuing:
+                        continue;
+                  }
+               }
+            }
+            else
+            {
+               using var reader = new StringReader(text);
+               string line;
+               var index = 0;
+               while ((line = reader.ReadLine()) != null)
+               {
+                  if (line.IndexOf(filter, StringComparison.Ordinal) > -1)
+                  {
+                     assistant.SetLoopParameters(line, index++);
+                     block.Evaluate();
+                     var signal = ParameterAssistant.Signal();
+                     if (signal == ParameterAssistant.SignalType.Breaking)
+                     {
+                        break;
+                     }
+
+                     switch (signal)
+                     {
+                        case ParameterAssistant.SignalType.ReturningNull:
+                           return null;
+                        case ParameterAssistant.SignalType.Continuing:
+                           continue;
                      }
                   }
                }
-               else
-               {
-                  using (var reader = new StringReader(text))
-                  {
-                     string line;
-                     var index = 0;
-                     while ((line = reader.ReadLine()) != null)
-                     {
-                        if (line.IndexOf(filter, StringComparison.Ordinal) > -1)
-                        {
-                           assistant.SetLoopParameters(line, index++);
-                           block.Evaluate();
-                           var signal = ParameterAssistant.Signal();
-                           if (signal == ParameterAssistant.SignalType.Breaking)
-                           {
-                              break;
-                           }
-
-                           switch (signal)
-                           {
-                              case ParameterAssistant.SignalType.ReturningNull:
-                                 return null;
-                              case ParameterAssistant.SignalType.Continuing:
-                                 continue;
-                           }
-                        }
-                     }
-                  }
-               }
-
-               return null;
             }
 
             return null;
          }
+
+         return null;
       }
 
       public Value Filter() => new ValueAttributeVariable("filter", this);

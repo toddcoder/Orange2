@@ -5,16 +5,19 @@ namespace Orange.Library.Generators
 {
    public class GroupFramework : GeneratorFramework
    {
-      Hash<string, Array> groups;
+      protected Hash<string, Array> groups;
 
-      public GroupFramework(Generator generator, Block block, Arguments arguments)
-         : base(generator, block, arguments) => groups = new Hash<string, Array>();
+      public GroupFramework(Generator generator, Block block, Arguments arguments) : base(generator, block, arguments)
+      {
+         groups = new Hash<string, Array>();
+      }
 
       public override Value Map(Value value)
       {
          var key = block.Evaluate().Text;
-         var array = groups.Find(key, s => new Array(), true);
+         var array = groups.Find(key, _ => new Array(), true);
          array.Add(value);
+
          return value;
       }
 

@@ -7,8 +7,7 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class VariableElementParser : Parser, IElementParser
    {
-      public VariableElementParser()
-         : base($"^ /(/s*) /'~'? /({REGEX_VARIABLE})", true)
+      public VariableElementParser() : base($"^ /(/s*) /'~'? /({REGEX_VARIABLE})", true)
       {
       }
 
@@ -20,17 +19,13 @@ namespace Orange.Library.Parsers.Patterns
          Color(breakSymbol.Length, Operators);
          Color(variableName.Length, Variables);
 
-         Element = breakSymbol == "~" ? (Element)new BreakVariableElement(variableName) : new VariableElement(variableName);
+         Element = breakSymbol == "~" ? new BreakVariableElement(variableName) : new VariableElement(variableName);
 
          return new NullOp();
       }
 
       public override string VerboseName => "variable element";
 
-      public Element Element
-      {
-         get;
-         set;
-      }
+      public Element Element { get; set; }
    }
 }

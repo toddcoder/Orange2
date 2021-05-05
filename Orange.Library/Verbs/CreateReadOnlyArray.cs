@@ -5,7 +5,7 @@ namespace Orange.Library.Verbs
 {
    public class CreateReadOnlyArray : Verb
    {
-      Block block;
+      protected Block block;
 
       public CreateReadOnlyArray(Block block) => this.block = block;
 
@@ -15,18 +15,11 @@ namespace Orange.Library.Verbs
       {
          var value = block.Evaluate();
          var array = value.IsArray ? (Array)value.SourceArray : newArray(value);
+
          return new ReadOnlyArray(array);
       }
 
-      static Array newArray(Value value)
-      {
-         if (value.IsEmpty)
-         {
-            return new Array();
-         }
-
-         return new Array { value };
-      }
+      protected static Array newArray(Value value) => value.IsEmpty ? new Array() : new Array { value };
 
       public override VerbPrecedenceType Precedence => VerbPrecedenceType.Push;
 

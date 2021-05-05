@@ -41,9 +41,8 @@ namespace Orange.Library.Parsers
          return (superName, superParameters, traits.ToArray(), index);
       }
 
-      public ClassParser()
-         : base(@"^ /(|tabs|) /('abstract' /s+)? /(('class' | 'enum' | 'module' | 'union' | 'extend' | 'view') /s+) " +
-            $"/({REGEX_VARIABLE}) /(\'(\')?")
+      public ClassParser() : base(@"^ /(|tabs|) /('abstract' /s+)? /(('class' | 'enum' | 'module' | 'union' | 'extend' | 'view') /s+) " +
+         $"/({REGEX_VARIABLE}) /(\'(\')?")
       {
       }
 
@@ -97,7 +96,7 @@ namespace Orange.Library.Parsers
             index = position + length;
          }
 
-         var (superClass, superParameters, traits, newIndex) = Ancestors(source, index);
+         var (superClass, _, traits, newIndex) = Ancestors(source, index);
          index = newIndex;
 
          var endParser = new EndParser();

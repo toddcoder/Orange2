@@ -5,8 +5,8 @@ namespace Orange.Library.Values
 {
    public class KeyedValue : Value
    {
-      string key;
-      Value value;
+      protected string key;
+      protected Value value;
 
       public KeyedValue(string key, Value value)
       {
@@ -18,20 +18,12 @@ namespace Orange.Library.Values
 
       public Value Value => value;
 
-      public override int Compare(Value value)
+      public override int Compare(Value value) => value switch
       {
-         if(value is KeyedValue other)
-         {
-            if (key != other.key)
-            {
-               return string.Compare(key, other.key, Ordinal);
-            }
-
-            return this.value.Compare(other.value);
-         }
-
-         return -1;
-      }
+         KeyedValue other when key != other.key => string.Compare(key, other.key, Ordinal),
+         KeyedValue other => this.value.Compare(other.value),
+         _ => -1
+      };
 
       public override string Text
       {

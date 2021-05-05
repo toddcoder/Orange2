@@ -8,7 +8,9 @@ namespace Orange.Library.Parsers
 {
    public class InvokeParser : Parser
    {
-      public InvokeParser() : base("^ /(':'? '(')") { }
+      public InvokeParser() : base("^ /(':'? '(')")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
@@ -19,7 +21,7 @@ namespace Orange.Library.Parsers
             var arguments = new Arguments(block);
             overridePosition = index;
 
-            return tokens[1].StartsWith(":") ? (Verb)new ApplyInvoke(arguments) : new Invoke(arguments);
+            return tokens[1].StartsWith(":") ? new ApplyInvoke(arguments) : new Invoke(arguments);
          }
 
          return null;

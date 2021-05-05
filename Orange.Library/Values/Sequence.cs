@@ -18,23 +18,22 @@ namespace Orange.Library.Values
 
       public class MapItem : Item
       {
-         ParameterBlock parameterBlock;
-         SignalType signal;
+         protected ParameterBlock parameterBlock;
+         protected SignalType signal;
 
          public MapItem(ParameterBlock parameterBlock) => this.parameterBlock = parameterBlock;
 
          public override Value Process(Array.IterItem item, int length)
          {
             signal = SignalType.None;
-            using (var assistant = new ParameterAssistant(parameterBlock))
-            {
-               var block = assistant.Block();
-               assistant.ArrayParameters();
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate();
-               signal = Signal();
-               return value;
-            }
+            using var assistant = new ParameterAssistant(parameterBlock);
+            var block = assistant.Block();
+            assistant.ArrayParameters();
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate();
+            signal = Signal();
+
+            return value;
          }
 
          public override SignalType Signal => signal;
@@ -44,23 +43,22 @@ namespace Orange.Library.Values
 
       public class IfItem : Item
       {
-         ParameterBlock parameterBlock;
-         SignalType signal;
+         protected ParameterBlock parameterBlock;
+         protected SignalType signal;
 
          public IfItem(ParameterBlock parameterBlock) => this.parameterBlock = parameterBlock;
 
          public override Value Process(Array.IterItem item, int length)
          {
             signal = SignalType.None;
-            using (var assistant = new ParameterAssistant(parameterBlock))
-            {
-               var block = assistant.Block();
-               assistant.ArrayParameters();
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate().IsTrue ? item.Value : null;
-               signal = Signal();
-               return value;
-            }
+            using var assistant = new ParameterAssistant(parameterBlock);
+            var block = assistant.Block();
+            assistant.ArrayParameters();
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate().IsTrue ? item.Value : null;
+            signal = Signal();
+
+            return value;
          }
 
          public override SignalType Signal => signal;
@@ -70,23 +68,22 @@ namespace Orange.Library.Values
 
       public class UnlessItem : Item
       {
-         ParameterBlock parameterBlock;
-         SignalType signal;
+         protected ParameterBlock parameterBlock;
+         protected SignalType signal;
 
          public UnlessItem(ParameterBlock parameterBlock) => this.parameterBlock = parameterBlock;
 
          public override Value Process(Array.IterItem item, int length)
          {
             signal = SignalType.None;
-            using (var assistant = new ParameterAssistant(parameterBlock))
-            {
-               var block = assistant.Block();
-               assistant.ArrayParameters();
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate().IsTrue ? null : item.Value;
-               signal = Signal();
-               return value;
-            }
+            using var assistant = new ParameterAssistant(parameterBlock);
+            var block = assistant.Block();
+            assistant.ArrayParameters();
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate().IsTrue ? null : item.Value;
+            signal = Signal();
+
+            return value;
          }
 
          public override SignalType Signal => signal;
@@ -98,7 +95,7 @@ namespace Orange.Library.Values
 
       public class TakeItem : Item
       {
-         int limit;
+         protected int limit;
 
          public TakeItem(int limit) => this.limit = limit;
 
@@ -113,23 +110,22 @@ namespace Orange.Library.Values
 
       public class TakeBlockItem : Item
       {
-         ParameterBlock parameterBlock;
-         SignalType signal;
+         protected ParameterBlock parameterBlock;
+         protected SignalType signal;
 
          public TakeBlockItem(ParameterBlock parameterBlock) => this.parameterBlock = parameterBlock;
 
          public override Value Process(Array.IterItem item, int length)
          {
             signal = SignalType.None;
-            using (var assistant = new ParameterAssistant(parameterBlock))
-            {
-               var block = assistant.Block();
-               assistant.ArrayParameters();
-               assistant.SetParameterValues(item);
-               var value = block.Evaluate().IsTrue ? item.Value : null;
-               signal = Signal();
-               return value;
-            }
+            using var assistant = new ParameterAssistant(parameterBlock);
+            var block = assistant.Block();
+            assistant.ArrayParameters();
+            assistant.SetParameterValues(item);
+            var value = block.Evaluate().IsTrue ? item.Value : null;
+            signal = Signal();
+
+            return value;
          }
 
          public override SignalType Signal => signal;
@@ -139,15 +135,16 @@ namespace Orange.Library.Values
          public override bool IsBreaking => true;
       }
 
-      ISequenceSource source;
-      List<Item> items;
-      int index;
-      Region region;
+      protected ISequenceSource source;
+      protected List<Item> items;
+      protected int index;
+      protected Region region;
 
       public Sequence(ISequenceSource source, Region region = null)
       {
          this.source = source;
          this.region = Region.CopyCurrent(region);
+
          items = new List<Item>();
          index = -1;
       }
@@ -156,13 +153,13 @@ namespace Orange.Library.Values
 
       public override string Text
       {
-         get { return AlternateValue("str").Text; }
+         get => AlternateValue("str").Text;
          set { }
       }
 
       public override double Number
       {
-         get { return AlternateValue("num").Number; }
+         get => AlternateValue("num").Number;
          set { }
       }
 
@@ -217,53 +214,51 @@ namespace Orange.Library.Values
 
       public Value Next()
       {
-         using (var popper = new RegionPopper(region, "next"))
+         using var popper = new RegionPopper(region, "next");
+         popper.Push();
+         index++;
+         for (var i = 0; i < MAX_ARRAY; i++)
          {
-            popper.Push();
-            index++;
-            for (var i = 0; i < MAX_ARRAY; i++)
+            var value = source.Next();
+            if (value.Type == ValueType.Nil)
             {
-               var value = source.Next();
-               if (value.Type == ValueType.Nil)
+               return value;
+            }
+
+            var skip = false;
+            foreach (var item in items)
+            {
+               var iterItem = new Array.IterItem
                {
-                  return value;
+                  Value = value,
+                  Key = index.ToString(),
+                  Index = index
+               };
+               value = item.Process(iterItem, index);
+               if (value == null && item.IsBreaking)
+               {
+                  return new Nil();
                }
 
-               var skip = false;
-               foreach (var item in items)
+               if (value == null || value.Type == ValueType.Nil || item.Signal == SignalType.Continuing)
                {
-                  var iterItem = new Array.IterItem
-                  {
-                     Value = value,
-                     Key = index.ToString(),
-                     Index = index
-                  };
-                  value = item.Process(iterItem, index);
-                  if (value == null && item.IsBreaking)
-                  {
-                     return new Nil();
-                  }
-
-                  if (value == null || value.Type == ValueType.Nil || item.Signal == SignalType.Continuing)
-                  {
-                     skip = true;
-                     break;
-                  }
-
-                  if (item.Signal == SignalType.Breaking)
-                  {
-                     return new Nil();
-                  }
+                  skip = true;
+                  break;
                }
 
-               if (!skip)
+               if (item.Signal == SignalType.Breaking)
                {
-                  return value;
+                  return new Nil();
                }
             }
 
-            return new Nil();
+            if (!skip)
+            {
+               return value;
+            }
          }
+
+         return new Nil();
       }
 
       public ISequenceSource Copy() => (ISequenceSource)Clone();
@@ -278,58 +273,56 @@ namespace Orange.Library.Values
 
       public Array Array => getArray();
 
-      Array getArray()
+      protected Array getArray()
       {
-         using (var popper = new RegionPopper(region, "seq-get-array"))
+         using var popper = new RegionPopper(region, "seq-get-array");
+         popper.Push();
+         var array = new Array();
+         var i = 0;
+         source.Reset();
+         while (array.Length < source.Limit && i <= MAX_ARRAY)
          {
-            popper.Push();
-            var array = new Array();
-            var i = 0;
-            source.Reset();
-            while (array.Length < source.Limit && i <= MAX_ARRAY)
+            var itemIndex = i++;
+            var value = source.Next();
+            if (value.Type == ValueType.Nil)
             {
-               var itemIndex = i++;
-               var value = source.Next();
-               if (value.Type == ValueType.Nil)
+               return array;
+            }
+
+            var skip = false;
+            foreach (var item in items)
+            {
+               var iterItem = new Array.IterItem
+               {
+                  Value = value,
+                  Key = itemIndex.ToString(),
+                  Index = itemIndex
+               };
+               value = item.Process(iterItem, array.Length);
+               if (value == null && item.IsBreaking)
                {
                   return array;
                }
 
-               var skip = false;
-               foreach (var item in items)
+               if (value == null || value.Type == ValueType.Nil || item.Signal == SignalType.Continuing)
                {
-                  var iterItem = new Array.IterItem
-                  {
-                     Value = value,
-                     Key = itemIndex.ToString(),
-                     Index = itemIndex
-                  };
-                  value = item.Process(iterItem, array.Length);
-                  if (value == null && item.IsBreaking)
-                  {
-                     return array;
-                  }
-
-                  if (value == null || value.Type == ValueType.Nil || item.Signal == SignalType.Continuing)
-                  {
-                     skip = true;
-                     break;
-                  }
-
-                  if (item.Signal == SignalType.Breaking)
-                  {
-                     return array;
-                  }
+                  skip = true;
+                  break;
                }
 
-               if (!skip)
+               if (item.Signal == SignalType.Breaking)
                {
-                  array.Add(value);
+                  return array;
                }
             }
 
-            return array;
+            if (!skip)
+            {
+               array.Add(value);
+            }
          }
+
+         return array;
       }
 
       public override Value AlternateValue(string message) => getArray();

@@ -5,8 +5,7 @@ namespace Orange.Library.Parsers
 {
    public class PostIncrementDecrementParser : Parser
    {
-      public PostIncrementDecrementParser()
-         : base("^ /(|sp|) /('++' | '--') -(> ['!?'])")
+      public PostIncrementDecrementParser() : base("^ /(|sp|) /('++' | '--') -(> ['!?'])")
       {
       }
 
@@ -14,7 +13,7 @@ namespace Orange.Library.Parsers
       {
          Color(position, tokens[1].Length, Whitespaces);
          Color(tokens[2].Length, Operators);
-         return tokens[2] == "++" ? (Verb)new Increment() : new Decrement();
+         return tokens[2] == "++" ? new Increment() : new Decrement();
       }
 
       public override string VerboseName => "post-increment/decrement";

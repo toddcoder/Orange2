@@ -14,13 +14,13 @@ namespace Orange.Library.Verbs
       {
          var stack = State.Stack;
          var y = stack.Pop(true, Location);
-         if (y is Block yBlock && yBlock.Expression)
+         if (y is Block { Expression: true } yBlock)
          {
             y = yBlock.Evaluate();
          }
 
          var x = stack.Pop(true, Location);
-         if (x is Block xBlock && xBlock.Expression)
+         if (x is Block { Expression: true } xBlock)
          {
             x = xBlock.Evaluate();
          }
@@ -41,17 +41,14 @@ namespace Orange.Library.Verbs
 
       public virtual Value Exception(Value x, Value y) => null;
 
-      Value evaluate(Value x, Value y)
+      protected Value evaluate(Value x, Value y)
       {
-         switch (y.Type)
+         x = y.Type switch
          {
-            case Value.ValueType.Complex when x.Type != Value.ValueType.Complex:
-               x = new Complex(x.Number);
-               break;
-            case Value.ValueType.Big when x.Type != Value.ValueType.Big:
-               x = new Big(x.Number);
-               break;
-         }
+            Value.ValueType.Complex when x.Type != Value.ValueType.Complex => new Complex(x.Number),
+            Value.ValueType.Big when x.Type != Value.ValueType.Big => new Big(x.Number),
+            _ => x
+         };
 
          if (x.Type == Value.ValueType.Case && y.Type != Value.ValueType.Case)
          {
@@ -59,22 +56,20 @@ namespace Orange.Library.Verbs
             y = new Case(_case.Value, y, false, _case.Required, _case.Condition);
          }
 
-         switch (x.Type)
+         return x.Type switch
          {
-            case Value.ValueType.Date:
-            case Value.ValueType.Rational:
-            case Value.ValueType.Complex:
-            case Value.ValueType.Big:
-            case Value.ValueType.Case:
-            case Value.ValueType.Object:
-            case Value.ValueType.Set:
-               return MessagingState.SendMessage(x, Message, new Arguments(y));
-            default:
-               return (x.IsArray || y.IsArray) && UseArrayVersion ? evaluateArray(x, y) : Evaluate(x, y);
-         }
+            Value.ValueType.Date => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            Value.ValueType.Rational => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            Value.ValueType.Complex => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            Value.ValueType.Big => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            Value.ValueType.Case => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            Value.ValueType.Object => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            Value.ValueType.Set => MessagingState.SendMessage(x, Message, new Arguments(y)),
+            _ => (x.IsArray || y.IsArray) && UseArrayVersion ? evaluateArray(x, y) : Evaluate(x, y)
+         };
       }
 
-      Value evaluateArray(Value x, Value y)
+      protected Value evaluateArray(Value x, Value y)
       {
          if (y is KeyedValue)
          {

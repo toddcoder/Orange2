@@ -16,7 +16,7 @@ namespace Orange.Library.Values
 {
    public class OTuple : Value, IMessageHandler
    {
-      static Hash<TKey, TValue> Clone<TKey, TValue>(Hash<TKey, TValue> original)
+      protected static Hash<TKey, TValue> Clone<TKey, TValue>(Hash<TKey, TValue> original)
       {
          var clone = new Hash<TKey, TValue>();
          foreach (var (key, value) in original)
@@ -42,10 +42,10 @@ namespace Orange.Library.Values
          return new OTuple(left, right);
       }
 
-      Value[] values;
-      int current;
-      Hash<string, int> messageToIndex;
-      Hash<int, string> indexToMessage;
+      protected Value[] values;
+      protected int current;
+      protected Hash<string, int> messageToIndex;
+      protected Hash<int, string> indexToMessage;
 
       public OTuple(Value[] values)
       {
@@ -86,7 +86,7 @@ namespace Orange.Library.Values
          this.indexToMessage = indexToMessage;
       }
 
-      Value getValue(Value value)
+      protected Value getValue(Value value)
       {
          if (value is BoundValue bv)
          {
@@ -162,9 +162,9 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "update", v => ((OTuple)v).Update());
       }
 
-      static IMaybe<int> getIntIndex(Value arg) => maybe(arg.Type == ValueType.Number, () => (int)arg.Number);
+      protected static IMaybe<int> getIntIndex(Value arg) => maybe(arg.Type == ValueType.Number, () => (int)arg.Number);
 
-      static IMaybe<int[]> getIntIndexes(Value[] values)
+      protected static IMaybe<int[]> getIntIndexes(Value[] values)
       {
          return maybe(values.All(v => v.Type == ValueType.Number), () => values.Select(v => (int)v.Number).ToArray());
       }
@@ -180,8 +180,10 @@ namespace Orange.Library.Values
             {
                return values.Of(index, NilValue);
             }
-
-            return NilValue;
+            else
+            {
+               return NilValue;
+            }
          }
 
          var intIndexes = getIntIndexes(argValues);
@@ -202,7 +204,7 @@ namespace Orange.Library.Values
 
       public Value Len() => values.Length;
 
-      Value returnValue(Value value, int index) => indexToMessage.FlatMap(index, message => new BoundValue(message, value), value);
+      protected Value returnValue(Value value, int index) => indexToMessage.FlatMap(index, message => new BoundValue(message, value), value);
 
       public override string ToString() => $"({values.Select(returnValue).ToString("; ")})";
 
@@ -224,8 +226,10 @@ namespace Orange.Library.Values
          {
             return values[current];
          }
-
-         return NilValue;
+         else
+         {
+            return NilValue;
+         }
       }
 
       public bool Match(OTuple comparisand, bool required, bool assigning)
@@ -328,7 +332,7 @@ namespace Orange.Library.Values
       public Value Update()
       {
          var argument = Arguments[0];
-         if (!(argument is OTuple otherTuple))
+         if (argument is not OTuple otherTuple)
          {
             otherTuple = new OTuple(array(argument));
          }

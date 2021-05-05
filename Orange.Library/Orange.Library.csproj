@@ -59,20 +59,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Argument.cs" />
     <Compile Include="ArgumentHelper.cs" />
     <Compile Include="Arguments.cs" />
     <Compile Include="BlockBuilder.cs" />
     <Compile Include="BlockMatcher.cs" />
-    <Compile Include="BlockState.cs" />
     <Compile Include="Buffer.cs" />
     <Compile Include="CodeBuilder.cs" />
     <Compile Include="ConsoleManager.cs" />
-    <Compile Include="Debugging\Breakpoint.cs" />
     <Compile Include="Debugging\Debugger.cs" />
     <Compile Include="Debugging\Line.cs" />
     <Compile Include="Debugging\Position.cs" />
-    <Compile Include="DoubleRegionPopper.cs" />
     <Compile Include="ICanStackTraits.cs" />
     <Compile Include="IConsole.cs" />
     <Compile Include="INSGenerator.cs" />
@@ -84,14 +80,11 @@
     <Compile Include="Junctions\Junction.cs" />
     <Compile Include="Junctions\NoneJunction.cs" />
     <Compile Include="Junctions\OneJunction.cs" />
-    <Compile Include="LambdaContext.cs" />
     <Compile Include="DefaultGenerator.cs" />
     <Compile Include="DefaultParameterNames.cs" />
     <Compile Include="Depth.cs" />
-    <Compile Include="EveryFillInBlock.cs" />
     <Compile Include="EverySubBlock.cs" />
     <Compile Include="Expander.cs" />
-    <Compile Include="FunctionArgument.cs" />
     <Compile Include="Generators\AllFramework.cs" />
     <Compile Include="Generators\AnyFramework.cs" />
     <Compile Include="Generators\ArrayFramework.cs" />
@@ -105,14 +98,10 @@
     <Compile Include="Generators\MaxFramework.cs" />
     <Compile Include="Generators\MinFramework.cs" />
     <Compile Include="Generators\NoneFramework.cs" />
-    <Compile Include="Generators\RangeGenerator.cs" />
     <Compile Include="Generators\ScalarFramework.cs" />
     <Compile Include="Generators\SumFramework.cs" />
     <Compile Include="Generators\UniqueFramework.cs" />
     <Compile Include="GetDefault.cs" />
-    <Compile Include="GraphIndexer.cs" />
-    <Compile Include="IArrayMaker.cs" />
-    <Compile Include="ICaseClass.cs" />
     <Compile Include="IEnd.cs" />
     <Compile Include="IFileCache.cs" />
     <Compile Include="IGenerator.cs" />
@@ -137,7 +126,6 @@
     <Compile Include="IXMethod.cs" />
     <Compile Include="LambdaRegion.cs" />
     <Compile Include="LockedDownRegion.cs" />
-    <Compile Include="Managers\LoopManager.cs" />
     <Compile Include="Memoizer.cs" />
     <Compile Include="NewOrangeCompiler.cs" />
     <Compile Include="ObjectBuildingRegion.cs" />
@@ -154,7 +142,6 @@
     <Compile Include="Parsers\MiddleParser.cs" />
     <Compile Include="Parsers\AltLoopRangeParser.cs" />
     <Compile Include="Parsers\ApplyInvokeParser.cs" />
-    <Compile Include="Parsers\ArraySubComprehensionParser.cs" />
     <Compile Include="Parsers\AssertParser.cs" />
     <Compile Include="Parsers\AssignParser.cs" />
     <Compile Include="Parsers\AssignToNewFieldParser.cs" />
@@ -192,7 +179,6 @@
     <Compile Include="Parsers\IgnoreReturnsParser.cs" />
     <Compile Include="Parsers\LoopParser.cs" />
     <Compile Include="Parsers\ConditionParser.cs" />
-    <Compile Include="Parsers\ContinuationParser.cs" />
     <Compile Include="Parsers\CreateFieldParser.cs" />
     <Compile Include="Parsers\DeferredParser.cs" />
     <Compile Include="Parsers\DefineExpressionParser.cs" />
@@ -203,15 +189,11 @@
     <Compile Include="Parsers\EmptyArrayLiteralParser.cs" />
     <Compile Include="Parsers\ExpressionLineParser.cs" />
     <Compile Include="Parsers\ExpressionParser.cs" />
-    <Compile Include="Parsers\FillInBlockParser.cs" />
     <Compile Include="Parsers\FillInVariableParser.cs" />
-    <Compile Include="Parsers\FirstmostListParser.cs" />
     <Compile Include="Parsers\ForParser.cs" />
     <Compile Include="Parsers\FreeParser.cs" />
     <Compile Include="Parsers\FunctionalIfParser.cs" />
-    <Compile Include="Parsers\GeneratorParser.cs" />
     <Compile Include="Parsers\MaybeParser.cs" />
-    <Compile Include="Parsers\IncrementsParser.cs" />
     <Compile Include="Parsers\LineBlockParser.cs" />
     <Compile Include="Parsers\Line\AndOrParser.cs" />
     <Compile Include="Parsers\Line\AssignToFieldParser.cs" />
@@ -313,8 +295,6 @@
     <Compile Include="Parsers\AbstractParser.cs" />
     <Compile Include="Parsers\ArrayLiteralParser.cs" />
     <Compile Include="Parsers\EnumerationValueParser.cs" />
-    <Compile Include="Parsers\InitBlockParser.cs" />
-    <Compile Include="Parsers\DelegateParser.cs" />
     <Compile Include="Parsers\BinParser.cs" />
     <Compile Include="Parsers\SpecialPrefixParser.cs" />
     <Compile Include="Parsers\LambdaInvokeParser.cs" />
@@ -322,11 +302,9 @@
     <Compile Include="Parsers\DefineParser.cs" />
     <Compile Include="Parsers\FunctionParser.cs" />
     <Compile Include="Parsers\DoesParser.cs" />
-    <Compile Include="Parsers\IDParser.cs" />
     <Compile Include="Parsers\IfParser.cs" />
     <Compile Include="Parsers\InheritanceParser.cs" />
     <Compile Include="Parsers\TraitParser.cs" />
-    <Compile Include="Parsers\IsDefinedParser.cs" />
     <Compile Include="Parsers\IStem.cs" />
     <Compile Include="Parsers\LetParser.cs" />
     <Compile Include="Parsers\MacroLiteralParser.cs" />
@@ -344,10 +322,7 @@
     <Compile Include="Parsers\StaticParser.cs" />
     <Compile Include="Parsers\LazyBlockParser.cs" />
     <Compile Include="Parsers\DateParser.cs" />
-    <Compile Include="Parsers\EndBlockParametersParser.cs" />
-    <Compile Include="Parsers\EndOfParametersParser.cs" />
     <Compile Include="Parsers\EndParser.cs" />
-    <Compile Include="Parsers\EnumerationParser.cs" />
     <Compile Include="Parsers\Enumerations\EndEnumerationParser.cs" />
     <Compile Include="Parsers\Enumerations\EnumerationBuilder.cs" />
     <Compile Include="Parsers\Enumerations\IEnumerationParser.cs" />
@@ -459,7 +434,6 @@
     <Compile Include="Values\Ignore.cs" />
     <Compile Include="Values\Some.cs" />
     <Compile Include="Values\Scanner.cs" />
-    <Compile Include="Values\YieldGenerator.cs" />
     <Compile Include="Values\BlockPattern.cs" />
     <Compile Include="Values\BoundValue.cs" />
     <Compile Include="Values\ContractInvokable.cs" />
@@ -467,7 +441,6 @@
     <Compile Include="Values\ExpansibleLambda.cs" />
     <Compile Include="Values\Folder.cs" />
     <Compile Include="Values\Generator.cs" />
-    <Compile Include="Values\GeneratorComprehension.cs" />
     <Compile Include="Values\Grammar.cs" />
     <Compile Include="Values\IMacroBlock.cs" />
     <Compile Include="Values\ImmediatelyInvokableVariable.cs" />
@@ -580,7 +553,6 @@
     <Compile Include="Values\Sequence.cs" />
     <Compile Include="Values\PseudoStream.cs" />
     <Compile Include="Values\RangeRepeater.cs" />
-    <Compile Include="Values\Records.cs" />
     <Compile Include="Values\ReplacementLiteral.cs" />
     <Compile Include="Values\StopIncrement.cs" />
     <Compile Include="Values\StringIndexer.cs" />
@@ -601,7 +573,6 @@
     <Compile Include="VerbStack.cs" />
     <Compile Include="Orange.cs" />
     <Compile Include="Parsers\Conditionals\ConditionalParser.cs" />
-    <Compile Include="Parsers\FormatterParser.cs" />
     <Compile Include="Parsers\InvokeParser.cs" />
     <Compile Include="Parsers\IndexerParser.cs" />
     <Compile Include="Parsers\Patterns\AnyElementParser.cs" />
@@ -792,7 +763,6 @@
     <Compile Include="Verbs\ArrayConcatenate.cs" />
     <Compile Include="Verbs\ArrayFromValue.cs" />
     <Compile Include="Verbs\As.cs" />
-    <Compile Include="Verbs\AsArray.cs" />
     <Compile Include="Verbs\Assert.cs" />
     <Compile Include="Verbs\Assign.cs" />
     <Compile Include="Verbs\AssignToField.cs" />
@@ -895,7 +865,6 @@
     <Compile Include="Verbs\NSExclusiveRange.cs" />
     <Compile Include="Verbs\ExitSignal.cs" />
     <Compile Include="Verbs\Fields.cs" />
-    <Compile Include="Verbs\FlatMap.cs" />
     <Compile Include="Verbs\For.cs" />
     <Compile Include="Verbs\Group.cs" />
     <Compile Include="Verbs\If.cs" />

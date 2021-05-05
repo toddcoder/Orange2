@@ -84,10 +84,8 @@ namespace Orange.Library.Values
 
       public Value For()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
-         {
-            return filter == null ? standardLoop(assistant) : filteredLoop(assistant);
-         }
+         using var assistant = new ParameterAssistant(Arguments);
+         return filter == null ? standardLoop(assistant) : filteredLoop(assistant);
       }
 
       protected Value standardLoop(ParameterAssistant assistant)
@@ -99,27 +97,25 @@ namespace Orange.Library.Values
          }
 
          assistant.LoopParameters();
-         using (var fileNameReader = fileName.Reader())
+         using var fileNameReader = fileName.Reader();
+         string line;
+         var index = 0;
+         while ((line = fileNameReader.ReadLine()) != null)
          {
-            string line;
-            var index = 0;
-            while ((line = fileNameReader.ReadLine()) != null)
+            assistant.SetLoopParameters(line, index++);
+            block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
             {
-               assistant.SetLoopParameters(line, index++);
-               block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
+               break;
+            }
 
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
             }
          }
 
@@ -135,31 +131,29 @@ namespace Orange.Library.Values
          }
 
          assistant.LoopParameters();
-         using (var fileNameReader = fileName.Reader())
+         using var fileNameReader = fileName.Reader();
+         string line;
+         var index = 0;
+         while ((line = fileNameReader.ReadLine()) != null)
          {
-            string line;
-            var index = 0;
-            while ((line = fileNameReader.ReadLine()) != null)
+            assistant.SetLoopParameters(line, index++);
+            if (filter.IsTrue)
             {
-               assistant.SetLoopParameters(line, index++);
-               if (filter.IsTrue)
-               {
-                  block.Evaluate();
-               }
+               block.Evaluate();
+            }
 
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
 
-               switch (signal)
-               {
-                  case Continuing:
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
             }
          }
 
@@ -183,6 +177,7 @@ namespace Orange.Library.Values
          var name = fileName.Name;
          name = name.Succ();
          var newFileName = fileName.Folder.File(name, fileName.Extension);
+
          return new File(newFileName);
       }
 
@@ -191,6 +186,7 @@ namespace Orange.Library.Values
          var name = fileName.Name;
          name = name.Pred();
          var newFileName = fileName.Folder.File(name, fileName.Extension);
+
          return new File(newFileName);
       }
 

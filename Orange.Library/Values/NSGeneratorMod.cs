@@ -93,7 +93,9 @@ namespace Orange.Library.Values
 
          public INSGeneratorSource GeneratorSource => null;
 
-         public void Visit(Value value) { }
+         public void Visit(Value value)
+         {
+         }
 
          public bool More => false;
 
@@ -105,18 +107,16 @@ namespace Orange.Library.Values
             }
 
             this.value = value;
-            using (var popper = new SharedRegionPopper(region, this, "modifier"))
+            using var popper = new SharedRegionPopper(region, this, "modifier");
+            popper.Push();
+            parameters.SetValues(value, ++index);
+            var next = Next();
+            if (State.ReturnSignal)
             {
-               popper.Push();
-               parameters.SetValues(value, ++index);
-               var next = Next();
-               if (State.ReturnSignal)
-               {
-                  State.ReturnSignal = false;
-               }
-
-               return next;
+               State.ReturnSignal = false;
             }
+
+            return next;
          }
 
          protected string argumentText() => $"(({parameters}) -> {expression})";
@@ -132,7 +132,9 @@ namespace Orange.Library.Values
 
       public class IfModifier : Modifier
       {
-         public IfModifier(Arguments arguments) : base(arguments) { }
+         public IfModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          public override Value Next() => expression.Evaluate().IsTrue ? value : IgnoreValue;
 
@@ -141,7 +143,9 @@ namespace Orange.Library.Values
 
       public class IfNotModifier : Modifier
       {
-         public IfNotModifier(Arguments arguments) : base(arguments) { }
+         public IfNotModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          public override Value Next() => expression.Evaluate().IsTrue ? IgnoreValue : value;
 
@@ -150,20 +154,19 @@ namespace Orange.Library.Values
 
       public class MapModifier : Modifier
       {
-         public MapModifier(Arguments arguments) : base(arguments) { }
+         public MapModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          public override Value Next()
          {
             var next = expression.Evaluate();
-            switch (next)
+            return next switch
             {
-               case None _:
-                  return IgnoreValue;
-               case Some some:
-                  return some.Value();
-               default:
-                  return next;
-            }
+               None => IgnoreValue,
+               Some some => some.Value(),
+               _ => next
+            };
          }
 
          public override string ToString() => $"map {base.ToString()}";
@@ -171,7 +174,9 @@ namespace Orange.Library.Values
 
       public class MapIfModifier : Modifier
       {
-         public MapIfModifier(Arguments arguments) : base(arguments) { }
+         public MapIfModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          public override Value Next()
          {
@@ -197,7 +202,9 @@ namespace Orange.Library.Values
       {
          protected bool applies;
 
-         public SkipWhileModifier(Arguments arguments) : base(arguments) { }
+         public SkipWhileModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          public override void Reset()
          {
@@ -232,7 +239,9 @@ namespace Orange.Library.Values
 
       public class SkipUntilModifier : SkipWhileModifier
       {
-         public SkipUntilModifier(Arguments arguments) : base(arguments) { }
+         public SkipUntilModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          protected override bool condition() => !base.condition();
 
@@ -241,7 +250,9 @@ namespace Orange.Library.Values
 
       public class TakeModifier : SkipModifier
       {
-         public TakeModifier(Arguments arguments) : base(arguments) { }
+         public TakeModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          public override Value Next() => index < count ? value : NilValue;
 
@@ -250,7 +261,9 @@ namespace Orange.Library.Values
 
       public class TakeWhileModifier : SkipWhileModifier
       {
-         public TakeWhileModifier(Arguments arguments) : base(arguments) { }
+         public TakeWhileModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          protected override Value ifTrue() => value;
 
@@ -261,7 +274,9 @@ namespace Orange.Library.Values
 
       public class TakeUntilModifier : TakeWhileModifier
       {
-         public TakeUntilModifier(Arguments arguments) : base(arguments) { }
+         public TakeUntilModifier(Arguments arguments) : base(arguments)
+         {
+         }
 
          protected override bool condition() => !base.condition();
 
@@ -270,7 +285,7 @@ namespace Orange.Library.Values
 
       public class UniqueModifier : Modifier
       {
-         Set<Value> set;
+         protected Set<Value> set;
 
          public UniqueModifier(Arguments arguments) : base(arguments) => set = new Set<Value>();
 
@@ -293,17 +308,18 @@ namespace Orange.Library.Values
          public override string ToString() => "unique";
       }
 
-      INSGenerator generator;
-      List<Modifier> modifiers;
-      Region region;
-      Region sharedRegion;
-      NSIterator iterator;
-      bool more;
+      protected INSGenerator generator;
+      protected List<Modifier> modifiers;
+      protected Region region;
+      protected Region sharedRegion;
+      protected NSIterator iterator;
+      protected bool more;
 
       public NSGeneratorMod(INSGenerator generator, Modifier modifier)
       {
          this.generator = generator;
          modifiers = new List<Modifier> { modifier };
+
          region = new Region();
          iterator = new NSIterator(this.generator);
       }
@@ -458,7 +474,9 @@ namespace Orange.Library.Values
 
       public INSGeneratorSource GeneratorSource => generator.GeneratorSource;
 
-      public void Visit(Value value) { }
+      public void Visit(Value value)
+      {
+      }
 
       public bool More => more;
 

@@ -220,22 +220,18 @@ namespace Orange.Library.Values
 
       public static bool operator ==(Value x, Value y)
       {
-         if (ReferenceEquals(null, x))
-         {
-            return ReferenceEquals(null, y);
-         }
-
-         if (ReferenceEquals(null, y))
+         if (x is null || y is null)
          {
             return false;
          }
-
-         if (x.id == y.id)
+         else if (x.id == y.id)
          {
             return true;
          }
-
-         return x.Compare(y) == 0;
+         else
+         {
+            return x.Compare(y) == 0;
+         }
       }
 
       public static bool operator !=(Value x, Value y) => !(x == y);
@@ -286,7 +282,7 @@ namespace Orange.Library.Values
       public static Value EvaluateMessage(Value value, Parameters parameters, Block block)
       {
          List<ParameterValue> values = null;
-         if (!(parameters is NullParameters))
+         if (parameters is not NullParameters)
          {
             values = parameters.GetArguments(value.Arguments);
          }
@@ -302,6 +298,7 @@ namespace Orange.Library.Values
          var result = block.Evaluate();
          result = State.UseReturnValue(result);
          State.UnregisterBlock();
+
          return result;
       }
 
@@ -309,7 +306,7 @@ namespace Orange.Library.Values
 
       public virtual Value AlternateValue(string message) => null;
 
-      public virtual bool IsEmpty => Type == ValueType.String && Text.IsEmpty() || Type == ValueType.Nil || Type == ValueType.Null;
+      public virtual bool IsEmpty => Type == ValueType.String && Text.IsEmpty() || Type is ValueType.Nil or ValueType.Null;
 
       public virtual string ContainerType => Type.ToString();
 
@@ -373,18 +370,12 @@ namespace Orange.Library.Values
 
       public int Int => (int)Number;
 
-      public virtual IMaybe<INSGenerator> PossibleGenerator()
+      public virtual IMaybe<INSGenerator> PossibleGenerator() => this switch
       {
-         switch (this)
-         {
-            case INSGenerator generator:
-               return generator.Some();
-            case INSGeneratorSource source when source.IsGeneratorAvailable:
-               return source.GetGenerator().Some();
-            default:
-               return none<INSGenerator>();
-         }
-      }
+         INSGenerator generator => generator.Some(),
+         INSGeneratorSource { IsGeneratorAvailable: true } source => source.GetGenerator().Some(),
+         _ => none<INSGenerator>()
+      };
 
       public virtual IMaybe<INSGenerator> PossibleIndexGenerator() => PossibleGenerator();
 

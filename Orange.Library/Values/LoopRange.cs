@@ -9,25 +9,25 @@ namespace Orange.Library.Values
 {
    public class LoopRange : Value, INSGeneratorSource, ISharedRegion
    {
-      string variable;
-      Block init;
-      bool positive;
-      Block condition;
-      Block increment;
-      IMaybe<Block> yielding;
-      Region region;
-      Func<bool> conditionFunc;
+      protected string variable;
+      protected Block init;
+      protected bool positive;
+      protected Block condition;
+      protected Block increment;
+      protected IMaybe<Block> _yielding;
+      protected Region region;
+      protected Func<bool> conditionFunc;
 
-      public LoopRange(string variable, Block init, bool positive, Block condition, Block increment, IMaybe<Block> yielding,
-         Region region = null)
+      public LoopRange(string variable, Block init, bool positive, Block condition, Block increment, IMaybe<Block> yielding, Region region = null)
       {
          this.variable = variable;
          this.init = init;
          this.positive = positive;
          this.condition = condition;
          this.increment = increment;
-         this.yielding = yielding;
+         _yielding = yielding;
          this.region = region ?? new Region();
+
          conditionFunc = this.positive ? func(() => condition.IsTrue) : func(() => !condition.IsTrue);
       }
 
@@ -43,8 +43,8 @@ namespace Orange.Library.Values
 
       public override Value Clone()
       {
-         return new LoopRange(variable, (Block)init.Clone(), positive, (Block)condition.Clone(), (Block)increment.Clone(),
-            yielding.Map(y => (Block)y.Clone()), region.Clone());
+         var yielding = _yielding.Map(y => (Block)y.Clone());
+         return new LoopRange(variable, (Block)init.Clone(), positive, (Block)condition.Clone(), (Block)increment.Clone(), yielding, region.Clone());
       }
 
       protected override void registerMessages(MessageManager manager)
@@ -56,23 +56,21 @@ namespace Orange.Library.Values
 
       public Value Next(int index)
       {
-         using (var popper = new SharedRegionPopper(region, this, "loop-range-next"))
+         using var popper = new SharedRegionPopper(region, this, "loop-range-next");
+         popper.Push();
+         if (index == 0)
          {
-            popper.Push();
-            if (index == 0)
-            {
-               region.SetParameter(variable, init.Evaluate());
-            }
-
-            if (conditionFunc())
-            {
-               var result = yielding.Map(y => y.Evaluate()).DefaultTo(() => region[variable]);
-               region[variable] = increment.Evaluate();
-               return result;
-            }
-
-            return NilValue;
+            region.SetParameter(variable, init.Evaluate());
          }
+
+         if (conditionFunc())
+         {
+            var result = _yielding.Map(y => y.Evaluate()).DefaultTo(() => region[variable]);
+            region[variable] = increment.Evaluate();
+            return result;
+         }
+
+         return NilValue;
       }
 
       public bool IsGeneratorAvailable => true;
@@ -90,7 +88,8 @@ namespace Orange.Library.Values
       public override string ToString()
       {
          var direction = positive ? "while" : "until";
-         var yieldingAs = yielding.Map(y => y.ToString()).DefaultTo(() => variable);
+         var yieldingAs = _yielding.Map(y => y.ToString()).DefaultTo(() => variable);
+
          return $"(loop {variable} = {init} {direction} then {increment} yield {yieldingAs})";
       }
 

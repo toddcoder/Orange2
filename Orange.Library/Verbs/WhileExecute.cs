@@ -17,15 +17,15 @@ namespace Orange.Library.Verbs
    {
       public class WhileGenerator : NSGenerator
       {
-         INSGenerator blockGenerator;
-         Func<bool> predicate;
-         bool checkPredicate;
+         protected INSGenerator blockGenerator;
+         protected Func<bool> predicate;
+         protected bool checkPredicate;
 
-         public WhileGenerator(WhileExecute whileExecute)
-            : base(whileExecute)
+         public WhileGenerator(WhileExecute whileExecute) : base(whileExecute)
          {
             blockGenerator = whileExecute.block.GetGenerator();
             predicate = whileExecute.predicate;
+
             region = new Region();
          }
 
@@ -40,34 +40,32 @@ namespace Orange.Library.Verbs
 
          public override Value Next()
          {
-            using (var popper = new RegionPopper(region, "while-generator"))
+            using var popper = new RegionPopper(region, "while-generator");
+            popper.Push();
+
+            if (index++ < MAX_LOOP && (!checkPredicate || predicate()))
             {
-               popper.Push();
-
-               if (index++ < MAX_LOOP && (!checkPredicate || predicate()))
+               var next = blockGenerator.Next();
+               checkPredicate = false;
+               if (next.IsNil)
                {
-                  var next = blockGenerator.Next();
-                  checkPredicate = false;
-                  if (next.IsNil)
-                  {
-                     next = IgnoreValue;
-                     Reset();
-                  }
-
-                  return next;
+                  next = IgnoreValue;
+                  Reset();
                }
 
-               return NilValue;
+               return next;
             }
+
+            return NilValue;
          }
       }
 
-      Block condition;
-      Block block;
-      bool positive;
-      string result;
-      string type;
-      Func<bool> predicate;
+      protected Block condition;
+      protected Block block;
+      protected bool positive;
+      protected string result;
+      protected string type;
+      protected Func<bool> predicate;
 
       public WhileExecute(Block condition, Block block, bool positive)
       {
@@ -79,8 +77,6 @@ namespace Orange.Library.Verbs
          predicate = this.positive ? func(() => this.condition.Evaluate().IsTrue) : () => !this.condition.Evaluate().IsTrue;
       }
 
-      public WhileExecute() : this(new Block(), new Block(), true) { }
-
       public override Value Evaluate()
       {
          var count = 0;
@@ -89,7 +85,7 @@ namespace Orange.Library.Verbs
             block.Evaluate();
             count++;
             var signal = Signal();
-            if (signal == Breaking || signal == ReturningNull)
+            if (signal is Breaking or ReturningNull)
             {
                break;
             }

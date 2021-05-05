@@ -7,14 +7,17 @@ namespace Orange.Library.Parsers.Patterns
 {
    public class FieldScanElementParser : Parser, IElementParser
    {
-      public FieldScanElementParser() : base("^ /s* /(/d+)? '//'") { }
+      public FieldScanElementParser() : base("^ /s* /(/d+)? '//'")
+      {
+      }
 
       public override Verb CreateVerb(string[] tokens)
       {
          Color(position, length - 1, Numbers);
          Color(1, Operators);
          var count = tokens[1].ToInt(-1);
-         Element = count == -1 ? (Element)new FieldElement() : new FieldScanElement(count);
+         Element = count == -1 ? new FieldElement() : new FieldScanElement(count);
+
          return new NullOp();
       }
 

@@ -12,13 +12,15 @@ namespace Orange.Library.Values
       {
          protected DateTime start;
 
-         public NSDateRangeGenerator(INSGeneratorSource generatorSource, DateTime start)
-            : base(generatorSource) => this.start = start;
+         public NSDateRangeGenerator(INSGeneratorSource generatorSource, DateTime start) : base(generatorSource)
+         {
+            this.start = start;
+         }
       }
 
-      DateTime start;
-      DateTime stop;
-      bool inclusive;
+      protected DateTime start;
+      protected DateTime stop;
+      protected bool inclusive;
 
       public NSDateRange(Date start, Date stop, bool inclusive)
       {
@@ -62,10 +64,12 @@ namespace Orange.Library.Values
          var current = start.AddDays(index);
          if (inclusive)
          {
-            return current <= stop ? (Value)current : NilValue;
+            return current <= stop ? current : NilValue;
          }
-
-         return current < stop ? (Value)current : NilValue;
+         else
+         {
+            return current < stop ? current : NilValue;
+         }
       }
 
       public bool IsGeneratorAvailable => true;
@@ -74,23 +78,19 @@ namespace Orange.Library.Values
 
       public override string ToString() => $"{start}{(inclusive ? ".." : "...")}{stop}";
 
-      public override Value AlternateValue(string message)
+      public override Value AlternateValue(string message) => message switch
       {
-         switch (message)
-         {
-            case "__$get_item":
-            case "__$set_item":
-            case "len":
-               return ToArray();
-            default:
-               return (Value)GetGenerator();
-         }
-      }
+         "__$get_item" => ToArray(),
+         "__$set_item" => ToArray(),
+         "len" => ToArray(),
+         _ => (Value)GetGenerator()
+      };
 
       public Value In()
       {
          var needle = Arguments[0];
          var iterator = new NSIterator(GetGenerator());
+
          return iterator.Any(value => needle.Compare(value) == 0);
       }
 

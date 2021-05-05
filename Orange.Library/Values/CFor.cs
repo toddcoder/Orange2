@@ -8,16 +8,17 @@ namespace Orange.Library.Values
 {
    public class CFor : Value, ISequenceSource
    {
-      Value seed;
-      ParameterBlock increment;
-      ParameterBlock whileBlock;
-      Value current;
+      protected Value seed;
+      protected ParameterBlock increment;
+      protected ParameterBlock whileBlock;
+      protected Value current;
 
       public CFor(Value seed, ParameterBlock whileBlock, ParameterBlock increment)
       {
          this.seed = seed;
          this.increment = increment;
          this.whileBlock = whileBlock;
+
          current = null;
       }
 
@@ -45,25 +46,13 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "for", v => ((CFor)v).For());
       }
 
-      public Value Map() => new Sequence(this)
-      {
-         Arguments = Arguments.Clone()
-      }.Map();
+      public Value Map() => new Sequence(this) { Arguments = Arguments.Clone() }.Map();
 
-      public Value If() => new Sequence(this)
-      {
-         Arguments = Arguments.Clone()
-      }.If();
+      public Value If() => new Sequence(this) { Arguments = Arguments.Clone() }.If();
 
-      public Value Unless() => new Sequence(this)
-      {
-         Arguments = Arguments.Clone()
-      }.Unless();
+      public Value Unless() => new Sequence(this) { Arguments = Arguments.Clone() }.Unless();
 
-      public Value Take() => new Sequence(this)
-      {
-         Arguments = Arguments.Clone()
-      }.Take();
+      public Value Take() => new Sequence(this) { Arguments = Arguments.Clone() }.Take();
 
       public Value Next()
       {
@@ -73,33 +62,32 @@ namespace Orange.Library.Values
             return current;
          }
 
-         using (var whileAssistant = new ParameterAssistant(whileBlock, true))
-         using (var incrementAssistant = new ParameterAssistant(increment, true))
+         using var whileAssistant = new ParameterAssistant(whileBlock, true);
+         using var incrementAssistant = new ParameterAssistant(increment, true);
+         var block = incrementAssistant.Block();
+         if (block == null)
          {
-            var block = incrementAssistant.Block();
-            if (block == null)
-            {
-               return new Nil();
-            }
-
-            incrementAssistant.IteratorParameter();
-            incrementAssistant.SetIteratorParameter(current);
-            current = block.Evaluate();
-            whileAssistant.IteratorParameter();
-            whileAssistant.SetIteratorParameter(current);
-            block = whileAssistant.Block();
-            if (block == null)
-            {
-               return new Nil();
-            }
-
-            if (block.Evaluate().IsTrue)
-            {
-               return current;
-            }
+            return Nil.NilValue;
          }
 
-         return new Nil();
+         incrementAssistant.IteratorParameter();
+         incrementAssistant.SetIteratorParameter(current);
+         current = block.Evaluate();
+         whileAssistant.IteratorParameter();
+         whileAssistant.SetIteratorParameter(current);
+         block = whileAssistant.Block();
+         if (block == null)
+         {
+            return Nil.NilValue;
+         }
+         else if (block.Evaluate().IsTrue)
+         {
+            return current;
+         }
+         else
+         {
+            return Nil.NilValue;
+         }
       }
 
       public ISequenceSource Copy() => (ISequenceSource)Clone();
@@ -122,34 +110,32 @@ namespace Orange.Library.Values
 
       public Value For()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         assistant.IteratorParameter();
+         Reset();
+         var value = Next();
+         var index = 0;
+         while (!value.IsNil && index++ <= MAX_LOOP)
          {
-            var block = assistant.Block();
-            assistant.IteratorParameter();
-            Reset();
-            var value = Next();
-            var index = 0;
-            while (!value.IsNil && index++ <= MAX_LOOP)
+            assistant.SetIteratorParameter(value);
+            block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
             {
-               assistant.SetIteratorParameter(value);
-               block.Evaluate();
-               var signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case Continuing:
-                     value = Next();
-                     continue;
-                  case ReturningNull:
-                     return null;
-               }
-
-               value = Next();
+               break;
             }
+
+            switch (signal)
+            {
+               case Continuing:
+                  value = Next();
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            value = Next();
          }
 
          return this;

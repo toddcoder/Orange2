@@ -15,8 +15,8 @@ namespace Orange.Library.Values
 {
    public class StringIndexer : Variable
    {
-      String text;
-      Block indexesBlock;
+      protected String text;
+      protected Block indexesBlock;
 
       public StringIndexer(String text, Block indexesBlock) : base(VAR_ANONYMOUS + CompilerState.ObjectID())
       {
@@ -99,13 +99,13 @@ namespace Orange.Library.Values
          }
       }
 
-      bool inRange()
+      protected bool inRange()
       {
-         var anyOffset = none<int>();
+         var _offset = none<int>();
          var indexes = getIndexes();
          for (var i = 0; i < indexes.Length; i++)
          {
-            if (anyOffset.If(out var offset))
+            if (_offset.If(out var offset))
             {
                if (indexes[i] - offset != i)
                {
@@ -114,14 +114,14 @@ namespace Orange.Library.Values
             }
             else
             {
-               anyOffset = (indexes[i] - i).Some();
+               _offset = (indexes[i] - i).Some();
             }
          }
 
          return true;
       }
 
-      void setLength()
+      protected void setLength()
       {
          var length = text.Text.Length;
          foreach (var wrapping in indexesBlock.OfType<IWrapping>())
@@ -131,7 +131,7 @@ namespace Orange.Library.Values
          }
       }
 
-      int[] getIndexes()
+      protected int[] getIndexes()
       {
          setLength();
          var result = indexesBlock.Evaluate();
@@ -193,6 +193,7 @@ namespace Orange.Library.Values
       protected override void registerMessages(MessageManager manager)
       {
          base.registerMessages(manager);
+
          manager.RegisterMessage(this, "each", v => ((StringIndexer)v).Each());
          manager.RegisterMessage(this, "remove", v => ((StringIndexer)v).Remove());
          manager.RegisterMessage(this, "insert", v => ((StringIndexer)v).Insert());
@@ -205,6 +206,7 @@ namespace Orange.Library.Values
          var source = Arguments[0].Text;
          target = indexes.Aggregate(target, (s, i) => s.Insert(WrapIndex(i, target.Length, true), source));
          text.Text = target;
+
          return this;
       }
 
@@ -231,72 +233,65 @@ namespace Orange.Library.Values
 
       public Value Each()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return null;
-            }
-
-            RegionManager.Regions.Push("string-indexer");
-
-            var changes = new Hash<int, string>();
-            var indexes = getIndexes();
-
-            foreach (var index in indexes)
-            {
-               var correctedIndex = WrapIndex(index, text.Text.Length, true);
-               assistant.SetParameterValues(text.Text.Drop(index).Keep(1), index.ToString(), correctedIndex);
-               var result = block.Evaluate();
-               var signal = ParameterAssistant.Signal();
-               if (signal == ParameterAssistant.SignalType.Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ParameterAssistant.SignalType.Continuing:
-                     continue;
-                  case ParameterAssistant.SignalType.ReturningNull:
-                     return null;
-               }
-
-               if (result != null)
-               {
-                  changes[correctedIndex] = result.Text;
-               }
-            }
-
-            Slicer slicer = text.Text;
-            foreach (var (key, value) in changes)
-            {
-               slicer[key] = value[0];
-            }
-
-            text.Text = slicer.ToString();
-
-            RegionManager.Regions.Pop("string-indexer");
-
             return null;
          }
+
+         RegionManager.Regions.Push("string-indexer");
+
+         var changes = new Hash<int, string>();
+         var indexes = getIndexes();
+
+         foreach (var index in indexes)
+         {
+            var correctedIndex = WrapIndex(index, text.Text.Length, true);
+            assistant.SetParameterValues(text.Text.Drop(index).Keep(1), index.ToString(), correctedIndex);
+            var result = block.Evaluate();
+            var signal = ParameterAssistant.Signal();
+            if (signal == ParameterAssistant.SignalType.Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case ParameterAssistant.SignalType.Continuing:
+                  continue;
+               case ParameterAssistant.SignalType.ReturningNull:
+                  return null;
+            }
+
+            if (result != null)
+            {
+               changes[correctedIndex] = result.Text;
+            }
+         }
+
+         Slicer slicer = text.Text;
+         foreach (var (key, value) in changes)
+         {
+            slicer[key] = value[0];
+         }
+
+         text.Text = slicer.ToString();
+
+         RegionManager.Regions.Pop("string-indexer");
+
+         return null;
       }
 
       public override bool IsIndexer => true;
 
-      public override Value MessageTarget(string message)
+      public override Value MessageTarget(string message) => message switch
       {
-         switch (message)
-         {
-            case "each":
-            case "remove":
-            case "insert":
-               return this;
-            default:
-               return Value;
-         }
-      }
+         "each" => this,
+         "remove" => this,
+         "insert" => this,
+         _ => Value
+      };
 
       public override Value AlternateValue(string message) => Value;
    }

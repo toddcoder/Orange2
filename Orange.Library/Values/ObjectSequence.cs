@@ -4,8 +4,8 @@ namespace Orange.Library.Values
 {
    public class ObjectSequence : Value, ISequenceSource
    {
-      Object obj;
-      Region region;
+      protected Object obj;
+      protected Region region;
 
       public ObjectSequence(Object obj, Region region = null)
       {
@@ -36,49 +36,20 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "limit", v => ((ObjectSequence)v).Limit);
       }
 
-      public Value Map()
-      {
-         var sequence = new Sequence(this)
-         {
-            Arguments = Arguments.Clone()
-         };
-         return sequence.Map();
-      }
+      public Value Map() => new Sequence(this) { Arguments = Arguments.Clone() }.Map();
 
-      public Value If()
-      {
-         var sequence = new Sequence(this)
-         {
-            Arguments = Arguments.Clone()
-         };
-         return sequence.If();
-      }
+      public Value If() => new Sequence(this) { Arguments = Arguments.Clone() }.If();
 
-      public Value Unless()
-      {
-         var sequence = new Sequence(this)
-         {
-            Arguments = Arguments.Clone()
-         };
-         return sequence.Unless();
-      }
+      public Value Unless() => new Sequence(this) { Arguments = Arguments.Clone() }.Unless();
 
-      public Value Take()
-      {
-         var sequence = new Sequence(this)
-         {
-            Arguments = Arguments.Clone()
-         };
-         return sequence.Take();
-      }
+      public Value Take() => new Sequence(this) { Arguments = Arguments.Clone() }.Take();
 
       public Value Next()
       {
-         using (var popper = new RegionPopper(region, "object-seq-next"))
-         {
-            popper.Push();
-            return MessageManager.MessagingState.SendMessage(obj, "next", new Arguments());
-         }
+         using var popper = new RegionPopper(region, "object-seq-next");
+         popper.Push();
+
+         return MessageManager.MessagingState.SendMessage(obj, "next", new Arguments());
       }
 
       public ISequenceSource Copy() => (ISequenceSource)Clone();

@@ -9,10 +9,10 @@ namespace Orange.Library.Values
 {
    public class If : Value, IStatementResult
    {
-      Block condition;
-      Block result;
-      If next;
-      Block elseBlock;
+      protected Block condition;
+      protected Block result;
+      protected If next;
+      protected Block elseBlock;
 
       public If(Block condition, Block result)
       {
@@ -122,7 +122,7 @@ namespace Orange.Library.Values
          return false;
       }
 
-      static void evaluateResultBlock(Block block, out Block executeBlock, out Block returnBlock)
+      protected static void evaluateResultBlock(Block block, out Block executeBlock, out Block returnBlock)
       {
          var builder = new CodeBuilder();
          executeBlock = null;
@@ -161,21 +161,19 @@ namespace Orange.Library.Values
 
       public override string ToString()
       {
-         using (var writer = new StringWriter())
+         using var writer = new StringWriter();
+         writer.Write($"if {condition} [{result}]");
+         if (elseBlock != null)
          {
-            writer.Write($"if {condition} [{result}]");
-            if (elseBlock != null)
-            {
-               writer.Write($" else [{elseBlock}]");
-            }
-
-            if (next != null)
-            {
-               writer.Write($"else{next}");
-            }
-
-            return writer.ToString();
+            writer.Write($" else [{elseBlock}]");
          }
+
+         if (next != null)
+         {
+            writer.Write($"else{next}");
+         }
+
+         return writer.ToString();
       }
 
       public Block Condition

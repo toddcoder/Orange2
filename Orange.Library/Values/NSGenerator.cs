@@ -65,7 +65,7 @@ namespace Orange.Library.Values
             return array;
          }
 
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
          {
             var block = assistant.Block();
             if (block == null)
@@ -73,7 +73,7 @@ namespace Orange.Library.Values
                return ToArray(generator);
             }
 
-            var hash = new AutoHash<string, List<Value>>(k => new List<Value>(), true);
+            var hash = new AutoHash<string, List<Value>>(_ => new List<Value>(), true);
 
             assistant.IteratorParameter();
             var iterator = new NSIterator(generator);
@@ -98,36 +98,59 @@ namespace Orange.Library.Values
       public static Value FoldL(INSGenerator generator, Arguments arguments)
       {
          var iterator = new NSIterator(generator);
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return NilValue;
-            }
+            return NilValue;
+         }
 
-            iterator.Reset();
+         iterator.Reset();
 
-            assistant.TwoValueParameters();
-            var initialFromArguments = arguments[0];
-            var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
-            if (initialValue.IsNil)
-            {
-               return initialValue;
-            }
+         assistant.TwoValueParameters();
+         var initialFromArguments = arguments[0];
+         var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
+         if (initialValue.IsNil)
+         {
+            return initialValue;
+         }
 
-            var secondValue = iterator.Next();
-            if (secondValue.IsNil)
-            {
-               return initialValue;
-            }
+         var secondValue = iterator.Next();
+         if (secondValue.IsNil)
+         {
+            return initialValue;
+         }
 
-            assistant.SetParameterValues(initialValue, secondValue);
-            var value = block.Evaluate();
-            var signal = Signal();
+         assistant.SetParameterValues(initialValue, secondValue);
+         var value = block.Evaluate();
+         var signal = Signal();
+         if (signal == Breaking)
+         {
+            return value;
+         }
+
+         switch (signal)
+         {
+            case ReturningNull:
+               return null;
+            case Continuing:
+               return value;
+         }
+
+         var next = iterator.Next();
+         if (next.IsNil)
+         {
+            return value;
+         }
+
+         for (var i = 0; i < MAX_LOOP; i++)
+         {
+            assistant.SetParameterValues(value, next);
+            value = block.Evaluate();
+            signal = Signal();
             if (signal == Breaking)
             {
-               return value;
+               break;
             }
 
             switch (signal)
@@ -135,79 +158,77 @@ namespace Orange.Library.Values
                case ReturningNull:
                   return null;
                case Continuing:
-                  return value;
+                  continue;
             }
 
-            var next = iterator.Next();
+            next = iterator.Next();
             if (next.IsNil)
             {
                return value;
             }
-
-            for (var i = 0; i < MAX_LOOP; i++)
-            {
-               assistant.SetParameterValues(value, next);
-               value = block.Evaluate();
-               signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ReturningNull:
-                     return null;
-                  case Continuing:
-                     continue;
-               }
-
-               next = iterator.Next();
-               if (next.IsNil)
-               {
-                  return value;
-               }
-            }
-
-            return value;
          }
+
+         return value;
       }
 
       public static Value FoldR(INSGenerator generator, Arguments arguments)
       {
          var iterator = new NSIterator(new NSStackGenerator(generator.GeneratorSource));
 
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return NilValue;
-            }
+            return NilValue;
+         }
 
-            iterator.Reset();
+         iterator.Reset();
 
-            assistant.TwoValueParameters();
-            var initialFromArguments = arguments[0];
-            iterator.Reset();
-            var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
-            if (initialValue.IsNil)
-            {
-               return initialValue;
-            }
+         assistant.TwoValueParameters();
+         var initialFromArguments = arguments[0];
+         iterator.Reset();
+         var initialValue = initialFromArguments.IsEmpty ? iterator.Next() : initialFromArguments;
+         if (initialValue.IsNil)
+         {
+            return initialValue;
+         }
 
-            var secondValue = iterator.Next();
-            if (secondValue.IsNil)
-            {
-               return initialValue;
-            }
+         var secondValue = iterator.Next();
+         if (secondValue.IsNil)
+         {
+            return initialValue;
+         }
 
-            assistant.SetParameterValues(secondValue, initialValue);
-            var value = block.Evaluate();
-            var signal = Signal();
+         assistant.SetParameterValues(secondValue, initialValue);
+         var value = block.Evaluate();
+         var signal = Signal();
+         if (signal == Breaking)
+         {
+            return value;
+         }
+
+         switch (signal)
+         {
+            case ReturningNull:
+               return null;
+            case Continuing:
+               return value;
+         }
+
+         var next = iterator.Next();
+         if (next.IsNil)
+         {
+            return value;
+         }
+
+         for (var i = 0; i < MAX_LOOP; i++)
+         {
+            assistant.SetParameterValues(next, value);
+            value = block.Evaluate();
+            signal = Signal();
             if (signal == Breaking)
             {
-               return value;
+               break;
             }
 
             switch (signal)
@@ -215,42 +236,17 @@ namespace Orange.Library.Values
                case ReturningNull:
                   return null;
                case Continuing:
-                  return value;
+                  continue;
             }
 
-            var next = iterator.Next();
+            next = iterator.Next();
             if (next.IsNil)
             {
                return value;
             }
-
-            for (var i = 0; i < MAX_LOOP; i++)
-            {
-               assistant.SetParameterValues(next, value);
-               value = block.Evaluate();
-               signal = Signal();
-               if (signal == Breaking)
-               {
-                  break;
-               }
-
-               switch (signal)
-               {
-                  case ReturningNull:
-                     return null;
-                  case Continuing:
-                     continue;
-               }
-
-               next = iterator.Next();
-               if (next.IsNil)
-               {
-                  return value;
-               }
-            }
-
-            return value;
          }
+
+         return value;
       }
 
       public static Value AnyOf(INSGenerator generator, Arguments arguments)
@@ -285,7 +281,7 @@ namespace Orange.Library.Values
          iterator.Reset();
          var next = iterator.Next();
 
-         return next.IsNil ? (Value)new None() : new Some(next);
+         return next.IsNil ? new None() : new Some(next);
       }
 
       protected INSGeneratorSource generatorSource;
@@ -303,7 +299,9 @@ namespace Orange.Library.Values
 
       public INSGeneratorSource GeneratorSource => generatorSource;
 
-      public virtual void Visit(Value value) { }
+      public virtual void Visit(Value value)
+      {
+      }
 
       public bool More => more;
 
@@ -424,43 +422,93 @@ namespace Orange.Library.Values
       {
          var iterator = new NSIterator(generator);
          iterator.Reset();
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         var left = new Array();
+         var right = new Array();
+         if (block == null)
          {
-            var block = assistant.Block();
-            var left = new Array();
-            var right = new Array();
-            if (block == null)
+            var count = arguments[0].Int;
+            if (count == 0)
             {
-               var count = arguments[0].Int;
-               if (count == 0)
-               {
-                  return generator.Array();
-               }
-
-               Value value;
-               for (var i = 0; i < count; i++)
-               {
-                  value = iterator.Next();
-                  if (value.IsNil)
-                  {
-                     break;
-                  }
-
-                  left.Add(value);
-               }
-
-               value = iterator.Next();
-               for (var i = 0; !value.IsNil && i < MAX_LOOP; i++)
-               {
-                  right.Add(value);
-                  value = iterator.Next();
-               }
-
-               return new Array { left, right };
+               return generator.Array();
             }
 
-            assistant.IteratorParameter();
-            foreach (var item in iterator)
+            Value value;
+            for (var i = 0; i < count; i++)
+            {
+               value = iterator.Next();
+               if (value.IsNil)
+               {
+                  break;
+               }
+
+               left.Add(value);
+            }
+
+            value = iterator.Next();
+            for (var i = 0; !value.IsNil && i < MAX_LOOP; i++)
+            {
+               right.Add(value);
+               value = iterator.Next();
+            }
+
+            return new Array { left, right };
+         }
+
+         assistant.IteratorParameter();
+         foreach (var item in iterator)
+         {
+            assistant.SetIteratorParameter(item);
+            var result = block.IsTrue;
+            var signal = Signal();
+            if (signal == Breaking)
+            {
+               break;
+            }
+
+            switch (signal)
+            {
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
+
+            if (result)
+            {
+               left.Add(item);
+            }
+            else
+            {
+               right.Add(item);
+            }
+         }
+
+         return new Array { left, right };
+      }
+
+      public Value Split() => Split(this, Arguments);
+
+      public Value SplitWhile() => SplitWhile(this, Arguments);
+
+      public static Value SplitWhile(INSGenerator generator, Arguments arguments)
+      {
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
+         {
+            return generator.Array();
+         }
+
+         var left = new Array();
+         var right = new Array();
+         var adding = true;
+         assistant.IteratorParameter();
+         var iterator = new NSIterator(generator);
+         foreach (var item in iterator)
+         {
+            if (adding)
             {
                assistant.SetIteratorParameter(item);
                var result = block.IsTrue;
@@ -485,147 +533,89 @@ namespace Orange.Library.Values
                else
                {
                   right.Add(item);
+                  adding = false;
                }
             }
-
-            return new Array { left, right };
-         }
-      }
-
-      public Value Split() => Split(this, Arguments);
-
-      public Value SplitWhile() => SplitWhile(this, Arguments);
-
-      public static Value SplitWhile(INSGenerator generator, Arguments arguments)
-      {
-         using (var assistant = new ParameterAssistant(arguments))
-         {
-            var block = assistant.Block();
-            if (block == null)
+            else
             {
-               return generator.Array();
+               right.Add(item);
             }
-
-            var left = new Array();
-            var right = new Array();
-            var adding = true;
-            assistant.IteratorParameter();
-            var iterator = new NSIterator(generator);
-            foreach (var item in iterator)
-            {
-               if (adding)
-               {
-                  assistant.SetIteratorParameter(item);
-                  var result = block.IsTrue;
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
-
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (result)
-                  {
-                     left.Add(item);
-                  }
-                  else
-                  {
-                     right.Add(item);
-                     adding = false;
-                  }
-               }
-               else
-               {
-                  right.Add(item);
-               }
-            }
-
-            return new Array { left, right };
          }
+
+         return new Array { left, right };
       }
 
       public Value SplitUntil() => SplitUntil(this, Arguments);
 
       public static Value SplitUntil(INSGenerator generator, Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return generator.Array();
-            }
+            return generator.Array();
+         }
 
-            var left = new Array();
-            var right = new Array();
-            var adding = true;
-            assistant.IteratorParameter();
-            var iterator = new NSIterator(generator);
-            foreach (var item in iterator)
+         var left = new Array();
+         var right = new Array();
+         var adding = true;
+         assistant.IteratorParameter();
+         var iterator = new NSIterator(generator);
+         foreach (var item in iterator)
+         {
+            if (adding)
             {
-               if (adding)
+               assistant.SetIteratorParameter(item);
+               var result = block.IsTrue;
+               var signal = Signal();
+               if (signal == Breaking)
                {
-                  assistant.SetIteratorParameter(item);
-                  var result = block.IsTrue;
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
+                  break;
+               }
 
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
+               switch (signal)
+               {
+                  case Continuing:
+                     continue;
+                  case ReturningNull:
+                     return null;
+               }
 
-                  if (!result)
-                  {
-                     left.Add(item);
-                  }
-                  else
-                  {
-                     right.Add(item);
-                     adding = false;
-                  }
+               if (!result)
+               {
+                  left.Add(item);
                }
                else
                {
                   right.Add(item);
+                  adding = false;
                }
             }
-
-            return new Array { left, right };
+            else
+            {
+               right.Add(item);
+            }
          }
+
+         return new Array { left, right };
       }
 
       public Value GatherWhile() => GatherWhile(this, Arguments);
 
       public Value GatherWhile(INSGenerator generator, Arguments arguments)
       {
-         using (var assistant = new ParameterAssistant(arguments))
+         using var assistant = new ParameterAssistant(arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            assistant.IteratorParameter();
-
-            var array = new Array();
-
-            return array;
+            return this;
          }
+
+         assistant.IteratorParameter();
+
+         var array = new Array();
+
+         return array;
       }
 
       public Region SharedRegion

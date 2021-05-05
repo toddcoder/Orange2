@@ -28,7 +28,7 @@ namespace Orange.Library.Values
          setCompare();
       }
 
-      void setCompare()
+      protected void setCompare()
       {
          if (inclusive)
          {
@@ -65,9 +65,9 @@ namespace Orange.Library.Values
 
       public INSGenerator GetGenerator() => new NSGenerator(this);
 
-      string succ() => current.Length == 1 ? ((char)(current[0] + 1)).ToString() : current.Succ();
+      protected string succ() => current.Length == 1 ? ((char)(current[0] + 1)).ToString() : current.Succ();
 
-      string pred() => current.Length == 1 ? ((char)(current[0] - 1)).ToString() : current.Pred();
+      protected string pred() => current.Length == 1 ? ((char)(current[0] - 1)).ToString() : current.Pred();
 
       public Value Next(int index)
       {
@@ -84,7 +84,7 @@ namespace Orange.Library.Values
             current = pred();
          }
 
-         return compare() ? (Value)current : NilValue;
+         return compare() ? current : NilValue;
       }
 
       public bool IsGeneratorAvailable => true;
@@ -93,18 +93,13 @@ namespace Orange.Library.Values
 
       public override string ToString() => $"'{start}'{(inclusive ? ".." : "...")}'{stop}'";
 
-      public override Value AlternateValue(string message)
+      public override Value AlternateValue(string message) => message switch
       {
-         switch (message)
-         {
-            case "__$get_item":
-            case "__$set_item":
-            case "len":
-               return ToArray();
-            default:
-               return (Value)GetGenerator();
-         }
-      }
+         "__$get_item" => ToArray(),
+         "__$set_item" => ToArray(),
+         "len" => ToArray(),
+         _ => (Value)GetGenerator()
+      };
 
       public override bool IsArray => true;
 
@@ -114,6 +109,7 @@ namespace Orange.Library.Values
       {
          var needle = Arguments[0];
          var iterator = new NSIterator(GetGenerator());
+
          return iterator.Any(value => needle.Compare(value) == 0);
       }
 

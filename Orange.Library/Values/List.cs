@@ -51,11 +51,11 @@ namespace Orange.Library.Values
 
       public static List Cons(Value x, Value y) => y is List list ? new List(x, list) : new List(x, y);
 
-      public static List Empty => new List();
+      public static List Empty => new();
 
-      Value head;
-      bool isEmpty;
-      List tail;
+      protected Value head;
+      protected bool isEmpty;
+      protected List tail;
 
       public List(Value head, Value tail)
       {
@@ -99,22 +99,20 @@ namespace Orange.Library.Values
          set => tail = value;
       }
 
-      public Value GetHead() => isEmpty ? (Value)new None() : new Some(head);
+      public Value GetHead() => isEmpty ? new None() : new Some(head);
 
       public Value GetTail() => tail;
 
       public override int Compare(Value value) => value is List l ? compareLists(this, l) : -1;
 
-      static int compareLists(List left, List right)
+      protected static int compareLists(List left, List right)
       {
-         if (left.IsEmpty && right.IsEmpty)
+         switch (left.IsEmpty)
          {
-            return 0;
-         }
-
-         if (left.IsEmpty)
-         {
-            return 1;
+            case true when right.IsEmpty:
+               return 0;
+            case true:
+               return 1;
          }
 
          if (right.IsEmpty)
@@ -123,12 +121,11 @@ namespace Orange.Library.Values
          }
 
          var result = left.Head.Compare(right.Head);
-         if (result == 0)
+         return result switch
          {
-            return compareLists(left.Tail, right.Tail);
-         }
-
-         return result;
+            0 => compareLists(left.Tail, right.Tail),
+            _ => result
+         };
       }
 
       public override string Text
@@ -303,100 +300,92 @@ namespace Orange.Library.Values
          return new List(list1.head, Append(list1.Tail, list2.Tail));
       }
 
-      public Value Length() => FoldR((v, a) => a.Int + 1, 0, this);
+      public Value Length() => FoldR((_, a) => a.Int + 1, 0, this);
 
       public Value Map()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push("list-map");
-            assistant.IteratorParameter();
-            var result = Map(v =>
-            {
-               assistant.SetIteratorParameter(v);
-               return block.Evaluate();
-            }, this);
-            Regions.Pop("list-map");
-
-            return result;
+            return this;
          }
+
+         Regions.Push("list-map");
+         assistant.IteratorParameter();
+         var result = Map(v =>
+         {
+            assistant.SetIteratorParameter(v);
+            return block.Evaluate();
+         }, this);
+         Regions.Pop("list-map");
+
+         return result;
       }
 
       public Value If()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push("list-if");
-            assistant.IteratorParameter();
-            var result = Filter(v =>
-            {
-               assistant.SetIteratorParameter(v);
-               return block.Evaluate().IsTrue;
-            }, this);
-            Regions.Pop("list-if");
-
-            return result;
+            return this;
          }
+
+         Regions.Push("list-if");
+         assistant.IteratorParameter();
+         var result = Filter(v =>
+         {
+            assistant.SetIteratorParameter(v);
+            return block.Evaluate().IsTrue;
+         }, this);
+         Regions.Pop("list-if");
+
+         return result;
       }
 
       public Value FoldR()
       {
          var accum = Arguments[0];
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push("foldr-list");
-            assistant.TwoValueParameters();
-            var result = FoldR((v, a) =>
-            {
-               assistant.SetParameterValues(v, a);
-               return block.Evaluate();
-            }, accum, this);
-            Regions.Pop("foldr-list");
-
-            return result;
+            return this;
          }
+
+         Regions.Push("foldr-list");
+         assistant.TwoValueParameters();
+         var result = FoldR((v, a) =>
+         {
+            assistant.SetParameterValues(v, a);
+            return block.Evaluate();
+         }, accum, this);
+         Regions.Pop("foldr-list");
+
+         return result;
       }
 
       public Value FoldL()
       {
          var accum = Arguments[0];
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push("foldl-list");
-            assistant.TwoValueParameters();
-            var result = FoldL((v, a) =>
-            {
-               assistant.SetParameterValues(v, a);
-               return block.Evaluate();
-            }, accum, this);
-            Regions.Pop("foldl-list");
-
-            return result;
+            return this;
          }
+
+         Regions.Push("foldl-list");
+         assistant.TwoValueParameters();
+         var result = FoldL((v, a) =>
+         {
+            assistant.SetParameterValues(v, a);
+            return block.Evaluate();
+         }, accum, this);
+         Regions.Pop("foldl-list");
+
+         return result;
       }
 
       public static Value Concat(List left, List right) => FoldR(Cons, right, left);
@@ -405,24 +394,22 @@ namespace Orange.Library.Values
 
       public Value Find()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push("find-list");
-            assistant.IteratorParameter();
-            var result = find(this, assistant, block);
-            Regions.Pop("find-list");
-
-            return result;
+            return this;
          }
+
+         Regions.Push("find-list");
+         assistant.IteratorParameter();
+         var result = find(this, assistant, block);
+         Regions.Pop("find-list");
+
+         return result;
       }
 
-      static Value find(List list, ParameterAssistant assistant, Block block)
+      protected static Value find(List list, ParameterAssistant assistant, Block block)
       {
          if (list.IsEmpty)
          {
@@ -431,81 +418,72 @@ namespace Orange.Library.Values
 
          var head = list.Head;
          assistant.SetIteratorParameter(head);
-         if (block.Evaluate().IsTrue)
-         {
-            return new Some(head);
-         }
-         else
-         {
-            return find(list.Tail, assistant, block);
-         }
+
+         return block.Evaluate().IsTrue ? new Some(head) : find(list.Tail, assistant, block);
       }
 
       public Value Zip()
       {
          if (Arguments[0] is List right)
          {
-            using (var assistant = new ParameterAssistant(Arguments))
+            using var assistant = new ParameterAssistant(Arguments);
+            var block = assistant.Block();
+            Func<Value, Value, Value> func;
+            if (block == null)
             {
-               var block = assistant.Block();
-               Func<Value, Value, Value> func;
-               if (block == null)
-               {
-                  func = (x, y) => new Array(array(x, y));
-               }
-               else
-               {
-                  func = (x, y) =>
-                  {
-                     assistant.SetParameterValues(x, y);
-                     return block.Evaluate();
-                  };
-               }
-
-               Regions.Push("zip-list");
-               assistant.TwoValueParameters();
-               var result = zip(this, right, func);
-               Regions.Pop("zip-list");
-
-               return result;
+               func = (x, y) => new Array(array(x, y));
             }
+            else
+            {
+               func = (x, y) =>
+               {
+                  assistant.SetParameterValues(x, y);
+                  return block.Evaluate();
+               };
+            }
+
+            Regions.Push("zip-list");
+            assistant.TwoValueParameters();
+            var result = zip(this, right, func);
+            Regions.Pop("zip-list");
+
+            return result;
          }
 
          return this;
       }
 
-      static List zip(List left, List right, Func<Value, Value, Value> func)
+      protected static List zip(List left, List right, Func<Value, Value, Value> func)
       {
          if (left.IsEmpty)
          {
             return left;
          }
-
-         if (right.IsEmpty)
+         else if (right.IsEmpty)
          {
             return right;
          }
-
-         return Cons(func(left.Head, right.Head), zip(left.Tail, right.Tail, func));
+         else
+         {
+            return Cons(func(left.Head, right.Head), zip(left.Tail, right.Tail, func));
+         }
       }
 
       public Value process(Func<ParameterAssistant, Block, Value> func, string regionName)
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push(regionName);
-            assistant.IteratorParameter();
-            var result = func(assistant, block);
-            Regions.Pop(regionName);
-
-            return result;
+            return this;
          }
+
+         Regions.Push(regionName);
+         assistant.IteratorParameter();
+         var result = func(assistant, block);
+         Regions.Pop(regionName);
+
+         return result;
       }
 
       public Value Take()
@@ -514,31 +492,31 @@ namespace Orange.Library.Values
          return take(count);
       }
 
-      public Value TakeWhile() => process((a, b) => take((x, xs) =>
+      public Value TakeWhile() => process((a, b) => take((x, _) =>
       {
          a.SetIteratorParameter(x);
          return !b.Evaluate().IsTrue;
       }), "take-while-list");
 
-      public Value TakeUntil() => process((a, b) => take((x, xs) =>
+      public Value TakeUntil() => process((a, b) => take((x, _) =>
       {
          a.SetIteratorParameter(x);
          return b.Evaluate().IsTrue;
       }), "take-until-list");
 
-      public Value SkipWhile() => process((a, b) => skip((x, xs) =>
+      public Value SkipWhile() => process((a, b) => skip((x, _) =>
       {
          a.SetIteratorParameter(x);
          return !b.Evaluate().IsTrue;
       }), "skip-while-list");
 
-      public Value SkipUntil() => process((a, b) => skip((x, xs) =>
+      public Value SkipUntil() => process((a, b) => skip((x, _) =>
       {
          a.SetIteratorParameter(x);
          return b.Evaluate().IsTrue;
       }), "skip-until-list");
 
-      Value take(Func<Value, List, bool> predicate) => FoldR(Cons, Empty, this, predicate);
+      protected Value take(Func<Value, List, bool> predicate) => FoldR(Cons, Empty, this, predicate);
 
       public Value Skip()
       {
@@ -546,70 +524,66 @@ namespace Orange.Library.Values
          return skip(count);
       }
 
-      Value skip(Func<Value, List, bool> predicate) => FoldR((v, a) => ((List)a).Tail, this, this, predicate);
+      protected Value skip(Func<Value, List, bool> predicate) => FoldR((_, a) => ((List)a).Tail, this, this, predicate);
 
-      Value skip(int count) => skip((x, xs) => count-- <= 0);
+      protected Value skip(int count) => skip((_, _) => count-- <= 0);
 
-      Value take(int count) => take((x, xs) => count-- <= 0);
+      protected Value take(int count) => take((_, _) => count-- <= 0);
 
       public Value Split()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
+            var count = Arguments[0].Int;
+            return new Array { take(count), skip(count) };
+         }
+
+         assistant.IteratorParameter();
+         using var popper = new RegionPopper(new Region(), "list-split");
+         popper.Push();
+         var values = Values();
+         var leftList = Empty;
+         var rightList = Empty;
+         foreach (var value in values)
+         {
+            assistant.SetIteratorParameter(value);
+            var result = block.Evaluate();
+            var signal = Signal();
+            if (signal == Breaking)
             {
-               var count = Arguments[0].Int;
-               return new Array { take(count), skip(count) };
+               break;
             }
 
-            assistant.IteratorParameter();
-            using (var popper = new RegionPopper(new Region(), "list-split"))
+            switch (signal)
             {
-               popper.Push();
-               var values = Values();
-               var leftList = Empty;
-               var rightList = Empty;
-               foreach (var value in values)
-               {
-                  assistant.SetIteratorParameter(value);
-                  var result = block.Evaluate();
-                  var signal = Signal();
-                  if (signal == Breaking)
-                  {
-                     break;
-                  }
+               case Continuing:
+                  continue;
+               case ReturningNull:
+                  return null;
+            }
 
-                  switch (signal)
-                  {
-                     case Continuing:
-                        continue;
-                     case ReturningNull:
-                        return null;
-                  }
-
-                  if (result.IsTrue)
-                  {
-                     leftList = leftList.Add(value);
-                  }
-                  else
-                  {
-                     rightList = rightList.Add(value);
-                  }
-               }
-
-               var list = Empty;
-               list = list.Add(leftList);
-               list = list.Add(rightList);
-
-               return list;
+            if (result.IsTrue)
+            {
+               leftList = leftList.Add(value);
+            }
+            else
+            {
+               rightList = rightList.Add(value);
             }
          }
+
+         var list = Empty;
+         list = list.Add(leftList);
+         list = list.Add(rightList);
+
+         return list;
       }
 
-      public Value Last() => skip((x, xs) => xs.IsEmpty);
+      public Value Last() => skip((_, xs) => xs.IsEmpty);
 
-      public Value Init() => take((x, xs) => xs.IsEmpty);
+      public Value Init() => take((_, xs) => xs.IsEmpty);
 
       public Value Join()
       {
@@ -620,7 +594,7 @@ namespace Orange.Library.Values
       public Value[] Values()
       {
          Value list = new Array();
-         var result = FoldR((v, a) =>
+         var result = FoldR((v, _) =>
          {
             var array = (Array)list;
             array.Add(v);
@@ -633,7 +607,7 @@ namespace Orange.Library.Values
       public Value[] ComparisonValues()
       {
          Value list = new Array();
-         var result = FoldR((v, a) =>
+         var result = FoldR((v, _) =>
          {
             var array = (Array)list;
             array.Add(v);
@@ -650,27 +624,25 @@ namespace Orange.Library.Values
 
       public Value For()
       {
-         using (var assistant = new ParameterAssistant(Arguments))
+         using var assistant = new ParameterAssistant(Arguments);
+         var block = assistant.Block();
+         if (block == null)
          {
-            var block = assistant.Block();
-            if (block == null)
-            {
-               return this;
-            }
-
-            Regions.Push("list-for");
-            assistant.IteratorParameter();
-
-            foreach (var value in this)
-            {
-               assistant.SetIteratorParameter(value);
-               block.Evaluate();
-            }
-
-            Regions.Pop("list-for");
-
             return this;
          }
+
+         Regions.Push("list-for");
+         assistant.IteratorParameter();
+
+         foreach (var value in this)
+         {
+            assistant.SetIteratorParameter(value);
+            block.Evaluate();
+         }
+
+         Regions.Pop("list-for");
+
+         return this;
       }
 
       public Value Add() => Add(Arguments[0]);

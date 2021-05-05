@@ -4,15 +4,15 @@ namespace Orange.Library.Values
 {
    public class SequenceComprehension : Value, ISequenceSource
    {
-      Block block;
-      SequenceComprehension innerComprehension;
-      Parameters parameters;
-      Block arrayBlock;
-      Block ifBlock;
-      Region region;
-      int index;
-      Value arrayValue;
-      ISequenceSource sequence;
+      protected Block block;
+      protected SequenceComprehension innerComprehension;
+      protected Parameters parameters;
+      protected Block arrayBlock;
+      protected Block ifBlock;
+      protected Region region;
+      protected int index;
+      protected Value arrayValue;
+      protected ISequenceSource sequence;
 
       public SequenceComprehension(Block block, Parameters parameters, Region region = null)
       {
@@ -37,6 +37,7 @@ namespace Orange.Library.Values
       {
          this.innerComprehension = innerComprehension;
          this.parameters = parameters;
+
          index = -1;
          arrayValue = null;
          sequence = null;
@@ -108,7 +109,7 @@ namespace Orange.Library.Values
          manager.RegisterMessage(this, "reset", v => ((SequenceComprehension)v).Reset());
       }
 
-      Value getNext()
+      protected Value getNext()
       {
          if (arrayBlock == null)
          {
@@ -149,83 +150,81 @@ namespace Orange.Library.Values
 
       public Value Next()
       {
-         using (var assistant = new ParameterAssistant(new Arguments(new NullBlock(), null, parameters)))
-         using (var popper = new RegionPopper(region, "Seq-comprehension"))
+         using var assistant = new ParameterAssistant(new Arguments(new NullBlock(), null, parameters));
+         using var popper = new RegionPopper(region, "Seq-comprehension");
+         popper.Push();
+         if (arrayBlock == null)
          {
-            popper.Push();
-            if (arrayBlock == null)
-            {
-               return new Nil();
-            }
+            return new Nil();
+         }
 
-            assistant.ArrayParameters();
-            if (ifBlock != null)
+         assistant.ArrayParameters();
+         if (ifBlock != null)
+         {
+            if (innerComprehension == null)
             {
-               if (innerComprehension == null)
+               var value = getNext();
+               if (value.IsNil)
                {
-                  var value = getNext();
-                  if (value.IsNil)
-                  {
-                     return value;
-                  }
-
-                  assistant.SetParameterValues(value, index.ToString(), index);
-                  if (ifBlock.Evaluate().IsTrue)
-                  {
-                     value = block.Evaluate();
-                     if (!value.IsNil)
-                     {
-                        return value;
-                     }
-                  }
+                  return value;
                }
-               else
+
+               assistant.SetParameterValues(value, index.ToString(), index);
+               if (ifBlock.Evaluate().IsTrue)
                {
-                  var value = getNext();
-                  if (value.IsNil)
+                  value = block.Evaluate();
+                  if (!value.IsNil)
                   {
                      return value;
-                  }
-
-                  assistant.SetParameterValues(value, index.ToString(), index);
-                  if (ifBlock.Evaluate().IsTrue)
-                  {
-                     return innerComprehension.Next();
                   }
                }
             }
             else
             {
-               if (innerComprehension == null)
+               var value = getNext();
+               if (value.IsNil)
                {
-                  var value = getNext();
-                  if (value.IsNil)
-                  {
-                     return value;
-                  }
-
-                  assistant.SetParameterValues(value, index.ToString(), index);
-                  value = block.Evaluate();
                   return value;
                }
-               else
-               {
-                  var value = getNext();
-                  if (value.IsNil)
-                  {
-                     return value;
-                  }
 
-                  assistant.SetParameterValues(value, index.ToString(), index);
+               assistant.SetParameterValues(value, index.ToString(), index);
+               if (ifBlock.Evaluate().IsTrue)
+               {
                   return innerComprehension.Next();
                }
             }
-
-            return null;
          }
+         else
+         {
+            if (innerComprehension == null)
+            {
+               var value = getNext();
+               if (value.IsNil)
+               {
+                  return value;
+               }
+
+               assistant.SetParameterValues(value, index.ToString(), index);
+               value = block.Evaluate();
+               return value;
+            }
+            else
+            {
+               var value = getNext();
+               if (value.IsNil)
+               {
+                  return value;
+               }
+
+               assistant.SetParameterValues(value, index.ToString(), index);
+               return innerComprehension.Next();
+            }
+         }
+
+         return null;
       }
 
-      void pushDownInnerComprehension(SequenceComprehension comprehension)
+      protected void pushDownInnerComprehension(SequenceComprehension comprehension)
       {
          if (innerComprehension != null)
          {
@@ -247,6 +246,7 @@ namespace Orange.Library.Values
          };
          pushDownInnerComprehension(comprehension);
          block = null;
+
          return this;
       }
 
@@ -256,7 +256,7 @@ namespace Orange.Library.Values
          return this;
       }
 
-      void setIf(Block block)
+      protected void setIf(Block block)
       {
          if (innerComprehension == null)
          {
@@ -275,6 +275,7 @@ namespace Orange.Library.Values
          index = 0;
          arrayValue = null;
          sequence = null;
+
          return null;
       }
 

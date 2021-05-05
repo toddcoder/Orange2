@@ -5,26 +5,18 @@ namespace Orange.Library.Verbs
 {
    public class With : Verb, IStatement
    {
-      Block sourceBlock;
-      Block actionsBlock;
-      VerbPrecedenceType precedence;
-      string result;
-      string typeName;
+      protected Block sourceBlock;
+      protected Block actionsBlock;
+      protected VerbPrecedenceType precedence;
+      protected string result;
+      protected string typeName;
 
       public With(Block sourceBlock, Block actionsBlock, VerbPrecedenceType precedence)
       {
          this.sourceBlock = sourceBlock;
          this.actionsBlock = actionsBlock;
          this.precedence = precedence;
-         result = "";
-         typeName = "";
-      }
 
-      public With(VerbPrecedenceType precedence)
-      {
-         this.precedence = precedence;
-         sourceBlock = new Block();
-         actionsBlock = new Block();
          result = "";
          typeName = "";
       }
@@ -35,17 +27,18 @@ namespace Orange.Library.Verbs
          if (value is Object obj)
          {
             var region = obj.Region;
-            using (var popper = new RegionPopper(region, "with"))
-            {
-               popper.Push();
-               result = value.ToString();
-               typeName = value.Type.ToString();
-               actionsBlock.Evaluate();
-            }
+            using var popper = new RegionPopper(region, "with");
+            popper.Push();
+            result = value.ToString();
+            typeName = value.Type.ToString();
+            actionsBlock.Evaluate();
+
             return obj;
          }
-
-         return value;
+         else
+         {
+            return value;
+         }
       }
 
       public override VerbPrecedenceType Precedence => precedence;

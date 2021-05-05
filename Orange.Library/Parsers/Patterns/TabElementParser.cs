@@ -22,7 +22,7 @@ namespace Orange.Library.Parsers.Patterns
          {
             Color(atSource.Length, Numbers);
             var at = atSource.ToInt();
-            Element = right ? (Element)new TabRightElement(at) : new TabLeftElement(at);
+            Element = right ? new TabRightElement(at) : new TabLeftElement(at);
          }
          else
          {
@@ -30,7 +30,7 @@ namespace Orange.Library.Parsers.Patterns
             var index = position + length;
             if (GetExpression(source, index, CloseParenthesis()).If(out var at, out index))
             {
-               Element = right ? (Element)new TabRightBlockElement(at) : new TabLeftBlockElement(at);
+               Element = right ? new TabRightBlockElement(at) : new TabLeftBlockElement(at);
                overridePosition = index;
             }
             else

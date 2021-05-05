@@ -66,7 +66,7 @@ namespace Orange.Library.Parsers.Special
 
             switch (verb)
             {
-               case If _:
+               case If:
                   buildingCondition = true;
                   break;
                case Where where:

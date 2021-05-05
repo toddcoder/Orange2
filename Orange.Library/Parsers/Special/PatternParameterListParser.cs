@@ -35,7 +35,7 @@ namespace Orange.Library.Parsers.Special
 
       public override IMaybe<(List<Parameter>, int)> Parse(string source, int index)
       {
-         return GetExpression(source, index, stop).Map(t => maybe(Parse(t.Item1), () => (list, t.Item2)));
+         return GetExpression(source, index, stop).Map(t => maybe(Parse(t.block), () => (list, t.position)));
       }
 
       public bool Parse(Block block)
@@ -72,7 +72,7 @@ namespace Orange.Library.Parsers.Special
                   {
                      case Variable variable1:
                         var name = variable1.Name;
-                        value = name == "_" ? (Value)new Any() : new Placeholder(name);
+                        value = name == "_" ? new Any() : new Placeholder(name);
                         break;
                      case Block arrayBlock when arrayBlock.AsAdded.Any(v => v is AppendToArray):
                         value = ReplacePlaceholders(arrayBlock);
@@ -150,14 +150,14 @@ namespace Orange.Library.Parsers.Special
 
                   break;
                }
-               case Bind _ when variable != null:
+               case Bind when variable != null:
                   list.RemoveAt(list.Count - 1);
                   bindingName = variable.Name;
                   break;
                case CreateSet createSet:
                   list.Add(getParameter(list.Count, createSet.Create(), ref bindingName));
                   break;
-               case If _:
+               case If:
                   addingToCondition = true;
                   condition = new Block();
                   break;
@@ -217,7 +217,7 @@ namespace Orange.Library.Parsers.Special
             if (value is Variable variable)
             {
                var name = variable.Name;
-               value = name == "_" ? (Value)new Any() : new Placeholder(name);
+               value = name == "_" ? new Any() : new Placeholder(name);
             }
 
             array.Add(value);
@@ -247,7 +247,7 @@ namespace Orange.Library.Parsers.Special
             if (value is Variable variable)
             {
                var name = variable.Name;
-               value = name == "_" ? (Value)new Any() : new Placeholder(name);
+               value = name == "_" ? new Any() : new Placeholder(name);
             }
 
             list = list.Add(value);
